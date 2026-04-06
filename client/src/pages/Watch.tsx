@@ -511,6 +511,7 @@ export default function Watch() {
         >
             {/* VIDEO */}
             <video
+                key={getStreamUrl()}
                 ref={videoRef}
                 src={getStreamUrl()}
                 className={`watch-video ${isSensitiveNow ? 'blur-video' : ''}`}
