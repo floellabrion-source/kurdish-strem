@@ -26,7 +26,7 @@ export default function Flashcards() {
     const [isAiLoading, setIsAiLoading] = useState(false);
     const [aiVariations, setAiVariations] = useState<{front: string, back: string}[]>([]);
 
-    const GEMINI_API_KEY = 'AIzaSyAFEZvgIZW3NXJSUJoyRWBHZ5cCf9of3Gk';
+    const GEMINI_API_KEY = 'AIzaSyAFEZvgIZW3NXJSUJoyRWBHZ5ccF9of3Gk';
 
     const generateVariations = async (card: Card) => {
         setAiVarTarget(card);
@@ -187,7 +187,11 @@ export default function Flashcards() {
         <div className="flashcards-container">
             <div className="fc-header">
                 <div>
-                    <h1 className="fc-title"><CreditCard size={28} /> فلاش کارتەکان (Spaced Repetition)</h1>
+                    <h1 className="fc-title">
+                        <CreditCard size={28} /> 
+                        <span className="fc-title-main">فلاش کارتەکان</span>
+                        <span className="fc-title-sub">(Spaced Repetition)</span>
+                    </h1>
                     <p className="fc-subtitle">بە شێوازێکی زیرەکانە کارتەکانت بەپێی کات بۆ ڕیز دەکات تا لە بیرت نەچێت</p>
                 </div>
                 
