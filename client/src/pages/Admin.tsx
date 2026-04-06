@@ -109,7 +109,7 @@ export default function Admin() {
         const movieIdx = movies.findIndex(m => m.id === sensitiveTarget.movieId);
         if (movieIdx === -1) return;
 
-        const updatedMovie = JSON.parse(JSON.stringify(movies[movieIdx])); // Deep copy
+        const updatedMovie = JSON.parse(JSON.stringify(movies[movieIdx]));
 
         if (sensitiveTarget.episodeId !== undefined && sensitiveTarget.seasonNum !== undefined) {
             const season = updatedMovie.seasons.find((s: Season) => s.number === sensitiveTarget.seasonNum);
@@ -188,11 +188,11 @@ export default function Admin() {
             }
 
             await axios.put(`/api/admin/movies/${movieId}`, updated);
-            toast(`فایلەکە بە سەرکەوتوویی بۆ کلاود (R2) بارکرا ☁️`);
+            toast(`فایلەکە بە سەرکەوتوویی بارکرا ☁️`);
             load();
         } catch (err: any) {
             console.error(err);
-            toast('هەڵەیەک لە کاتی ئەپلۆد بۆ R2 ڕوویدا', 'error');
+            toast('هەڵەیەک لە کاتی ئەپلۆد ڕوویدا', 'error');
         } finally {
             setUploading(u => ({ ...u, [key]: false }));
         }
@@ -318,63 +318,42 @@ export default function Admin() {
                 <div className="form-overlay" onClick={() => setSensitiveTarget(null)}>
                     <div className="form-modal" onClick={e => e.stopPropagation()}>
                         <div className="form-header">
-                            <h2><Shield size={20} color="#f87171" style={{marginRight: '8px', verticalAlign: 'middle'}}/> کاتە نەشیاوەکان (Family Mode)</h2>
+                            <h2><Shield size={20} color="#f87171" style={{marginLeft: '8px', verticalAlign: 'middle'}}/> کاتە نەشیاوەکان</h2>
                             <button onClick={() => setSensitiveTarget(null)} className="close-btn"><X size={20} /></button>
                         </div>
                         <div className="form-body">
                             {sensitiveScenes.length === 0 ? (
-                                <div style={{textAlign: 'center', padding: '20px', color: '#64748b'}}>هیچ دیمەنێکی نەشیاو دیاری نەکراوە بۆ ئەم ڤیدیۆیە.</div>
+                                <div style={{textAlign: 'center', padding: '20px', color: '#64748b'}}>هیچ دیمەنێکی نەشیاو نییە.</div>
                             ) : (
-                                <div style={{display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '15px'}}>
+                                <div style={{display: 'flex', flexDirection: 'column', gap: '15px'}}>
                                     {sensitiveScenes.map((s, i) => (
                                         <div key={i} style={{ display: 'flex', gap: '10px', background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)' }}>
-                                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                                            <div style={{ flex: 1 }}>
                                                 <label style={{fontSize: '12px', color: '#cbd5e1'}}>دەستپێک</label>
-                                                <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
-                                                    <input type="number" min="0" placeholder="خولەک" value={Math.floor((s.start || 0) / 60) || ''} onChange={e => {
-                                                        const newS = [...sensitiveScenes];
-                                                        newS[i].start = (Number(e.target.value) * 60) + ((s.start || 0) % 60);
-                                                        setSensitiveScenes(newS);
-                                                    }} className="form-input" style={{padding: '8px', textAlign: 'center', margin: 0}} />
-                                                    <span style={{color: '#94a3b8'}}>:</span>
-                                                    <input type="number" min="0" max="59" placeholder="چرکە" value={(s.start || 0) % 60 || ''} onChange={e => {
-                                                        const newS = [...sensitiveScenes];
-                                                        newS[i].start = (Math.floor((s.start || 0) / 60) * 60) + Number(e.target.value);
-                                                        setSensitiveScenes(newS);
-                                                    }} className="form-input" style={{padding: '8px', textAlign: 'center', margin: 0}} />
-                                                </div>
+                                                <input type="number" value={s.start} onChange={e => {
+                                                    const newS = [...sensitiveScenes];
+                                                    newS[i].start = Number(e.target.value);
+                                                    setSensitiveScenes(newS);
+                                                }} className="form-input" />
                                             </div>
-                                            <div style={{color: '#475569', alignSelf: 'flex-end', paddingBottom: '10px'}}>-</div>
-                                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                                            <div style={{ flex: 1 }}>
                                                 <label style={{fontSize: '12px', color: '#cbd5e1'}}>کۆتایی</label>
-                                                <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
-                                                    <input type="number" min="0" placeholder="خولەک" value={Math.floor((s.end || 0) / 60) || ''} onChange={e => {
-                                                        const newS = [...sensitiveScenes];
-                                                        newS[i].end = (Number(e.target.value) * 60) + ((s.end || 0) % 60);
-                                                        setSensitiveScenes(newS);
-                                                    }} className="form-input" style={{padding: '8px', textAlign: 'center', margin: 0}} />
-                                                    <span style={{color: '#94a3b8'}}>:</span>
-                                                    <input type="number" min="0" max="59" placeholder="چرکە" value={(s.end || 0) % 60 || ''} onChange={e => {
-                                                        const newS = [...sensitiveScenes];
-                                                        newS[i].end = (Math.floor((s.end || 0) / 60) * 60) + Number(e.target.value);
-                                                        setSensitiveScenes(newS);
-                                                    }} className="form-input" style={{padding: '8px', textAlign: 'center', margin: 0}} />
-                                                </div>
+                                                <input type="number" value={s.end} onChange={e => {
+                                                    const newS = [...sensitiveScenes];
+                                                    newS[i].end = Number(e.target.value);
+                                                    setSensitiveScenes(newS);
+                                                }} className="form-input" />
                                             </div>
-                                            <button className="btn-cancel" style={{padding: '0 12px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)', alignSelf: 'flex-end', height: '39px'}} onClick={() => {
-                                                setSensitiveScenes(sensitiveScenes.filter((_, idx) => idx !== i));
-                                            }}><Trash2 size={16} /></button>
+                                            <button className="btn-cancel" onClick={() => setSensitiveScenes(sensitiveScenes.filter((_, idx) => idx !== i))}><Trash2 size={16} /></button>
                                         </div>
                                     ))}
                                 </div>
                             )}
-                            <button className="btn-add" style={{width: '100%', justifyContent: 'center'}} onClick={() => setSensitiveScenes([...sensitiveScenes, { start: 0, end: 0 }])}>
-                                <Plus size={16}/> کاتی زیاتر
-                            </button>
+                            <button className="btn-add" style={{width: '100%', marginTop: '10px'}} onClick={() => setSensitiveScenes([...sensitiveScenes, { start: 0, end: 0 }])}><Plus size={16}/> کاتی نوێ</button>
                         </div>
                         <div className="form-footer">
                             <button onClick={() => setSensitiveTarget(null)} className="btn-cancel">پاشگەز</button>
-                            <button onClick={handleSaveSensitive} className="btn-save"><Save size={16} /> پاشەکەوتکردن</button>
+                            <button onClick={handleSaveSensitive} className="btn-save"><Save size={16} /> پاشەکەوت</button>
                         </div>
                     </div>
                 </div>
@@ -382,72 +361,44 @@ export default function Admin() {
 
             {loading ? (
                 <div className="admin-loading"><Loader2 size={32} className="spinning" /></div>
-            ) : movies.length === 0 ? (
-                <div className="admin-empty"><Film size={48} /><p>هیچ بەرهەمێک نییە.</p></div>
             ) : (
                 <div className="movies-admin-list">
                     {movies.map(movie => (
                         <div key={movie.id} className="admin-card">
                             <div className="ac-top">
                                 <div className="ac-poster" onClick={() => refs.poster.current[movie.id]?.click()}>
-                                    {movie.posterUrl ? <img src={`${movie.posterUrl}?t=${Date.now()}`} alt={movie.title} className="ac-poster-img" /> : <div className="ac-poster-placeholder"><Upload size={22} className="ac-upload-icon" /><span>وێنە</span></div>}
-                                    <div className="ac-poster-hover"><Upload size={18} /> گۆڕانەوە</div>
-                                    <input type="file" accept="image/*" className="hidden-input" ref={el => { refs.poster.current[movie.id] = el; }} onChange={e => e.target.files?.[0] && doUpload(movie.id, e.target.files[0], 'poster')} />
+                                    {movie.posterUrl ? <img src={movie.posterUrl} className="ac-poster-img" alt="" /> : <div className="ac-poster-placeholder"><Upload size={22} /></div>}
+                                    <input type="file" className="hidden-input" ref={el => { refs.poster.current[movie.id] = el; }} onChange={e => e.target.files?.[0] && doUpload(movie.id, e.target.files[0], 'poster')} />
                                 </div>
                                 <div className="ac-info">
-                                    <div className="ac-title-row">
-                                        <h3 className="ac-title">{movie.title}</h3>
-                                        <span className={`type-badge ${movie.type === 'series' ? 'badge-series' : 'badge-movie'}`}>
-                                            {movie.type === 'series' ? <><Layers size={10} /> زنجیرە</> : <><Film size={10} /> فیلم</>}
-                                        </span>
-                                    </div>
+                                    <h3 className="ac-title">{movie.title}</h3>
                                     <div className="ac-meta">
-                                        {movie.year && <span>{movie.year}</span>}
-                                        {movie.genre && <span>{movie.genre}</span>}
-                                        {movie.duration && <span>{movie.duration}</span>}
-                                        {movie.type === 'series' && movie.seasons && <span>{movie.seasons.length} سیزن • {movie.seasons.reduce((a, s) => a + s.episodes.length, 0)} ئالقە</span>}
+                                        <span>{movie.year}</span>
+                                        <span className={`type-badge ${movie.type}`}>{movie.type === 'movie' ? 'فیلم' : 'زنجیرە'}</span>
                                     </div>
-                                    {movie.description && <p className="ac-desc">{movie.description}</p>}
+                                    <p className="ac-desc">{movie.description}</p>
                                 </div>
                                 <div className="ac-actions">
-                                    {movie.type === 'movie' && (
-                                        <button className="ac-btn tooltip" style={movie.sensitiveScenes?.length ? {color: '#ef4444'} : {}} data-tip="کاتە نەشیاوەکان" onClick={(e) => { e.stopPropagation(); openSensitiveModal(movie.id); }} title="کاتە نەشیاوەکان">
-                                            <Shield size={16} />
-                                        </button>
-                                    )}
-                                    <button className="ac-btn ac-edit" onClick={() => setEditMovie(movie)} title="دەستکاریکردن"><Edit3 size={16} /></button>
-                                    <button className="ac-btn ac-delete" onClick={() => handleDelete(movie)} title="سڕینەوە"><Trash2 size={16} /></button>
+                                    {movie.type === 'movie' && <button className="ac-btn" onClick={() => openSensitiveModal(movie.id)}><Shield size={16} /></button>}
+                                    <button className="ac-btn" onClick={() => setEditMovie(movie)}><Edit3 size={16} /></button>
+                                    <button className="ac-btn" onClick={() => handleDelete(movie)}><Trash2 size={16} /></button>
                                     {movie.type === 'series' && (
-                                        <button className={`ac-btn ac-expand ${expandedSeries[movie.id] ? 'active' : ''}`} onClick={() => setExpandedSeries(e => ({ ...e, [movie.id]: !e[movie.id] }))} title="سیزن و ئالقەکان"><ListVideo size={16} /></button>
+                                        <button className="ac-btn" onClick={() => setExpandedSeries(e => ({ ...e, [movie.id]: !e[movie.id] }))}><ListVideo size={16} /></button>
                                     )}
                                 </div>
                             </div>
 
                             {movie.type !== 'series' && (
                                 <div className="ac-uploads">
-                                    <div className={`ac-upload-card ${movie.videoUrl ? 'done' : ''}`} onClick={() => refs.video.current[movie.id]?.click()}>
-                                        <input type="file" accept="video/*" className="hidden-input" ref={el => { refs.video.current[movie.id] = el; }} onChange={e => e.target.files?.[0] && doUpload(movie.id, e.target.files[0], 'video')} />
-                                        <div className="ac-upload-icon-wrap">{uploading[`${movie.id}-video-0-0`] ? <Loader2 size={22} className="spinning" /> : <Video size={22} />}</div>
-                                        <div className="ac-upload-label">ڤیدیۆ (Server)</div>
-                                        <div className="ac-upload-status">{movie.videoUrl ? '✓ بارکراوە' : 'کلیک بکە'}</div>
+                                    <div className="ac-upload-card" onClick={() => refs.video.current[movie.id]?.click()}>
+                                        <input type="file" className="hidden-input" ref={el => { refs.video.current[movie.id] = el; }} onChange={e => e.target.files?.[0] && doUpload(movie.id, e.target.files[0], 'video')} />
+                                        <div className="ac-upload-icon-wrap">{uploading[`${movie.id}-video-0-0`] ? <Loader2 className="spinning" /> : <Video size={22} />}</div>
+                                        <div className="ac-upload-label">Server</div>
                                     </div>
-
-                                    <div className={`ac-upload-card cloud-upload ${movie.videoUrl ? 'done' : ''}`} onClick={() => refs.r2Video.current[movie.id]?.click()}>
-                                        <input type="file" accept="video/*" className="hidden-input" ref={el => { refs.r2Video.current[movie.id] = el; }} onChange={e => { if (e.target.files?.[0]) doR2Upload(movie.id, e.target.files[0], 'video'); }} />
-                                        <div className="ac-upload-icon-wrap">{uploading[`${movie.id}-video-main`] ? <Loader2 size={22} className="spinning" /> : <Upload size={22} />}</div>
-                                        <div className="ac-upload-label">ئەپلۆد بۆ Cloud R2</div>
-                                        <div className="ac-upload-status">{movie.videoUrl ? '✓ کلاود' : 'بۆ کلاود (R2)'}</div>
-                                    </div>
-
-                                    <div className={`ac-upload-card ${movie.originalSrt ? 'done' : ''}`} onClick={() => refs.origSrt.current[movie.id]?.click()}>
-                                        <input type="file" accept=".srt" className="hidden-input" ref={el => { refs.origSrt.current[movie.id] = el; }} onChange={e => e.target.files?.[0] && doUpload(movie.id, e.target.files[0], 'srt', { srtType: 'original' })} />
-                                        <div className="ac-upload-icon-wrap">{uploading[`${movie.id}-srt-0-0`] ? <Loader2 size={22} className="spinning" /> : <FileText size={22} />}</div>
-                                        <div className="ac-upload-label">SRT ئەسڵی</div>
-                                    </div>
-                                    <div className={`ac-upload-card ${movie.translatedSrt ? 'done' : ''}`} onClick={() => refs.transSrt.current[movie.id]?.click()}>
-                                        <input type="file" accept=".srt" className="hidden-input" ref={el => { refs.transSrt.current[movie.id] = el; }} onChange={e => e.target.files?.[0] && doUpload(movie.id, e.target.files[0], 'srt', { srtType: 'translated' })} />
-                                        <div className="ac-upload-icon-wrap">{uploading[`${movie.id}-srt-0-0`] ? <Loader2 size={22} className="spinning" /> : <FileText size={22} />}</div>
-                                        <div className="ac-upload-label">SRT وەرگێڕدراو</div>
+                                    <div className="ac-upload-card cloud-upload" onClick={() => refs.r2Video.current[movie.id]?.click()}>
+                                        <input type="file" className="hidden-input" ref={el => { refs.r2Video.current[movie.id] = el; }} onChange={e => e.target.files?.[0] && doR2Upload(movie.id, e.target.files[0], 'video')} />
+                                        <div className="ac-upload-icon-wrap">{uploading[`${movie.id}-video-main`] ? <Loader2 className="spinning" /> : <Upload size={22} />}</div>
+                                        <div className="ac-upload-label">Cloud R2</div>
                                     </div>
                                 </div>
                             )}
@@ -455,29 +406,27 @@ export default function Admin() {
                             {movie.type === 'series' && expandedSeries[movie.id] && (
                                 <div className="series-manager">
                                     <div className="series-manager-header">
-                                        <h4><Layers size={15} /> سیزن و ئالقەکان</h4>
-                                        <button className="btn-add-season" onClick={() => addSeason(movie.id)}><PlusCircle size={14} /> سیزنی نوێ</button>
+                                        <h4>سیزن و ئالقەکان</h4>
+                                        <button className="btn-add-season" onClick={() => addSeason(movie.id)}>سیزنی نوێ</button>
                                     </div>
-                                    {(!movie.seasons || movie.seasons.length === 0) ? (
-                                        <div className="no-seasons">هیچ سیزنێک نییە.</div>
-                                    ) : movie.seasons.map(season => (
-                                            <SeasonPanel
-                                                key={season.id}
-                                                season={season}
-                                                movieId={movie.id}
-                                                onAddEpisode={() => addEpisode(movie.id, season.number)}
-                                                onBulkAdd={(count) => addBulkEpisodes(movie.id, season.number, count)}
-                                                onEpVideo={(n, f) => doUpload(movie.id, f, 'ep-video', { season: season.number, episode: n })}
-                                                onEpSrt={(n, f, t) => doUpload(movie.id, f, 'ep-srt', { season: season.number, episode: n, srtType: t })}
-                                                onSensitive={(epId) => openSensitiveModal(movie.id, season.number, epId)}
-                                                onEpVideoUrl={(epId, url) => saveEpVideoUrl(movie.id, season.number, epId, url)}
-                                                onR2Upload={(n, f, id) => doR2Upload(movie.id, f, 'video', { season: season.number, episodeId: id })}
-                                                uploading={uploading}
-                                                epVideoRef={refs.epVideo}
-                                                epOrigSrtRef={refs.epOrigSrt}
-                                                epTransSrtRef={refs.epTransSrt}
-                                                r2EpVideoRef={refs.r2EpVideo}
-                                            />
+                                    {movie.seasons?.map(season => (
+                                        <SeasonPanel
+                                            key={season.id}
+                                            season={season}
+                                            movieId={movie.id}
+                                            onAddEpisode={() => addEpisode(movie.id, season.number)}
+                                            onBulkAdd={(count: number) => addBulkEpisodes(movie.id, season.number, count)}
+                                            onEpVideo={(n: number, f: File) => doUpload(movie.id, f, 'ep-video', { season: season.number, episode: n })}
+                                            onEpSrt={(n: number, f: File, t: string) => doUpload(movie.id, f, 'ep-srt', { season: season.number, episode: n, srtType: t })}
+                                            onSensitive={(epId: string) => openSensitiveModal(movie.id, season.number, epId)}
+                                            onEpVideoUrl={(epId: string, url: string) => saveEpVideoUrl(movie.id, season.number, epId, url)}
+                                            onR2Upload={(n: number, f: File, id: string) => doR2Upload(movie.id, f, 'video', { season: season.number, episodeId: id })}
+                                            uploading={uploading}
+                                            epVideoRef={refs.epVideo}
+                                            epOrigSrtRef={refs.epOrigSrt}
+                                            epTransSrtRef={refs.epTransSrt}
+                                            r2EpVideoRef={refs.r2EpVideo}
+                                        />
                                     ))}
                                 </div>
                             )}
@@ -492,51 +441,39 @@ export default function Admin() {
 function SeasonPanel({ season, movieId, onAddEpisode, onBulkAdd, onEpVideo, onEpSrt, onSensitive, onEpVideoUrl, onR2Upload, uploading, epVideoRef, epOrigSrtRef, epTransSrtRef, r2EpVideoRef }: any) {
     const [open, setOpen] = useState(true);
     const [bulkCount, setBulkCount] = useState('');
-    const handleBulk = async () => {
-        const n = parseInt(bulkCount);
-        if (!n || n < 1) return;
-        await onBulkAdd(n);
-        setBulkCount('');
-    };
 
     return (
         <div className="season-block">
             <div className="season-block-header" onClick={() => setOpen(!open)}>
-                <span className="season-block-title">سیزنی {season.number}: {season.title} <span className="ep-count-badge">{season.episodes.length} ئالقە</span></span>
-                <div className="season-header-actions" onClick={e => e.stopPropagation()}>
-                    <div className="bulk-add-row"><input type="number" min={1} value={bulkCount} onChange={e => setBulkCount(e.target.value)} placeholder="٢٠" className="bulk-count-input" /><button className="btn-bulk-add" onClick={handleBulk}>زیاد بکە</button></div>
-                    {open ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
-                </div>
+                <span>سیزنی {season.number} ({season.episodes.length} ئالقە)</span>
+                <div>{open ? <ChevronUp size={15} /> : <ChevronDown size={15} />}</div>
             </div>
             {open && (
                 <div className="episodes-list">
+                    <div className="bulk-add-row" onClick={e => e.stopPropagation()}>
+                        <input type="number" value={bulkCount} onChange={e => setBulkCount(e.target.value)} placeholder="ژمارە" />
+                        <button onClick={() => onBulkAdd(Number(bulkCount))}>زیادکردن</button>
+                    </div>
                     <div className="ep-grid">
-                        {season.episodes.map((ep: any) => {
-                            const k = `${movieId}-${season.number}-${ep.number}`;
-                            return (
-                                <div key={ep.id} className="ep-grid-card">
-                                    <div className="ep-grid-header"><div className="ep-grid-num">{ep.number}</div></div>
-                                    <div className="ep-grid-title">{ep.title}</div>
-                                    <div className="ep-grid-btns">
-                                        <input type="file" accept="video/*" className="hidden-input" ref={el => { epVideoRef.current[ep.id] = el; }} onChange={e => e.target.files?.[0] && onEpVideo(ep.number, e.target.files[0])} />
-                                        <button className={`ep-mini-btn ${ep.videoUrl ? 'done' : ''}`} onClick={() => epVideoRef.current[ep.id]?.click()} title="ڤیدیۆ (Server)"><Video size={11} /></button>
-                                        
-                                        <input type="file" accept="video/*" className="hidden-input" ref={el => { r2EpVideoRef.current[ep.id] = el; }} onChange={e => e.target.files?.[0] && onR2Upload(ep.number, e.target.files[0], ep.id)} />
-                                        <button className={`ep-mini-btn cloud-upload-btn ${ep.videoUrl ? 'done' : ''}`} onClick={() => r2EpVideoRef.current[ep.id]?.click()} title="ئەپلۆد بۆ Cloud R2 ☁️"><Upload size={11} /></button>
+                        {season.episodes.map((ep: Episode) => (
+                            <div key={ep.id} className="ep-grid-card">
+                                <div className="ep-grid-title">{ep.number}. {ep.title}</div>
+                                <div className="ep-grid-btns">
+                                    <input type="file" className="hidden-input" ref={el => { epVideoRef.current[ep.id] = el; }} onChange={e => e.target.files?.[0] && onEpVideo(ep.number, e.target.files[0])} />
+                                    <button className={`ep-mini-btn ${ep.videoUrl ? 'done' : ''}`} onClick={() => epVideoRef.current[ep.id]?.click()}><Video size={11} /></button>
 
-                                        <button className="ep-mini-btn" onClick={() => { const url = window.prompt('URL بنوسە:', ep.videoUrl || ''); if(url) onEpVideoUrl(ep.id, url); }} title="لینکی ئامادە"><LinkIcon size={11} /></button>
+                                    <input type="file" className="hidden-input" ref={el => { r2EpVideoRef.current[ep.id] = el; }} onChange={e => e.target.files?.[0] && onR2Upload(ep.number, e.target.files[0], ep.id)} />
+                                    <button className={`ep-mini-btn cloud-upload-btn ${ep.videoUrl ? 'done' : ''}`} onClick={() => r2EpVideoRef.current[ep.id]?.click()}><Upload size={11} /></button>
 
-                                        <input type="file" accept=".srt" className="hidden-input" ref={el => { epOrigSrtRef.current[ep.id] = el; }} onChange={e => e.target.files?.[0] && onEpSrt(ep.number, e.target.files[0], 'original')} />
-                                        <button className={`ep-mini-btn ${ep.originalSrt ? 'done' : ''}`} onClick={() => epOrigSrtRef.current[ep.id]?.click()} title="SRT ئەسڵی"><FileText size={11} /></button>
+                                    <button className="ep-mini-btn" onClick={() => { const u = window.prompt('URL:', ep.videoUrl || ''); if(u) onEpVideoUrl(ep.id, u); }}><LinkIcon size={11} /></button>
 
-                                        <input type="file" accept=".srt" className="hidden-input" ref={el => { epTransSrtRef.current[ep.id] = el; }} onChange={e => e.target.files?.[0] && onEpSrt(ep.number, e.target.files[0], 'translated')} />
-                                        <button className={`ep-mini-btn ${ep.translatedSrt ? 'done' : ''}`} onClick={() => epTransSrtRef.current[ep.id]?.click()} title="SRT کوردی"><Languages size={11} /></button>
-                                        
-                                        <button className={`ep-mini-btn ${ep.sensitiveScenes?.length ? 'done-alert' : ''}`} onClick={() => onSensitive(ep.id)} title="کاتە نەشیاوەکان"><Shield size={11} /></button>
-                                    </div>
+                                    <input type="file" className="hidden-input" ref={el => { epOrigSrtRef.current[ep.id] = el; }} onChange={e => e.target.files?.[0] && onEpSrt(ep.number, e.target.files[0], 'original')} />
+                                    <button className={`ep-mini-btn ${ep.originalSrt ? 'done' : ''}`} onClick={() => epOrigSrtRef.current[ep.id]?.click()}><FileText size={11} /></button>
+                                    
+                                    <button className={`ep-mini-btn ${ep.sensitiveScenes?.length ? 'done-alert' : ''}`} onClick={() => onSensitive(ep.id)}><Shield size={11} /></button>
                                 </div>
-                            );
-                        })}
+                            </div>
+                        ))}
                     </div>
                 </div>
             )}
