@@ -159,6 +159,31 @@ export default function Admin() {
         catch { toast('کێشەیەک ڕووی دا', 'error'); }
     };
 
+    const saveEpVideoUrl = async (movieId: string, seasonNum: number, epId: string, url: string) => {
+        const m = movies.find(x => x.id === movieId);
+        if (!m) return;
+        const updated = JSON.parse(JSON.stringify(m));
+        const season = updated.seasons?.find((s: Season) => s.number === seasonNum);
+        const ep = season?.episodes.find((e: Episode) => e.id === epId);
+        if (ep) { ep.videoUrl = url; }
+        try {
+            await axios.put(`/api/admin/movies/${movieId}`, updated);
+            toast('لینکی ڤیدیۆ پاشەکەوت کرا ✓');
+            load();
+        } catch { toast('کێشەیەک ڕووی دا', 'error'); }
+    };
+
+    const saveMoviePosterUrl = async (movieId: string, url: string) => {
+        const m = movies.find(x => x.id === movieId);
+        if (!m) return;
+        const updated = { ...m, posterCloudUrl: url };
+        try {
+            await axios.put(`/api/admin/movies/${movieId}`, updated);
+            toast('لینکی پۆستەر پاشەکەوت کرا ✓');
+            load();
+        } catch { toast('کێشەیەک ڕووی دا', 'error'); }
+    };
+
     return (
         <div className="admin-page">
             {/* Toasts */}
@@ -248,6 +273,16 @@ export default function Admin() {
                                 <div className="form-group"><label>ژانڕ</label><input type="text" value={editMovie.genre} onChange={e => setEditMovie(m => m ? { ...m, genre: e.target.value } : null)} className="form-input" /></div>
                                 <div className="form-group"><label>ساڵ</label><input type="number" value={editMovie.year} onChange={e => setEditMovie(m => m ? { ...m, year: +e.target.value } : null)} className="form-input" /></div>
                                 <div className="form-group"><label>کات</label><input type="text" value={editMovie.duration} onChange={e => setEditMovie(m => m ? { ...m, duration: e.target.value } : null)} className="form-input" /></div>
+                            </div>
+                            {editMovie.type === 'movie' && (
+                                <div className="form-group">
+                                    <label>🎬 لینکی ڤیدیۆی Cloudflare R2</label>
+                                    <input type="url" value={editMovie.videoUrl || ''} onChange={e => setEditMovie(m => m ? { ...m, videoUrl: e.target.value } : null)} className="form-input" placeholder="https://pub-xxx.r2.dev/videos/movie.mp4" />
+                                </div>
+                            )}
+                            <div className="form-group">
+                                <label>🖼️ لینکی پۆستەری Cloudflare R2</label>
+                                <input type="url" value={editMovie.posterCloudUrl || ''} onChange={e => setEditMovie(m => m ? { ...m, posterCloudUrl: e.target.value } : null)} className="form-input" placeholder="https://pub-xxx.r2.dev/posters/poster.jpg" />
                             </div>
                         </div>
                         <div className="form-footer">
@@ -449,6 +484,7 @@ export default function Admin() {
                                                 onEpVideo={(n, f) => doUpload(movie.id, f, 'ep-video', { season: season.number, episode: n })}
                                                 onEpSrt={(n, f, t) => doUpload(movie.id, f, 'ep-srt', { season: season.number, episode: n, srtType: t })}
                                                 onSensitive={(epId) => openSensitiveModal(movie.id, season.number, epId)}
+                                                onEpVideoUrl={(epId, url) => saveEpVideoUrl(movie.id, season.number, epId, url)}
                                                 uploading={uploading}
                                                 epVideoRef={refs.epVideo}
                                                 epOrigSrtRef={refs.epOrigSrt}
@@ -465,13 +501,14 @@ export default function Admin() {
     );
 }
 
-function SeasonPanel({ season, movieId, onAddEpisode, onBulkAdd, onEpVideo, onEpSrt, onSensitive, uploading, epVideoRef, epOrigSrtRef, epTransSrtRef }: {
+function SeasonPanel({ season, movieId, onAddEpisode, onBulkAdd, onEpVideo, onEpSrt, onSensitive, onEpVideoUrl, uploading, epVideoRef, epOrigSrtRef, epTransSrtRef }: {
     season: Season; movieId: string;
     onAddEpisode: () => void;
     onBulkAdd: (count: number) => void;
     onEpVideo: (n: number, f: File) => void;
     onEpSrt: (n: number, f: File, t: string) => void;
     onSensitive: (epId: string) => void;
+    onEpVideoUrl: (epId: string, url: string) => void;
     uploading: Record<string, boolean>;
     epVideoRef: React.MutableRefObject<Record<string, HTMLInputElement | null>>;
     epOrigSrtRef: React.MutableRefObject<Record<string, HTMLInputElement | null>>;
@@ -541,8 +578,21 @@ function SeasonPanel({ season, movieId, onAddEpisode, onBulkAdd, onEpVideo, onEp
                                             <div className="ep-grid-title">{ep.title}</div>
                                             <div className="ep-grid-btns">
                                                 <input type="file" accept="video/*" className="hidden-input" ref={el => { epVideoRef.current[`${k}-v`] = el; }} onChange={e => e.target.files?.[0] && onEpVideo(ep.number, e.target.files[0])} />
-                                                <button className={`ep-mini-btn ${hasVideo ? 'done' : ''}`} onClick={() => epVideoRef.current[`${k}-v`]?.click()} title="ڤیدیۆ بار بکە">
+                                                <button className={`ep-mini-btn ${hasVideo || ep.videoUrl ? 'done' : ''}`} onClick={() => epVideoRef.current[`${k}-v`]?.click()} title="ڤیدیۆ بار بکە">
                                                     <Video size={11} />
+                                                </button>
+
+                                                {/* Cloudflare R2 URL button */}
+                                                <button
+                                                    className={`ep-mini-btn ${ep.videoUrl ? 'done' : ''}`}
+                                                    title={ep.videoUrl ? `R2: ${ep.videoUrl}` : 'لینکی Cloudflare R2'}
+                                                    onClick={() => {
+                                                        const url = window.prompt('لینکی Cloudflare R2 بنووسە (MP4):', ep.videoUrl || '');
+                                                        if (url !== null) onEpVideoUrl(ep.id, url);
+                                                    }}
+                                                    style={ep.videoUrl ? {background: 'rgba(99,102,241,0.2)', color: '#818cf8', borderColor: '#6366f1'} : {}}
+                                                >
+                                                    🔗
                                                 </button>
 
                                                 <input type="file" accept=".srt" className="hidden-input" ref={el => { epOrigSrtRef.current[`${k}-o`] = el; }} onChange={e => e.target.files?.[0] && onEpSrt(ep.number, e.target.files[0], 'original')} />

@@ -299,7 +299,17 @@ export default function Watch() {
     };
 
     const getStreamUrl = () => {
-        if (episodeNum > 0) return `/api/stream/${id}?s=${seasonNum}&e=${episodeNum}`;
+        if (episodeNum > 0) {
+            // Check if the episode has a Cloudflare R2 URL
+            if (movie?.seasons) {
+                const season = movie.seasons.find(s => s.number === seasonNum);
+                const episode = season?.episodes.find(e => e.number === episodeNum);
+                if (episode?.videoUrl) return episode.videoUrl;
+            }
+            return `/api/stream/${id}?s=${seasonNum}&e=${episodeNum}`;
+        }
+        // Movie: use Cloudflare URL if available
+        if (movie?.videoUrl) return movie.videoUrl;
         return `/api/stream/${id}`;
     };
 

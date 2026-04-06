@@ -4,6 +4,7 @@ export interface Episode {
     title: string;
     description: string;
     videoFile: string | null;
+    videoUrl: string | null;
     originalSrt: string | null;
     translatedSrt: string | null;
     duration: string;
@@ -25,7 +26,9 @@ export interface Movie {
     year: number;
     duration: string;
     posterUrl: string;
+    posterCloudUrl: string | null;
     videoFile: string | null;
+    videoUrl: string | null;
     originalSrt: string | null;
     translatedSrt: string | null;
     createdAt: number;
