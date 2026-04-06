@@ -4,7 +4,7 @@ import {
     Plus, Film, Trash2, Edit3, Save, X,
     CheckCircle, AlertCircle, Loader2, FileText,
     Image, Video, Layers, ChevronDown, ChevronUp,
-    PlusCircle, ListVideo, Upload, Languages, Shield
+    PlusCircle, ListVideo, Upload, Languages, Shield, Link as LinkIcon
 } from 'lucide-react';
 import { Movie, Season, Episode } from '../types';
 import SrtTranslator from './SrtTranslator';
@@ -115,9 +115,7 @@ export default function Admin() {
             const season = updatedMovie.seasons.find((s: Season) => s.number === sensitiveTarget.seasonNum);
             if (season) {
                 const ep = season.episodes.find((e: Episode) => e.id === sensitiveTarget.episodeId);
-                if (ep) {
-                    ep.sensitiveScenes = sensitiveScenes;
-                }
+                if (ep) ep.sensitiveScenes = sensitiveScenes;
             }
         } else {
             updatedMovie.sensitiveScenes = sensitiveScenes;
@@ -157,6 +155,49 @@ export default function Admin() {
         finally { setUploading(u => ({ ...u, [key]: false })); }
     };
 
+    const doR2Upload = async (movieId: string, file: File, target: 'video' | 'poster', extra?: { season?: number; episodeId?: string; episodeNum?: number }) => {
+        const key = `${movieId}-${target}-${extra?.episodeId || 'main'}`;
+        setUploading(u => ({ ...u, [key]: true }));
+
+        try {
+            const timestamp = Date.now();
+            const cleanName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
+            const r2Path = `${target}s/${movieId}_${timestamp}_${cleanName}`;
+
+            const command = new PutObjectCommand({
+                Bucket: R2_CONFIG.bucket,
+                Key: r2Path,
+                Body: file,
+                ContentType: file.type,
+            });
+
+            await s3Client.send(command);
+            const finalUrl = `${R2_CONFIG.publicUrl}/${r2Path}`;
+
+            const m = movies.find(x => x.id === movieId);
+            if (!m) throw new Error("Movie not found");
+
+            const updated = JSON.parse(JSON.stringify(m));
+            if (extra?.episodeId) {
+                const season = updated.seasons?.find((s: Season) => s.number === extra.season);
+                const ep = season?.episodes.find((e: Episode) => e.id === extra.episodeId);
+                if (ep) ep.videoUrl = finalUrl;
+            } else {
+                if (target === 'video') updated.videoUrl = finalUrl;
+                else updated.posterCloudUrl = finalUrl;
+            }
+
+            await axios.put(`/api/admin/movies/${movieId}`, updated);
+            toast(`فایلەکە بە سەرکەوتوویی بۆ کلاود (R2) بارکرا ☁️`);
+            load();
+        } catch (err: any) {
+            console.error(err);
+            toast('هەڵەیەک لە کاتی ئەپلۆد بۆ R2 ڕوویدا', 'error');
+        } finally {
+            setUploading(u => ({ ...u, [key]: false }));
+        }
+    };
+
     const addBulkEpisodes = async (movieId: string, seasonNum: number, count: number) => {
         try {
             await axios.post(`/api/admin/movies/${movieId}/seasons/${seasonNum}/episodes/bulk`, { count });
@@ -194,68 +235,8 @@ export default function Admin() {
         } catch { toast('کێشەیەک ڕووی دا', 'error'); }
     };
 
-    const saveMoviePosterUrl = async (movieId: string, url: string) => {
-        const m = movies.find(x => x.id === movieId);
-        if (!m) return;
-        const updated = { ...m, posterCloudUrl: url };
-        try {
-            await axios.put(`/api/admin/movies/${movieId}`, updated);
-            toast('لینکی پۆستەر پاشەکەوت کرا ✓');
-            load();
-        } catch { toast('کێشەیەک ڕووی دا', 'error'); }
-    };
-
-    const doR2Upload = async (movieId: string, file: File, target: 'video' | 'poster', extra?: { season?: number; episodeId?: string; episodeNum?: number }) => {
-        const key = `${movieId}-${target}-${extra?.episodeId || 'main'}`;
-        setUploading(u => ({ ...u, [key]: true }));
-
-        try {
-            // 1. Generate a clean filename: movies/id_timestamp_name.mp4
-            const timestamp = Date.now();
-            const cleanName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
-            const r2Path = `${target}s/${movieId}_${timestamp}_${cleanName}`;
-
-            // 2. Upload to R2 directly from browser
-            const command = new PutObjectCommand({
-                Bucket: R2_CONFIG.bucket,
-                Key: r2Path,
-                Body: file,
-                ContentType: file.type,
-            });
-
-            await s3Client.send(command);
-
-            // 3. Construct Public URL
-            const finalUrl = `${R2_CONFIG.publicUrl}/${r2Path}`;
-
-            // 4. Save to Database
-            const m = movies.find(x => x.id === movieId);
-            if (!m) throw new Error("Movie not found");
-
-            const updated = JSON.parse(JSON.stringify(m));
-            if (extra?.episodeId) {
-                const season = updated.seasons?.find((s: Season) => s.number === extra.season);
-                const ep = season?.episodes.find((e: Episode) => e.id === extra.episodeId);
-                if (ep) ep.videoUrl = finalUrl;
-            } else {
-                if (target === 'video') updated.videoUrl = finalUrl;
-                else updated.posterCloudUrl = finalUrl;
-            }
-
-            await axios.put(`/api/admin/movies/${movieId}`, updated);
-            toast(`فایلەکە بە سەرکەوتوویی بۆ کلاود (R2) بارکرا ☁️`);
-            load();
-        } catch (err: any) {
-            console.error(err);
-            toast('هەڵەیەک لە کاتی ئەپلۆد بۆ R2 ڕوویدا', 'error');
-        } finally {
-            setUploading(u => ({ ...u, [key]: false }));
-        }
-    };
-
     return (
         <div className="admin-page">
-            {/* Toasts */}
             <div className="toast-container">
                 {toasts.map(t => (
                     <div key={t.id} className={`toast toast-${t.type}`}>
@@ -277,7 +258,6 @@ export default function Admin() {
 
             <SrtTranslator />
 
-            {/* CREATE FORM */}
             {showForm && (
                 <div className="form-overlay" onClick={() => setShowForm(false)}>
                     <div className="form-modal" onClick={e => e.stopPropagation()}>
@@ -294,29 +274,12 @@ export default function Admin() {
                                     <Layers size={18} /> زنجیرە
                                 </button>
                             </div>
-                            <div className="form-group">
-                                <label>ناو *</label>
-                                <input type="text" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="ناوی بەرهەمەکە..." className="form-input" />
-                            </div>
-                            <div className="form-group">
-                                <label>باس</label>
-                                <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="کورتەباسێک..." className="form-input form-textarea" rows={3} />
-                            </div>
+                            <div className="form-group"><label>ناو *</label><input type="text" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} className="form-input" /></div>
+                            <div className="form-group"><label>باس</label><textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className="form-input form-textarea" rows={3} /></div>
                             <div className="form-row">
-                                <div className="form-group">
-                                    <label>ژانڕ</label>
-                                    <input type="text" value={form.genre} onChange={e => setForm(f => ({ ...f, genre: e.target.value }))} placeholder="ئاکشن، دراما..." className="form-input" />
-                                </div>
-                                <div className="form-group">
-                                    <label>ساڵ</label>
-                                    <input type="number" value={form.year} onChange={e => setForm(f => ({ ...f, year: e.target.value }))} className="form-input" />
-                                </div>
-                                {form.type === 'movie' && (
-                                    <div className="form-group">
-                                        <label>کات</label>
-                                        <input type="text" value={form.duration} onChange={e => setForm(f => ({ ...f, duration: e.target.value }))} placeholder="١:٣٠" className="form-input" />
-                                    </div>
-                                )}
+                                <div className="form-group"><label>ژانڕ</label><input type="text" value={form.genre} onChange={e => setForm(f => ({ ...f, genre: e.target.value }))} className="form-input" /></div>
+                                <div className="form-group"><label>ساڵ</label><input type="number" value={form.year} onChange={e => setForm(f => ({ ...f, year: e.target.value }))} className="form-input" /></div>
+                                {form.type === 'movie' && <div className="form-group"><label>کات</label><input type="text" value={form.duration} onChange={e => setForm(f => ({ ...f, duration: e.target.value }))} className="form-input" /></div>}
                             </div>
                         </div>
                         <div className="form-footer">
@@ -327,7 +290,6 @@ export default function Admin() {
                 </div>
             )}
 
-            {/* EDIT FORM */}
             {editMovie && (
                 <div className="form-overlay" onClick={() => setEditMovie(null)}>
                     <div className="form-modal" onClick={e => e.stopPropagation()}>
@@ -343,16 +305,6 @@ export default function Admin() {
                                 <div className="form-group"><label>ساڵ</label><input type="number" value={editMovie.year} onChange={e => setEditMovie(m => m ? { ...m, year: +e.target.value } : null)} className="form-input" /></div>
                                 <div className="form-group"><label>کات</label><input type="text" value={editMovie.duration} onChange={e => setEditMovie(m => m ? { ...m, duration: e.target.value } : null)} className="form-input" /></div>
                             </div>
-                            {editMovie.type === 'movie' && (
-                                <div className="form-group">
-                                    <label>🎬 لینکی ڤیدیۆی Cloudflare R2</label>
-                                    <input type="url" value={editMovie.videoUrl || ''} onChange={e => setEditMovie(m => m ? { ...m, videoUrl: e.target.value } : null)} className="form-input" placeholder="https://pub-xxx.r2.dev/videos/movie.mp4" />
-                                </div>
-                            )}
-                            <div className="form-group">
-                                <label>🖼️ لینکی پۆستەری Cloudflare R2</label>
-                                <input type="url" value={editMovie.posterCloudUrl || ''} onChange={e => setEditMovie(m => m ? { ...m, posterCloudUrl: e.target.value } : null)} className="form-input" placeholder="https://pub-xxx.r2.dev/posters/poster.jpg" />
-                            </div>
                         </div>
                         <div className="form-footer">
                             <button onClick={() => setEditMovie(null)} className="btn-cancel">پاشگەز</button>
@@ -362,7 +314,6 @@ export default function Admin() {
                 </div>
             )}
 
-            {/* SENSITIVE SCENES FORM */}
             {sensitiveTarget && (
                 <div className="form-overlay" onClick={() => setSensitiveTarget(null)}>
                     <div className="form-modal" onClick={e => e.stopPropagation()}>
@@ -371,8 +322,6 @@ export default function Admin() {
                             <button onClick={() => setSensitiveTarget(null)} className="close-btn"><X size={20} /></button>
                         </div>
                         <div className="form-body">
-                            <p style={{fontSize: '14px', color: '#94a3b8', marginBottom: '15px', lineHeight: '1.6'}}>کاتی دەستپێکردن و کۆتایی هاتنی دیمەنە نەشیاوەکان بە دەقە (خولەک) و چرکە دیاری بکە. بۆ نموونە: 1 دەقە و 30 چرکە.</p>
-                            
                             {sensitiveScenes.length === 0 ? (
                                 <div style={{textAlign: 'center', padding: '20px', color: '#64748b'}}>هیچ دیمەنێکی نەشیاو دیاری نەکراوە بۆ ئەم ڤیدیۆیە.</div>
                             ) : (
@@ -431,7 +380,6 @@ export default function Admin() {
                 </div>
             )}
 
-            {/* MOVIE LIST */}
             {loading ? (
                 <div className="admin-loading"><Loader2 size={32} className="spinning" /></div>
             ) : movies.length === 0 ? (
@@ -440,24 +388,12 @@ export default function Admin() {
                 <div className="movies-admin-list">
                     {movies.map(movie => (
                         <div key={movie.id} className="admin-card">
-
-                            {/* TOP: Poster + Info + Actions */}
                             <div className="ac-top">
-                                {/* Poster */}
                                 <div className="ac-poster" onClick={() => refs.poster.current[movie.id]?.click()}>
-                                    {movie.posterUrl ? (
-                                        <img src={`${movie.posterUrl}?t=${Date.now()}`} alt={movie.title} className="ac-poster-img" />
-                                    ) : (
-                                        <div className="ac-poster-placeholder">
-                                            <Upload size={22} className="ac-upload-icon" />
-                                            <span>وێنە</span>
-                                        </div>
-                                    )}
+                                    {movie.posterUrl ? <img src={`${movie.posterUrl}?t=${Date.now()}`} alt={movie.title} className="ac-poster-img" /> : <div className="ac-poster-placeholder"><Upload size={22} className="ac-upload-icon" /><span>وێنە</span></div>}
                                     <div className="ac-poster-hover"><Upload size={18} /> گۆڕانەوە</div>
                                     <input type="file" accept="image/*" className="hidden-input" ref={el => { refs.poster.current[movie.id] = el; }} onChange={e => e.target.files?.[0] && doUpload(movie.id, e.target.files[0], 'poster')} />
                                 </div>
-
-                                {/* Info */}
                                 <div className="ac-info">
                                     <div className="ac-title-row">
                                         <h3 className="ac-title">{movie.title}</h3>
@@ -469,80 +405,61 @@ export default function Admin() {
                                         {movie.year && <span>{movie.year}</span>}
                                         {movie.genre && <span>{movie.genre}</span>}
                                         {movie.duration && <span>{movie.duration}</span>}
-                                        {movie.type === 'series' && movie.seasons && (
-                                            <span>{movie.seasons.length} سیزن • {movie.seasons.reduce((a, s) => a + s.episodes.length, 0)} ئالقە</span>
-                                        )}
+                                        {movie.type === 'series' && movie.seasons && <span>{movie.seasons.length} سیزن • {movie.seasons.reduce((a, s) => a + s.episodes.length, 0)} ئالقە</span>}
                                     </div>
                                     {movie.description && <p className="ac-desc">{movie.description}</p>}
                                 </div>
-
-                                {/* Actions */}
                                 <div className="ac-actions">
                                     {movie.type === 'movie' && (
-                                        <button className="ac-btn tooltip" style={movie.sensitiveScenes?.length ? {color: '#ef4444'} : {}} data-tip="کاتی نەشیاو" onClick={(e) => { e.stopPropagation(); openSensitiveModal(movie.id); }} title="کاتە نەشیاوەکان">
+                                        <button className="ac-btn tooltip" style={movie.sensitiveScenes?.length ? {color: '#ef4444'} : {}} data-tip="کاتە نەشیاوەکان" onClick={(e) => { e.stopPropagation(); openSensitiveModal(movie.id); }} title="کاتە نەشیاوەکان">
                                             <Shield size={16} />
                                         </button>
                                     )}
                                     <button className="ac-btn ac-edit" onClick={() => setEditMovie(movie)} title="دەستکاریکردن"><Edit3 size={16} /></button>
                                     <button className="ac-btn ac-delete" onClick={() => handleDelete(movie)} title="سڕینەوە"><Trash2 size={16} /></button>
                                     {movie.type === 'series' && (
-                                        <button
-                                            className={`ac-btn ac-expand ${expandedSeries[movie.id] ? 'active' : ''}`}
-                                            onClick={() => setExpandedSeries(e => ({ ...e, [movie.id]: !e[movie.id] }))}
-                                            title="سیزن و ئالقەکان"
-                                        >
-                                            <ListVideo size={16} />
-                                        </button>
+                                        <button className={`ac-btn ac-expand ${expandedSeries[movie.id] ? 'active' : ''}`} onClick={() => setExpandedSeries(e => ({ ...e, [movie.id]: !e[movie.id] }))} title="سیزن و ئالقەکان"><ListVideo size={16} /></button>
                                     )}
                                 </div>
                             </div>
 
-                            {/* UPLOAD SECTION (movie only) */}
                             {movie.type !== 'series' && (
                                 <div className="ac-uploads">
-                                    {/* Video */}
-                                    <div className={`ac-upload-card ${movie.videoFile ? 'done' : ''}`} onClick={() => refs.video.current[movie.id]?.click()}>
+                                    <div className={`ac-upload-card ${movie.videoUrl ? 'done' : ''}`} onClick={() => refs.video.current[movie.id]?.click()}>
                                         <input type="file" accept="video/*" className="hidden-input" ref={el => { refs.video.current[movie.id] = el; }} onChange={e => e.target.files?.[0] && doUpload(movie.id, e.target.files[0], 'video')} />
-                                        <div className="ac-upload-icon-wrap">
-                                            {uploading[`${movie.id}-video-0-0`] ? <Loader2 size={22} className="spinning" /> : <Video size={22} />}
-                                        </div>
-                                        <div className="ac-upload-label">ڤیدیۆ</div>
-                                        <div className="ac-upload-status">{movie.videoFile ? '✓ بارکراوە' : 'کلیک بکە'}</div>
+                                        <div className="ac-upload-icon-wrap">{uploading[`${movie.id}-video-0-0`] ? <Loader2 size={22} className="spinning" /> : <Video size={22} />}</div>
+                                        <div className="ac-upload-label">ڤیدیۆ (Server)</div>
+                                        <div className="ac-upload-status">{movie.videoUrl ? '✓ بارکراوە' : 'کلیک بکە'}</div>
                                     </div>
 
-                                    {/* Original SRT */}
+                                    <div className={`ac-upload-card cloud-upload ${movie.videoUrl ? 'done' : ''}`} onClick={() => refs.r2Video.current[movie.id]?.click()}>
+                                        <input type="file" accept="video/*" className="hidden-input" ref={el => { refs.r2Video.current[movie.id] = el; }} onChange={e => { if (e.target.files?.[0]) doR2Upload(movie.id, e.target.files[0], 'video'); }} />
+                                        <div className="ac-upload-icon-wrap">{uploading[`${movie.id}-video-main`] ? <Loader2 size={22} className="spinning" /> : <Upload size={22} />}</div>
+                                        <div className="ac-upload-label">ئەپلۆد بۆ Cloud R2</div>
+                                        <div className="ac-upload-status">{movie.videoUrl ? '✓ کلاود' : 'بۆ کلاود (R2)'}</div>
+                                    </div>
+
                                     <div className={`ac-upload-card ${movie.originalSrt ? 'done' : ''}`} onClick={() => refs.origSrt.current[movie.id]?.click()}>
                                         <input type="file" accept=".srt" className="hidden-input" ref={el => { refs.origSrt.current[movie.id] = el; }} onChange={e => e.target.files?.[0] && doUpload(movie.id, e.target.files[0], 'srt', { srtType: 'original' })} />
-                                        <div className="ac-upload-icon-wrap">
-                                            {uploading[`${movie.id}-srt-0-0`] ? <Loader2 size={22} className="spinning" /> : <FileText size={22} />}
-                                        </div>
+                                        <div className="ac-upload-icon-wrap">{uploading[`${movie.id}-srt-0-0`] ? <Loader2 size={22} className="spinning" /> : <FileText size={22} />}</div>
                                         <div className="ac-upload-label">SRT ئەسڵی</div>
-                                        <div className="ac-upload-status">{movie.originalSrt ? '✓ بارکراوە' : 'کلیک بکە'}</div>
                                     </div>
-
-                                    {/* Translated SRT */}
                                     <div className={`ac-upload-card ${movie.translatedSrt ? 'done' : ''}`} onClick={() => refs.transSrt.current[movie.id]?.click()}>
                                         <input type="file" accept=".srt" className="hidden-input" ref={el => { refs.transSrt.current[movie.id] = el; }} onChange={e => e.target.files?.[0] && doUpload(movie.id, e.target.files[0], 'srt', { srtType: 'translated' })} />
-                                        <div className="ac-upload-icon-wrap">
-                                            {uploading[`${movie.id}-srt-0-0`] ? <Loader2 size={22} className="spinning" /> : <FileText size={22} />}
-                                        </div>
+                                        <div className="ac-upload-icon-wrap">{uploading[`${movie.id}-srt-0-0`] ? <Loader2 size={22} className="spinning" /> : <FileText size={22} />}</div>
                                         <div className="ac-upload-label">SRT وەرگێڕدراو</div>
-                                        <div className="ac-upload-status">{movie.translatedSrt ? '✓ بارکراوە' : 'کلیک بکە'}</div>
                                     </div>
                                 </div>
                             )}
 
-                            {/* SERIES MANAGER */}
                             {movie.type === 'series' && expandedSeries[movie.id] && (
                                 <div className="series-manager">
                                     <div className="series-manager-header">
                                         <h4><Layers size={15} /> سیزن و ئالقەکان</h4>
-                                        <button className="btn-add-season" onClick={() => addSeason(movie.id)}>
-                                            <PlusCircle size={14} /> سیزنی نوێ
-                                        </button>
+                                        <button className="btn-add-season" onClick={() => addSeason(movie.id)}><PlusCircle size={14} /> سیزنی نوێ</button>
                                     </div>
                                     {(!movie.seasons || movie.seasons.length === 0) ? (
-                                        <div className="no-seasons">هیچ سیزنێک نییە. "سیزنی نوێ" بکلیک بکە.</div>
+                                        <div className="no-seasons">هیچ سیزنێک نییە.</div>
                                     ) : movie.seasons.map(season => (
                                             <SeasonPanel
                                                 key={season.id}
@@ -554,10 +471,12 @@ export default function Admin() {
                                                 onEpSrt={(n, f, t) => doUpload(movie.id, f, 'ep-srt', { season: season.number, episode: n, srtType: t })}
                                                 onSensitive={(epId) => openSensitiveModal(movie.id, season.number, epId)}
                                                 onEpVideoUrl={(epId, url) => saveEpVideoUrl(movie.id, season.number, epId, url)}
+                                                onR2Upload={(n, f, id) => doR2Upload(movie.id, f, 'video', { season: season.number, episodeId: id })}
                                                 uploading={uploading}
                                                 epVideoRef={refs.epVideo}
                                                 epOrigSrtRef={refs.epOrigSrt}
                                                 epTransSrtRef={refs.epTransSrt}
+                                                r2EpVideoRef={refs.r2EpVideo}
                                             />
                                     ))}
                                 </div>
@@ -570,124 +489,55 @@ export default function Admin() {
     );
 }
 
-function SeasonPanel({ season, movieId, onAddEpisode, onBulkAdd, onEpVideo, onEpSrt, onSensitive, onEpVideoUrl, uploading, epVideoRef, epOrigSrtRef, epTransSrtRef }: {
-    season: Season; movieId: string;
-    onAddEpisode: () => void;
-    onBulkAdd: (count: number) => void;
-    onEpVideo: (n: number, f: File) => void;
-    onEpSrt: (n: number, f: File, t: string) => void;
-    onSensitive: (epId: string) => void;
-    onEpVideoUrl: (epId: string, url: string) => void;
-    uploading: Record<string, boolean>;
-    epVideoRef: React.MutableRefObject<Record<string, HTMLInputElement | null>>;
-    epOrigSrtRef: React.MutableRefObject<Record<string, HTMLInputElement | null>>;
-    epTransSrtRef: React.MutableRefObject<Record<string, HTMLInputElement | null>>;
-}) {
+function SeasonPanel({ season, movieId, onAddEpisode, onBulkAdd, onEpVideo, onEpSrt, onSensitive, onEpVideoUrl, onR2Upload, uploading, epVideoRef, epOrigSrtRef, epTransSrtRef, r2EpVideoRef }: any) {
     const [open, setOpen] = useState(true);
     const [bulkCount, setBulkCount] = useState('');
-    const [bulkLoading, setBulkLoading] = useState(false);
-
     const handleBulk = async () => {
         const n = parseInt(bulkCount);
         if (!n || n < 1) return;
-        setBulkLoading(true);
         await onBulkAdd(n);
         setBulkCount('');
-        setBulkLoading(false);
     };
 
     return (
         <div className="season-block">
             <div className="season-block-header" onClick={() => setOpen(!open)}>
-                <span className="season-block-title">
-                    سیزنی {season.number}: {season.title}
-                    <span className="ep-count-badge">{season.episodes.length} ئالقە</span>
-                </span>
+                <span className="season-block-title">سیزنی {season.number}: {season.title} <span className="ep-count-badge">{season.episodes.length} ئالقە</span></span>
                 <div className="season-header-actions" onClick={e => e.stopPropagation()}>
-                    {/* Bulk add */}
-                    <div className="bulk-add-row">
-                        <input
-                            type="number"
-                            min={1} max={200}
-                            value={bulkCount}
-                            onChange={e => setBulkCount(e.target.value)}
-                            placeholder="٢٠"
-                            className="bulk-count-input"
-                            onKeyDown={e => e.key === 'Enter' && handleBulk()}
-                        />
-                        <button className="btn-bulk-add" onClick={handleBulk} disabled={bulkLoading || !bulkCount}>
-                            {bulkLoading ? <Loader2 size={12} className="spinning" /> : <Plus size={12} />}
-                            زیاد بکە
-                        </button>
-                    </div>
+                    <div className="bulk-add-row"><input type="number" min={1} value={bulkCount} onChange={e => setBulkCount(e.target.value)} placeholder="٢٠" className="bulk-count-input" /><button className="btn-bulk-add" onClick={handleBulk}>زیاد بکە</button></div>
                     {open ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
                 </div>
             </div>
             {open && (
                 <div className="episodes-list">
-                    {season.episodes.length === 0 ? (
-                        <div className="no-episodes">هیچ ئالقەیەک نییە — ژمارەیەک داخڵ بکە و "زیاد بکە" بکلیک بکە.</div>
-                    ) : (
-                        <>
-                            {/* Episode grid */}
-                            <div className="ep-grid">
-                                {season.episodes.map(ep => {
-                                    const k = `${movieId}-${season.number}-${ep.number}`;
-                                    const hasVideo = !!ep.videoFile;
-                                    const hasSrt = !!ep.translatedSrt;
-                                    return (
-                                        <div key={ep.id} className="ep-grid-card">
-                                            <div className="ep-grid-header">
-                                                <div className="ep-grid-num">{ep.number}</div>
-                                                <div className="ep-grid-status">
-                                                    {hasVideo && <span className="ep-dot ep-dot-video" title="ڤیدیۆ هەیە">V</span>}
-                                                    {hasSrt && <span className="ep-dot ep-dot-srt" title="SRT هەیە">S</span>}
-                                                </div>
-                                            </div>
-                                            <div className="ep-grid-title">{ep.title}</div>
-                                            <div className="ep-grid-btns">
-                                                <input type="file" accept="video/*" className="hidden-input" ref={el => { epVideoRef.current[`${k}-v`] = el; }} onChange={e => e.target.files?.[0] && onEpVideo(ep.number, e.target.files[0])} />
-                                                <button className={`ep-mini-btn ${hasVideo || ep.videoUrl ? 'done' : ''}`} onClick={() => epVideoRef.current[`${k}-v`]?.click()} title="ڤیدیۆ بار بکە">
-                                                    <Video size={11} />
-                                                </button>
+                    <div className="ep-grid">
+                        {season.episodes.map((ep: any) => {
+                            const k = `${movieId}-${season.number}-${ep.number}`;
+                            return (
+                                <div key={ep.id} className="ep-grid-card">
+                                    <div className="ep-grid-header"><div className="ep-grid-num">{ep.number}</div></div>
+                                    <div className="ep-grid-title">{ep.title}</div>
+                                    <div className="ep-grid-btns">
+                                        <input type="file" accept="video/*" className="hidden-input" ref={el => { epVideoRef.current[ep.id] = el; }} onChange={e => e.target.files?.[0] && onEpVideo(ep.number, e.target.files[0])} />
+                                        <button className={`ep-mini-btn ${ep.videoUrl ? 'done' : ''}`} onClick={() => epVideoRef.current[ep.id]?.click()} title="ڤیدیۆ (Server)"><Video size={11} /></button>
+                                        
+                                        <input type="file" accept="video/*" className="hidden-input" ref={el => { r2EpVideoRef.current[ep.id] = el; }} onChange={e => e.target.files?.[0] && onR2Upload(ep.number, e.target.files[0], ep.id)} />
+                                        <button className={`ep-mini-btn cloud-upload-btn ${ep.videoUrl ? 'done' : ''}`} onClick={() => r2EpVideoRef.current[ep.id]?.click()} title="ئەپلۆد بۆ Cloud R2 ☁️"><Upload size={11} /></button>
 
-                                                {/* Cloudflare R2 URL button */}
-                                                <button
-                                                    className={`ep-mini-btn ${ep.videoUrl ? 'done' : ''}`}
-                                                    title={ep.videoUrl ? `R2: ${ep.videoUrl}` : 'لینکی Cloudflare R2'}
-                                                    onClick={() => {
-                                                        const url = window.prompt('لینکی Cloudflare R2 بنووسە (MP4):', ep.videoUrl || '');
-                                                        if (url !== null) onEpVideoUrl(ep.id, url);
-                                                    }}
-                                                    style={ep.videoUrl ? {background: 'rgba(99,102,241,0.2)', color: '#818cf8', borderColor: '#6366f1'} : {}}
-                                                >
-                                                    🔗
-                                                </button>
+                                        <button className="ep-mini-btn" onClick={() => { const url = window.prompt('URL بنوسە:', ep.videoUrl || ''); if(url) onEpVideoUrl(ep.id, url); }} title="لینکی ئامادە"><LinkIcon size={11} /></button>
 
-                                                <input type="file" accept=".srt" className="hidden-input" ref={el => { epOrigSrtRef.current[`${k}-o`] = el; }} onChange={e => e.target.files?.[0] && onEpSrt(ep.number, e.target.files[0], 'original')} />
-                                                <button className={`ep-mini-btn ${ep.originalSrt ? 'done' : ''}`} onClick={() => epOrigSrtRef.current[`${k}-o`]?.click()} title="SRT ئەسڵی">
-                                                    <FileText size={11} />
-                                                </button>
+                                        <input type="file" accept=".srt" className="hidden-input" ref={el => { epOrigSrtRef.current[ep.id] = el; }} onChange={e => e.target.files?.[0] && onEpSrt(ep.number, e.target.files[0], 'original')} />
+                                        <button className={`ep-mini-btn ${ep.originalSrt ? 'done' : ''}`} onClick={() => epOrigSrtRef.current[ep.id]?.click()} title="SRT ئەسڵی"><FileText size={11} /></button>
 
-                                                <input type="file" accept=".srt" className="hidden-input" ref={el => { epTransSrtRef.current[`${k}-t`] = el; }} onChange={e => e.target.files?.[0] && onEpSrt(ep.number, e.target.files[0], 'translated')} />
-                                                <button className={`ep-mini-btn ${hasSrt ? 'done' : ''}`} onClick={() => epTransSrtRef.current[`${k}-t`]?.click()} title="SRT کوردی">
-                                                    <Languages size={11} />
-                                                </button>
-
-                                                <button className={`ep-mini-btn ${ep.sensitiveScenes?.length ? 'done-alert' : ''}`} style={ep.sensitiveScenes?.length ? {background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderColor: '#ef4444'} : {}} onClick={() => onSensitive(ep.id)} title="کاتە نەشیاوەکان">
-                                                    <Shield size={11} />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                            <div className="ep-legend">
-                                <span className="ep-dot ep-dot-video">V</span> = ڤیدیۆ هەیە &nbsp;
-                                <span className="ep-dot ep-dot-srt">S</span> = SRT کوردی هەیە
-                            </div>
-                        </>
-                    )}
+                                        <input type="file" accept=".srt" className="hidden-input" ref={el => { epTransSrtRef.current[ep.id] = el; }} onChange={e => e.target.files?.[0] && onEpSrt(ep.number, e.target.files[0], 'translated')} />
+                                        <button className={`ep-mini-btn ${ep.translatedSrt ? 'done' : ''}`} onClick={() => epTransSrtRef.current[ep.id]?.click()} title="SRT کوردی"><Languages size={11} /></button>
+                                        
+                                        <button className={`ep-mini-btn ${ep.sensitiveScenes?.length ? 'done-alert' : ''}`} onClick={() => onSensitive(ep.id)} title="کاتە نەشیاوەکان"><Shield size={11} /></button>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
                 </div>
             )}
         </div>
