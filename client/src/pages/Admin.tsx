@@ -165,10 +165,15 @@ export default function Admin() {
             const cleanName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
             const r2Path = `${target}s/${movieId}_${timestamp}_${cleanName}`;
 
+            // Convert File to Uint8Array for browser compatibility
+            const arrayBuffer = await file.arrayBuffer();
+            const body = new Uint8Array(arrayBuffer);
+
+            // 2. Upload to R2 directly from browser
             const command = new PutObjectCommand({
                 Bucket: R2_CONFIG.bucket,
                 Key: r2Path,
-                Body: file,
+                Body: body,
                 ContentType: file.type,
             });
 
