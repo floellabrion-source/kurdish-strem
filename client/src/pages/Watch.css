@@ -461,6 +461,7 @@
     width: 80px;
     height: 3px;
     -webkit-appearance: none;
+    appearance: none;
     background: rgba(255, 255, 255, 0.3);
     border-radius: 2px;
     cursor: pointer;
@@ -555,6 +556,7 @@ kbd {
     outline: none;
     border-radius: 2px;
     -webkit-appearance: none;
+    appearance: none;
     background: rgba(255, 255, 255, 0.2);
 }
 
@@ -1260,15 +1262,29 @@ kbd {
         font-size: 13px !important;
     }
 
-    /* Hide AI/practice buttons on mobile subtitle (too small) */
+    /* Show and optimize AI/practice buttons on mobile subtitle */
     .sub-actions-row {
-        display: none;
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-bottom: 6px;
+        width: 100%;
+        position: relative;
+    }
+
+    .sub-ai-btn, .sub-practice-btn {
+        padding: 5px 12px;
+        font-size: 11px;
+    }
+
+    .sub-save-btn {
+        padding: 4px 10px;
     }
 
     /* Time labels smaller */
     .time-label {
         font-size: 11px;
-        min-width: 42px;
+        min-width: 45px;
     }
 
     /* Play button a bit smaller */
