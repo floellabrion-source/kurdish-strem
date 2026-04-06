@@ -136,7 +136,7 @@ function EpisodeCard({
     seasonNum: number;
     posterUrl: string;
 }) {
-    const hasVideo = !!episode.videoFile;
+    const hasVideo = !!episode.videoFile || !!episode.videoUrl;
 
     return (
         <div className={`episode-card ${!hasVideo ? 'no-video' : ''}`}>
