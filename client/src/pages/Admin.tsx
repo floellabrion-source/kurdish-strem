@@ -23,6 +23,7 @@ const R2_CONFIG = {
 const s3Client = new S3Client({
     region: "auto",
     endpoint: R2_CONFIG.endpoint,
+    forcePathStyle: true, // This is important for R2 in many cases
     credentials: {
         accessKeyId: R2_CONFIG.accessKeyId,
         secretAccessKey: R2_CONFIG.secretAccessKey,
@@ -191,8 +192,9 @@ export default function Admin() {
             toast(`فایلەکە بە سەرکەوتوویی بارکرا ☁️`);
             load();
         } catch (err: any) {
-            console.error(err);
-            toast('هەڵەیەک لە کاتی ئەپلۆد ڕوویدا', 'error');
+            console.error("R2 Error:", err);
+            const errMsg = err.message || "هەڵەیەک لە کاتی ئەپلۆد ڕوویدا";
+            toast(`هەڵە: ${errMsg}`, 'error');
         } finally {
             setUploading(u => ({ ...u, [key]: false }));
         }
