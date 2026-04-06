@@ -1150,3 +1150,176 @@ kbd {
     color: rgba(255, 255, 255, 0.7);
     border-color: rgba(255, 255, 255, 0.25);
 }
+
+/* ══════════════════════════════════════
+   📱 MOBILE RESPONSIVE - Watch Player
+   ══════════════════════════════════════ */
+@media (max-width: 768px) {
+
+    /* Controls always visible on mobile (no hover needed) */
+    .watch-controls,
+    .watch-topbar {
+        opacity: 1 !important;
+        pointer-events: all !important;
+    }
+
+    /* Compact topbar padding */
+    .watch-topbar {
+        padding: 10px 14px;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .watch-back {
+        font-size: 12px;
+        padding: 7px 12px;
+        max-width: 200px;
+    }
+
+    .back-title {
+        max-width: 140px;
+    }
+
+    /* Hide keyboard hints on mobile */
+    .key-hints {
+        display: none;
+    }
+
+    /* Smaller subtitle toggles */
+    .sub-toggle-btn {
+        padding: 5px 10px;
+        font-size: 11px;
+    }
+
+    .sub-toggles {
+        gap: 4px;
+    }
+
+    /* Controls bar */
+    .watch-controls {
+        padding: 10px 14px 16px;
+    }
+
+    /* Bigger progress bar for touch */
+    .progress-track {
+        height: 6px;
+    }
+
+    .progress-track:hover {
+        height: 8px;
+    }
+
+    .progress-thumb {
+        width: 18px;
+        height: 18px;
+        opacity: 1 !important;
+    }
+
+    .progress-range-hidden {
+        inset: -15px 0;
+        height: calc(100% + 30px);
+    }
+
+    /* Controls row */
+    .controls-left,
+    .controls-right {
+        gap: 2px;
+    }
+
+    /* Bigger touch targets for control buttons */
+    .ctrl-btn {
+        padding: 10px;
+        font-size: 14px;
+    }
+
+    /* Hide volume bar on mobile (use phone volume keys) */
+    .volume-bar {
+        display: none;
+    }
+
+    .vol-label {
+        display: none;
+    }
+
+    /* Smaller subtitle text on mobile */
+    .subtitle-area {
+        width: 95%;
+    }
+
+    .subtitle-text {
+        font-size: 14px !important;
+        padding: 4px 12px;
+        line-height: 1.4;
+    }
+
+    .subtitle-translated {
+        font-size: 14px !important;
+    }
+
+    .subtitle-original {
+        font-size: 13px !important;
+    }
+
+    /* Hide AI/practice buttons on mobile subtitle (too small) */
+    .sub-actions-row {
+        display: none;
+    }
+
+    /* Time labels smaller */
+    .time-label {
+        font-size: 11px;
+        min-width: 42px;
+    }
+
+    /* Play button a bit smaller */
+    .play-ctrl {
+        width: 42px;
+        height: 42px;
+    }
+
+    /* Settings panel full width on mobile */
+    .settings-panel {
+        right: 0;
+        left: 0;
+        width: 100%;
+        border-radius: 18px 18px 0 0;
+        bottom: 100%;
+    }
+
+    /* Skip indicators smaller */
+    .skip-indicator {
+        padding: 12px 20px;
+        font-size: 18px;
+    }
+
+    .skip-forward { right: 30px; }
+    .skip-backward { left: 30px; }
+
+    /* Next episode button */
+    .next-ep-btn {
+        font-size: 11px;
+        padding: 5px 10px;
+    }
+}
+
+/* Landscape mobile - video fills full screen */
+@media (max-width: 900px) and (orientation: landscape) {
+    .watch-controls,
+    .watch-topbar {
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s;
+    }
+
+    .watch-controls.visible,
+    .watch-topbar.visible {
+        opacity: 1 !important;
+        pointer-events: all !important;
+    }
+
+    .watch-video {
+        width: 100vw;
+        height: 100vh;
+        object-fit: contain;
+    }
+}

@@ -28,7 +28,7 @@ const parseSRT = (data: string) => {
         const id = parseInt(lines[0]);
         const tm = lines[1].match(/(\d{2}:\d{2}:\d{2},\d{3}) --> (\d{2}:\d{2}:\d{2},\d{3})/);
         if (!tm || isNaN(id)) return;
-        subs.push({ id, start: toSec(tm[1]), end: toSec(tm[2]), text: lines.slice(2).join('\n') });
+        subs.push({ id, start: toSec(tm[1]), end: toSec(tm[2]), text: lines.slice(2).join('\n').replace(/<[^>]*>/g, '') });
     });
     return subs;
 };
@@ -508,6 +508,8 @@ export default function Watch() {
             ref={containerRef}
             onMouseMove={resetControlsTimer}
             onMouseLeave={() => isPlaying && setShowControls(false)}
+            onTouchStart={resetControlsTimer}
+            onTouchMove={resetControlsTimer}
         >
             {/* VIDEO */}
             <video
