@@ -1,0 +1,50 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import Home from './pages/Home';
+import Watch from './pages/Watch';
+import Admin from './pages/Admin';
+import SeriesPage from './pages/SeriesPage';
+import Flashcards from './pages/Flashcards';
+import Auth from './pages/Auth';
+import Profile from './pages/Profile';
+import Navbar from './components/Navbar';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { LanguageProvider } from './context/LanguageContext';
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+    const { user, loading } = useAuth();
+    if (loading) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>چاوەڕوانبە...</div>;
+    return user ? <>{children}</> : <Navigate to="/auth" />;
+}
+
+function AppRoutes() {
+    return (
+        <div className="app-container">
+            <Navbar />
+            <main className="main-content">
+                <Routes>
+                    <Route path="/auth" element={<Auth />} />
+                    <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+                    <Route path="/movies" element={<ProtectedRoute><Home filter="movie" /></ProtectedRoute>} />
+                    <Route path="/series" element={<ProtectedRoute><Home filter="series" /></ProtectedRoute>} />
+                    <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                    <Route path="/watch/:id" element={<ProtectedRoute><Watch /></ProtectedRoute>} />
+                    <Route path="/series/:id" element={<ProtectedRoute><SeriesPage /></ProtectedRoute>} />
+                    <Route path="/flashcards" element={<ProtectedRoute><Flashcards /></ProtectedRoute>} />
+                    <Route path="/admin" element={<Admin />} />
+                </Routes>
+            </main>
+        </div>
+    );
+}
+
+export default function App() {
+    return (
+        <LanguageProvider>
+            <AuthProvider>
+                <BrowserRouter>
+                    <AppRoutes />
+                </BrowserRouter>
+            </AuthProvider>
+        </LanguageProvider>
+    );
+}

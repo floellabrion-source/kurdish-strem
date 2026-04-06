@@ -1,0 +1,1340 @@
+[
+  {
+    "id": "bf34bec3-6f05-48fe-a675-e06603700417",
+    "title": "٣٣",
+    "description": "٣٣٣",
+    "genre": "٣٣٣",
+    "year": 2015,
+    "duration": "",
+    "posterUrl": "/api/poster/bf34bec3-6f05-48fe-a675-e06603700417",
+    "videoFile": null,
+    "originalSrt": null,
+    "translatedSrt": null,
+    "type": "series",
+    "seasons": [
+      {
+        "id": "7b018ad0-4b9e-4148-a93b-8cc6f00a9f6c",
+        "number": 1,
+        "title": "سیزنی 1",
+        "episodes": []
+      },
+      {
+        "id": "3b86db10-2efa-496e-a93a-1be544b63d23",
+        "number": 2,
+        "title": "سیزنی 2",
+        "episodes": [
+          {
+            "id": "0e04be90-9e37-4dd2-ac3a-288437dd4844",
+            "number": 1,
+            "title": "ئالقەی 1",
+            "description": "",
+            "duration": "",
+            "videoFile": null,
+            "originalSrt": null,
+            "translatedSrt": null
+          },
+          {
+            "id": "e32df0f0-d2bf-446c-9463-d1083332167c",
+            "number": 2,
+            "title": "ئالقەی 2",
+            "description": "",
+            "duration": "",
+            "videoFile": null,
+            "originalSrt": null,
+            "translatedSrt": null
+          },
+          {
+            "id": "d1358472-6db9-4352-963c-94f69b809cab",
+            "number": 3,
+            "title": "ئالقەی 3",
+            "description": "",
+            "duration": "",
+            "videoFile": null,
+            "originalSrt": null,
+            "translatedSrt": null
+          },
+          {
+            "id": "1438e647-63aa-4628-ab15-9807e512c013",
+            "number": 4,
+            "title": "ئالقەی 4",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": null
+          },
+          {
+            "id": "7b56b3af-0168-4f7d-9f89-05806c54668d",
+            "number": 5,
+            "title": "ئالقەی 5",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "3af565fe-28c7-490e-b42f-d624f59dbcd8",
+            "number": 6,
+            "title": "ئالقەی 6",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "bef353d2-cd8d-4c04-9b13-9c9b34a58795",
+            "number": 7,
+            "title": "ئالقەی 7",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "6eb1b354-860e-44fd-9d1b-692673e7eb44",
+            "number": 8,
+            "title": "ئالقەی 8",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "600269d0-2f2d-46bb-8291-5c6e5da030c4",
+            "number": 9,
+            "title": "ئالقەی 9",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "f8054688-ffb9-4129-97d2-0f5924649500",
+            "number": 10,
+            "title": "ئالقەی 10",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "3a4ff1f6-4fbc-416d-9a19-ee76dd31d56f",
+            "number": 11,
+            "title": "ئالقەی 11",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "3e36179a-3b13-44d1-a225-edb4bfd2bf5a",
+            "number": 12,
+            "title": "ئالقەی 12",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "0ce5ba4f-a691-4984-9f2c-1fc3b8437c86",
+            "number": 13,
+            "title": "ئالقەی 13",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "2dba0c00-784f-46ee-ba11-e741aaa15978",
+            "number": 14,
+            "title": "ئالقەی 14",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "f0bed763-4acf-494e-b970-27f6767890db",
+            "number": 15,
+            "title": "ئالقەی 15",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "343b9ef2-6f4e-41fe-98ed-9ee869bf2f6d",
+            "number": 16,
+            "title": "ئالقەی 16",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          }
+        ]
+      },
+      {
+        "id": "e0e3b1dd-69a8-43c6-81e2-79e137d4e555",
+        "number": 3,
+        "title": "سیزنی 3",
+        "episodes": [
+          {
+            "id": "22c18746-ec8c-41c3-abfb-539fee415a2b",
+            "number": 1,
+            "title": "ئالقەی 1",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "744e54ae-a04e-4c3c-b22d-68e995d689bf",
+            "number": 2,
+            "title": "ئالقەی 2",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "a202f8e6-71c5-4145-93d3-ca3069d726f6",
+            "number": 3,
+            "title": "ئالقەی 3",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "59a1db3c-daba-4ad2-abb6-0e827f3ccb79",
+            "number": 4,
+            "title": "ئالقەی 4",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "194031b3-c5a2-48d0-ac12-4d8206015fec",
+            "number": 5,
+            "title": "ئالقەی 5",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "c7d3ec69-2f32-4838-ad52-90daee523fe3",
+            "number": 6,
+            "title": "ئالقەی 6",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "a37b987e-f409-4987-b581-d84e7f686f27",
+            "number": 7,
+            "title": "ئالقەی 7",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "1cdd3b98-7368-4cbd-805e-ffeff005f9ec",
+            "number": 8,
+            "title": "ئالقەی 8",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "f7e93e3b-cbe9-4a15-82a4-16b0a4d9cdb9",
+            "number": 9,
+            "title": "ئالقەی 9",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "9bf80275-8266-442f-b192-9c3be0ab4a0a",
+            "number": 10,
+            "title": "ئالقەی 10",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "2e1f70f2-f4fb-42d2-ac17-0d5a43cdca76",
+            "number": 11,
+            "title": "ئالقەی 11",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "e018a9f3-d7bf-4030-be9b-976606f31855",
+            "number": 12,
+            "title": "ئالقەی 12",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "30c9344a-c42d-419e-bfc3-e73b03980a3e",
+            "number": 13,
+            "title": "ئالقەی 13",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "21afae3e-2ca5-4957-be3a-80555ee8bd9f",
+            "number": 14,
+            "title": "ئالقەی 14",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "81a30b7f-d628-4b64-a5dd-6a2a96ae9170",
+            "number": 15,
+            "title": "ئالقەی 15",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "c4b1bc11-61f2-45a5-9afb-f83b1f5826a3",
+            "number": 16,
+            "title": "ئالقەی 16",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          }
+        ]
+      },
+      {
+        "id": "d94a3587-5374-43a1-9424-7044f2e75a3b",
+        "number": 4,
+        "title": "سیزنی 4",
+        "episodes": [
+          {
+            "id": "cecc8bed-c1e2-45ac-a6a8-2fcb31ab9893",
+            "number": 1,
+            "title": "ئالقەی 1",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "c22fcf87-33e4-489c-96c1-ff93460ab243",
+            "number": 2,
+            "title": "ئالقەی 2",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "8a2eeefc-4cd4-42c8-a8c0-262aa6843f62",
+            "number": 3,
+            "title": "ئالقەی 3",
+            "description": "",
+            "duration": "",
+            "videoFile": null,
+            "originalSrt": null,
+            "translatedSrt": null
+          },
+          {
+            "id": "3d896c74-4cab-4dd3-89f8-9135792947b8",
+            "number": 4,
+            "title": "ئالقەی 4",
+            "description": "",
+            "duration": "",
+            "videoFile": null,
+            "originalSrt": null,
+            "translatedSrt": null
+          },
+          {
+            "id": "2e573b09-746f-4307-9e42-9e48d7b8077c",
+            "number": 5,
+            "title": "ئالقەی 5",
+            "description": "",
+            "duration": "",
+            "videoFile": null,
+            "originalSrt": null,
+            "translatedSrt": null
+          },
+          {
+            "id": "741ad6b5-e71b-40d4-b3d7-1d6856b04d62",
+            "number": 6,
+            "title": "ئالقەی 6",
+            "description": "",
+            "duration": "",
+            "videoFile": null,
+            "originalSrt": null,
+            "translatedSrt": null
+          },
+          {
+            "id": "31a72ed9-4d8c-4e23-a5d6-a2fb50e59ab8",
+            "number": 7,
+            "title": "ئالقەی 7",
+            "description": "",
+            "duration": "",
+            "videoFile": null,
+            "originalSrt": null,
+            "translatedSrt": null
+          },
+          {
+            "id": "6e84d2bc-9da3-4f88-b112-905e0c45df94",
+            "number": 8,
+            "title": "ئالقەی 8",
+            "description": "",
+            "duration": "",
+            "videoFile": null,
+            "originalSrt": null,
+            "translatedSrt": null
+          },
+          {
+            "id": "fe287cc6-0f76-453e-a704-2ed53f112429",
+            "number": 9,
+            "title": "ئالقەی 9",
+            "description": "",
+            "duration": "",
+            "videoFile": null,
+            "originalSrt": null,
+            "translatedSrt": null
+          },
+          {
+            "id": "0f7ea3d5-3f44-42a7-80d0-b4b8f34c35fa",
+            "number": 10,
+            "title": "ئالقەی 10",
+            "description": "",
+            "duration": "",
+            "videoFile": null,
+            "originalSrt": null,
+            "translatedSrt": null
+          },
+          {
+            "id": "ef330c0f-a5d5-4156-af46-b03028cbed63",
+            "number": 11,
+            "title": "ئالقەی 11",
+            "description": "",
+            "duration": "",
+            "videoFile": null,
+            "originalSrt": null,
+            "translatedSrt": null
+          },
+          {
+            "id": "70b7c407-a82b-4c3d-af60-ad9428ba4029",
+            "number": 12,
+            "title": "ئالقەی 12",
+            "description": "",
+            "duration": "",
+            "videoFile": null,
+            "originalSrt": null,
+            "translatedSrt": null
+          },
+          {
+            "id": "6aa3d635-f49e-467e-9d3c-015c3a25ad08",
+            "number": 13,
+            "title": "ئالقەی 13",
+            "description": "",
+            "duration": "",
+            "videoFile": null,
+            "originalSrt": null,
+            "translatedSrt": null
+          },
+          {
+            "id": "f6808a2b-302c-4063-94f3-c2be4c53ae03",
+            "number": 14,
+            "title": "ئالقەی 14",
+            "description": "",
+            "duration": "",
+            "videoFile": null,
+            "originalSrt": null,
+            "translatedSrt": null
+          },
+          {
+            "id": "5bde8459-04d8-4ba5-ba82-91b4adc4517f",
+            "number": 15,
+            "title": "ئالقەی 15",
+            "description": "",
+            "duration": "",
+            "videoFile": null,
+            "originalSrt": null,
+            "translatedSrt": null
+          },
+          {
+            "id": "7065dd44-7d3e-4d4b-9383-f087f6c35123",
+            "number": 16,
+            "title": "ئالقەی 16",
+            "description": "",
+            "duration": "",
+            "videoFile": null,
+            "originalSrt": null,
+            "translatedSrt": null
+          },
+          {
+            "id": "b2a93728-908e-492f-bca9-e4346796c17c",
+            "number": 17,
+            "title": "ئالقەی 17",
+            "description": "",
+            "duration": "",
+            "videoFile": null,
+            "originalSrt": null,
+            "translatedSrt": null
+          },
+          {
+            "id": "dca3551a-b5db-4801-be13-6c55db4f5d37",
+            "number": 18,
+            "title": "ئالقەی 18",
+            "description": "",
+            "duration": "",
+            "videoFile": null,
+            "originalSrt": null,
+            "translatedSrt": null
+          },
+          {
+            "id": "adf1f6ef-ba77-4c3a-a25f-1460e3ed64ee",
+            "number": 19,
+            "title": "ئالقەی 19",
+            "description": "",
+            "duration": "",
+            "videoFile": null,
+            "originalSrt": null,
+            "translatedSrt": null
+          },
+          {
+            "id": "aeaed738-02d9-4b82-afca-fd20fefd3203",
+            "number": 20,
+            "title": "ئالقەی 20",
+            "description": "",
+            "duration": "",
+            "videoFile": null,
+            "originalSrt": null,
+            "translatedSrt": null
+          },
+          {
+            "id": "89980cc0-dd11-4b9e-aa20-be280a58ee8a",
+            "number": 21,
+            "title": "ئالقەی 21",
+            "description": "",
+            "duration": "",
+            "videoFile": null,
+            "originalSrt": null,
+            "translatedSrt": null
+          },
+          {
+            "id": "8bc4e0c9-a57b-49e4-84eb-2ebeb67960e0",
+            "number": 22,
+            "title": "ئالقەی 22",
+            "description": "",
+            "duration": "",
+            "videoFile": null,
+            "originalSrt": null,
+            "translatedSrt": null
+          },
+          {
+            "id": "1d47d361-6d87-433d-9bdd-3007e8171960",
+            "number": 23,
+            "title": "ئالقەی 23",
+            "description": "",
+            "duration": "",
+            "videoFile": null,
+            "originalSrt": null,
+            "translatedSrt": null
+          }
+        ]
+      },
+      {
+        "id": "a14a485f-8e18-4d04-bd36-b8d4d5636604",
+        "number": 5,
+        "title": "سیزنی 5",
+        "episodes": [
+          {
+            "id": "f1d4ccfd-5db0-43f3-a5a5-d318805a2cf6",
+            "number": 1,
+            "title": "ئالقەی 1",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "5d0e6595-5234-4a7a-b2bd-bcdbd02a4d12",
+            "number": 2,
+            "title": "ئالقەی 2",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "57ea4b86-dccd-4e57-826c-65292a69aefc",
+            "number": 3,
+            "title": "ئالقەی 3",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "b23d86cc-714d-46b1-86fb-732af31a9dcc",
+            "number": 4,
+            "title": "ئالقەی 4",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "6c53383e-3be7-4bc2-8d62-7828e154e847",
+            "number": 5,
+            "title": "ئالقەی 5",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "4cfb460e-58c2-4d21-a523-cd9249b919c9",
+            "number": 6,
+            "title": "ئالقەی 6",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "2be316c9-18da-4331-bd98-8bbf810f34b1",
+            "number": 7,
+            "title": "ئالقەی 7",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "a93c7467-5b12-4a6a-bf94-3887492d6b8c",
+            "number": 8,
+            "title": "ئالقەی 8",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "c555293a-fb17-4970-bd18-00b26ad8c9d1",
+            "number": 9,
+            "title": "ئالقەی 9",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "f50da674-110b-4369-a57e-4ad0ab510cde",
+            "number": 10,
+            "title": "ئالقەی 10",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "16b7a4ec-57c3-434f-bb95-9568eb58c517",
+            "number": 11,
+            "title": "ئالقەی 11",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "78ab9e02-b2d0-46ef-826f-57b824a8584f",
+            "number": 12,
+            "title": "ئالقەی 12",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "cfec3e79-0496-497d-9e89-89927b46e25d",
+            "number": 13,
+            "title": "ئالقەی 13",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          }
+        ]
+      },
+      {
+        "id": "85f48397-313b-426b-8a40-1c9e6c15793a",
+        "number": 6,
+        "title": "سیزنی 6",
+        "episodes": [
+          {
+            "id": "0d625001-61c1-46e8-9b69-640105553632",
+            "number": 1,
+            "title": "ئالقەی 1",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "029b1186-7261-4261-b556-ac9e787c865b",
+            "number": 2,
+            "title": "ئالقەی 2",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "2354c6ba-66a0-4550-a739-a64b392e5404",
+            "number": 3,
+            "title": "ئالقەی 3",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "a9cec6a9-ee9f-460f-bd23-6400ffb0fd03",
+            "number": 4,
+            "title": "ئالقەی 4",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "230f4f82-f667-4b02-80c5-a1e038cabe11",
+            "number": 5,
+            "title": "ئالقەی 5",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "b2ff17a7-864f-438b-b978-76cd0c578462",
+            "number": 6,
+            "title": "ئالقەی 6",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "84715a02-273e-4a9f-8626-18755bc9a686",
+            "number": 7,
+            "title": "ئالقەی 7",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "e8ae0edf-69c6-480d-8f52-b2e0a0e23161",
+            "number": 8,
+            "title": "ئالقەی 8",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "b60aee82-57d2-4650-a21a-6bc1d0506671",
+            "number": 9,
+            "title": "ئالقەی 9",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "663c1735-f725-4047-837b-cb5a9b9e77b7",
+            "number": 10,
+            "title": "ئالقەی 10",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "5bfcc7c5-dd98-47a6-bfa6-6eaa8d11af8d",
+            "number": 11,
+            "title": "ئالقەی 11",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "b6bf731f-2126-476b-a350-822bbb907f8c",
+            "number": 12,
+            "title": "ئالقەی 12",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "a57b9e99-4c1b-4d19-8cdd-a45f79359aeb",
+            "number": 13,
+            "title": "ئالقەی 13",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          }
+        ]
+      },
+      {
+        "id": "6701f63e-2184-4f37-9ca6-73db1a1fc3bb",
+        "number": 7,
+        "title": "سیزنی 7",
+        "episodes": [
+          {
+            "id": "1eaee9b6-aa80-4bfe-9464-60550e8c11e3",
+            "number": 1,
+            "title": "ئالقەی 1",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "a967228b-b00a-4532-8614-fa92bbc669db",
+            "number": 2,
+            "title": "ئالقەی 2",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "4783e267-0d89-404e-b6ab-1b24b361ab93",
+            "number": 3,
+            "title": "ئالقەی 3",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "e939f734-7d43-4f84-951a-d942435ce908",
+            "number": 4,
+            "title": "ئالقەی 4",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "a72c0035-dbc8-495d-ac36-e53892b391ff",
+            "number": 5,
+            "title": "ئالقەی 5",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "365c391c-0e84-4a2f-8e0d-63ee1c006718",
+            "number": 6,
+            "title": "ئالقەی 6",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": null
+          },
+          {
+            "id": "aea65db4-276a-47fa-a721-6d0fb799ec6b",
+            "number": 7,
+            "title": "ئالقەی 7",
+            "description": "",
+            "duration": "",
+            "videoFile": null,
+            "originalSrt": null,
+            "translatedSrt": null
+          },
+          {
+            "id": "b4f9fa69-d29f-430a-8250-8248935b2bc3",
+            "number": 8,
+            "title": "ئالقەی 8",
+            "description": "",
+            "duration": "",
+            "videoFile": null,
+            "originalSrt": null,
+            "translatedSrt": null
+          },
+          {
+            "id": "84c4dfcb-1f1e-4dde-b824-af36e0191929",
+            "number": 9,
+            "title": "ئالقەی 9",
+            "description": "",
+            "duration": "",
+            "videoFile": null,
+            "originalSrt": null,
+            "translatedSrt": null
+          },
+          {
+            "id": "914a5405-6528-4934-8434-68da3b143474",
+            "number": 10,
+            "title": "ئالقەی 10",
+            "description": "",
+            "duration": "",
+            "videoFile": null,
+            "originalSrt": null,
+            "translatedSrt": null
+          },
+          {
+            "id": "5c6c6666-cd62-4fdb-8293-a814488a2c17",
+            "number": 11,
+            "title": "ئالقەی 11",
+            "description": "",
+            "duration": "",
+            "videoFile": null,
+            "originalSrt": null,
+            "translatedSrt": null
+          },
+          {
+            "id": "7f02d048-2021-4f29-940a-579e7196800c",
+            "number": 12,
+            "title": "ئالقەی 12",
+            "description": "",
+            "duration": "",
+            "videoFile": null,
+            "originalSrt": null,
+            "translatedSrt": null
+          },
+          {
+            "id": "4a1a24e4-fc00-453a-9e79-8a7fdb7b493d",
+            "number": 13,
+            "title": "ئالقەی 13",
+            "description": "",
+            "duration": "",
+            "videoFile": null,
+            "originalSrt": null,
+            "translatedSrt": null
+          },
+          {
+            "id": "81b46565-508a-494c-8e70-e0d678aac989",
+            "number": 14,
+            "title": "ئالقەی 14",
+            "description": "",
+            "duration": "",
+            "videoFile": null,
+            "originalSrt": null,
+            "translatedSrt": null
+          },
+          {
+            "id": "19de8e34-d3da-4e65-bb76-d140e0a74058",
+            "number": 15,
+            "title": "ئالقەی 15",
+            "description": "",
+            "duration": "",
+            "videoFile": null,
+            "originalSrt": null,
+            "translatedSrt": null
+          },
+          {
+            "id": "dba46720-3c4d-4766-a942-3f6378e09970",
+            "number": 16,
+            "title": "ئالقەی 16",
+            "description": "",
+            "duration": "",
+            "videoFile": null,
+            "originalSrt": null,
+            "translatedSrt": null
+          }
+        ]
+      },
+      {
+        "id": "e2d6814b-0fd9-46d3-8ea8-f7c4d00bf99d",
+        "number": 8,
+        "title": "سیزنی 8",
+        "episodes": [
+          {
+            "id": "59da8906-d042-497b-b099-d4488d9707e0",
+            "number": 1,
+            "title": "ئالقەی 1",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": null
+          },
+          {
+            "id": "353c00cb-b0a6-4202-a0cb-8db643e49e6e",
+            "number": 2,
+            "title": "ئالقەی 2",
+            "description": "",
+            "duration": "",
+            "videoFile": null,
+            "originalSrt": null,
+            "translatedSrt": null
+          },
+          {
+            "id": "7523a064-4db0-4464-b05f-13b14b38d231",
+            "number": 3,
+            "title": "ئالقەی 3",
+            "description": "",
+            "duration": "",
+            "videoFile": null,
+            "originalSrt": null,
+            "translatedSrt": null
+          },
+          {
+            "id": "7e699e90-cbf7-4368-81d2-d5855a5b3119",
+            "number": 4,
+            "title": "ئالقەی 4",
+            "description": "",
+            "duration": "",
+            "videoFile": null,
+            "originalSrt": null,
+            "translatedSrt": null
+          },
+          {
+            "id": "236d65dd-5d7c-4ca2-b763-87a8e42eec91",
+            "number": 5,
+            "title": "ئالقەی 5",
+            "description": "",
+            "duration": "",
+            "videoFile": null,
+            "originalSrt": null,
+            "translatedSrt": null
+          }
+        ]
+      }
+    ],
+    "createdAt": 1772228967244
+  },
+  {
+    "id": "42038eaf-72ba-4c2a-954a-d297e89a512b",
+    "title": "SNEAKY PETE (2015)",
+    "description": "وەلا نازانم",
+    "genre": "دراما ",
+    "year": 2015,
+    "duration": "",
+    "posterUrl": "/api/poster/42038eaf-72ba-4c2a-954a-d297e89a512b",
+    "videoFile": null,
+    "originalSrt": null,
+    "translatedSrt": null,
+    "type": "series",
+    "seasons": [
+      {
+        "id": "c36c8c39-3d8e-4fb9-9fdb-56852377e1e4",
+        "number": 1,
+        "title": "سیزنی 1",
+        "episodes": [
+          {
+            "id": "6442d5db-5f20-4d56-bd19-f5b9bda57ab6",
+            "number": 1,
+            "title": "ئالقەی 1",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "9311becc-1e8b-4ef2-91b2-c3d740a32def",
+            "number": 2,
+            "title": "ئالقەی 2",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "4fee3808-7b3b-494a-8625-ab8e386a40e4",
+            "number": 3,
+            "title": "ئالقەی 3",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "e542bbe0-8042-4b40-8d85-853fb3fb5dc2",
+            "number": 4,
+            "title": "ئالقەی 4",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "cc001c9a-fbe0-4128-9e82-d0d39aec74c8",
+            "number": 5,
+            "title": "ئالقەی 5",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "ab9cfcd3-f796-4080-9e09-1e05dc0e5adf",
+            "number": 6,
+            "title": "ئالقەی 6",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "45aa3a03-6283-44c8-b959-8287bd020205",
+            "number": 7,
+            "title": "ئالقەی 7",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt",
+            "sensitiveScenes": []
+          },
+          {
+            "id": "735398ed-4b8f-4889-b5d2-d13d661bbf75",
+            "number": 8,
+            "title": "ئالقەی 8",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "d76affba-eccf-45d6-9753-5fccc79c97ab",
+            "number": 9,
+            "title": "ئالقەی 9",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "fbb760af-63b1-4917-b54f-750d347d3ec8",
+            "number": 10,
+            "title": "ئالقەی 10",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt",
+            "sensitiveScenes": [
+              {
+                "start": 209,
+                "end": 258
+              },
+              {
+                "start": 0,
+                "end": 0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "f4496eda-424a-4239-9005-83d26515150e",
+        "number": 2,
+        "title": "سیزنی 2",
+        "episodes": [
+          {
+            "id": "46495b65-549c-4685-8dc4-e818a1040d17",
+            "number": 1,
+            "title": "ئالقەی 1",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt",
+            "sensitiveScenes": [
+              {
+                "start": 181,
+                "end": 241
+              }
+            ]
+          },
+          {
+            "id": "46a49db2-694e-4c58-ba9d-94b94b589b1b",
+            "number": 2,
+            "title": "ئالقەی 2",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "f3d9d529-601e-4437-a07a-b75d1f8ff129",
+            "number": 3,
+            "title": "ئالقەی 3",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "aa73a5be-8dc6-4a9b-acf6-a6bb11a1411b",
+            "number": 4,
+            "title": "ئالقەی 4",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "3c1e840e-78d9-4666-96b0-4d99efca08d2",
+            "number": 5,
+            "title": "ئالقەی 5",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "b3c86fc2-3ad0-42a7-8e8b-7716f40e128f",
+            "number": 6,
+            "title": "ئالقەی 6",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "4a045235-6726-490e-80a9-9da91eb9e559",
+            "number": 7,
+            "title": "ئالقەی 7",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "aed27e8d-32fc-4b05-bd9c-3412a1d2d7ce",
+            "number": 8,
+            "title": "ئالقەی 8",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "1158a78e-21a9-4f52-9d4c-bfed786c0197",
+            "number": 9,
+            "title": "ئالقەی 9",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          },
+          {
+            "id": "0d2af323-9675-4383-83b9-1c4cd5b9e44a",
+            "number": 10,
+            "title": "ئالقەی 10",
+            "description": "",
+            "duration": "",
+            "videoFile": "video.mkv",
+            "originalSrt": "original.srt",
+            "translatedSrt": "translated.srt"
+          }
+        ]
+      }
+    ],
+    "createdAt": 1774987608056
+  }
+]

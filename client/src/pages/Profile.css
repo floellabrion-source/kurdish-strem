@@ -1,0 +1,171 @@
+.profile-page {
+    min-height: 100vh;
+    padding-bottom: 80px;
+}
+
+.profile-hero {
+    position: relative;
+    padding-top: 150px;
+    padding-bottom: 40px;
+    overflow: hidden;
+}
+
+.profile-blur-bg {
+    position: absolute;
+    top: -50px;
+    left: -50px;
+    right: -50px;
+    bottom: 50%;
+    background-size: cover;
+    background-position: center;
+    filter: blur(80px);
+    opacity: 0.4;
+    z-index: 0;
+}
+
+.profile-hero-content {
+    position: relative;
+    z-index: 1;
+    padding: 0 24px;
+}
+
+.profile-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 30px;
+    border: 4px solid var(--bg);
+    object-fit: cover;
+    background: #111;
+    margin-bottom: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.profile-name {
+    font-size: 28px;
+    font-weight: 800;
+    color: white;
+    margin-bottom: 2px;
+}
+
+.profile-handle {
+    font-size: 14px;
+    color: #888;
+    margin-bottom: 24px;
+}
+
+.profile-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.btn-edit {
+    flex: 1;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: white;
+    padding: 12px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.btn-settings {
+    width: 48px;
+    height: 48px;
+    background: transparent;
+    border: none;
+    color: #888;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.profile-stats {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #aaa;
+    font-size: 14px;
+    margin-bottom: 30px;
+}
+
+.profile-stats strong {
+    color: white;
+    font-weight: 700;
+}
+
+.profile-stats .dot {
+    color: #555;
+}
+
+.profile-favorites-grid {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.fav-card {
+    flex: 1;
+    background: rgba(255,255,255,0.03);
+    border: 1px dashed rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.fav-icon {
+    color: #666;
+}
+
+.fav-text h5 {
+    font-size: 11px;
+    color: #888;
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+
+.fav-text p {
+    font-size: 13px;
+    color: white;
+    font-weight: 600;
+}
+
+/* Tabs */
+.profile-tabs {
+    display: flex;
+    background: rgba(255,255,255,0.05);
+    margin: 0 24px 20px;
+    border-radius: 12px;
+    padding: 4px;
+}
+
+.tab-btn {
+    flex: 1;
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 10px;
+    border-radius: 8px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.tab-btn.active {
+    background: var(--bg2);
+    color: white;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
