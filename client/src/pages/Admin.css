@@ -5,6 +5,51 @@
     margin: 0 auto;
 }
 
+/* ☁️ Cloud Upload Styling */
+.cloud-upload {
+    background: rgba(139, 92, 246, 0.1) !important;
+    border: 1.5px solid rgba(139, 92, 246, 0.3) !important;
+}
+
+.cloud-upload-btn {
+    background: rgba(139, 92, 246, 0.15) !important;
+    color: #a78bfa !important;
+    border: 1px solid rgba(139, 92, 246, 0.3) !important;
+}
+
+.cloud-upload:hover {
+    background: rgba(139, 92, 246, 0.2) !important;
+    border-color: #a78bfa !important;
+}
+
+.cloud-upload-btn:hover {
+    background: #8b5cf6 !important;
+    color: white !important;
+}
+
+.cloud-upload .uc-icon {
+    color: #a78bfa !important;
+}
+
+.cloud-upload .uc-label {
+    color: #c4b5fd !important;
+}
+
+.ep-file-btn.cloud-upload-btn.has-file {
+    background: #8b5cf6 !important;
+    color: white !important;
+}
+
+@keyframes pulse-cloud {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.cloud-upload.uploading {
+    animation: pulse-cloud 1.5s infinite;
+}
+
 /* Header */
 .admin-header {
     display: flex;

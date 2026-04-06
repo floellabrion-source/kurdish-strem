@@ -8,7 +8,26 @@ import {
 } from 'lucide-react';
 import { Movie, Season, Episode } from '../types';
 import SrtTranslator from './SrtTranslator';
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import './Admin.css';
+
+// Cloudflare R2 Configuration
+const R2_CONFIG = {
+    bucket: 'kurdishstream',
+    accessKeyId: '5d32ffa66b0b0e4ffba628c3816dd0a8',
+    secretAccessKey: 'de0d9bb0f2874987a1aa37dec9a3d487d3a9ac245180105fed98e9a3af720ed2',
+    endpoint: 'https://e411f31b45ae1c9d39f9c4287140a79a.r2.cloudflarestorage.com',
+    publicUrl: 'https://pub-b0d449d8e91a4935b983f479c22d8796.r2.dev'
+};
+
+const s3Client = new S3Client({
+    region: "auto",
+    endpoint: R2_CONFIG.endpoint,
+    credentials: {
+        accessKeyId: R2_CONFIG.accessKeyId,
+        secretAccessKey: R2_CONFIG.secretAccessKey,
+    },
+});
 
 interface Toast { id: number; msg: string; type: 'success' | 'error'; }
 
@@ -38,6 +57,8 @@ export default function Admin() {
         epVideo: useRef<Record<string, HTMLInputElement | null>>({}),
         epOrigSrt: useRef<Record<string, HTMLInputElement | null>>({}),
         epTransSrt: useRef<Record<string, HTMLInputElement | null>>({}),
+        r2Video: useRef<Record<string, HTMLInputElement | null>>({}),
+        r2EpVideo: useRef<Record<string, HTMLInputElement | null>>({}),
     };
 
     const toast = (msg: string, type: 'success' | 'error' = 'success') => {
@@ -182,6 +203,54 @@ export default function Admin() {
             toast('لینکی پۆستەر پاشەکەوت کرا ✓');
             load();
         } catch { toast('کێشەیەک ڕووی دا', 'error'); }
+    };
+
+    const doR2Upload = async (movieId: string, file: File, target: 'video' | 'poster', extra?: { season?: number; episodeId?: string; episodeNum?: number }) => {
+        const key = `${movieId}-${target}-${extra?.episodeId || 'main'}`;
+        setUploading(u => ({ ...u, [key]: true }));
+
+        try {
+            // 1. Generate a clean filename: movies/id_timestamp_name.mp4
+            const timestamp = Date.now();
+            const cleanName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
+            const r2Path = `${target}s/${movieId}_${timestamp}_${cleanName}`;
+
+            // 2. Upload to R2 directly from browser
+            const command = new PutObjectCommand({
+                Bucket: R2_CONFIG.bucket,
+                Key: r2Path,
+                Body: file,
+                ContentType: file.type,
+            });
+
+            await s3Client.send(command);
+
+            // 3. Construct Public URL
+            const finalUrl = `${R2_CONFIG.publicUrl}/${r2Path}`;
+
+            // 4. Save to Database
+            const m = movies.find(x => x.id === movieId);
+            if (!m) throw new Error("Movie not found");
+
+            const updated = JSON.parse(JSON.stringify(m));
+            if (extra?.episodeId) {
+                const season = updated.seasons?.find((s: Season) => s.number === extra.season);
+                const ep = season?.episodes.find((e: Episode) => e.id === extra.episodeId);
+                if (ep) ep.videoUrl = finalUrl;
+            } else {
+                if (target === 'video') updated.videoUrl = finalUrl;
+                else updated.posterCloudUrl = finalUrl;
+            }
+
+            await axios.put(`/api/admin/movies/${movieId}`, updated);
+            toast(`فایلەکە بە سەرکەوتوویی بۆ کلاود (R2) بارکرا ☁️`);
+            load();
+        } catch (err: any) {
+            console.error(err);
+            toast('هەڵەیەک لە کاتی ئەپلۆد بۆ R2 ڕوویدا', 'error');
+        } finally {
+            setUploading(u => ({ ...u, [key]: false }));
+        }
     };
 
     return (
