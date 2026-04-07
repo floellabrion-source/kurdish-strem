@@ -10,7 +10,7 @@ import { Movie } from '../types';
 import { useAuth } from '../context/AuthContext';
 import './Watch.css';
 
-const GEMINI_API_KEY = 'AIzaSyDxC-iu896zqlT2nk4lIQGThMmSnGPAWbc';
+const GEMINI_API_KEY = 'AIzaSyDxC-iu896zqIT2nk4liQGThMmSnGPAWbc';
 
 const parseSRT = (data: string) => {
     if (!data) return [];
