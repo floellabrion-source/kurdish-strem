@@ -41,10 +41,10 @@ export default function Flashcards() {
                 body: JSON.stringify({
                     contents: [{ parts: [{ text: `Create 3 simple and practical English sentences that use the word/phrase "${card.front}". Provide the Kurdish Sorani translation for each. WARNING: You MUST use the Arabic alphabet for the Kurdish translation. Do NOT use Latin letters for Kurdish. Return strictly a JSON array of objects in this exact format, nothing else: [{"front": "English Sentence", "back": "Kurdish Translation"}]` }] }],
                     safetySettings: [
-                        { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-                        { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-                        { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-                        { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+                        { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" },
+                        { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
+                        { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_ONLY_HIGH" },
+                        { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_ONLY_HIGH" }
                     ]
                 })
             });
