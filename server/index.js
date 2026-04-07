@@ -109,7 +109,32 @@ app.post('/api/user/sync', (req, res) => {
     res.json({ success: true, points: users[idx].points });
 });
 
-// ======= GET all movies =======
+// ======= GEMINI AI Proxy =======
+const GEMINI_KEY = 'AIzaSyDxC-iu896zqIT2nk4liQGThMmSnGPAWbc';
+const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+
+app.post('/api/ai/generate', async (req, res) => {
+    try {
+        const body = req.body;
+        const response = await fetch(GEMINI_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-goog-api-key': GEMINI_KEY
+            },
+            body: JSON.stringify(body)
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            return res.status(response.status).json(data);
+        }
+        res.json(data);
+    } catch (err) {
+        console.error('Gemini proxy error:', err);
+        res.status(500).json({ error: 'AI server error' });
+    }
+});
+
 app.get('/api/movies', (req, res) => res.json(readMovies()));
 
 // ======= GET single movie =======
