@@ -3,7 +3,7 @@ import { Upload, Languages, Download, Loader2, CheckCircle, AlertCircle, X, File
 import './SrtTranslator.css';
 
 const GEMINI_API_KEY = 'AIzaSyDxC-iu896zqIT2nk4liQGThMmSnGPAWbc';
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
 const BATCH_SIZE = 30;
 
 const SEP = '|||';
