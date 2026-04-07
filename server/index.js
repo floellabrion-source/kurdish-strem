@@ -113,15 +113,14 @@ app.post('/api/user/sync', (req, res) => {
 const GEMINI_KEY = process.env.GEMINI_KEY || '';
 
 const MODELS_TO_TRY = [
-    'gemini-2.0-flash-lite',
     'gemini-2.0-flash',
-    'gemini-1.5-flash-002',
-    'gemini-1.5-pro',
+    'gemini-2.0-flash-lite',
+    'gemini-1.5-flash'
 ];
 
 app.post('/api/ai/generate', async (req, res) => {
     const body = req.body;
-    let lastError = null;
+    let errors = [];
 
     for (const model of MODELS_TO_TRY) {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
@@ -140,14 +139,19 @@ app.post('/api/ai/generate', async (req, res) => {
                 return res.json(data);
             }
             console.error(`[AI] Model ${model} failed ${response.status}:`, JSON.stringify(data).slice(0, 200));
-            lastError = { status: response.status, data };
+            errors.push(`${model}: ${response.status} - ${data?.error?.message || 'Error'}`);
+            
+            // If the key is invalid, don't even try other models
+            if (response.status === 403 || response.status === 400) {
+                return res.status(403).json({ error: { message: `کلیلەکەی AI کێشەی هەیە یان بلۆک کراوە (${model})` } });
+            }
         } catch (err) {
             console.error(`[AI] Fetch error for model ${model}:`, err.message);
-            lastError = { status: 500, data: { error: err.message } };
+            errors.push(`${model}: Fetch Error`);
         }
     }
 
-    res.status(lastError?.status || 500).json(lastError?.data || { error: 'All AI models failed' });
+    res.status(500).json({ error: { message: "هەموو مۆدێلەکان شکستیان هێنا. کێشە: " + errors.join(' | ') }});
 });
 
 app.get('/api/movies', (req, res) => res.json(readMovies()));
