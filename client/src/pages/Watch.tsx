@@ -133,12 +133,9 @@ export default function Watch() {
         setAiExplanation('');
 
         try {
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`, {
+            const res = await fetch(`/api/ai/generate`, {
                 method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'x-goog-api-key': GEMINI_API_KEY
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     contents: [{ parts: [{ text: `You are a professional English teacher for Kurdish speakers. Briefly explain the grammar, context, and vocabulary of this English sentence in very clear Kurdish Sorani (کوردی سۆرانی). Format the response nicely. WARNING: You MUST use ONLY the Arabic alphabet for Kurdish texts. Never use Latin/Hawar letters (like ê, û, î, ş, ç) for Kurdish. \n\nSentence: "${text}"` }] }],
                     safetySettings: [
@@ -178,12 +175,9 @@ export default function Watch() {
         setAiPronunciationFeedback('');
 
         try {
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`, {
+            const res = await fetch(`/api/ai/generate`, {
                 method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'x-goog-api-key': GEMINI_API_KEY
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     contents: [{ parts: [{ text: `You are an English language pronunciation coach. The user tried to say: "${target}". However, the speech recognition heard them say: "${spoken}". Briefly explain in Kurdish Sorani (کوردی سۆرانی) what their mistake was and how to pronounce the misunderstood words correctly. If they were very close, encourage them. WARNING: You MUST write the Kurdish explanation in the Arabic alphabet only. Never use Latin letters (like ê, û, î, ş) for Kurdish words!` }] }],
                     safetySettings: [
