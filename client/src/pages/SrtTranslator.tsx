@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { Upload, Languages, Download, Loader2, CheckCircle, AlertCircle, X, FileText } from 'lucide-react';
 import './SrtTranslator.css';
 
-const GEMINI_API_KEY = 'AIzaSyAFEZvgIZW3NXJSUJoyRWBHZ5ccF9of3Gk';
+const GEMINI_API_KEY = 'AIzaSyDxC-iu896zqlT2nk4lIQGThMmSnGPAWbc';
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 const BATCH_SIZE = 30;
 
@@ -58,6 +58,12 @@ Kurdish Sorani translations (same numbering):`;
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
+            safetySettings: [
+                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+            ],
             generationConfig: { temperature: 0.1, maxOutputTokens: 8192 }
         })
     });

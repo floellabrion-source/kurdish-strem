@@ -10,7 +10,7 @@ import { Movie } from '../types';
 import { useAuth } from '../context/AuthContext';
 import './Watch.css';
 
-const GEMINI_API_KEY = 'AIzaSyAFEZvgIZW3NXJSUJoyRWBHZ5ccF9of3Gk';
+const GEMINI_API_KEY = 'AIzaSyDxC-iu896zqlT2nk4lIQGThMmSnGPAWbc';
 
 const parseSRT = (data: string) => {
     if (!data) return [];
@@ -137,7 +137,13 @@ export default function Watch() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    contents: [{ parts: [{ text: `You are a professional English teacher for Kurdish speakers. Briefly explain the grammar, context, and vocabulary of this English sentence in very clear Kurdish Sorani (کوردی سۆرانی). Format the response nicely. WARNING: You MUST use ONLY the Arabic alphabet for Kurdish texts. Never use Latin/Hawar letters (like ê, û, î, ş, ç) for Kurdish. \n\nSentence: "${text}"` }] }]
+                    contents: [{ parts: [{ text: `You are a professional English teacher for Kurdish speakers. Briefly explain the grammar, context, and vocabulary of this English sentence in very clear Kurdish Sorani (کوردی سۆرانی). Format the response nicely. WARNING: You MUST use ONLY the Arabic alphabet for Kurdish texts. Never use Latin/Hawar letters (like ê, û, î, ş, ç) for Kurdish. \n\nSentence: "${text}"` }] }],
+                    safetySettings: [
+                        { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                        { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                        { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                        { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+                    ]
                 })
             });
             const data = await res.json();
@@ -173,7 +179,13 @@ export default function Watch() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    contents: [{ parts: [{ text: `You are an English language pronunciation coach. The user tried to say: "${target}". However, the speech recognition heard them say: "${spoken}". Briefly explain in Kurdish Sorani (کوردی سۆرانی) what their mistake was and how to pronounce the misunderstood words correctly. If they were very close, encourage them. WARNING: You MUST write the Kurdish explanation in the Arabic alphabet only. Never use Latin letters (like ê, û, î, ş) for Kurdish words!` }] }]
+                    contents: [{ parts: [{ text: `You are an English language pronunciation coach. The user tried to say: "${target}". However, the speech recognition heard them say: "${spoken}". Briefly explain in Kurdish Sorani (کوردی سۆرانی) what their mistake was and how to pronounce the misunderstood words correctly. If they were very close, encourage them. WARNING: You MUST write the Kurdish explanation in the Arabic alphabet only. Never use Latin letters (like ê, û, î, ş) for Kurdish words!` }] }],
+                    safetySettings: [
+                        { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                        { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                        { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                        { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+                    ]
                 })
             });
             const data = await res.json();

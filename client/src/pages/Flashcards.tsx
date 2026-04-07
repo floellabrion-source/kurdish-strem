@@ -26,7 +26,7 @@ export default function Flashcards() {
     const [isAiLoading, setIsAiLoading] = useState(false);
     const [aiVariations, setAiVariations] = useState<{front: string, back: string}[]>([]);
 
-    const GEMINI_API_KEY = 'AIzaSyAFEZvgIZW3NXJSUJoyRWBHZ5ccF9of3Gk';
+    const GEMINI_API_KEY = 'AIzaSyDxC-iu896zqlT2nk4lIQGThMmSnGPAWbc';
 
     const generateVariations = async (card: Card) => {
         setAiVarTarget(card);
@@ -39,7 +39,13 @@ export default function Flashcards() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    contents: [{ parts: [{ text: `Create 3 simple and practical English sentences that use the word/phrase "${card.front}". Provide the Kurdish Sorani translation for each. WARNING: You MUST use the Arabic alphabet for the Kurdish translation. Do NOT use Latin letters for Kurdish. Return strictly a JSON array of objects in this exact format, nothing else: [{"front": "English Sentence", "back": "Kurdish Translation"}]` }] }]
+                    contents: [{ parts: [{ text: `Create 3 simple and practical English sentences that use the word/phrase "${card.front}". Provide the Kurdish Sorani translation for each. WARNING: You MUST use the Arabic alphabet for the Kurdish translation. Do NOT use Latin letters for Kurdish. Return strictly a JSON array of objects in this exact format, nothing else: [{"front": "English Sentence", "back": "Kurdish Translation"}]` }] }],
+                    safetySettings: [
+                        { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                        { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                        { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                        { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+                    ]
                 })
             });
             const data = await res.json();
