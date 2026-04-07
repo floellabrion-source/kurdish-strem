@@ -2,8 +2,7 @@ import { useState, useRef } from 'react';
 import { Upload, Languages, Download, Loader2, CheckCircle, AlertCircle, X, FileText } from 'lucide-react';
 import './SrtTranslator.css';
 
-const GEMINI_API_KEY = 'AIzaSyDxC-iu896zqIT2nk4liQGThMmSnGPAWbc';
-const GEMINI_URL = `/api/ai/generate`;
+const GEMINI_API_KEY = 'AIzaSyBKKULek72iPlrD-Uzbkh2DTginsy9vGio';
 const BATCH_SIZE = 30;
 
 const SEP = '|||';
@@ -32,10 +31,7 @@ const toSrtString = (blocks: SubBlock[]): string =>
     blocks.map(b => `${b.id}\n${b.time}\n${b.text}`).join('\n\n');
 
 const translateBatch = async (texts: string[]): Promise<string[]> => {
-    // Replace newlines inside subtitle blocks with <br> to keep them on one logical line
     const flatTexts = texts.map(t => t.replace(/\n/g, '<br>'));
-
-    // Build a simple numbered list for Gemini
     const input = flatTexts.map((t, i) => `${i + 1}. ${t}`).join('\n');
 
     const prompt = `You are a professional subtitle translator. Translate the following numbered subtitle lines to Kurdish Sorani (کوردی سۆرانی).
@@ -43,8 +39,8 @@ const translateBatch = async (texts: string[]): Promise<string[]> => {
 Rules:
 - Return ONLY the translations, numbered the same way
 - Do NOT add explanations or notes
-- Keep <br> as is (it means line break)
-- Keep names, numbers, and technical terms if they don't have Kurdish equivalents
+- Keep <br> as is
+- Keep names if they don't have Kurdish equivalents
 - Use natural spoken Kurdish Sorani dialect
 - WARNING: You MUST use the Arabic alphabet for Kurdish texts. DO NOT use Latin letters for Kurdish!
 
@@ -53,12 +49,11 @@ ${input}
 
 Kurdish Sorani translations (same numbering):`;
 
-    const resp = await fetch(GEMINI_URL, {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${GEMINI_API_KEY}`;
+    
+    const resp = await fetch(url, {
         method: 'POST',
-        headers: { 
-            'Content-Type': 'application/json',
-            'x-goog-api-key': GEMINI_API_KEY
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
             safetySettings: [
@@ -66,8 +61,7 @@ Kurdish Sorani translations (same numbering):`;
                 { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
                 { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_ONLY_HIGH" },
                 { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_ONLY_HIGH" }
-            ],
-            generationConfig: { temperature: 0.1, maxOutputTokens: 8192 }
+            ]
         })
     });
 

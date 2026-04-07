@@ -26,7 +26,7 @@ export default function Flashcards() {
     const [isAiLoading, setIsAiLoading] = useState(false);
     const [aiVariations, setAiVariations] = useState<{front: string, back: string}[]>([]);
 
-    const GEMINI_API_KEY = 'AIzaSyDxC-iu896zqIT2nk4liQGThMmSnGPAWbc';
+    const GEMINI_API_KEY = 'AIzaSyBKKULek72iPlrD-Uzbkh2DTginsy9vGio';
 
     const generateVariations = async (card: Card) => {
         setAiVarTarget(card);
@@ -35,7 +35,8 @@ export default function Flashcards() {
         setAiVariations([]);
 
         try {
-            const res = await fetch(`/api/ai/generate`, {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${GEMINI_API_KEY}`;
+            const res = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

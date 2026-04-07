@@ -10,7 +10,7 @@ import { Movie } from '../types';
 import { useAuth } from '../context/AuthContext';
 import './Watch.css';
 
-const GEMINI_API_KEY = 'AIzaSyDxC-iu896zqIT2nk4liQGThMmSnGPAWbc';
+const GEMINI_API_KEY = 'AIzaSyBKKULek72iPlrD-Uzbkh2DTginsy9vGio';
 
 const parseSRT = (data: string) => {
     if (!data) return [];
@@ -133,7 +133,8 @@ export default function Watch() {
         setAiExplanation('');
 
         try {
-            const res = await fetch(`/api/ai/generate`, {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${GEMINI_API_KEY}`;
+            const res = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -175,7 +176,8 @@ export default function Watch() {
         setAiPronunciationFeedback('');
 
         try {
-            const res = await fetch(`/api/ai/generate`, {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${GEMINI_API_KEY}`;
+            const res = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
