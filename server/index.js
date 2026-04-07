@@ -111,28 +111,43 @@ app.post('/api/user/sync', (req, res) => {
 
 // ======= GEMINI AI Proxy =======
 const GEMINI_KEY = 'AIzaSyDxC-iu896zqIT2nk4liQGThMmSnGPAWbc';
-const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+
+const MODELS_TO_TRY = [
+    'gemini-2.0-flash-lite',
+    'gemini-2.0-flash',
+    'gemini-1.5-flash-002',
+    'gemini-1.5-pro',
+];
 
 app.post('/api/ai/generate', async (req, res) => {
-    try {
-        const body = req.body;
-        const response = await fetch(GEMINI_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-goog-api-key': GEMINI_KEY
-            },
-            body: JSON.stringify(body)
-        });
-        const data = await response.json();
-        if (!response.ok) {
-            return res.status(response.status).json(data);
+    const body = req.body;
+    let lastError = null;
+
+    for (const model of MODELS_TO_TRY) {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-goog-api-key': GEMINI_KEY
+                },
+                body: JSON.stringify(body)
+            });
+            const data = await response.json();
+            if (response.ok) {
+                console.log(`[AI] Success with model: ${model}`);
+                return res.json(data);
+            }
+            console.error(`[AI] Model ${model} failed ${response.status}:`, JSON.stringify(data).slice(0, 200));
+            lastError = { status: response.status, data };
+        } catch (err) {
+            console.error(`[AI] Fetch error for model ${model}:`, err.message);
+            lastError = { status: 500, data: { error: err.message } };
         }
-        res.json(data);
-    } catch (err) {
-        console.error('Gemini proxy error:', err);
-        res.status(500).json({ error: 'AI server error' });
     }
+
+    res.status(lastError?.status || 500).json(lastError?.data || { error: 'All AI models failed' });
 });
 
 app.get('/api/movies', (req, res) => res.json(readMovies()));
