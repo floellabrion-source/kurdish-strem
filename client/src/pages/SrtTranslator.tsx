@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { Upload, Languages, Download, Loader2, CheckCircle, AlertCircle, X, FileText } from 'lucide-react';
 import './SrtTranslator.css';
 
-const GEMINI_API_KEY = 'AIzaSyBKKULek72iPlrD-Uzbkh2DTginsy9vGio';
+const GEMINI_API_KEY = 'AIzaSyAFEZvgIZW3NXJSUJoyRWBHZ5cCf9of3Gk';
 const BATCH_SIZE = 30;
 
 const SEP = '|||';
