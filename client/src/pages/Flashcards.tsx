@@ -35,9 +35,12 @@ export default function Flashcards() {
         setAiVariations([]);
 
         try {
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'x-goog-api-key': GEMINI_API_KEY
+                },
                 body: JSON.stringify({
                     contents: [{ parts: [{ text: `Create 3 simple and practical English sentences that use the word/phrase "${card.front}". Provide the Kurdish Sorani translation for each. WARNING: You MUST use the Arabic alphabet for the Kurdish translation. Do NOT use Latin letters for Kurdish. Return strictly a JSON array of objects in this exact format, nothing else: [{"front": "English Sentence", "back": "Kurdish Translation"}]` }] }],
                     safetySettings: [

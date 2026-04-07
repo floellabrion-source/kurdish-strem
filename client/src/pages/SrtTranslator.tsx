@@ -3,7 +3,7 @@ import { Upload, Languages, Download, Loader2, CheckCircle, AlertCircle, X, File
 import './SrtTranslator.css';
 
 const GEMINI_API_KEY = 'AIzaSyDxC-iu896zqIT2nk4liQGThMmSnGPAWbc';
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`;
 const BATCH_SIZE = 30;
 
 const SEP = '|||';
@@ -55,7 +55,10 @@ Kurdish Sorani translations (same numbering):`;
 
     const resp = await fetch(GEMINI_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+            'Content-Type': 'application/json',
+            'x-goog-api-key': GEMINI_API_KEY
+        },
         body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
             safetySettings: [
