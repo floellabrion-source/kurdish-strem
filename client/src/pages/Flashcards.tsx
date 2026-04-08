@@ -26,7 +26,7 @@ export default function Flashcards() {
     const [isAiLoading, setIsAiLoading] = useState(false);
     const [aiVariations, setAiVariations] = useState<{front: string, back: string}[]>([]);
 
-    const GEMINI_API_KEY = 'AIzaSyAFEZvgIZW3NXJSUJoyRWBHZ5cCf9of3Gk';
+    const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_KEY;
 
     const generateVariations = async (card: Card) => {
         setAiVarTarget(card);

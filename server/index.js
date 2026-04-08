@@ -110,7 +110,7 @@ app.post('/api/user/sync', (req, res) => {
 });
 
 // ======= GEMINI AI Proxy =======
-const GEMINI_KEY = process.env.GEMINI_KEY || '';
+const GEMINI_KEY = process.env.GEMINI_KEY || 'AIzaSyAFEZvgIZW3NXJSUJoyRWBHZ5cCf9of3Gk';
 
 const MODELS_TO_TRY = [
     'gemini-2.0-flash',
