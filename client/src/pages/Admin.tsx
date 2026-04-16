@@ -389,7 +389,7 @@ export default function Admin() {
 
                             {movie.type !== 'series' && (
                                 <div className="ac-uploads">
-                                    <div className="ac-upload-card" onClick={() => refs.video.current[movie.id]?.click()}>
+                                    <div className={`ac-upload-card ${movie.videoFile ? 'done' : ''}`} onClick={() => refs.video.current[movie.id]?.click()}>
                                         <input type="file" className="hidden-input" ref={el => { refs.video.current[movie.id] = el; }} onChange={e => e.target.files?.[0] && doUpload(movie.id, e.target.files[0], 'video')} />
                                         <div className="ac-upload-icon-wrap">
                                             {uploading[`${movie.id}-video-0-0`] ? 
@@ -401,7 +401,7 @@ export default function Admin() {
                                         </div>
                                         <div className="ac-upload-label">Server</div>
                                     </div>
-                                    <div className="ac-upload-card cloud-upload" onClick={() => refs.r2Video.current[movie.id]?.click()}>
+                                    <div className={`ac-upload-card cloud-upload ${movie.videoUrl && movie.videoUrl.includes('r2') ? 'done' : ''}`} onClick={() => refs.r2Video.current[movie.id]?.click()}>
                                         <input type="file" className="hidden-input" ref={el => { refs.r2Video.current[movie.id] = el; }} onChange={e => e.target.files?.[0] && doR2Upload(movie.id, e.target.files[0], 'video')} />
                                         <div className="ac-upload-icon-wrap">
                                             {uploading[`${movie.id}-video-main`] ? 
@@ -497,7 +497,7 @@ function SeasonPanel({ season, movieId, onAddEpisode, onBulkAdd, onEpVideo, onEp
                                 <div className="ep-grid-title">{ep.number}. {ep.title}</div>
                                 <div className="ep-grid-btns">
                                     <input type="file" className="hidden-input" ref={el => { epVideoRef.current[ep.id] = el; }} onChange={e => e.target.files?.[0] && onEpVideo(ep.number, e.target.files[0])} />
-                                    <button className={`ep-mini-btn ${ep.videoUrl ? 'done' : ''}`} onClick={() => epVideoRef.current[ep.id]?.click()}>
+                                    <button className={`ep-mini-btn ${ep.videoFile ? 'done' : ''}`} onClick={() => epVideoRef.current[ep.id]?.click()}>
                                         {uploading[`${movieId}-ep-video-${season.number}-${ep.number}`] ? (
                                             <div style={{display: 'flex', gap: '4px', alignItems: 'center'}}>
                                                 <Loader2 size={11} className="spinning" />
@@ -507,7 +507,7 @@ function SeasonPanel({ season, movieId, onAddEpisode, onBulkAdd, onEpVideo, onEp
                                     </button>
 
                                     <input type="file" className="hidden-input" ref={el => { r2EpVideoRef.current[ep.id] = el; }} onChange={e => e.target.files?.[0] && onR2Upload(ep.number, e.target.files[0], ep.id)} />
-                                    <button className={`ep-mini-btn cloud-upload-btn ${ep.videoUrl ? 'done' : ''}`} onClick={() => r2EpVideoRef.current[ep.id]?.click()}>
+                                    <button className={`ep-mini-btn cloud-upload-btn ${ep.videoUrl && ep.videoUrl.includes('r2') ? 'done' : ''}`} onClick={() => r2EpVideoRef.current[ep.id]?.click()}>
                                         {uploading[`${movieId}-video-${ep.id}`] ? (
                                             <div style={{display: 'flex', gap: '4px', alignItems: 'center'}}>
                                                 <Loader2 size={11} className="spinning" />
