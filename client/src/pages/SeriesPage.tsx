@@ -20,16 +20,21 @@ export default function SeriesPage() {
         }).catch(() => setLoading(false));
     }, [id]);
 
+    useEffect(() => {
+        if (!loading && movie && movie.type !== 'series') {
+            navigate('/');
+        }
+    }, [loading, movie, navigate]);
+
     if (loading) return (
         <div className="series-loading">
             <div className="loading-spinner" />
         </div>
     );
 
-    if (!movie || movie.type !== 'series') {
-        navigate('/');
-        return null;
-    }
+    if (!movie || movie.type !== 'series') return null;
+
+    const poster = movie.posterCloudUrl || movie.posterUrl;
 
     const seasons = movie.seasons || [];
     const currentSeason = seasons.find(s => s.number === activeSeason);
@@ -40,8 +45,8 @@ export default function SeriesPage() {
             <div
                 className="series-hero"
                 style={{
-                    backgroundImage: movie.posterUrl
-                        ? `url(${movie.posterUrl})`
+                    backgroundImage: poster
+                        ? `url(${poster})`
                         : 'linear-gradient(135deg, #0d0d1a 0%, #1a1a2e 100%)'
                 }}
             >
@@ -108,7 +113,7 @@ export default function SeriesPage() {
                                 episode={episode}
                                 seriesId={id!}
                                 seasonNum={activeSeason}
-                                posterUrl={movie.posterUrl}
+                                posterUrl={poster}
                             />
                         ))}
                     </div>

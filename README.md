@@ -43,3 +43,8 @@ npm run dev
 1. بڕۆ بۆ `/admin` بۆ زیادکردنی فیلمی نوێ
 2. فیلمەکان بڕۆ بۆ **uploads/movies/** خەزن دەبن لەناو کۆمپیوتەرت
 3. بۆ بینین بڕۆ بۆ لاپەڕەی سەرەکی
+
+## Deploy (Production)
+
+- بۆ deploy لەسەر Hetzner، ئەم ڕێنماییە بخوێنەوە:
+- [DEPLOY_HETZNER.md](file:///c:/Users/BSMA%20CO/Downloads/kurdish-stream/DEPLOY_HETZNER.md)

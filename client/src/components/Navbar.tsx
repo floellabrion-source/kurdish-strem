@@ -150,11 +150,11 @@ export default function Navbar() {
                     <p className="sidebar-label">{t('continue_watching_menu')}</p>
                     <div className="continue-mini-list">
                         <div className="mini-item">
-                            <div className="mini-thumb" style={{ backgroundImage: 'url(https://image.tmdb.org/t/p/w200/w7EszBfPzD57u20t99oNsh27h6u.jpg)' }}></div>
+                            <div className="mini-thumb" style={{ background: 'linear-gradient(135deg, #1f2937, #0f172a)' }}></div>
                             <div className="mini-info"><h4>The 100</h4><p>2014 • S7 E2</p></div>
                         </div>
                         <div className="mini-item">
-                            <div className="mini-thumb" style={{ backgroundImage: 'url(https://image.tmdb.org/t/p/w200/kZ1N8m1Z9oItn5dK5Sj1KEd5X0j.jpg)' }}></div>
+                            <div className="mini-thumb" style={{ background: 'linear-gradient(135deg, #312e81, #111827)' }}></div>
                             <div className="mini-info"><h4>Sneaky Pete</h4><p>2015 • S1 E1</p></div>
                         </div>
                     </div>
@@ -205,5 +205,5 @@ export default function Navbar() {
                     </Link>
                 </nav>
             </aside>
-        </>);
+        </>/*  */);
 }

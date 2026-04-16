@@ -1,11 +1,10 @@
 import { useState, useRef } from 'react';
+import axios from 'axios';
 import { Upload, Languages, Download, Loader2, CheckCircle, AlertCircle, X, FileText } from 'lucide-react';
 import './SrtTranslator.css';
 
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_KEY;
 const BATCH_SIZE = 30;
-
-const SEP = '|||';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 interface SubBlock {
     id: string;
@@ -49,28 +48,10 @@ ${input}
 
 Kurdish Sorani translations (same numbering):`;
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${GEMINI_API_KEY}`;
-    
-    const resp = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            safetySettings: [
-                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" },
-                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
-                { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_ONLY_HIGH" },
-                { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_ONLY_HIGH" }
-            ]
-        })
+    const resp = await axios.post('/api/ai/generate', {
+        contents: [{ parts: [{ text: prompt }] }]
     });
-
-    if (!resp.ok) {
-        const errText = await resp.text();
-        throw new Error(`Gemini ${resp.status}: ${errText.slice(0, 200)}`);
-    }
-    const data = await resp.json();
-    const raw: string = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const raw: string = resp.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
     // Parse numbered lines: "1. text", "2. text", etc.
     const result: string[] = texts.map(t => t); // default to original
@@ -148,15 +129,36 @@ export default function SrtTranslator() {
             let done = 0;
             for (const batch of batches) {
                 const texts = batch.map(b => b.text);
-                const translatedTexts = await translateBatch(texts);
+                
+                let translatedTexts: string[] = [];
+                let retries = 5;
+                let success = false;
+                
+                while (retries > 0 && !success) {
+                    try {
+                        translatedTexts = await translateBatch(texts);
+                        success = true;
+                    } catch (err: any) {
+                        if (err?.response?.status === 429) {
+                            retries--;
+                            if (retries === 0) throw err;
+                            console.warn(`429 Too Many Requests. Retrying... (${retries} retries left)`);
+                            // Wait 5 seconds before retrying
+                            await new Promise(r => setTimeout(r, 5000));
+                        } else {
+                            throw err;
+                        }
+                    }
+                }
+
                 batch.forEach((b, i) => {
                     const idx = blocks.findIndex(x => x.id === b.id);
                     if (idx !== -1) result[idx] = { ...b, text: translatedTexts[i] };
                 });
                 done += batch.length;
                 setProgress(done);
-                // Added a 4-second delay between batches to avoid Error 429 (Rate Limit)
-                if (done < blocks.length) await new Promise(r => setTimeout(r, 4000));
+                // Added a 2-second delay between batches
+                if (done < blocks.length) await new Promise(r => setTimeout(r, 2000));
             }
 
             setTranslated(result);

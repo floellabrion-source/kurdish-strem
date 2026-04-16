@@ -10,8 +10,6 @@ import { Movie } from '../types';
 import { useAuth } from '../context/AuthContext';
 import './Watch.css';
 
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_KEY || 'AIzaSyAFEZvgIZW3NXJSUJoyRWBHZ5cCf9of3Gk';
-
 const parseSRT = (data: string) => {
     if (!data) return [];
     const clean = data.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
@@ -42,6 +40,10 @@ const fmt = (s: number) => {
     return `${m}:${String(sec).padStart(2, '0')}`;
 };
 
+const AI_MIN_INTERVAL_MS = 1500;
+const AI_MAX_RETRIES = 2;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+
 export default function Watch() {
     const { id } = useParams<{ id: string }>();
     const [searchParams] = useSearchParams();
@@ -57,6 +59,7 @@ export default function Watch() {
 
     const [movie, setMovie] = useState<Movie | null>(null);
     const [loading, setLoading] = useState(true);
+    const [videoLoadError, setVideoLoadError] = useState('');
     const [originalSubs, setOriginalSubs] = useState<ReturnType<typeof parseSRT>>([]);
     const [translatedSubs, setTranslatedSubs] = useState<ReturnType<typeof parseSRT>>([]);
     const { user, syncProgress } = useAuth();
@@ -111,6 +114,7 @@ export default function Watch() {
                 const now = Date.now();
                 cards.unshift({ id: now.toString(), front, back, ease: 2.5, interval: 0, nextReview: now });
                 localStorage.setItem('kurdish_stream_flashcards', JSON.stringify(cards));
+                if (user) syncProgress({ flashcards: cards });
             }
             
             // Show toast
@@ -124,6 +128,62 @@ export default function Watch() {
     const [aiModalOpen, setAiModalOpen] = useState(false);
     const [aiExplanation, setAiExplanation] = useState('');
     const [isAiLoading, setIsAiLoading] = useState(false);
+    const aiLastRequestAtRef = useRef(0);
+    const aiInFlightRef = useRef(false);
+
+    const extractApiError = (err: any, fallback: string) => {
+        return err?.response?.data?.error?.message || err?.response?.data?.error || fallback;
+    };
+
+    const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+    const getRetryDelayMs = (err: any, fallbackMs: number) => {
+        const retryAfterHeader = err?.response?.headers?.['retry-after'];
+        if (retryAfterHeader) {
+            const sec = Number(retryAfterHeader);
+            if (!isNaN(sec) && sec > 0) return sec * 1000;
+        }
+        const msg = extractApiError(err, '');
+        const sMatch = String(msg).match(/retry in\s*([0-9.]+)s/i);
+        if (sMatch?.[1]) return Math.ceil(Number(sMatch[1]) * 1000);
+        const genericNum = String(msg).match(/([0-9.]+)\s*(چرکە|second|sec)/i);
+        if (genericNum?.[1]) return Math.ceil(Number(genericNum[1]) * 1000);
+        return fallbackMs;
+    };
+
+    const postAiWithRetry = async (payload: any) => {
+        if (aiInFlightRef.current) {
+            throw new Error('AI request already in progress');
+        }
+        aiInFlightRef.current = true;
+        try {
+            const elapsed = Date.now() - aiLastRequestAtRef.current;
+            if (elapsed < AI_MIN_INTERVAL_MS) {
+                await sleep(AI_MIN_INTERVAL_MS - elapsed);
+            }
+
+            let attempt = 0;
+            let backoffMs = 1500;
+
+            while (true) {
+                aiLastRequestAtRef.current = Date.now();
+                try {
+                    return await axios.post('/api/ai/generate', payload);
+                } catch (err: any) {
+                    const status = err?.response?.status;
+                    if (status !== 429 || attempt >= AI_MAX_RETRIES) {
+                        throw err;
+                    }
+                    const waitMs = getRetryDelayMs(err, backoffMs);
+                    await sleep(waitMs);
+                    attempt += 1;
+                    backoffMs = Math.min(backoffMs * 2, 10000);
+                }
+            }
+        } finally {
+            aiInFlightRef.current = false;
+        }
+    };
 
     const explainWithAi = async (text: string) => {
         if (videoRef.current) videoRef.current.pause();
@@ -133,25 +193,17 @@ export default function Watch() {
         setAiExplanation('');
 
         try {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${GEMINI_API_KEY}`;
-            const res = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: `You are a professional English teacher for Kurdish speakers. Briefly explain the grammar, context, and vocabulary of this English sentence in very clear Kurdish Sorani (کوردی سۆرانی). Format the response nicely. WARNING: You MUST use ONLY the Arabic alphabet for Kurdish texts. Never use Latin/Hawar letters (like ê, û, î, ş, ç) for Kurdish. \n\nSentence: "${text}"` }] }],
-                    safetySettings: [
-                        { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" },
-                        { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
-                        { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_ONLY_HIGH" },
-                        { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_ONLY_HIGH" }
-                    ]
-                })
+            const res = await postAiWithRetry({
+                contents: [{ parts: [{ text: `You are a professional English teacher for Kurdish speakers. Briefly explain the grammar, context, and vocabulary of this English sentence in very clear Kurdish Sorani (کوردی سۆرانی). Format the response nicely. WARNING: You MUST use ONLY the Arabic alphabet for Kurdish texts. Never use Latin/Hawar letters (like ê, û, î, ş, ç) for Kurdish. \n\nSentence: "${text}"` }] }]
             });
-            const data = await res.json();
-            const expl = data.candidates[0].content.parts[0].text;
+            const expl = res.data?.candidates?.[0]?.content?.parts?.[0]?.text || 'وەڵامێک نەهات.';
             setAiExplanation(expl);
-        } catch (err) {
-            setAiExplanation('هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سەرپەرشتیاری AI. دووبارە تاقیبکەرەوە.');
+        } catch (err: any) {
+            if (err?.message === 'AI request already in progress') {
+                setAiExplanation('تکایە چاوەڕێ بکە، داواکارییەکی AI هەنووکە بەڕێوەدەچێت.');
+            } else {
+                setAiExplanation(extractApiError(err, 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە AI.'));
+            }
         } finally {
             setIsAiLoading(false);
         }
@@ -176,25 +228,17 @@ export default function Watch() {
         setAiPronunciationFeedback('');
 
         try {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${GEMINI_API_KEY}`;
-            const res = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: `You are an English language pronunciation coach. The user tried to say: "${target}". However, the speech recognition heard them say: "${spoken}". Briefly explain in Kurdish Sorani (کوردی سۆرانی) what their mistake was and how to pronounce the misunderstood words correctly. If they were very close, encourage them. WARNING: You MUST write the Kurdish explanation in the Arabic alphabet only. Never use Latin letters (like ê, û, î, ş) for Kurdish words!` }] }],
-                    safetySettings: [
-                        { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" },
-                        { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
-                        { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_ONLY_HIGH" },
-                        { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_ONLY_HIGH" }
-                    ]
-                })
+            const res = await postAiWithRetry({
+                contents: [{ parts: [{ text: `You are an English language pronunciation coach. The user tried to say: "${target}". However, the speech recognition heard them say: "${spoken}". Briefly explain in Kurdish Sorani (کوردی سۆرانی) what their mistake was and how to pronounce the misunderstood words correctly. If they were very close, encourage them. WARNING: You MUST write the Kurdish explanation in the Arabic alphabet only. Never use Latin letters (like ê, û, î, ş) for Kurdish words!` }] }]
             });
-            const data = await res.json();
-            const expl = data.candidates[0].content.parts[0].text;
+            const expl = res.data?.candidates?.[0]?.content?.parts?.[0]?.text || 'وەڵامێک نەهات.';
             setAiPronunciationFeedback(expl);
-        } catch (err) {
-            setAiPronunciationFeedback('هەڵەیەک ڕوویدا لە کاتی شیکاردا.');
+        } catch (err: any) {
+            if (err?.message === 'AI request already in progress') {
+                setAiPronunciationFeedback('تکایە چاوەڕێ بکە، داواکارییەکی AI هەنووکە بەڕێوەدەچێت.');
+            } else {
+                setAiPronunciationFeedback(extractApiError(err, 'هەڵەیەک ڕوویدا لە کاتی شیکارکردندا.'));
+            }
         } finally {
             setIsAiFeedbackLoading(false);
         }
@@ -312,19 +356,29 @@ export default function Watch() {
         doTTS(practiceText, () => setPracticePhase('listening'));
     };
 
-    const getStreamUrl = () => {
+    const getCurrentVideoFileName = () => {
+        if (!movie) return null;
         if (episodeNum > 0) {
-            // Check if the episode has a Cloudflare R2 URL
-            if (movie?.seasons) {
-                const season = movie.seasons.find(s => s.number === seasonNum);
-                const episode = season?.episodes.find(e => e.number === episodeNum);
-                if (episode?.videoUrl) return episode.videoUrl;
-            }
-            return `/api/stream/${id}?s=${seasonNum}&e=${episodeNum}`;
+            const season = movie.seasons?.find(s => s.number === seasonNum);
+            const episode = season?.episodes.find(e => e.number === episodeNum);
+            return episode?.videoFile || null;
         }
-        // Movie: use Cloudflare URL if available
-        if (movie?.videoUrl) return movie.videoUrl;
-        return `/api/stream/${id}`;
+        return movie.videoFile || null;
+    };
+
+    const getStreamUrl = () => {
+        if (!movie) return null;
+        if (episodeNum > 0) {
+            const season = movie.seasons?.find(s => s.number === seasonNum);
+            const episode = season?.episodes.find(e => e.number === episodeNum);
+            if (!episode) return null;
+            if (episode.videoUrl) return episode.videoUrl;
+            if (episode.videoFile) return `/api/stream/${id}?s=${seasonNum}&e=${episodeNum}`;
+            return null;
+        }
+        if (movie.videoUrl) return movie.videoUrl;
+        if (movie.videoFile) return `/api/stream/${id}`;
+        return null;
     };
 
     const loadSubtitles = async (origUrl: string | null, transUrl: string | null) => {
@@ -515,6 +569,13 @@ export default function Watch() {
     );
 
     const isSensitiveNow = familyMode && sensitiveScenes.some(s => currentTime >= s.start && currentTime <= s.end);
+    const streamUrl = getStreamUrl();
+    const videoFileName = getCurrentVideoFileName();
+    const browserSupportsMkv = typeof document !== 'undefined'
+        ? !!document.createElement('video').canPlayType('video/x-matroska')
+        : true;
+    const mkvUnsupported = !!videoFileName?.toLowerCase().endsWith('.mkv') && !browserSupportsMkv;
+    const effectiveStreamUrl = mkvUnsupported ? null : streamUrl;
 
     return (
         <div
@@ -527,13 +588,14 @@ export default function Watch() {
         >
             {/* VIDEO */}
             <video
-                key={getStreamUrl()}
+                key={effectiveStreamUrl || 'no-stream'}
                 ref={videoRef}
-                src={getStreamUrl()}
+                src={effectiveStreamUrl || undefined}
                 className={`watch-video ${isSensitiveNow ? 'blur-video' : ''}`}
                 autoPlay
                 onTimeUpdate={handleTimeUpdate}
                 onLoadedMetadata={e => {
+                    setVideoLoadError('');
                     const v = e.currentTarget;
                     setDuration(v.duration);
                     setCurrentTime(0);
@@ -556,8 +618,21 @@ export default function Watch() {
                     localStorage.removeItem(progressKey); // clear progress when done
                     if (nextEpisode) goToNext();
                 }}
+                onError={() => setVideoLoadError('ڤیدیۆکە لەسەر سێرڤەر نەدۆزرایەوە یان فایلەکە کێشەی هەیە.')}
                 onClick={togglePlay}
             />
+
+            {(!effectiveStreamUrl || videoLoadError) && (
+                <div className="sensitive-overlay">
+                    <Shield size={64} className="sensitive-icon" />
+                    <h2>ڤیدیۆ بەردەست نییە</h2>
+                    <p>
+                        {mkvUnsupported
+                            ? 'ئەم ڤیدیۆیە .mkv ـە و بروەزەرەکەت پشتگیری ناکات. بۆ چارەسەر mp4 بەکاربهێنە یان فایلەکە بگۆڕە بۆ mp4.'
+                            : (videoLoadError || 'بۆ ئەم ئالقە/فیلمە هێشتا ڤیدیۆ دانەنراوە.')}
+                    </p>
+                </div>
+            )}
 
             {isSensitiveNow && (
                 <div className="sensitive-overlay">

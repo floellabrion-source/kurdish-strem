@@ -4,6 +4,7 @@ import axios from 'axios';
 interface User {
     id: string;
     username: string;
+    role: 'admin' | 'user';
     avatarUrl?: string;
     points: number;
     history?: Record<string, { time: number; title: string; date?: string }>;
@@ -75,7 +76,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!user) return; // Silent fail if not logged in
         try {
             const res = await axios.post('/api/user/sync', data);
-            if (res.data.points !== undefined) {
+            if (res.data.user) {
+                setUser(res.data.user);
+            } else if (res.data.points !== undefined) {
                 setUser(prev => prev ? { ...prev, points: res.data.points } : null);
             }
         } catch (e) {

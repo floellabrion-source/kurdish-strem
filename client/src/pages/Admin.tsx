@@ -8,27 +8,7 @@ import {
 } from 'lucide-react';
 import { Movie, Season, Episode } from '../types';
 import SrtTranslator from './SrtTranslator';
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import './Admin.css';
-
-// Cloudflare R2 Configuration
-const R2_CONFIG = {
-    bucket: 'kurdishstream',
-    accessKeyId: '5d32ffa66b0b0e4ffba628c3816dd0a8',
-    secretAccessKey: 'de0d9bb0f2874987a1aa37dec9a3d487d3a9ac245180105fed98e9a3af720ed2',
-    endpoint: 'https://e411f31b45ae1c9d39f9c4287140a79a.r2.cloudflarestorage.com',
-    publicUrl: 'https://pub-b0d449d8e91a4935b983f479c22d8796.r2.dev'
-};
-
-const s3Client = new S3Client({
-    region: "auto",
-    endpoint: R2_CONFIG.endpoint,
-    forcePathStyle: true, // This is important for R2 in many cases
-    credentials: {
-        accessKeyId: R2_CONFIG.accessKeyId,
-        secretAccessKey: R2_CONFIG.secretAccessKey,
-    },
-});
 
 interface Toast { id: number; msg: string; type: 'success' | 'error'; }
 
@@ -70,7 +50,10 @@ export default function Admin() {
 
     const load = () => {
         setLoading(true);
-        axios.get('/api/movies').then(r => { setMovies(r.data); setLoading(false); });
+        axios.get('/api/movies')
+            .then(r => { setMovies(r.data); })
+            .catch(() => toast('نەتوانرا داتا بهێندرێت', 'error'))
+            .finally(() => setLoading(false));
     };
 
     useEffect(() => { load(); }, []);
@@ -161,44 +144,19 @@ export default function Admin() {
         setUploading(u => ({ ...u, [key]: true }));
 
         try {
-            const timestamp = Date.now();
-            const cleanName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
-            const r2Path = `${target}s/${movieId}_${timestamp}_${cleanName}`;
+            const fd = new FormData();
+            fd.append('file', file);
+            fd.append('movieId', movieId);
+            fd.append('target', target);
+            if (extra?.season !== undefined) fd.append('season', String(extra.season));
+            if (extra?.episodeId) fd.append('episodeId', extra.episodeId);
 
-            // Convert File to Uint8Array for browser compatibility
-            const arrayBuffer = await file.arrayBuffer();
-            const body = new Uint8Array(arrayBuffer);
-
-            // 2. Upload to R2 directly from browser
-            const command = new PutObjectCommand({
-                Bucket: R2_CONFIG.bucket,
-                Key: r2Path,
-                Body: body,
-                ContentType: file.type,
-            });
-
-            await s3Client.send(command);
-            const finalUrl = `${R2_CONFIG.publicUrl}/${r2Path}`;
-
-            const m = movies.find(x => x.id === movieId);
-            if (!m) throw new Error("Movie not found");
-
-            const updated = JSON.parse(JSON.stringify(m));
-            if (extra?.episodeId) {
-                const season = updated.seasons?.find((s: Season) => s.number === extra.season);
-                const ep = season?.episodes.find((e: Episode) => e.id === extra.episodeId);
-                if (ep) ep.videoUrl = finalUrl;
-            } else {
-                if (target === 'video') updated.videoUrl = finalUrl;
-                else updated.posterCloudUrl = finalUrl;
-            }
-
-            await axios.put(`/api/admin/movies/${movieId}`, updated);
+            await axios.post('/api/admin/r2/upload', fd);
             toast(`فایلەکە بە سەرکەوتوویی بارکرا ☁️`);
             load();
         } catch (err: any) {
             console.error("R2 Error:", err);
-            const errMsg = err.message || "هەڵەیەک لە کاتی ئەپلۆد ڕوویدا";
+            const errMsg = err?.response?.data?.error || err.message || "هەڵەیەک لە کاتی ئەپلۆد ڕوویدا";
             toast(`هەڵە: ${errMsg}`, 'error');
         } finally {
             setUploading(u => ({ ...u, [key]: false }));
@@ -374,7 +332,7 @@ export default function Admin() {
                         <div key={movie.id} className="admin-card">
                             <div className="ac-top">
                                 <div className="ac-poster" onClick={() => refs.poster.current[movie.id]?.click()}>
-                                    {movie.posterUrl ? <img src={movie.posterUrl} className="ac-poster-img" alt="" /> : <div className="ac-poster-placeholder"><Upload size={22} /></div>}
+                                    {(movie.posterCloudUrl || movie.posterUrl) ? <img src={movie.posterCloudUrl || movie.posterUrl} className="ac-poster-img" alt="" /> : <div className="ac-poster-placeholder"><Upload size={22} /></div>}
                                     <input type="file" className="hidden-input" ref={el => { refs.poster.current[movie.id] = el; }} onChange={e => e.target.files?.[0] && doUpload(movie.id, e.target.files[0], 'poster')} />
                                 </div>
                                 <div className="ac-info">
@@ -476,6 +434,9 @@ function SeasonPanel({ season, movieId, onAddEpisode, onBulkAdd, onEpVideo, onEp
 
                                     <input type="file" className="hidden-input" ref={el => { epOrigSrtRef.current[ep.id] = el; }} onChange={e => e.target.files?.[0] && onEpSrt(ep.number, e.target.files[0], 'original')} />
                                     <button className={`ep-mini-btn ${ep.originalSrt ? 'done' : ''}`} onClick={() => epOrigSrtRef.current[ep.id]?.click()}><FileText size={11} /></button>
+
+                                    <input type="file" className="hidden-input" ref={el => { epTransSrtRef.current[ep.id] = el; }} onChange={e => e.target.files?.[0] && onEpSrt(ep.number, e.target.files[0], 'translated')} />
+                                    <button className={`ep-mini-btn ${ep.translatedSrt ? 'done' : ''}`} onClick={() => epTransSrtRef.current[ep.id]?.click()}><Languages size={11} /></button>
                                     
                                     <button className={`ep-mini-btn ${ep.sensitiveScenes?.length ? 'done-alert' : ''}`} onClick={() => onSensitive(ep.id)}><Shield size={11} /></button>
                                 </div>

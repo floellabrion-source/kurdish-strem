@@ -16,6 +16,13 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return user ? <>{children}</> : <Navigate to="/auth" />;
 }
 
+function AdminRoute({ children }: { children: React.ReactNode }) {
+    const { user, loading } = useAuth();
+    if (loading) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>چاوەڕوانبە...</div>;
+    if (!user) return <Navigate to="/auth" />;
+    return user.role === 'admin' ? <>{children}</> : <Navigate to="/" />;
+}
+
 function AppRoutes() {
     return (
         <div className="app-container">
@@ -30,7 +37,7 @@ function AppRoutes() {
                     <Route path="/watch/:id" element={<ProtectedRoute><Watch /></ProtectedRoute>} />
                     <Route path="/series/:id" element={<ProtectedRoute><SeriesPage /></ProtectedRoute>} />
                     <Route path="/flashcards" element={<ProtectedRoute><Flashcards /></ProtectedRoute>} />
-                    <Route path="/admin" element={<Admin />} />
+                    <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
                 </Routes>
             </main>
         </div>

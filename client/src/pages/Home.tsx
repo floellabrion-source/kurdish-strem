@@ -44,6 +44,7 @@ export default function Home({ filter }: { filter?: 'movie' | 'series' }) {
 
     const getLink = (movie: Movie) =>
         movie.type === 'series' ? `/series/${movie.id}` : `/watch/${movie.id}`;
+    const getPoster = (movie: Movie) => movie.posterCloudUrl || movie.posterUrl;
 
     return (
         <div className="home">
@@ -63,7 +64,7 @@ export default function Home({ filter }: { filter?: 'movie' | 'series' }) {
 
             {featured && !loading && (
                 <div className="hero-carousel">
-                    <div className="hero" style={{ backgroundImage: featured.posterUrl ? `url(${featured.posterUrl})` : 'linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%)' }}>
+                    <div className="hero" style={{ backgroundImage: getPoster(featured) ? `url(${getPoster(featured)})` : 'linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%)' }}>
                         <div className="hero-overlay" />
                         <div className="hero-content animate-fade">
                             <h1 className="hero-title">{featured.title}</h1>
@@ -85,7 +86,7 @@ export default function Home({ filter }: { filter?: 'movie' | 'series' }) {
                         </div>
                     </div>
                     {secondary && (
-                        <Link to={getLink(secondary)} className="hero-secondary" style={{ backgroundImage: secondary.posterUrl ? `url(${secondary.posterUrl})` : 'none' }}>
+                        <Link to={getLink(secondary)} className="hero-secondary" style={{ backgroundImage: getPoster(secondary) ? `url(${getPoster(secondary)})` : 'none' }}>
                              <div className="hero-overlay" style={{ background: 'linear-gradient(to top, rgba(9, 9, 11, 0.9) 0%, transparent 50%)' }} />
                         </Link>
                     )}
@@ -125,10 +126,10 @@ export default function Home({ filter }: { filter?: 'movie' | 'series' }) {
                                     
                                     return (
                                         <Link to={link || "#"} key={key} className="history-card">
-                                            {m && m.posterUrl && <div className="history-bg" style={{ backgroundImage: `url(${m.posterUrl})`}}></div>}
+                                            {m && getPoster(m) && <div className="history-bg" style={{ backgroundImage: `url(${getPoster(m)})`}}></div>}
                                             <div className="history-card-inner">
-                                                {m && m.posterUrl ? (
-                                                    <img src={m.posterUrl} alt="" style={{width: '100px', height: '65px', borderRadius: '8px', objectFit: 'cover'}} />
+                                                {m && getPoster(m) ? (
+                                                    <img src={getPoster(m)} alt="" style={{width: '100px', height: '65px', borderRadius: '8px', objectFit: 'cover'}} />
                                                 ) : (
                                                     <div style={{width: '100px', height: '65px', borderRadius: '8px', background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
                                                         <Film size={20} color="#64748b" />
@@ -177,8 +178,8 @@ export default function Home({ filter }: { filter?: 'movie' | 'series' }) {
                     <div className="movies-grid animate-fade">
                         {filtered.map(movie => (
                             <Link to={getLink(movie)} key={movie.id} className="movie-card">
-                                {movie.posterUrl ? (
-                                    <img src={movie.posterUrl} alt={movie.title} className="card-poster" loading="lazy" />
+                                {getPoster(movie) ? (
+                                    <img src={getPoster(movie)} alt={movie.title} className="card-poster" loading="lazy" />
                                 ) : (
                                     <div className="card-poster" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1a1a24' }}>
                                         <Film size={32} color="#475569" />

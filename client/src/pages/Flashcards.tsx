@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Plus, X, Trash2, Edit2, Play, CreditCard, Save, RotateCcw, Frown, Smile, CheckSquare, Sparkles, Loader2 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import './Flashcards.css';
 
 interface Card {
@@ -11,9 +13,12 @@ interface Card {
     nextReview?: number;
 }
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+
 export default function Flashcards() {
     const [cards, setCards] = useState<Card[]>([]);
     const [view, setView] = useState<'manage' | 'practice'>('manage');
+    const { user, syncProgress } = useAuth();
     
     // Manage state
     const [frontText, setFrontText] = useState('');
@@ -26,8 +31,6 @@ export default function Flashcards() {
     const [isAiLoading, setIsAiLoading] = useState(false);
     const [aiVariations, setAiVariations] = useState<{front: string, back: string}[]>([]);
 
-    const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_KEY;
-
     const generateVariations = async (card: Card) => {
         setAiVarTarget(card);
         setAiVarModalOpen(true);
@@ -35,22 +38,10 @@ export default function Flashcards() {
         setAiVariations([]);
 
         try {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${GEMINI_API_KEY}`;
-            const res = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: `Create 3 simple and practical English sentences that use the word/phrase "${card.front}". Provide the Kurdish Sorani translation for each. WARNING: You MUST use the Arabic alphabet for the Kurdish translation. Do NOT use Latin letters for Kurdish. Return strictly a JSON array of objects in this exact format, nothing else: [{"front": "English Sentence", "back": "Kurdish Translation"}]` }] }],
-                    safetySettings: [
-                        { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" },
-                        { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
-                        { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_ONLY_HIGH" },
-                        { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_ONLY_HIGH" }
-                    ]
-                })
+            const res = await axios.post('/api/ai/generate', {
+                contents: [{ parts: [{ text: `Create 3 simple and practical English sentences that use the word/phrase "${card.front}". Provide the Kurdish Sorani translation for each. WARNING: You MUST use the Arabic alphabet for the Kurdish translation. Do NOT use Latin letters for Kurdish. Return strictly a JSON array of objects in this exact format, nothing else: [{"front": "English Sentence", "back": "Kurdish Translation"}]` }] }]
             });
-            const data = await res.json();
-            let rawText = data.candidates[0].content.parts[0].text;
+            let rawText = res.data?.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
             rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
             const parsed = JSON.parse(rawText);
             
@@ -106,6 +97,9 @@ export default function Flashcards() {
     const saveCards = (newCards: Card[]) => {
         setCards(newCards);
         localStorage.setItem('kurdish_stream_flashcards', JSON.stringify(newCards));
+        if (user) {
+            syncProgress({ flashcards: newCards });
+        }
     };
 
     const handleSave = () => {
