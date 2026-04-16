@@ -208,6 +208,18 @@ export default function Admin() {
         catch { toast('کێشەیەک ڕووی دا', 'error'); }
     };
 
+    const saveMovieVideoUrl = async (movieId: string, url: string) => {
+        const m = movies.find(x => x.id === movieId);
+        if (!m) return;
+        const updated = JSON.parse(JSON.stringify(m));
+        updated.videoUrl = url;
+        try {
+            await axios.put(`/api/admin/movies/${movieId}`, updated);
+            toast('لینکی ڤیدیۆ پاشەکەوت کرا ✓');
+            load();
+        } catch { toast('کێشەیەک ڕووی دا', 'error'); }
+    };
+
     const saveEpVideoUrl = async (movieId: string, seasonNum: number, epId: string, url: string) => {
         const m = movies.find(x => x.id === movieId);
         if (!m) return;
@@ -400,6 +412,13 @@ export default function Admin() {
                                                 : <Upload size={22} />}
                                         </div>
                                         <div className="ac-upload-label">Cloud R2</div>
+                                    </div>
+
+                                    <div className={`ac-upload-card ${movie.videoUrl ? 'done' : ''}`} onClick={() => { const u = window.prompt('URL:', movie.videoUrl || ''); if(u) saveMovieVideoUrl(movie.id, u); }}>
+                                        <div className="ac-upload-icon-wrap">
+                                            <LinkIcon size={22} />
+                                        </div>
+                                        <div className="ac-upload-label">Link 🔗</div>
                                     </div>
                                     
                                     <div className={`ac-upload-card ${movie.originalSrt ? 'done' : ''}`} onClick={() => refs.origSrt.current[movie.id]?.click()}>
