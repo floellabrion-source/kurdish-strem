@@ -194,7 +194,13 @@ export default function Watch() {
 
         try {
             const res = await postAiWithRetry({
-                contents: [{ parts: [{ text: `You are a professional English teacher for Kurdish speakers. Briefly explain the grammar, context, and vocabulary of this English sentence in very clear Kurdish Sorani (کوردی سۆرانی). Format the response nicely using markdown lists and bold text. WARNING: You MUST use ONLY the Arabic alphabet for Kurdish texts. Never use Latin/Hawar letters (like ê, û, î, ş, ç) for Kurdish. Use correct Right-To-Left formatting.\n\nSentence: "${text}"` }] }]
+                contents: [{ parts: [{ text: `You are an expert English-to-Kurdish translator and teacher. The user will provide a sentence from a movie. 
+Task:
+1. Provide the exact meaning in Kurdish Sorani (کوردی سۆرانی).
+2. Briefly explain the context or grammar.
+Do NOT use Markdown headers (#) or bold asterisks (**). Use emojis like 📌 for Meaning and 💡 for Explanation. Keep it very short, clean, and beautiful. MUST use Arabic alphabet for Kurdish.
+
+Sentence: "${text}"` }] }]
             });
             const expl = res.data?.candidates?.[0]?.content?.parts?.[0]?.text || 'وەڵامێک نەهات.';
             setAiExplanation(expl);
@@ -736,7 +742,16 @@ export default function Watch() {
                             </div>
                         ) : (
                             <div className="ai-result" dir="rtl">
-                                {aiExplanation.split('\n').map((line, i) => <p key={i}>{line}</p>)}
+                                {aiExplanation.replace(/[\#\*]/g, '').split('\n').filter(l => l.trim()).map((line, i) => (
+                                    <p key={i} style={{ 
+                                        padding: '10px', 
+                                        background: 'rgba(255,255,255,0.03)', 
+                                        borderRadius: '8px',
+                                        marginBottom: '8px'
+                                    }}>
+                                        {line}
+                                    </p>
+                                ))}
                             </div>
                         )}
                     </div>
