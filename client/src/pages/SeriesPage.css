@@ -135,9 +135,9 @@
 
 .season-tabs {
     display: flex;
-    gap: 4px;
+    gap: 12px;
     flex-wrap: wrap;
-    padding-bottom: 0;
+    padding-bottom: 16px;
 }
 
 .season-tab {
@@ -145,43 +145,41 @@
     align-items: center;
     gap: 8px;
     padding: 10px 22px;
-    border-radius: 12px 12px 0 0;
-    border: 1px solid transparent;
-    border-bottom: none;
-    background: none;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.03);
     color: var(--text3);
     font-family: var(--font);
     font-size: 14px;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.2s;
-    position: relative;
-    bottom: -1px;
 }
 
 .season-tab:hover {
-    color: var(--text2);
-    background: rgba(255, 255, 255, 0.04);
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
 }
 
 .season-tab.active {
-    color: var(--text);
-    background: var(--bg2);
-    border-color: var(--border);
-    border-bottom-color: var(--bg2);
+    color: white;
+    background: var(--accent);
+    border-color: var(--accent);
+    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
 }
 
 .ep-count {
     font-size: 10px;
-    background: var(--bg3);
+    background: rgba(255, 255, 255, 0.1);
     padding: 2px 8px;
     border-radius: 100px;
-    color: var(--text3);
+    color: var(--text2);
     font-weight: 600;
 }
 
 .season-tab.active .ep-count {
-    background: var(--accent);
+    background: rgba(255, 255, 255, 0.25);
     color: white;
 }
 
@@ -361,5 +359,44 @@
 @keyframes spin {
     to {
         transform: rotate(360deg);
+    }
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .series-hero {
+        min-height: 55vh;
+    }
+    
+    .series-hero-content {
+        padding: 0 20px 40px;
+    }
+
+    .series-title {
+        font-size: 32px;
+    }
+
+    .series-content {
+        padding: 0 20px 40px;
+    }
+
+    .episodes-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .season-tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 12px;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .season-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    .season-tab {
+        flex-shrink: 0;
     }
 }
