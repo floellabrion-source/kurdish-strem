@@ -19,6 +19,7 @@ export default function Admin() {
     const [editMovie, setEditMovie] = useState<Movie | null>(null);
     const [toasts, setToasts] = useState<Toast[]>([]);
     const [uploading, setUploading] = useState<Record<string, boolean>>({});
+    const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
     const [expandedSeries, setExpandedSeries] = useState<Record<string, boolean>>({});
 
     const [sensitiveTarget, setSensitiveTarget] = useState<{ movieId: string, seasonNum?: number, episodeId?: string } | null>(null);
@@ -127,21 +128,41 @@ export default function Admin() {
     const doUpload = async (movieId: string, file: File, type: string, extra?: { season?: number; episode?: number; srtType?: string }) => {
         const key = `${movieId}-${type}-${extra?.season || 0}-${extra?.episode || 0}`;
         setUploading(u => ({ ...u, [key]: true }));
+        setUploadProgress(p => ({ ...p, [key]: 0 }));
+        
         const fd = new FormData();
+        const config = {
+            onUploadProgress: (progressEvent: any) => {
+                const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                setUploadProgress(p => ({ ...p, [key]: percentCompleted }));
+            }
+        };
+
         try {
-            if (type === 'video') { fd.append('video', file); await axios.post(`/api/admin/movies/${movieId}/video`, fd); toast('ڤیدیۆکە بارکرا ✓'); }
-            else if (type === 'poster') { fd.append('poster', file); await axios.post(`/api/admin/movies/${movieId}/poster`, fd); toast('وێنەی پۆستەر بارکرا ✓'); }
-            else if (type === 'srt') { fd.append('srt', file); await axios.post(`/api/admin/movies/${movieId}/srt/${extra?.srtType}`, fd); toast(`SRT ${extra?.srtType === 'original' ? 'ئەسڵی' : 'وەرگێڕدراو'} بارکرا ✓`); }
-            else if (type === 'ep-video') { fd.append('video', file); await axios.post(`/api/admin/movies/${movieId}/seasons/${extra!.season}/episodes/${extra!.episode}/video`, fd); toast(`ڤیدیۆی ئالقەی ${extra!.episode} بارکرا ✓`); }
-            else if (type === 'ep-srt') { fd.append('srt', file); await axios.post(`/api/admin/movies/${movieId}/seasons/${extra!.season}/episodes/${extra!.episode}/srt/${extra!.srtType}`, fd); toast(`SRT ئالقەی ${extra!.episode} بارکرا ✓`); }
+            if (type === 'video') { fd.append('video', file); await axios.post(`/api/admin/movies/${movieId}/video`, fd, config); toast('ڤیدیۆکە بارکرا ✓'); }
+            else if (type === 'poster') { fd.append('poster', file); await axios.post(`/api/admin/movies/${movieId}/poster`, fd, config); toast('وێنەی پۆستەر بارکرا ✓'); }
+            else if (type === 'srt') { fd.append('srt', file); await axios.post(`/api/admin/movies/${movieId}/srt/${extra?.srtType}`, fd, config); toast(`SRT ${extra?.srtType === 'original' ? 'ئەسڵی' : 'وەرگێڕدراو'} بارکرا ✓`); }
+            else if (type === 'ep-video') { fd.append('video', file); await axios.post(`/api/admin/movies/${movieId}/seasons/${extra!.season}/episodes/${extra!.episode}/video`, fd, config); toast(`ڤیدیۆی ئالقەی ${extra!.episode} بارکرا ✓`); }
+            else if (type === 'ep-srt') { fd.append('srt', file); await axios.post(`/api/admin/movies/${movieId}/seasons/${extra!.season}/episodes/${extra!.episode}/srt/${extra!.srtType}`, fd, config); toast(`SRT ئالقەی ${extra!.episode} بارکرا ✓`); }
             load();
         } catch { toast('بارکردن سەرکەوتوو نەبوو', 'error'); }
-        finally { setUploading(u => ({ ...u, [key]: false })); }
+        finally { 
+            setUploading(u => ({ ...u, [key]: false }));
+            setUploadProgress(p => ({ ...p, [key]: 0 }));
+        }
     };
 
     const doR2Upload = async (movieId: string, file: File, target: 'video' | 'poster', extra?: { season?: number; episodeId?: string; episodeNum?: number }) => {
         const key = `${movieId}-${target}-${extra?.episodeId || 'main'}`;
         setUploading(u => ({ ...u, [key]: true }));
+        setUploadProgress(p => ({ ...p, [key]: 0 }));
+
+        const config = {
+            onUploadProgress: (progressEvent: any) => {
+                const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                setUploadProgress(p => ({ ...p, [key]: percentCompleted }));
+            }
+        };
 
         try {
             const fd = new FormData();
@@ -151,7 +172,7 @@ export default function Admin() {
             if (extra?.season !== undefined) fd.append('season', String(extra.season));
             if (extra?.episodeId) fd.append('episodeId', extra.episodeId);
 
-            await axios.post('/api/admin/r2/upload', fd);
+            await axios.post('/api/admin/r2/upload', fd, config);
             toast(`فایلەکە بە سەرکەوتوویی بارکرا ☁️`);
             load();
         } catch (err: any) {
@@ -160,6 +181,7 @@ export default function Admin() {
             toast(`هەڵە: ${errMsg}`, 'error');
         } finally {
             setUploading(u => ({ ...u, [key]: false }));
+            setUploadProgress(p => ({ ...p, [key]: 0 }));
         }
     };
 
@@ -357,12 +379,26 @@ export default function Admin() {
                                 <div className="ac-uploads">
                                     <div className="ac-upload-card" onClick={() => refs.video.current[movie.id]?.click()}>
                                         <input type="file" className="hidden-input" ref={el => { refs.video.current[movie.id] = el; }} onChange={e => e.target.files?.[0] && doUpload(movie.id, e.target.files[0], 'video')} />
-                                        <div className="ac-upload-icon-wrap">{uploading[`${movie.id}-video-0-0`] ? <Loader2 className="spinning" /> : <Video size={22} />}</div>
+                                        <div className="ac-upload-icon-wrap">
+                                            {uploading[`${movie.id}-video-0-0`] ? 
+                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px' }}>
+                                                    <Loader2 className="spinning" />
+                                                    <span style={{ fontSize: '12px' }}>{uploadProgress[`${movie.id}-video-0-0`] || 0}%</span>
+                                                </div> 
+                                                : <Video size={22} />}
+                                        </div>
                                         <div className="ac-upload-label">Server</div>
                                     </div>
                                     <div className="ac-upload-card cloud-upload" onClick={() => refs.r2Video.current[movie.id]?.click()}>
                                         <input type="file" className="hidden-input" ref={el => { refs.r2Video.current[movie.id] = el; }} onChange={e => e.target.files?.[0] && doR2Upload(movie.id, e.target.files[0], 'video')} />
-                                        <div className="ac-upload-icon-wrap">{uploading[`${movie.id}-video-main`] ? <Loader2 className="spinning" /> : <Upload size={22} />}</div>
+                                        <div className="ac-upload-icon-wrap">
+                                            {uploading[`${movie.id}-video-main`] ? 
+                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px' }}>
+                                                    <Loader2 className="spinning" />
+                                                    <span style={{ fontSize: '12px' }}>{uploadProgress[`${movie.id}-video-main`] || 0}%</span>
+                                                </div>
+                                                : <Upload size={22} />}
+                                        </div>
                                         <div className="ac-upload-label">Cloud R2</div>
                                     </div>
                                 </div>
@@ -387,6 +423,7 @@ export default function Admin() {
                                             onEpVideoUrl={(epId: string, url: string) => saveEpVideoUrl(movie.id, season.number, epId, url)}
                                             onR2Upload={(n: number, f: File, id: string) => doR2Upload(movie.id, f, 'video', { season: season.number, episodeId: id })}
                                             uploading={uploading}
+                                            uploadProgress={uploadProgress}
                                             epVideoRef={refs.epVideo}
                                             epOrigSrtRef={refs.epOrigSrt}
                                             epTransSrtRef={refs.epTransSrt}
@@ -403,7 +440,7 @@ export default function Admin() {
     );
 }
 
-function SeasonPanel({ season, movieId, onAddEpisode, onBulkAdd, onEpVideo, onEpSrt, onSensitive, onEpVideoUrl, onR2Upload, uploading, epVideoRef, epOrigSrtRef, epTransSrtRef, r2EpVideoRef }: any) {
+function SeasonPanel({ season, movieId, onAddEpisode, onBulkAdd, onEpVideo, onEpSrt, onSensitive, onEpVideoUrl, onR2Upload, uploading, uploadProgress, epVideoRef, epOrigSrtRef, epTransSrtRef, r2EpVideoRef }: any) {
     const [open, setOpen] = useState(true);
     const [bulkCount, setBulkCount] = useState('');
 
@@ -425,10 +462,24 @@ function SeasonPanel({ season, movieId, onAddEpisode, onBulkAdd, onEpVideo, onEp
                                 <div className="ep-grid-title">{ep.number}. {ep.title}</div>
                                 <div className="ep-grid-btns">
                                     <input type="file" className="hidden-input" ref={el => { epVideoRef.current[ep.id] = el; }} onChange={e => e.target.files?.[0] && onEpVideo(ep.number, e.target.files[0])} />
-                                    <button className={`ep-mini-btn ${ep.videoUrl ? 'done' : ''}`} onClick={() => epVideoRef.current[ep.id]?.click()}><Video size={11} /></button>
+                                    <button className={`ep-mini-btn ${ep.videoUrl ? 'done' : ''}`} onClick={() => epVideoRef.current[ep.id]?.click()}>
+                                        {uploading[`${movieId}-ep-video-${season.number}-${ep.number}`] ? (
+                                            <div style={{display: 'flex', gap: '4px', alignItems: 'center'}}>
+                                                <Loader2 size={11} className="spinning" />
+                                                <span style={{fontSize: '9px'}}>{uploadProgress[`${movieId}-ep-video-${season.number}-${ep.number}`] || 0}%</span>
+                                            </div>
+                                        ) : <Video size={11} />}
+                                    </button>
 
                                     <input type="file" className="hidden-input" ref={el => { r2EpVideoRef.current[ep.id] = el; }} onChange={e => e.target.files?.[0] && onR2Upload(ep.number, e.target.files[0], ep.id)} />
-                                    <button className={`ep-mini-btn cloud-upload-btn ${ep.videoUrl ? 'done' : ''}`} onClick={() => r2EpVideoRef.current[ep.id]?.click()}><Upload size={11} /></button>
+                                    <button className={`ep-mini-btn cloud-upload-btn ${ep.videoUrl ? 'done' : ''}`} onClick={() => r2EpVideoRef.current[ep.id]?.click()}>
+                                        {uploading[`${movieId}-video-${ep.id}`] ? (
+                                            <div style={{display: 'flex', gap: '4px', alignItems: 'center'}}>
+                                                <Loader2 size={11} className="spinning" />
+                                                <span style={{fontSize: '9px'}}>{uploadProgress[`${movieId}-video-${ep.id}`] || 0}%</span>
+                                            </div>
+                                        ) : <Upload size={11} />}
+                                    </button>
 
                                     <button className="ep-mini-btn" onClick={() => { const u = window.prompt('URL:', ep.videoUrl || ''); if(u) onEpVideoUrl(ep.id, u); }}><LinkIcon size={11} /></button>
 
