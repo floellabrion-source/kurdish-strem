@@ -194,12 +194,18 @@ export default function Watch() {
 
         try {
             const res = await postAiWithRetry({
-                contents: [{ parts: [{ text: `You are an expert English-to-Kurdish translator and teacher. The user will provide a sentence from a movie. 
+                contents: [{ parts: [{ text: `You are an expert English-to-Kurdish translator and grammar teacher. Analyze this sentence for a Kurdish student.
 Task:
-1. Provide the exact meaning in Kurdish Sorani (کوردی سۆرانی).
-2. Briefly explain the context or grammar IN KURDISH ONLY.
-CRITICAL RULE: Your ENTIRE response (except for the original English words you are explaining) MUST be written in Kurdish Sorani using the Arabic alphabet. Do not write the explanation in English!
-Do NOT use Markdown headers (#) or bold asterisks (**). Use emojis like 📌 for Meaning and 💡 for Explanation. Keep it very short, clean, and beautiful.
+1. Exact Meaning (مانای ڕستەکە بە کوردی).
+2. Word-by-Word Translation (شیکردنەوەی وشە بە وشە).
+3. Grammar/Context (ڕێزمان و مەبەست).
+
+Format exactly like this using emojis:
+📌 مانای ڕستەکە: (Translation here)
+📝 وشە بە وشە: (Word1: Meaning1, Word2: Meaning2, ...)
+💡 ڕێزمان و مەبەست: (Detailed grammar explanation here)
+
+CRITICAL RULE: The entire explanation MUST be in Kurdish Sorani using the Arabic alphabet. Do not use Markdown formatting symbols like # or **.
 
 Sentence: "${text}"` }] }]
             });
