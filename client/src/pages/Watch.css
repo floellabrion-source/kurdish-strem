@@ -869,6 +869,16 @@ kbd {
     margin-bottom: 12px;
 }
 
+.ai-result p, .ai-result li, .ai-result h1, .ai-result h2, .ai-result h3 {
+    text-align: right;
+    direction: rtl;
+}
+
+.ai-result strong {
+    color: #c4b5fd;
+    font-weight: 900;
+}
+
 .practice-close {
     position: absolute;
     top: 14px;

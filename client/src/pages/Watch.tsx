@@ -194,7 +194,7 @@ export default function Watch() {
 
         try {
             const res = await postAiWithRetry({
-                contents: [{ parts: [{ text: `You are a professional English teacher for Kurdish speakers. Briefly explain the grammar, context, and vocabulary of this English sentence in very clear Kurdish Sorani (کوردی سۆرانی). Format the response nicely. WARNING: You MUST use ONLY the Arabic alphabet for Kurdish texts. Never use Latin/Hawar letters (like ê, û, î, ş, ç) for Kurdish. \n\nSentence: "${text}"` }] }]
+                contents: [{ parts: [{ text: `You are a professional English teacher for Kurdish speakers. Briefly explain the grammar, context, and vocabulary of this English sentence in very clear Kurdish Sorani (کوردی سۆرانی). Format the response nicely using markdown lists and bold text. WARNING: You MUST use ONLY the Arabic alphabet for Kurdish texts. Never use Latin/Hawar letters (like ê, û, î, ş, ç) for Kurdish. Use correct Right-To-Left formatting.\n\nSentence: "${text}"` }] }]
             });
             const expl = res.data?.candidates?.[0]?.content?.parts?.[0]?.text || 'وەڵامێک نەهات.';
             setAiExplanation(expl);
@@ -229,7 +229,7 @@ export default function Watch() {
 
         try {
             const res = await postAiWithRetry({
-                contents: [{ parts: [{ text: `You are an English language pronunciation coach. The user tried to say: "${target}". However, the speech recognition heard them say: "${spoken}". Briefly explain in Kurdish Sorani (کوردی سۆرانی) what their mistake was and how to pronounce the misunderstood words correctly. If they were very close, encourage them. WARNING: You MUST write the Kurdish explanation in the Arabic alphabet only. Never use Latin letters (like ê, û, î, ş) for Kurdish words!` }] }]
+                contents: [{ parts: [{ text: `You are an English language pronunciation coach. The user tried to say: "${target}". However, the speech recognition heard them say: "${spoken}". Briefly explain in Kurdish Sorani (کوردی سۆرانی) what their mistake was and how to pronounce the misunderstood words correctly. If they were very close, encourage them. WARNING: You MUST write the Kurdish explanation in the Arabic alphabet only. Never use Latin letters (like ê, û, î, ş) for Kurdish words! Ensure proper Right-To-Left formatting for the Kurdish text.` }] }]
             });
             const expl = res.data?.candidates?.[0]?.content?.parts?.[0]?.text || 'وەڵامێک نەهات.';
             setAiPronunciationFeedback(expl);
