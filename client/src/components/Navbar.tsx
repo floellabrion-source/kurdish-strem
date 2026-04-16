@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Play, Home as HomeIcon, Film, Tv, User, Search, Shield, Moon, Sun, Monitor, Menu } from 'lucide-react';
+import { Play, Home as HomeIcon, Film, Tv, User, Search, Shield, Moon, Sun, Monitor, Menu, BookOpen } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import './Navbar.css';
@@ -74,14 +74,16 @@ export default function Navbar() {
                                 <Tv size={20} /><span>{t('series')}</span>
                             </Link>
                             <Link to="/flashcards" className={`mobile-drawer-item ${location.pathname === '/flashcards' ? 'active' : ''}`}>
-                                <Search size={20} /><span>{t('flashcards')}</span>
+                                <BookOpen size={20} /><span>{t('flashcards')}</span>
                             </Link>
                             <Link to="/profile" className={`mobile-drawer-item ${location.pathname === '/profile' ? 'active' : ''}`}>
                                 <User size={20} /><span>{t('account')}</span>
                             </Link>
-                            <Link to="/admin" className={`mobile-drawer-item ${location.pathname === '/admin' ? 'active' : ''}`}>
-                                <Shield size={20} /><span>{t('admin')}</span>
-                            </Link>
+                            {user?.role === 'admin' && (
+                                <Link to="/admin" className={`mobile-drawer-item ${location.pathname === '/admin' ? 'active' : ''}`}>
+                                    <Shield size={20} /><span>{t('admin')}</span>
+                                </Link>
+                            )}
                         </nav>
                         <div className="mobile-drawer-footer">
                             <div className="theme-toggles">
@@ -136,13 +138,15 @@ export default function Navbar() {
                             <span className="nav-text">{t('account')}</span>
                         </Link>
                         <Link to="/flashcards" className={`nav-item ${location.pathname === '/flashcards' ? 'active' : ''}`} data-tooltip={t('flashcards')}>
-                            <Search size={18} />
+                            <BookOpen size={18} />
                             <span className="nav-text">{t('flashcards')}</span>
                         </Link>
-                        <Link to="/admin" className={`nav-item ${location.pathname === '/admin' ? 'active' : ''}`} data-tooltip={t('admin')}>
-                            <Shield size={18} />
-                            <span className="nav-text">{t('admin')}</span>
-                        </Link>
+                        {user?.role === 'admin' && (
+                            <Link to="/admin" className={`nav-item ${location.pathname === '/admin' ? 'active' : ''}`} data-tooltip={t('admin')}>
+                                <Shield size={18} />
+                                <span className="nav-text">{t('admin')}</span>
+                            </Link>
+                        )}
                     </nav>
                 </div>
 
@@ -198,7 +202,7 @@ export default function Navbar() {
                         <Tv size={20} /><span>{t('series')}</span>
                     </Link>
                     <Link to="/flashcards" className={`mob-item ${location.pathname === '/flashcards' ? 'active' : ''}`}>
-                        <Search size={20} /><span>{t('flashcards')}</span>
+                        <BookOpen size={20} /><span>{t('flashcards')}</span>
                     </Link>
                     <Link to="/profile" className={`mob-item ${location.pathname === '/profile' ? 'active' : ''}`}>
                         <User size={20} /><span>{t('account')}</span>
