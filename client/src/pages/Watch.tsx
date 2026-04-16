@@ -197,8 +197,9 @@ export default function Watch() {
                 contents: [{ parts: [{ text: `You are an expert English-to-Kurdish translator and teacher. The user will provide a sentence from a movie. 
 Task:
 1. Provide the exact meaning in Kurdish Sorani (کوردی سۆرانی).
-2. Briefly explain the context or grammar.
-Do NOT use Markdown headers (#) or bold asterisks (**). Use emojis like 📌 for Meaning and 💡 for Explanation. Keep it very short, clean, and beautiful. MUST use Arabic alphabet for Kurdish.
+2. Briefly explain the context or grammar IN KURDISH ONLY.
+CRITICAL RULE: Your ENTIRE response (except for the original English words you are explaining) MUST be written in Kurdish Sorani using the Arabic alphabet. Do not write the explanation in English!
+Do NOT use Markdown headers (#) or bold asterisks (**). Use emojis like 📌 for Meaning and 💡 for Explanation. Keep it very short, clean, and beautiful.
 
 Sentence: "${text}"` }] }]
             });
