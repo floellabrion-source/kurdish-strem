@@ -401,6 +401,22 @@ export default function Admin() {
                                         </div>
                                         <div className="ac-upload-label">Cloud R2</div>
                                     </div>
+                                    
+                                    <div className={`ac-upload-card ${movie.originalSrt ? 'done' : ''}`} onClick={() => refs.origSrt.current[movie.id]?.click()}>
+                                        <input type="file" className="hidden-input" ref={el => { refs.origSrt.current[movie.id] = el; }} onChange={e => e.target.files?.[0] && doUpload(movie.id, e.target.files[0], 'srt', { srtType: 'original' })} />
+                                        <div className="ac-upload-icon-wrap">
+                                            {uploading[`${movie.id}-srt-0-0`] ? <Loader2 className="spinning" /> : <FileText size={22} />}
+                                        </div>
+                                        <div className="ac-upload-label">SRT ئەسڵی</div>
+                                    </div>
+                                    
+                                    <div className={`ac-upload-card ${movie.translatedSrt ? 'done' : ''}`} onClick={() => refs.transSrt.current[movie.id]?.click()}>
+                                        <input type="file" className="hidden-input" ref={el => { refs.transSrt.current[movie.id] = el; }} onChange={e => e.target.files?.[0] && doUpload(movie.id, e.target.files[0], 'srt', { srtType: 'translated' })} />
+                                        <div className="ac-upload-icon-wrap">
+                                            {uploading[`${movie.id}-srt-0-0`] ? <Loader2 className="spinning" /> : <Languages size={22} />}
+                                        </div>
+                                        <div className="ac-upload-label">SRT کوردی</div>
+                                    </div>
                                 </div>
                             )}
 
