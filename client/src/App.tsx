@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Home from './pages/Home';
 import Watch from './pages/Watch';
 import Admin from './pages/Admin';
@@ -24,10 +24,13 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 }
 
 function AppRoutes() {
+    const location = useLocation();
+    const isSidebarCollapsed = !location.pathname.startsWith('/admin');
+
     return (
         <div className="app-container">
             <Navbar />
-            <main className="main-content">
+            <main className={`main-content ${isSidebarCollapsed ? 'collapsed' : ''}`}>
                 <Routes>
                     <Route path="/auth" element={<Auth />} />
                     <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />

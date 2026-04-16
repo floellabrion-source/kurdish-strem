@@ -106,7 +106,7 @@ export default function Navbar() {
                 </div>
             )}
 
-            <aside className="sidebar">
+            <aside className={`sidebar ${location.pathname.startsWith('/admin') ? 'expanded' : ''}`} onMouseEnter={() => document.querySelector('.main-content')?.classList.remove('collapsed')} onMouseLeave={() => document.querySelector('.main-content')?.classList.add('collapsed')}>
                 <div className="sidebar-header">
                     <Link to="/" className="brand-logo">
                         <span className="brand-text">{t('kurdish_stream')} <span className="version">1.0.0</span></span>
@@ -119,29 +119,29 @@ export default function Navbar() {
                 <div className="sidebar-section">
                     <p className="sidebar-label">{t('menu')}</p>
                     <nav className="nav-menu">
-                        <Link to="/" className={`nav-item ${location.pathname === '/' ? 'active' : ''}`}>
-                            <span className="nav-text">{t('home')}</span>
+                        <Link to="/" className={`nav-item ${location.pathname === '/' ? 'active' : ''}`} data-tooltip={t('home')}>
                             <HomeIcon size={18} />
+                            <span className="nav-text">{t('home')}</span>
                         </Link>
-                        <Link to="/movies" className={`nav-item ${location.pathname === '/movies' ? 'active' : ''}`}>
-                            <span className="nav-text">{t('movies')}</span>
+                        <Link to="/movies" className={`nav-item ${location.pathname === '/movies' ? 'active' : ''}`} data-tooltip={t('movies')}>
                             <Film size={18} />
+                            <span className="nav-text">{t('movies')}</span>
                         </Link>
-                        <Link to="/series" className={`nav-item ${location.pathname === '/series' ? 'active' : ''}`}>
-                            <span className="nav-text">{t('series')}</span>
+                        <Link to="/series" className={`nav-item ${location.pathname === '/series' ? 'active' : ''}`} data-tooltip={t('series')}>
                             <Tv size={18} />
+                            <span className="nav-text">{t('series')}</span>
                         </Link>
-                        <Link to="/profile" className={`nav-item ${location.pathname === '/profile' ? 'active' : ''}`}>
-                            <span className="nav-text">{t('account')}</span>
+                        <Link to="/profile" className={`nav-item ${location.pathname === '/profile' ? 'active' : ''}`} data-tooltip={t('account')}>
                             <User size={18} />
+                            <span className="nav-text">{t('account')}</span>
                         </Link>
-                        <Link to="/flashcards" className={`nav-item ${location.pathname === '/flashcards' ? 'active' : ''}`}>
-                            <span className="nav-text">{t('flashcards')}</span>
+                        <Link to="/flashcards" className={`nav-item ${location.pathname === '/flashcards' ? 'active' : ''}`} data-tooltip={t('flashcards')}>
                             <Search size={18} />
+                            <span className="nav-text">{t('flashcards')}</span>
                         </Link>
-                        <Link to="/admin" className={`nav-item ${location.pathname === '/admin' ? 'active' : ''}`}>
-                            <span className="nav-text">{t('admin')}</span>
+                        <Link to="/admin" className={`nav-item ${location.pathname === '/admin' ? 'active' : ''}`} data-tooltip={t('admin')}>
                             <Shield size={18} />
+                            <span className="nav-text">{t('admin')}</span>
                         </Link>
                     </nav>
                 </div>
