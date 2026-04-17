@@ -1,20 +1,52 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { Play, Clock, Calendar, Star, Film, Search, Layers, User } from 'lucide-react';
+import { Play, Clock, Calendar, Star, Film, Search, Layers, User, Filter, Eye, ChevronDown } from 'lucide-react';
 import { Movie } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import './Home.css';
 
-export default function Home({ filter }: { filter?: 'movie' | 'series' }) {
+const GENRES_LIST = [
+    'تاوانکاری', 'دراما', 'زانستی خەیاڵی', 'هەستبزوێن', 'ئاکشن', 'سەرکێشی', 'خێزانی', 'خەیاڵی',
+    'موزیک', 'مێژوویی', 'ترسناک', 'دۆکیۆمێنتاری', 'کۆمێدی', 'ڕۆژئاوایی', 'وەرزشی', 'پزیشکی',
+    'کورتە', 'کۆمەڵایەتی', 'تراژیدی', 'سیخوڕی', 'کلاسیک', 'سامۆرای', 'بیۆگرافی', 'جەنگ'
+];
+
+const YEARS_LIST = [
+    '1950', '1951', '1952', '1953', '1954', '1955', '1956', '1957', '1958', '1959',
+    '1960', '1961', '1962', '1963', '1964', '1965', '1966', '1967', '1968', '1969',
+    '1970', '1971', '1972', '1973', '1974', '1975', '1976', '1977', '1978', '1979',
+    '1980', '1981', '1982', '1983', '1984', '1985', '1986', '1987', '1988', '1989',
+    '1990', '1991', '1992', '1993', '1994', '1995', '1996', '1997', '1998', '1999',
+    '2000', '2001', '2002', '2003', '2004', '2005', '2006', '2007', '2008', '2009',
+    '2010', '2011', '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019',
+    '2020', '2021', '2022', '2023', '2024', '2025'
+].reverse();
+
+export default function Home({ filter }: { filter?: 'movie' | 'series' | 'animation' }) {
     const [movies, setMovies] = useState<Movie[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [featured, setFeatured] = useState<Movie | null>(null);
     const [secondary, setSecondary] = useState<Movie | null>(null);
+    
+    // Filters state
+    const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+    const [selectedYear, setSelectedYear] = useState<string>('');
+    const [sortByViews, setSortByViews] = useState(false);
+    const [showGenreMenu, setShowGenreMenu] = useState(false);
+    const [showYearMenu, setShowYearMenu] = useState(false);
+    const filtersRef = useRef<HTMLDivElement>(null);
     const { user } = useAuth();
-    const { t } = useLanguage();
+    const { lang, t } = useLanguage();
+
+    const getDescription = (movie: Movie) => {
+        if (lang === 'ku' && movie.descriptionKu) return movie.descriptionKu;
+        if (lang === 'en' && movie.descriptionEn) return movie.descriptionEn;
+        if (lang === 'ar' && movie.descriptionAr) return movie.descriptionAr;
+        return movie.description || '';
+    };
 
     useEffect(() => {
         axios.get('/api/movies').then(res => {
@@ -37,10 +69,40 @@ export default function Home({ filter }: { filter?: 'movie' | 'series' }) {
         }).catch(() => setLoading(false));
     }, [filter]);
 
-    const filtered = movies.filter(m =>
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (filtersRef.current && !filtersRef.current.contains(event.target as Node)) {
+                setShowGenreMenu(false);
+                setShowYearMenu(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    let filtered = movies.filter(m =>
         m.title?.toLowerCase().includes(search.toLowerCase()) ||
         m.genre?.toLowerCase().includes(search.toLowerCase())
     );
+
+    if (selectedGenres.length > 0) {
+        filtered = filtered.filter(m => selectedGenres.some(g => m.genre?.includes(g)));
+    }
+
+    if (selectedYear) {
+        filtered = filtered.filter(m => m.year?.toString() === selectedYear);
+    }
+
+    if (sortByViews) {
+        // Just sort by views if we have them, else sort by ID or a dummy metric
+        filtered.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    }
+
+    const toggleGenre = (g: string) => {
+        setSelectedGenres(prev => 
+            prev.includes(g) ? prev.filter(x => x !== g) : [...prev, g]
+        );
+    };
 
     const getLink = (movie: Movie) =>
         movie.type === 'series' ? `/series/${movie.id}` : `/watch/${movie.id}`;
@@ -60,6 +122,49 @@ export default function Home({ filter }: { filter?: 'movie' | 'series' }) {
                         className="search-input" 
                     />
                 </div>
+                
+                {/* Filters Section */}
+                <div className="filters-right" ref={filtersRef}>
+                    <div className="filter-dropdown">
+                        <button className="filter-btn" onClick={() => { setShowGenreMenu(!showGenreMenu); setShowYearMenu(false); }}>
+                            <Filter size={16} /> چەشنەکان <ChevronDown size={14} />
+                        </button>
+                        {showGenreMenu && (
+                            <div className="filter-menu genre-menu">
+                                {GENRES_LIST.map(g => (
+                                    <label key={g} className="filter-option">
+                                        <input type="checkbox" checked={selectedGenres.includes(g)} onChange={() => toggleGenre(g)} />
+                                        <span>{g}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="filter-dropdown">
+                        <button className="filter-btn" onClick={() => { setShowYearMenu(!showYearMenu); setShowGenreMenu(false); }}>
+                            <Calendar size={16} /> ساڵ <ChevronDown size={14} />
+                        </button>
+                        {showYearMenu && (
+                            <div className="filter-menu year-menu">
+                                <label className="filter-option">
+                                    <input type="radio" name="year" checked={selectedYear === ''} onChange={() => setSelectedYear('')} />
+                                    <span>هەموو</span>
+                                </label>
+                                {YEARS_LIST.map(y => (
+                                    <label key={y} className="filter-option">
+                                        <input type="radio" name="year" checked={selectedYear === y} onChange={() => setSelectedYear(y)} />
+                                        <span>{y}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    <button className={`filter-btn ${sortByViews ? 'active' : ''}`} onClick={() => setSortByViews(!sortByViews)}>
+                        <Eye size={16} /> پڕبینەرترین
+                    </button>
+                </div>
             </div>
 
             {featured && !loading && (
@@ -71,14 +176,19 @@ export default function Home({ filter }: { filter?: 'movie' | 'series' }) {
                             <div className="hero-meta">
                                 {featured.type === 'series' ? 
                                     <span className="hero-badge"><Layers size={12} /> {t('series')}</span> : 
+                                 featured.type === 'animation' ? 
+                                    <span className="hero-badge"><Film size={12} /> {t('animation')}</span> :
                                     <span className="hero-badge"><Film size={12} /> {t('movies')}</span>
                                 }
                                 {featured.year && <span><Calendar size={14} />{featured.year}</span>}
                                 {featured.duration && <span><Clock size={14} />{featured.duration}</span>}
                                 {featured.genre && <span>{featured.genre}</span>}
-                                <span style={{ color: '#fbbf24', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'bold' }}>
-                                    <Star size={14} fill="currentColor" /> 7.3
-                                </span>
+                                {featured.language && <span>{featured.language.split(',')[0]}</span>}
+                                {featured.imdbRating && (
+                                    <span style={{ color: '#fbbf24', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'bold' }}>
+                                        <Star size={14} fill="currentColor" /> {featured.imdbRating}
+                                    </span>
+                                )}
                             </div>
                             <Link to={getLink(featured)} className="btn-play">
                                 <Play size={20} fill="currentColor" /> سەیرکردن
@@ -155,10 +265,84 @@ export default function Home({ filter }: { filter?: 'movie' | 'series' }) {
                     </div>
                 )}
 
-                <div className="section-header">
-                    <h2 className="section-title">
-                        {filter === 'movie' ? t('movies') : filter === 'series' ? t('series') : t('popular_movies')}
-                    </h2>
+                <div className="section-header-filters" ref={filtersRef}>
+                    <div className="filters-left">
+                        <div className="filter-dropdown">
+                            <button 
+                                className={`filter-btn ${selectedGenres.length > 0 ? 'active' : ''}`}
+                                onClick={() => { setShowGenreMenu(!showGenreMenu); setShowYearMenu(false); }}
+                            >
+                                <Filter size={16} /> چەشنەکان <ChevronDown size={14} />
+                            </button>
+                            {showGenreMenu && (
+                                <div className="filter-menu genre-menu">
+                                    <div className="filter-menu-header">چەشنەکان هەڵبژێرە</div>
+                                    <div className="genre-grid">
+                                        {GENRES_LIST.map(g => (
+                                            <label key={g} className="genre-label">
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={selectedGenres.includes(g)}
+                                                    onChange={() => toggleGenre(g)}
+                                                />
+                                                <span className="checkbox-custom"></span>
+                                                {g}
+                                            </label>
+                                        ))}
+                                    </div>
+                                    <div className="filter-actions">
+                                        <button className="clear-btn" onClick={() => setSelectedGenres([])}>سڕینەوە</button>
+                                        <button className="apply-btn" onClick={() => setShowGenreMenu(false)}>جێبەجێکردن</button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="filter-dropdown">
+                            <button 
+                                className={`filter-btn ${selectedYear ? 'active' : ''}`}
+                                onClick={() => { setShowYearMenu(!showYearMenu); setShowGenreMenu(false); }}
+                            >
+                                <Calendar size={16} /> ساڵ <ChevronDown size={14} />
+                            </button>
+                            {showYearMenu && (
+                                <div className="filter-menu year-menu">
+                                    <div className="filter-menu-header">ساڵ هەڵبژێرە</div>
+                                    <div className="year-grid">
+                                        <button 
+                                            className={`year-btn ${selectedYear === '' ? 'active' : ''}`}
+                                            onClick={() => { setSelectedYear(''); setShowYearMenu(false); }}
+                                        >
+                                            هەمووی
+                                        </button>
+                                        {YEARS_LIST.map(y => (
+                                            <button 
+                                                key={y} 
+                                                className={`year-btn ${selectedYear === y ? 'active' : ''}`}
+                                                onClick={() => { setSelectedYear(y); setShowYearMenu(false); }}
+                                            >
+                                                {y}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <button 
+                            className={`filter-btn ${sortByViews ? 'active' : ''}`}
+                            onClick={() => setSortByViews(!sortByViews)}
+                        >
+                            <Eye size={16} /> پڕبینەرترین
+                        </button>
+                    </div>
+
+                    <div className="filters-right">
+                        <span className="count-badge">{filtered.length}</span>
+                        <h2 className="section-title" style={{ margin: 0 }}>
+                            {filter === 'movie' ? t('movies') : filter === 'series' ? t('series') : filter === 'animation' ? t('animation') : t('popular_movies')}
+                        </h2>
+                    </div>
                 </div>
 
                 {loading ? (
@@ -186,7 +370,7 @@ export default function Home({ filter }: { filter?: 'movie' | 'series' }) {
                                     </div>
                                 )}
                                 <div className="movie-card-badges">
-                                    <div className="card-badge"><Star size={10} fill="#fbbf24" color="#fbbf24" /> 7.5</div>
+                                    {movie.imdbRating && <div className="card-badge"><Star size={10} fill="#fbbf24" color="#fbbf24" /> {movie.imdbRating}</div>}
                                     <div className="card-badge">{movie.year || '2025'}</div>
                                 </div>
                                 <div className="card-play-btn">

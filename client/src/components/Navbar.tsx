@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Play, Home as HomeIcon, Film, Tv, User, Search, Shield, Moon, Sun, Monitor, Menu, BookOpen } from 'lucide-react';
+import { Play, Home as HomeIcon, Film, Tv, User, Search, Shield, Moon, Sun, Monitor, Menu, BookOpen, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import './Navbar.css';
@@ -73,6 +73,9 @@ export default function Navbar() {
                             <Link to="/series" className={`mobile-drawer-item ${location.pathname === '/series' ? 'active' : ''}`}>
                                 <Tv size={20} /><span>{t('series')}</span>
                             </Link>
+                            <Link to="/animations" className={`mobile-drawer-item ${location.pathname === '/animations' ? 'active' : ''}`}>
+                                <Sparkles size={20} /><span>{t('animation')}</span>
+                            </Link>
                             <Link to="/flashcards" className={`mobile-drawer-item ${location.pathname === '/flashcards' ? 'active' : ''}`}>
                                 <BookOpen size={20} /><span>{t('flashcards')}</span>
                             </Link>
@@ -133,13 +136,17 @@ export default function Navbar() {
                             <Tv size={18} />
                             <span className="nav-text">{t('series')}</span>
                         </Link>
-                        <Link to="/profile" className={`nav-item ${location.pathname === '/profile' ? 'active' : ''}`} data-tooltip={t('account')}>
-                            <User size={18} />
-                            <span className="nav-text">{t('account')}</span>
+                        <Link to="/animations" className={`nav-item ${location.pathname === '/animations' ? 'active' : ''}`} data-tooltip={t('animation')}>
+                            <Sparkles size={18} />
+                            <span className="nav-text">{t('animation')}</span>
                         </Link>
                         <Link to="/flashcards" className={`nav-item ${location.pathname === '/flashcards' ? 'active' : ''}`} data-tooltip={t('flashcards')}>
                             <BookOpen size={18} />
                             <span className="nav-text">{t('flashcards')}</span>
+                        </Link>
+                        <Link to="/profile" className={`nav-item ${location.pathname === '/profile' ? 'active' : ''}`} data-tooltip={t('account')}>
+                            <User size={18} />
+                            <span className="nav-text">{t('account')}</span>
                         </Link>
                         {user?.role === 'admin' && (
                             <Link to="/admin" className={`nav-item ${location.pathname === '/admin' ? 'active' : ''}`} data-tooltip={t('admin')}>
@@ -200,6 +207,9 @@ export default function Navbar() {
                     </Link>
                     <Link to="/series" className={`mob-item ${location.pathname === '/series' ? 'active' : ''}`}>
                         <Tv size={20} /><span>{t('series')}</span>
+                    </Link>
+                    <Link to="/animations" className={`mob-item ${location.pathname === '/animations' ? 'active' : ''}`}>
+                        <Sparkles size={20} /><span>{t('animation')}</span>
                     </Link>
                     <Link to="/flashcards" className={`mob-item ${location.pathname === '/flashcards' ? 'active' : ''}`}>
                         <BookOpen size={20} /><span>{t('flashcards')}</span>
