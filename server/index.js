@@ -6,10 +6,12 @@ const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 const multer = require('multer');
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
-require('dotenv').config();
+const axios = require('axios');
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const OMDB_API_KEY = process.env.OMDB_API_KEY || 'e027208c'; // Fallback if .env fails
 const TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 const MOVIES_DIR = path.join(__dirname, '..', 'uploads', 'movies');
@@ -387,9 +389,117 @@ app.get('/api/poster/:id', (req, res) => {
     res.status(404).json({ error: 'No poster' });
 });
 
+// ======= OMDb API Endpoint =======
+
+async function translateText(text, targetLang) {
+    if (!text || text === 'N/A') return '';
+    try {
+        const res = await axios.get(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`);
+        if (res.data && res.data[0]) {
+            return res.data[0].map(x => x[0]).join('');
+        }
+    } catch(e) { console.error(`Translation error to ${targetLang}:`, e.message); }
+    return text;
+}
+
+app.get('/api/omdb-rating', requireAuth, requireAdmin, async (req, res) => {
+    const { title } = req.query;
+    if (!title) return res.status(400).json({ error: 'پێویستە ناوی فیلمەکە بنێریت' });
+    
+    // Remove the strict check for OMDB_API_KEY since we have a fallback key
+    // if (!OMDB_API_KEY) return res.status(500).json({ error: 'OMDB_API_KEY لەسەر سێرڤەر دانەنراوە' });
+
+    try {
+        // Handle potentially missing API key
+        const actualKey = OMDB_API_KEY && OMDB_API_KEY.trim() !== '' ? OMDB_API_KEY : 'e027208c';
+        
+        const url = `http://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=${actualKey}`;
+        console.log(`[OMDb API] Fetching: ${url.replace(actualKey, '***')}`);
+        
+        const response = await axios.get(url);
+        
+        if (response.data.Response === 'True') {
+            const imdbRating = parseFloat(response.data.imdbRating);
+            const data = response.data;
+            
+            let mappedType = data.Type === 'series' ? 'series' : 'movie';
+            if (data.Genre && data.Genre.includes('Animation')) mappedType = 'animation';
+
+            let seasonsData = [];
+            if (mappedType === 'series' && data.totalSeasons && !isNaN(parseInt(data.totalSeasons))) {
+                const totalS = parseInt(data.totalSeasons);
+                const limit = Math.min(totalS, 20); // Limit to max 20 seasons to avoid timeout
+                for (let i = 1; i <= limit; i++) {
+                    try {
+                        const sRes = await axios.get(`http://www.omdbapi.com/?t=${encodeURIComponent(title)}&Season=${i}&apikey=${actualKey}`);
+                        if (sRes.data.Response === 'True' && sRes.data.Episodes) {
+                            const episodes = sRes.data.Episodes.map(ep => ({
+                                id: uuidv4(),
+                                number: parseInt(ep.Episode) || 0,
+                                title: ep.Title !== 'N/A' ? ep.Title : `ئەڵقەی ${ep.Episode}`,
+                                duration: data.Runtime && data.Runtime !== 'N/A' ? data.Runtime : '',
+                                videoFile: null,
+                                videoUrl: null,
+                                originalSrt: null,
+                                translatedSrt: null,
+                                sensitiveScenes: []
+                            }));
+                            seasonsData.push({
+                                id: uuidv4(),
+                                number: i,
+                                title: `سیزنی ${i}`,
+                                episodes: episodes
+                            });
+                        }
+                    } catch(e) { console.error('OMDb Season Fetch Error:', e.message); }
+                }
+            }
+
+            const plotEn = data.Plot && data.Plot !== 'N/A' ? data.Plot : '';
+            let plotKu = '';
+            let plotAr = '';
+            try {
+                plotKu = await translateText(plotEn, 'ckb');
+            } catch(e) { console.error('Kurdish translation failed', e.message); }
+            
+            try {
+                plotAr = await translateText(plotEn, 'ar');
+            } catch(e) { console.error('Arabic translation failed', e.message); }
+
+            res.json({ 
+                imdbRating: isNaN(imdbRating) ? null : imdbRating,
+                plot: plotKu,
+                plotKu: plotKu,
+                plotEn: plotEn,
+                plotAr: plotAr,
+                genre: data.Genre && data.Genre !== 'N/A' ? data.Genre : '',
+                year: data.Year && data.Year !== 'N/A' ? parseInt(data.Year.substring(0, 4)) : new Date().getFullYear(),
+                runtime: data.Runtime && data.Runtime !== 'N/A' ? data.Runtime : '',
+                poster: data.Poster && data.Poster !== 'N/A' ? data.Poster : '',
+                type: mappedType,
+                seasons: seasonsData,
+                language: data.Language && data.Language !== 'N/A' ? data.Language : ''
+            });
+        } else {
+            res.status(404).json({ error: response.data.Error || 'فیلمەکە نەدۆزرایەوە لە OMDb' });
+        }
+    } catch (error) {
+        console.error('[OMDb API Error]:', error.message);
+        if (error.response) {
+            console.error('Response Data:', error.response.data);
+            console.error('Response Status:', error.response.status);
+            
+            if (error.response.status === 401) {
+                return res.status(401).json({ error: 'کێشە لە API Key هەیە (Unauthorized). دڵنیابە کلیلەکە ڕاستە و چالاککراوە.' });
+            }
+        }
+        res.status(500).json({ error: `کێشەیەک لە پەیوەندیکردن بە OMDb API ڕوویدا: ${error.message}` });
+    }
+});
+
 // ======= ADMIN Routes =======
 app.post('/api/admin/movies', requireAuth, requireAdmin, (req, res) => {
-    const { title, description, genre, year, duration, type } = req.body;
+    const { title, description, descriptionKu, descriptionEn, descriptionAr, language, genre, year, duration, type, imdbRating, posterUrl, seasons } = req.body;
     const id = uuidv4();
     fs.mkdirSync(path.join(MOVIES_DIR, id), { recursive: true });
 
@@ -397,19 +507,24 @@ app.post('/api/admin/movies', requireAuth, requireAdmin, (req, res) => {
     const newItem = {
         id,
         title: title || 'بێ ناو',
-        description: description || '',
+        description: description || descriptionKu || '',
+        descriptionKu: descriptionKu || '',
+        descriptionEn: descriptionEn || '',
+        descriptionAr: descriptionAr || '',
+        language: language || '',
         genre: genre || '',
         year: +year || new Date().getFullYear(),
         duration: duration || '',
-        posterUrl: '',
+        posterUrl: posterUrl || '',
         posterCloudUrl: null,
         videoFile: null,
         videoUrl: null,
         originalSrt: null,
         translatedSrt: null,
         type: type || 'movie',
-        seasons: type === 'series' ? [] : undefined,
-        createdAt: Date.now()
+        seasons: seasons && seasons.length > 0 ? seasons : (type === 'series' ? [] : undefined),
+        createdAt: Date.now(),
+        imdbRating: imdbRating || null
     };
     movies.push(newItem);
     writeMovies(movies);
