@@ -863,6 +863,16 @@ Sentence: "${text}"` }] }]
                 <button className="watch-back" onClick={backTo}>
                     <ArrowRight size={20} />
                     <span className="back-title">{episodeTitle || movie.title}</span>
+                    {movie.language && (
+                        <span style={{ color: '#a78bfa', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'bold', fontSize: '12px', marginLeft: '10px', background: 'rgba(167,139,250,0.1)', padding: '2px 8px', borderRadius: '10px' }}>
+                            <Languages size={14} /> {movie.language.split(',')[0]}
+                        </span>
+                    )}
+                    {movie.imdbRating && (
+                        <span style={{ color: '#fbbf24', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'bold', fontSize: '14px', marginLeft: '10px' }}>
+                            <Star size={14} fill="currentColor" /> {movie.imdbRating}
+                        </span>
+                    )}
                 </button>
                 <div className="sub-toggles">
                     <button className={`sub-toggle-btn ${showTranslated ? 'active' : ''}`} onClick={() => setShowTranslated(!showTranslated)}>

@@ -15,6 +15,7 @@ export const translations: Translations = {
     "home": { ku: "سەرەکی", en: "Home", ar: "الرئيسية" },
     "movies": { ku: "فیلمەکان", en: "Movies", ar: "أفلام" },
     "series": { ku: "زنجیرەکان", en: "Series", ar: "مسلسلات" },
+    "animation": { ku: "ئەنیمێشن", en: "Animation", ar: "رسوم متحركة" },
     "account": { ku: "هەژمار", en: "Account", ar: "حساب" },
     "flashcards": { ku: "فلاش کارت", en: "Flashcards", ar: "بطاقات تعليمية" },
     "admin": { ku: "ئەدمین", en: "Admin", ar: "المسؤول" },

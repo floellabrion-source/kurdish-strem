@@ -36,6 +36,7 @@ function AppRoutes() {
                     <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
                     <Route path="/movies" element={<ProtectedRoute><Home filter="movie" /></ProtectedRoute>} />
                     <Route path="/series" element={<ProtectedRoute><Home filter="series" /></ProtectedRoute>} />
+                    <Route path="/animations" element={<ProtectedRoute><Home filter="animation" /></ProtectedRoute>} />
                     <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                     <Route path="/watch/:id" element={<ProtectedRoute><Watch /></ProtectedRoute>} />
                     <Route path="/series/:id" element={<ProtectedRoute><SeriesPage /></ProtectedRoute>} />

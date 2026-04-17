@@ -1457,5 +1457,1569 @@
     "createdAt": 1774987608056,
     "posterCloudUrl": null,
     "videoUrl": null
+  },
+  {
+    "id": "c969b9e5-e638-4354-9637-3c24d2e29912",
+    "title": "Breaking Bad",
+    "description": "دد",
+    "genre": "ئاکشن, تاوانکاری, دراما",
+    "year": 2008,
+    "duration": "",
+    "posterUrl": "",
+    "posterCloudUrl": null,
+    "videoFile": null,
+    "videoUrl": null,
+    "originalSrt": null,
+    "translatedSrt": null,
+    "type": "series",
+    "seasons": [],
+    "createdAt": 1776459157285,
+    "imdbRating": "9.5"
+  },
+  {
+    "id": "263d0f20-f70d-457d-a342-ba397be78954",
+    "title": "Breaking Bad",
+    "description": "",
+    "genre": "",
+    "year": 2026,
+    "duration": "",
+    "posterUrl": "",
+    "posterCloudUrl": null,
+    "videoFile": null,
+    "videoUrl": null,
+    "originalSrt": null,
+    "translatedSrt": null,
+    "type": "movie",
+    "createdAt": 1776459213655,
+    "imdbRating": "9.5"
+  },
+  {
+    "id": "56a9bcc7-0bef-4133-9a77-91f0abacffa7",
+    "title": "Gods of Egypt",
+    "description": "Mortal hero Bek teams with the god Horus in an alliance against Set, the merciless god of darkness, who has usurped Egypt's throne, plunging the once peaceful and prosperous empire into chaos and conflict.",
+    "genre": "ئاکشن، سەرکێشی، دراما",
+    "year": 2016,
+    "duration": "127 min",
+    "posterUrl": "",
+    "posterCloudUrl": null,
+    "videoFile": null,
+    "videoUrl": null,
+    "originalSrt": null,
+    "translatedSrt": null,
+    "type": "movie",
+    "createdAt": 1776459618036,
+    "imdbRating": "5.4"
+  },
+  {
+    "id": "0126d3a0-9874-4adb-a562-45a5cb309c2f",
+    "title": "Breaking Bad",
+    "description": "A chemistry teacher diagnosed with inoperable lung cancer turns to manufacturing and selling methamphetamine with a former student to secure his family's future.",
+    "genre": "تاوانکاری، دراما، هەستبزوێن",
+    "year": 2008,
+    "duration": "49 min",
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BMzU5ZGYzNmQtMTdhYy00OGRiLTg0NmQtYjVjNzliZTg1ZGE4XkEyXkFqcGc@._V1_SX300.jpg",
+    "posterCloudUrl": null,
+    "videoFile": null,
+    "videoUrl": null,
+    "originalSrt": null,
+    "translatedSrt": null,
+    "type": "series",
+    "seasons": [
+      {
+        "id": "96de0b87-ab80-4633-a9b4-beac89d2b90a",
+        "number": 1,
+        "title": "سیزنی 1",
+        "episodes": [
+          {
+            "id": "6ff03694-c46d-4074-8688-e906613fe33a",
+            "number": 1,
+            "title": "Pilot",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "b6e451d3-5515-49a3-9564-7789d52fb267",
+            "number": 2,
+            "title": "Cat's in the Bag...",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "77d1353e-924e-43e6-84ab-865409c3b67c",
+            "number": 3,
+            "title": "...And the Bag's in the River",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "e0f1f0f9-dcfa-4436-af9b-5927e64e239e",
+            "number": 4,
+            "title": "Cancer Man",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "91e4da8c-8929-4fa1-824e-827e5b4d2f5f",
+            "number": 5,
+            "title": "Gray Matter",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "03e53f4f-c095-406d-a3ee-496c907f4f32",
+            "number": 6,
+            "title": "Crazy Handful of Nothin'",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "0a0652ab-d83d-458e-a824-f09a70af6674",
+            "number": 7,
+            "title": "A No-Rough-Stuff-Type Deal",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          }
+        ]
+      },
+      {
+        "id": "fe0ace04-7b2a-4bfe-8a74-6a23f81aafd7",
+        "number": 2,
+        "title": "سیزنی 2",
+        "episodes": [
+          {
+            "id": "15721509-e18c-42e5-8e8c-b42d13480382",
+            "number": 1,
+            "title": "Seven Thirty-Seven",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "ea9c12b1-8f9d-427e-a581-7695806d9c49",
+            "number": 2,
+            "title": "Grilled",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "6f083db6-65f7-49fa-80f9-050b3a85732a",
+            "number": 3,
+            "title": "Bit by a Dead Bee",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "1d081cc4-b907-40af-b27a-79f1a92fdb3c",
+            "number": 4,
+            "title": "Down",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "5ca9befb-9d37-40bd-8e63-079332cfdcc5",
+            "number": 5,
+            "title": "Breakage",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "312bb258-9d71-453b-98bc-25e93e8ca6ef",
+            "number": 6,
+            "title": "Peekaboo",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "ccdbec66-3908-4893-9831-68522c601cfd",
+            "number": 7,
+            "title": "Negro y Azul",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "95cf0f5c-6c6c-403f-b472-4e7d3cf4baf2",
+            "number": 8,
+            "title": "Better Call Saul",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "e9737b8a-4582-4b38-a7f5-8f5652a240dd",
+            "number": 9,
+            "title": "4 Days Out",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "1f578671-17b8-435d-9f20-aa75d4cfb2f7",
+            "number": 10,
+            "title": "Over",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "1ca8c57a-fa7e-457b-aaa6-e21fbec1af2a",
+            "number": 11,
+            "title": "Mandala",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "1d441f9e-5d3e-4fdf-90f8-d0b131800490",
+            "number": 12,
+            "title": "Phoenix",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "0c69a38a-6110-445d-aac2-f6fc943e3dd9",
+            "number": 13,
+            "title": "ABQ",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          }
+        ]
+      },
+      {
+        "id": "54fa893b-e797-4494-a4d8-c541ee592ec5",
+        "number": 3,
+        "title": "سیزنی 3",
+        "episodes": [
+          {
+            "id": "22599791-11cc-4534-b330-fe739c22e04f",
+            "number": 1,
+            "title": "No Más",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "e265a01e-a079-43a7-a8e7-1bcc7a26ba7b",
+            "number": 2,
+            "title": "Caballo sin Nombre",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "06cc91f8-9e69-4a36-a18f-87c38e6f3f4a",
+            "number": 3,
+            "title": "I.F.T.",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "bb47c41f-3e42-4952-ae2d-f5b892574c91",
+            "number": 4,
+            "title": "Green Light",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "d7d231a3-13c7-4b7d-af23-618712137684",
+            "number": 5,
+            "title": "Más",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "67139649-9dc2-4687-8566-7908392528ac",
+            "number": 6,
+            "title": "Sunset",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "a567f2cd-d382-40ce-8964-9fa8d60f6311",
+            "number": 7,
+            "title": "One Minute",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "fdf1abef-5c94-43dc-8e14-95b0bb0b9f8c",
+            "number": 8,
+            "title": "I See You",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "38844d86-453b-4a6d-bc3a-3374ce8c3dea",
+            "number": 9,
+            "title": "Kafkaesque",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "0843b57f-c1f4-461c-bb27-df1c73b68851",
+            "number": 10,
+            "title": "Fly",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "ac4d6902-f40a-484e-8b1a-6ae65bab1d23",
+            "number": 11,
+            "title": "Abiquiu",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "38206a15-f0c7-4cc2-86bc-1c551931d039",
+            "number": 12,
+            "title": "Half Measures",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "7f95517d-c4c8-450c-81e5-9f057a71af8a",
+            "number": 13,
+            "title": "Full Measure",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          }
+        ]
+      },
+      {
+        "id": "28dd5542-cc98-48a2-9cc7-21b76195433a",
+        "number": 4,
+        "title": "سیزنی 4",
+        "episodes": [
+          {
+            "id": "3f57426e-cf6c-4114-8a4d-6fe93af4492b",
+            "number": 1,
+            "title": "Box Cutter",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "511d208c-ff00-4541-9784-51ce1f5847eb",
+            "number": 2,
+            "title": "Thirty-Eight Snub",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "9026b185-5ad3-42fe-a027-a08feb4e5c8f",
+            "number": 3,
+            "title": "Open House",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "237c98cc-ec8a-428c-b575-439c6f549ef7",
+            "number": 4,
+            "title": "Bullet Points",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "590c25df-5e9d-4489-b5bc-c26bd6d0fc0f",
+            "number": 5,
+            "title": "Shotgun",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "4a2567d1-8e7a-49e2-944b-02685a0fbfe1",
+            "number": 6,
+            "title": "Cornered",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "d6c237b5-7c31-4d31-a696-4068a19ffd5a",
+            "number": 7,
+            "title": "Problem Dog",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "663b4c5a-42e5-4bb8-a6a6-11d97e13b915",
+            "number": 8,
+            "title": "Hermanos",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "9938a1c3-af5f-482e-b1d7-8fc7760c10a3",
+            "number": 9,
+            "title": "Bug",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "26c442e6-1df2-44f9-991a-0b59424ad456",
+            "number": 10,
+            "title": "Salud",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "f4f00813-75f8-4ea4-a17d-8d6ed81cf252",
+            "number": 11,
+            "title": "Crawl Space",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "0be7cfa4-ada1-4d0e-aeb9-14b3798140fa",
+            "number": 12,
+            "title": "End Times",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "d6723e22-7b06-4031-bfd0-6a24982cb650",
+            "number": 13,
+            "title": "Face Off",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          }
+        ]
+      },
+      {
+        "id": "310e25bc-c422-4c58-ab5d-13fbf4cf2d72",
+        "number": 5,
+        "title": "سیزنی 5",
+        "episodes": [
+          {
+            "id": "90fd615e-516c-4d6e-9602-55a51dd79821",
+            "number": 1,
+            "title": "Live Free or Die",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "0831372a-5652-4837-95d8-5e315e0702b6",
+            "number": 2,
+            "title": "Madrigal",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "fe82372b-01cc-483f-b4d3-397100e13c16",
+            "number": 3,
+            "title": "Hazard Pay",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "e46b17cf-af7a-4e23-8687-a7297dbae7f7",
+            "number": 4,
+            "title": "Fifty-One",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "49eaac5c-bed2-4700-aac7-7266fb8ab81e",
+            "number": 5,
+            "title": "Dead Freight",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "1edc4edd-16c7-4a06-b65d-6fbb14b9446f",
+            "number": 6,
+            "title": "Buyout",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "d2547ac1-fae3-40f9-90b9-946e7d11a35e",
+            "number": 7,
+            "title": "Say My Name",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "626c3a72-e2e8-4d69-9dce-302ab260bf9b",
+            "number": 8,
+            "title": "Gliding Over All",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "c7021056-20d9-49a4-8ec5-f8c201570ff3",
+            "number": 9,
+            "title": "Blood Money",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "a61cb59a-6284-49f9-94cd-685bc7fd96ef",
+            "number": 10,
+            "title": "Buried",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "eca4cff9-da37-4263-ac22-ed4c30b07977",
+            "number": 11,
+            "title": "Confessions",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "907b13e3-629b-4d68-a9e9-e2ed6fba0ea8",
+            "number": 12,
+            "title": "Rabid Dog",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "ae2814ed-2797-436e-9f5f-a7b861cab58f",
+            "number": 13,
+            "title": "To'hajiilee",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "26ee8036-8393-4ffc-ade0-c46fe7a63d96",
+            "number": 14,
+            "title": "Ozymandias",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "a70261d7-a844-4487-bf41-6e2f4bb194c5",
+            "number": 15,
+            "title": "Granite State",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "4910878a-46f4-4795-a07d-2f9f0b727ec9",
+            "number": 16,
+            "title": "Felina",
+            "duration": "49 min",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          }
+        ]
+      }
+    ],
+    "createdAt": 1776460236166,
+    "imdbRating": "9.5"
+  },
+  {
+    "id": "8c059d18-7de8-4cdf-a25b-a8f8061cd92f",
+    "title": "from",
+    "description": "From is set in a seemingly ordinary town with an extraordinary secret. The series follows the residents as they encounter unexplained phenomena that intensify with the onset of night. As everyday life is disrupted by mysterious fo...",
+    "genre": "دراما، ترسناک، نهێنی ئامێز",
+    "year": 2022,
+    "duration": "",
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BNDAwNDljNWEtNWE1Zi00YjFlLWEzM2UtY2E3ZTM1MTcxMTcyXkEyXkFqcGc@._V1_QL75_UX380_CR0,0,380,562_.jpg",
+    "posterCloudUrl": null,
+    "videoFile": null,
+    "videoUrl": null,
+    "originalSrt": null,
+    "translatedSrt": null,
+    "type": "series",
+    "seasons": [
+      {
+        "id": "5bbfabb1-4457-4b3c-8628-5f409fad6604",
+        "number": 1,
+        "title": "سیزنی 1",
+        "episodes": [
+          {
+            "id": "553d3d8f-b6d5-4a38-a37b-2ea43bc78dd0",
+            "number": 1,
+            "title": "Long Day's Journey Into Night",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "d889999c-59b1-41dc-8ea8-db78f712fa32",
+            "number": 2,
+            "title": "The Way Things Are Now",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "34dbd8b2-a694-440e-9c2e-b9111528e92c",
+            "number": 3,
+            "title": "Choosing Day",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "c51f89e0-a308-4e23-9330-fe3c2590980d",
+            "number": 4,
+            "title": "A Rock and a Farway",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "3eb5c76a-f8d1-454d-be9f-a049a6630e73",
+            "number": 5,
+            "title": "Silhouettes",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "c0e8fd6e-d982-4700-ad02-42f4ddc622d2",
+            "number": 6,
+            "title": "Book 74",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "631b5481-16f8-4406-ac9f-4573a29af60f",
+            "number": 7,
+            "title": "All Good Things...",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "4cca480e-5235-448f-869a-3c3ec12e06d2",
+            "number": 8,
+            "title": "Broken Windows, Open Doors",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "0b6dd368-4a4b-4a12-82b0-c5ea816006df",
+            "number": 9,
+            "title": "Into the Woods",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "6687d0eb-eec1-4d29-89cd-449d8ddfa357",
+            "number": 10,
+            "title": "Oh, the Places We'll Go",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          }
+        ]
+      },
+      {
+        "id": "eacd4048-7e88-455b-99fd-e1086c2052f6",
+        "number": 2,
+        "title": "سیزنی 2",
+        "episodes": [
+          {
+            "id": "ab716f18-685a-4ea5-a1a4-e91d2fcfed7c",
+            "number": 1,
+            "title": "Strangers in a Strange Land",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "123ce99b-2be7-49e3-81cd-8fbfa4b188ae",
+            "number": 2,
+            "title": "The Kindness of Strangers",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "68ac45ec-374f-4247-9f03-56b4ff807958",
+            "number": 3,
+            "title": "Tether",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "f67b2902-3146-4c85-893b-3eb4187e79e5",
+            "number": 4,
+            "title": "This Way Gone",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "67295932-b5a5-4129-af7c-e25426def6e6",
+            "number": 5,
+            "title": "Lullaby",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "48bedbf9-d97a-4578-bb0f-35ca2b168a33",
+            "number": 6,
+            "title": "Pas de Deux",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "587cf1f1-f872-49db-bb72-ad9f8ab1535e",
+            "number": 7,
+            "title": "Belly of the Beast",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "8f333010-e00b-4823-bf92-bfbd15838bc9",
+            "number": 8,
+            "title": "Forest for the Trees",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "220436a5-55ba-4181-984e-72d2f1684e14",
+            "number": 9,
+            "title": "Ball of Magic Fire",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "f67cf049-e542-4c34-8e64-5ec8eb06c1bf",
+            "number": 10,
+            "title": "Once Upon a Time...",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          }
+        ]
+      },
+      {
+        "id": "88b67384-6741-4974-9040-258dd3f829d9",
+        "number": 3,
+        "title": "سیزنی 3",
+        "episodes": [
+          {
+            "id": "ba903c30-4172-4830-9691-efd30503d585",
+            "number": 1,
+            "title": "Shatter",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "af2707f8-1e49-4923-81eb-3723b145ae7f",
+            "number": 2,
+            "title": "When We Go",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "8a9308b0-528d-45ec-a5c3-08f742587845",
+            "number": 3,
+            "title": "Mouse Trap",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "3eb4bccd-fd49-4331-bcc3-208c6c30e593",
+            "number": 4,
+            "title": "There and Back Again",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "fe896f01-a9d5-4699-84e9-34cff91087c6",
+            "number": 5,
+            "title": "The Light of Day",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "aa826be3-b960-4d9b-b99a-17637dfaf8fd",
+            "number": 6,
+            "title": "Scar Tissue",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "67e85f55-6ac4-496b-9375-55632057d916",
+            "number": 7,
+            "title": "These Fragile Lives",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "c1516f75-d363-40e6-8e8d-37adeadd5f8e",
+            "number": 8,
+            "title": "Thresholds",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "64c8d9da-28e3-4562-8ac8-36faa934f980",
+            "number": 9,
+            "title": "Revelations: Chapter One",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "3b381cea-c6a7-40fa-8f22-105528d82ace",
+            "number": 10,
+            "title": "Revelations: Chapter Two",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          }
+        ]
+      },
+      {
+        "id": "8f38761a-25ef-4750-90be-da4caa29126d",
+        "number": 4,
+        "title": "سیزنی 4",
+        "episodes": [
+          {
+            "id": "caffadee-fe3e-4abe-87be-072971c8038d",
+            "number": 1,
+            "title": "Episode #4.1",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          }
+        ]
+      }
+    ],
+    "createdAt": 1776460311823,
+    "imdbRating": "7.8"
+  },
+  {
+    "id": "352f2299-d756-49e9-b9e6-19a9614025eb",
+    "title": "The Pitt",
+    "description": "ژیانی ڕۆژانەی پیشەییەکانی چاودێری تەندروستی لە نەخۆشخانەیەکی پیتسبورگدا لەکاتێکدا قەیرانە کەسییەکان و سیاسەتی شوێنی کار و زیانی سۆزداری چارەسەرکردنی نەخۆشە سەختەکان دەخەنە ڕوو، ئەمەش ئەو خۆڕاگرییە ئاشکرا دەکات کە پێویستە لە بانگەوازە بەرزەکانیاندا.",
+    "descriptionKu": "ژیانی ڕۆژانەی پیشەییەکانی چاودێری تەندروستی لە نەخۆشخانەیەکی پیتسبورگدا لەکاتێکدا قەیرانە کەسییەکان و سیاسەتی شوێنی کار و زیانی سۆزداری چارەسەرکردنی نەخۆشە سەختەکان دەخەنە ڕوو، ئەمەش ئەو خۆڕاگرییە ئاشکرا دەکات کە پێویستە لە بانگەوازە بەرزەکانیاندا.",
+    "descriptionEn": "The daily lives of healthcare professionals in a Pittsburgh hospital as they juggle personal crises, workplace politics, and the emotional toll of treating critically ill patients, revealing the resilience required in their noble calling.",
+    "descriptionAr": "الحياة اليومية لمتخصصي الرعاية الصحية في أحد مستشفيات بيتسبرغ وهم يتعاملون مع الأزمات الشخصية، وسياسات مكان العمل، والتكاليف العاطفية لعلاج المرضى المصابين بأمراض خطيرة، مما يكشف عن المرونة المطلوبة في دعوتهم النبيلة.",
+    "language": "English",
+    "genre": "دراما, پزیشکی",
+    "year": 2025,
+    "duration": "",
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BMThjMjYxM2YtM2IzZC00NDdmLThiNDYtNzEyNzA0YTRmYTk3XkEyXkFqcGc@._V1_QL75_UX380_CR0,0,380,562_.jpg",
+    "posterCloudUrl": null,
+    "videoFile": null,
+    "videoUrl": null,
+    "originalSrt": null,
+    "translatedSrt": null,
+    "type": "series",
+    "seasons": [
+      {
+        "id": "81bb08cc-6325-4ec1-bd22-582b45e3c399",
+        "number": 1,
+        "title": "سیزنی 1",
+        "episodes": [
+          {
+            "id": "1634231d-8e3f-4f77-8338-ea4db2d56419",
+            "number": 1,
+            "title": "Episode #1.1",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "d948ab70-fdd0-45c2-a9cd-78284ada8d0d",
+            "number": 2,
+            "title": "8:00 A.M.",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "5c5ec6a6-9340-4a5f-b824-284f5de2492d",
+            "number": 3,
+            "title": "9:00 A.M.",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "2ea32edd-fe6b-4192-bd79-b2cace9d1469",
+            "number": 4,
+            "title": "Episode #1.4",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "2eab208d-8827-4e43-8147-27a2abd15943",
+            "number": 5,
+            "title": "11:00 A.M.",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "abeed6dc-6e19-4642-83a8-0ee5c882348c",
+            "number": 6,
+            "title": "Episode #1.6",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "5334a45a-6fb7-43f6-b8ff-605c0e13bd33",
+            "number": 7,
+            "title": "1:00 P.M.",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "e8198385-fda2-43ec-ab16-9edfb6aea8c8",
+            "number": 8,
+            "title": "2:00 P.M.",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "fad5cf3e-7099-4f02-8864-4d2b45b879d6",
+            "number": 9,
+            "title": "3:00 P.M.",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "536d5036-08d6-4b54-a60a-7aba41254530",
+            "number": 10,
+            "title": "4:00 P.M.",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "9c3a1846-8733-41ec-850a-6662a9f5f48e",
+            "number": 11,
+            "title": "5:00 P.M.",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "4d1f213c-92e3-474e-ab9b-bfa299867baf",
+            "number": 12,
+            "title": "6:00 P.M.",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "1919f5b7-ec10-4b97-9893-6110289f7f03",
+            "number": 13,
+            "title": "7:00 P.M.",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "9f42911f-a7a8-4e2f-8260-51ab2f1e664b",
+            "number": 14,
+            "title": "8:00 P.M.",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "f761f308-02c3-4212-bdbc-8386650ad0c6",
+            "number": 15,
+            "title": "Episode #1.15",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          }
+        ]
+      },
+      {
+        "id": "0410382a-defd-41eb-9b62-07023dff075f",
+        "number": 2,
+        "title": "سیزنی 2",
+        "episodes": [
+          {
+            "id": "ea06e4ab-7e74-471b-bdcb-14fd9c1beb5b",
+            "number": 1,
+            "title": "Episode #2.1",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "4088d4e3-a689-49ae-ba0e-1eb7e77a7a28",
+            "number": 2,
+            "title": "8:00 A.M.",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "e11d122a-39ed-4594-bd5b-d9fbedbb3154",
+            "number": 3,
+            "title": "9:00 A.M.",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "89845e6c-e5a3-46b6-a6e3-f0d1cc3305d8",
+            "number": 4,
+            "title": "10:00 A.M.",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "ddd02498-3dc9-45e6-babf-82d9051ed451",
+            "number": 5,
+            "title": "11:00 A.M.",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "9d73796f-6e43-43de-92c8-544b1e0191ab",
+            "number": 6,
+            "title": "12:00 P.M.",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "ed1989b5-6850-442c-a0fc-83660d8207b4",
+            "number": 7,
+            "title": "1:00 P.M.",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "94396aed-7fda-4bd9-bec7-af4f887dab38",
+            "number": 8,
+            "title": "Episode #2.8",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "cdd96f79-b3e8-4596-aaa8-23769cbdd8ae",
+            "number": 9,
+            "title": "Episode #2.9",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "9dbb0b7e-083c-4430-b620-a6085511f222",
+            "number": 10,
+            "title": "Episode #2.10",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "a9c2a945-26a5-420f-8f3f-1e075280fbfc",
+            "number": 11,
+            "title": "Episode #2.11",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "46b619e3-013d-44ae-bbc9-0276467d9f88",
+            "number": 12,
+            "title": "Episode #2.12",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "3cd772b3-a03c-4bcb-bf60-4b0e3b75e9dd",
+            "number": 13,
+            "title": "Episode #2.13",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "54a11348-8f56-47f7-b16c-f036bd942178",
+            "number": 14,
+            "title": "Episode #2.14",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          },
+          {
+            "id": "17049018-e02e-46cc-9127-d5dc33054444",
+            "number": 15,
+            "title": "Episode #2.15",
+            "duration": "",
+            "videoFile": null,
+            "videoUrl": null,
+            "originalSrt": null,
+            "translatedSrt": null,
+            "sensitiveScenes": []
+          }
+        ]
+      }
+    ],
+    "createdAt": 1776461429115,
+    "imdbRating": "8.9"
+  },
+  {
+    "id": "567c11b5-201c-4924-9e58-19978b44bc74",
+    "title": "the pit",
+    "description": "",
+    "descriptionKu": "",
+    "descriptionEn": "",
+    "descriptionAr": "",
+    "language": "",
+    "genre": "",
+    "year": 2026,
+    "duration": "",
+    "posterUrl": "",
+    "posterCloudUrl": null,
+    "videoFile": null,
+    "videoUrl": null,
+    "originalSrt": null,
+    "translatedSrt": null,
+    "type": "movie",
+    "createdAt": 1776463541133,
+    "imdbRating": null
   }
 ]
