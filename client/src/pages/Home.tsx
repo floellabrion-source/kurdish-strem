@@ -265,84 +265,11 @@ export default function Home({ filter }: { filter?: 'movie' | 'series' | 'animat
                     </div>
                 )}
 
-                <div className="section-header-filters" ref={filtersRef}>
-                    <div className="filters-left">
-                        <div className="filter-dropdown">
-                            <button 
-                                className={`filter-btn ${selectedGenres.length > 0 ? 'active' : ''}`}
-                                onClick={() => { setShowGenreMenu(!showGenreMenu); setShowYearMenu(false); }}
-                            >
-                                <Filter size={16} /> چەشنەکان <ChevronDown size={14} />
-                            </button>
-                            {showGenreMenu && (
-                                <div className="filter-menu genre-menu">
-                                    <div className="filter-menu-header">چەشنەکان هەڵبژێرە</div>
-                                    <div className="genre-grid">
-                                        {GENRES_LIST.map(g => (
-                                            <label key={g} className="genre-label">
-                                                <input 
-                                                    type="checkbox" 
-                                                    checked={selectedGenres.includes(g)}
-                                                    onChange={() => toggleGenre(g)}
-                                                />
-                                                <span className="checkbox-custom"></span>
-                                                {g}
-                                            </label>
-                                        ))}
-                                    </div>
-                                    <div className="filter-actions">
-                                        <button className="clear-btn" onClick={() => setSelectedGenres([])}>سڕینەوە</button>
-                                        <button className="apply-btn" onClick={() => setShowGenreMenu(false)}>جێبەجێکردن</button>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="filter-dropdown">
-                            <button 
-                                className={`filter-btn ${selectedYear ? 'active' : ''}`}
-                                onClick={() => { setShowYearMenu(!showYearMenu); setShowGenreMenu(false); }}
-                            >
-                                <Calendar size={16} /> ساڵ <ChevronDown size={14} />
-                            </button>
-                            {showYearMenu && (
-                                <div className="filter-menu year-menu">
-                                    <div className="filter-menu-header">ساڵ هەڵبژێرە</div>
-                                    <div className="year-grid">
-                                        <button 
-                                            className={`year-btn ${selectedYear === '' ? 'active' : ''}`}
-                                            onClick={() => { setSelectedYear(''); setShowYearMenu(false); }}
-                                        >
-                                            هەمووی
-                                        </button>
-                                        {YEARS_LIST.map(y => (
-                                            <button 
-                                                key={y} 
-                                                className={`year-btn ${selectedYear === y ? 'active' : ''}`}
-                                                onClick={() => { setSelectedYear(y); setShowYearMenu(false); }}
-                                            >
-                                                {y}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        <button 
-                            className={`filter-btn ${sortByViews ? 'active' : ''}`}
-                            onClick={() => setSortByViews(!sortByViews)}
-                        >
-                            <Eye size={16} /> پڕبینەرترین
-                        </button>
-                    </div>
-
-                    <div className="filters-right">
-                        <span className="count-badge">{filtered.length}</span>
-                        <h2 className="section-title" style={{ margin: 0 }}>
-                            {filter === 'movie' ? t('movies') : filter === 'series' ? t('series') : filter === 'animation' ? t('animation') : t('popular_movies')}
-                        </h2>
-                    </div>
+                <div className="section-header">
+                    <h2 className="section-title">
+                        {filter === 'movie' ? t('movies') : filter === 'series' ? t('series') : filter === 'animation' ? t('animation') : t('popular_movies')}
+                    </h2>
+                    <span className="count-badge">{filtered.length}</span>
                 </div>
 
                 {loading ? (

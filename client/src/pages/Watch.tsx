@@ -4,7 +4,7 @@ import axios from 'axios';
 import {
     ArrowRight, Play, Pause, Volume2, VolumeX,
     Maximize, Minimize, RotateCcw, RotateCw, Settings,
-    SkipForward, SkipBack, Mic, MicOff, Volume1, X, CheckCircle, BookmarkPlus, Brain, Loader2, Shield, EyeOff
+    SkipForward, SkipBack, Mic, MicOff, Volume1, X, CheckCircle, BookmarkPlus, Brain, Loader2, Shield, EyeOff, Languages, Star
 } from 'lucide-react';
 import { Movie } from '../types';
 import { useAuth } from '../context/AuthContext';
