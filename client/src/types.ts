@@ -22,6 +22,10 @@ export interface Movie {
     id: string;
     title: string;
     description: string;
+    descriptionKu?: string;
+    descriptionEn?: string;
+    descriptionAr?: string;
+    language?: string;
     genre: string;
     year: number;
     duration: string;
@@ -32,7 +36,8 @@ export interface Movie {
     originalSrt: string | null;
     translatedSrt: string | null;
     createdAt: number;
-    type: 'movie' | 'series';
+    type: 'movie' | 'series' | 'animation';
+    imdbRating?: string | number;
     sensitiveScenes?: { start: number, end: number }[];
     seasons?: Season[];
 }

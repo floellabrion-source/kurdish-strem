@@ -44,7 +44,7 @@ export default function Admin() {
 
     const [form, setForm] = useState({
         title: '', description: '', descriptionKu: '', descriptionEn: '', descriptionAr: '', language: '', genre: '', year: new Date().getFullYear().toString(),
-        duration: '', type: 'movie' as 'movie' | 'series' | 'animation', imdbRating: '',
+        duration: '', type: 'movie' as 'movie' | 'series' | 'animation', imdbRating: '' as string | number,
         posterUrl: '', seasons: [] as Season[]
     });
 
@@ -281,7 +281,7 @@ export default function Admin() {
                     genre: m.genre || kurdishGenres || '',
                     year: m.year || year || m.year,
                     duration: m.duration || runtime || '',
-                    type: type || m.type,
+                    type: (type as any) || m.type,
                     posterUrl: m.posterUrl || poster || '',
                     seasons: seasons && seasons.length > 0 && (!m.seasons || m.seasons.length === 0) ? seasons : m.seasons
                 } : null);
@@ -297,7 +297,7 @@ export default function Admin() {
                     genre: f.genre || kurdishGenres || '',
                     year: f.year === new Date().getFullYear().toString() ? (year?.toString() || f.year) : f.year,
                     duration: f.duration || runtime || '',
-                    type: type || f.type,
+                    type: (type as any) || f.type,
                     posterUrl: f.posterUrl || poster || '',
                     seasons: seasons && seasons.length > 0 ? seasons : f.seasons
                 }));
@@ -401,7 +401,7 @@ export default function Admin() {
                             <div className="form-group">
                                 <label>ڕەیتینگی IMDb</label>
                                 <div className="imdb-rating-input-group">
-                                    <input type="text" value={form.imdbRating} onChange={e => setForm(f => ({ ...f, imdbRating: e.target.value }))} className="form-input" placeholder="بۆ نموونە: 7.5" />
+                                    <input type="text" value={form.imdbRating as string} onChange={e => setForm(f => ({ ...f, imdbRating: e.target.value }))} className="form-input" placeholder="بۆ نموونە: 7.5" />
                                     <button onClick={() => fetchImdbRating(form.title)} className="btn-fetch-imdb" disabled={fetchingImdbRating}>
                                         {fetchingImdbRating ? <Loader2 size={16} className="spinning" /> : <Star size={16} />}
                                         هێنان
@@ -475,7 +475,7 @@ export default function Admin() {
                             <div className="form-group">
                                 <label>ڕەیتینگی IMDb</label>
                                 <div className="imdb-rating-input-group">
-                                    <input type="text" value={editMovie.imdbRating || ''} onChange={e => setEditMovie(m => m ? { ...m, imdbRating: e.target.value } : null)} className="form-input" placeholder="بۆ نموونە: 7.5" />
+                                    <input type="text" value={editMovie.imdbRating as string || ''} onChange={e => setEditMovie(m => m ? { ...m, imdbRating: e.target.value } : null)} className="form-input" placeholder="بۆ نموونە: 7.5" />
                                     <button onClick={() => fetchImdbRating(editMovie.title, true)} className="btn-fetch-imdb" disabled={fetchingImdbRating}>
                                         {fetchingImdbRating ? <Loader2 size={16} className="spinning" /> : <Star size={16} />}
                                         هێنان
@@ -551,21 +551,21 @@ export default function Admin() {
                                     <h3 className="ac-title">{movie.title}</h3>
                                     <div className="ac-meta">
                                         <span>{movie.year}</span>
-                                        <span className={`type-badge ${movie.type}`}>{movie.type === 'movie' ? 'فیلم' : movie.type === 'animation' ? 'ئەنیمێشن' : 'زنجیرە'}</span>
+                                        <span className={`type-badge ${movie.type}`}>{movie.type === ('movie' as any) ? 'فیلم' : movie.type === ('animation' as any) ? 'ئەنیمێشن' : 'زنجیرە'}</span>
                                     </div>
                                     <p className="ac-desc">{movie.description}</p>
                                 </div>
                                 <div className="ac-actions">
-                                    {(movie.type === 'movie' || movie.type === 'animation') && <button className="ac-btn" onClick={() => openSensitiveModal(movie.id)}><Shield size={16} /></button>}
+                                    {(movie.type === ('movie' as any) || movie.type === ('animation' as any)) && <button className="ac-btn" onClick={() => openSensitiveModal(movie.id)}><Shield size={16} /></button>}
                                     <button className="ac-btn" onClick={() => setEditMovie(movie)}><Edit3 size={16} /></button>
                                     <button className="ac-btn" onClick={() => handleDelete(movie)}><Trash2 size={16} /></button>
-                                    {movie.type === 'series' && (
+                                    {movie.type === ('series' as any) && (
                                         <button className="ac-btn" onClick={() => setExpandedSeries(e => ({ ...e, [movie.id]: !e[movie.id] }))}><ListVideo size={16} /></button>
                                     )}
                                 </div>
                             </div>
 
-                            {movie.type !== 'series' && (
+                            {movie.type !== ('series' as any) && (
                                 <div className="ac-uploads">
                                     <div className={`ac-upload-card ${movie.videoFile ? 'done' : ''}`} onClick={() => refs.video.current[movie.id]?.click()}>
                                         <input type="file" className="hidden-input" ref={el => { refs.video.current[movie.id] = el; }} onChange={e => e.target.files?.[0] && doUpload(movie.id, e.target.files[0], 'video')} />
@@ -617,7 +617,7 @@ export default function Admin() {
                                 </div>
                             )}
 
-                            {movie.type === 'series' && expandedSeries[movie.id] && (
+                            {movie.type === ('series' as any) && expandedSeries[movie.id] && (
                                 <div className="series-manager">
                                     <div className="series-manager-header">
                                         <h4>سیزن و ئالقەکان</h4>
