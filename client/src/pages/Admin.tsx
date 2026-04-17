@@ -4,13 +4,28 @@ import {
     Plus, Film, Trash2, Edit3, Save, X,
     CheckCircle, AlertCircle, Loader2, FileText,
     Image, Video, Layers, ChevronDown, ChevronUp,
-    PlusCircle, ListVideo, Upload, Languages, Shield, Link as LinkIcon
+    PlusCircle, ListVideo, Upload, Languages, Shield, Link as LinkIcon, Star, Play
 } from 'lucide-react';
 import { Movie, Season, Episode } from '../types';
 import SrtTranslator from './SrtTranslator';
 import './Admin.css';
 
 interface Toast { id: number; msg: string; type: 'success' | 'error'; }
+
+const GENRES_LIST = [
+    'تاوانکاری', 'دراما', 'زانستی خەیاڵی', 'هەستبزوێن', 'ئاکشن', 'سەرکێشی', 'خێزانی', 'خەیاڵی',
+    'موزیک', 'مێژوویی', 'ترسناک', 'دۆکیۆمێنتاری', 'کۆمێدی', 'ڕۆژئاوایی', 'وەرزشی', 'پزیشکی',
+    'کورتە', 'کۆمەڵایەتی', 'تراژیدی', 'سیخوڕی', 'کلاسیک', 'سامۆرای', 'بیۆگرافی', 'جەنگ'
+];
+
+const genreMap: Record<string, string> = {
+    'Crime': 'تاوانکاری', 'Drama': 'دراما', 'Sci-Fi': 'زانستی خەیاڵی', 'Thriller': 'هەستبزوێن',
+    'Action': 'ئاکشن', 'Adventure': 'سەرکێشی', 'Family': 'خێزانی', 'Fantasy': 'خەیاڵی',
+    'Music': 'موزیک', 'History': 'مێژوویی', 'Horror': 'ترسناک', 'Documentary': 'دۆکیۆمێنتاری',
+    'Comedy': 'کۆمێدی', 'Western': 'ڕۆژئاوایی', 'Sport': 'وەرزشی', 'Short': 'کورتە',
+    'Romance': 'ڕۆمانسی', 'War': 'جەنگ', 'Biography': 'بیۆگرافی', 'Mystery': 'نهێنی ئامێز',
+    'Animation': 'ئەنیمێشن'
+};
 
 export default function Admin() {
     const [movies, setMovies] = useState<Movie[]>([]);
@@ -25,10 +40,12 @@ export default function Admin() {
     const [sensitiveTarget, setSensitiveTarget] = useState<{ movieId: string, seasonNum?: number, episodeId?: string } | null>(null);
     const [sensitiveScenes, setSensitiveScenes] = useState<{ start: number, end: number }[]>([]);
 
+    const [fetchingImdbRating, setFetchingImdbRating] = useState(false);
+
     const [form, setForm] = useState({
-        title: '', description: '', genre: '',
-        year: new Date().getFullYear().toString(),
-        duration: '', type: 'movie' as 'movie' | 'series'
+        title: '', description: '', descriptionKu: '', descriptionEn: '', descriptionAr: '', language: '', genre: '', year: new Date().getFullYear().toString(),
+        duration: '', type: 'movie' as 'movie' | 'series' | 'animation', imdbRating: '',
+        posterUrl: '', seasons: [] as Season[]
     });
 
     const refs = {
@@ -65,7 +82,7 @@ export default function Admin() {
             await axios.post('/api/admin/movies', { ...form, year: parseInt(form.year) });
             toast('بە سەرکەوتوویی زیاد کرا ✓');
             setShowForm(false);
-            setForm({ title: '', description: '', genre: '', year: new Date().getFullYear().toString(), duration: '', type: 'movie' });
+            setForm({ title: '', description: '', descriptionKu: '', descriptionEn: '', descriptionAr: '', language: '', genre: '', year: new Date().getFullYear().toString(), duration: '', type: 'movie' as 'movie' | 'series' | 'animation', imdbRating: '', posterUrl: '', seasons: [] });
             load();
         } catch { toast('کێشەیەک ڕووی دا', 'error'); }
     };
@@ -234,6 +251,66 @@ export default function Admin() {
         } catch { toast('کێشەیەک ڕووی دا', 'error'); }
     };
 
+    const fetchImdbRating = async (title: string, isEditForm: boolean = false) => {
+        if (!title) {
+            toast('تکایە ناوی فیلمەکە داخڵ بکە بۆ هێنانی زانیارییەکان', 'error');
+            return;
+        }
+        setFetchingImdbRating(true);
+        try {
+            const response = await axios.get(`/api/omdb-rating?title=${encodeURIComponent(title)}`);
+            const { imdbRating, plotEn, plotKu, plotAr, genre, year, runtime, poster, type, seasons, language } = response.data;
+            
+            // Translate genres
+            let kurdishGenres = '';
+            if (genre) {
+                const englishGenres = genre.split(',').map((g: string) => g.trim());
+                const translated = englishGenres.map((g: string) => genreMap[g] || g);
+                kurdishGenres = translated.join('، ');
+            }
+
+            if (isEditForm) {
+                setEditMovie(m => m ? { 
+                    ...m, 
+                    imdbRating: imdbRating !== null ? imdbRating.toString() : '',
+                    description: m.description || plotKu || '',
+                    descriptionKu: m.descriptionKu || plotKu || '',
+                    descriptionEn: m.descriptionEn || plotEn || '',
+                    descriptionAr: m.descriptionAr || plotAr || '',
+                    language: m.language || language || '',
+                    genre: m.genre || kurdishGenres || '',
+                    year: m.year || year || m.year,
+                    duration: m.duration || runtime || '',
+                    type: type || m.type,
+                    posterUrl: m.posterUrl || poster || '',
+                    seasons: seasons && seasons.length > 0 && (!m.seasons || m.seasons.length === 0) ? seasons : m.seasons
+                } : null);
+            } else {
+                setForm(f => ({ 
+                    ...f, 
+                    imdbRating: imdbRating !== null ? imdbRating.toString() : '',
+                    description: f.description || plotKu || '',
+                    descriptionKu: f.descriptionKu || plotKu || '',
+                    descriptionEn: f.descriptionEn || plotEn || '',
+                    descriptionAr: f.descriptionAr || plotAr || '',
+                    language: f.language || language || '',
+                    genre: f.genre || kurdishGenres || '',
+                    year: f.year === new Date().getFullYear().toString() ? (year?.toString() || f.year) : f.year,
+                    duration: f.duration || runtime || '',
+                    type: type || f.type,
+                    posterUrl: f.posterUrl || poster || '',
+                    seasons: seasons && seasons.length > 0 ? seasons : f.seasons
+                }));
+            }
+            toast(`زانیارییەکانی ${title} دۆزرانەوە بە سەرکەوتوویی`);
+        } catch (error: any) {
+            const errorMessage = error.response?.data?.error || 'کێشەیەک لە هێنانی زانیارییەکان ڕوویدا';
+            toast(errorMessage, 'error');
+        } finally {
+            setFetchingImdbRating(false);
+        }
+    };
+
     return (
         <div className="admin-page">
             <div className="toast-container">
@@ -265,6 +342,11 @@ export default function Admin() {
                             <button onClick={() => setShowForm(false)} className="close-btn"><X size={20} /></button>
                         </div>
                         <div className="form-body">
+                            {form.posterUrl && (
+                                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '15px' }}>
+                                    <img src={form.posterUrl} alt="Poster" style={{ width: '120px', borderRadius: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }} />
+                                </div>
+                            )}
                             <div className="type-selector">
                                 <button className={`type-btn ${form.type === 'movie' ? 'active-movie' : ''}`} onClick={() => setForm(f => ({ ...f, type: 'movie' }))}>
                                     <Film size={18} /> فیلم
@@ -272,13 +354,59 @@ export default function Admin() {
                                 <button className={`type-btn ${form.type === 'series' ? 'active-series' : ''}`} onClick={() => setForm(f => ({ ...f, type: 'series' }))}>
                                     <Layers size={18} /> زنجیرە
                                 </button>
+                                <button className={`type-btn ${form.type === 'animation' ? 'active-animation' : ''}`} onClick={() => setForm(f => ({ ...f, type: 'animation' }))}>
+                                    <Play size={18} /> ئەنیمێشن
+                                </button>
                             </div>
                             <div className="form-group"><label>ناو *</label><input type="text" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} className="form-input" /></div>
-                            <div className="form-group"><label>باس</label><textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className="form-input form-textarea" rows={3} /></div>
+                            
+                            <div className="form-group"><label>زمانی قسەکردن</label><input type="text" value={form.language} onChange={e => setForm(f => ({ ...f, language: e.target.value }))} className="form-input" placeholder="بۆ نموونە: English, Spanish" /></div>
+
+                            <div className="form-group"><label>باس (کوردی)</label><textarea value={form.descriptionKu || form.description} onChange={e => setForm(f => ({ ...f, descriptionKu: e.target.value, description: e.target.value }))} className="form-input form-textarea" rows={3} /></div>
+                            <div className="form-group"><label>باس (English)</label><textarea value={form.descriptionEn} onChange={e => setForm(f => ({ ...f, descriptionEn: e.target.value }))} className="form-input form-textarea" rows={2} /></div>
+                            <div className="form-group"><label>باس (عربي)</label><textarea value={form.descriptionAr} onChange={e => setForm(f => ({ ...f, descriptionAr: e.target.value }))} className="form-input form-textarea" rows={2} /></div>
+                            
+                            <div className="form-group">
+                                <label>ژانڕ</label>
+                                <div className="genre-admin-grid">
+                                    {GENRES_LIST.map(g => {
+                                        const isSelected = form.genre.split(',').map(x => x.trim()).includes(g);
+                                        return (
+                                            <label key={g} className="genre-admin-label">
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={isSelected}
+                                                    onChange={() => {
+                                                        const current = form.genre.split(',').map(x => x.trim()).filter(Boolean);
+                                                        if (isSelected) {
+                                                            setForm(f => ({ ...f, genre: current.filter(x => x !== g).join(', ') }));
+                                                        } else {
+                                                            setForm(f => ({ ...f, genre: [...current, g].join(', ') }));
+                                                        }
+                                                    }}
+                                                />
+                                                <span className="checkbox-custom-admin"></span>
+                                                {g}
+                                            </label>
+                                        );
+                                    })}
+                                </div>
+                                <input type="text" value={form.genre} onChange={e => setForm(f => ({ ...f, genre: e.target.value }))} className="form-input" style={{ marginTop: '8px' }} placeholder="یان لێرە بینوسە..." />
+                            </div>
+
                             <div className="form-row">
-                                <div className="form-group"><label>ژانڕ</label><input type="text" value={form.genre} onChange={e => setForm(f => ({ ...f, genre: e.target.value }))} className="form-input" /></div>
                                 <div className="form-group"><label>ساڵ</label><input type="number" value={form.year} onChange={e => setForm(f => ({ ...f, year: e.target.value }))} className="form-input" /></div>
-                                {form.type === 'movie' && <div className="form-group"><label>کات</label><input type="text" value={form.duration} onChange={e => setForm(f => ({ ...f, duration: e.target.value }))} className="form-input" /></div>}
+                                {(form.type === 'movie' || form.type === 'animation') && <div className="form-group"><label>کات</label><input type="text" value={form.duration} onChange={e => setForm(f => ({ ...f, duration: e.target.value }))} className="form-input" /></div>}
+                            </div>
+                            <div className="form-group">
+                                <label>ڕەیتینگی IMDb</label>
+                                <div className="imdb-rating-input-group">
+                                    <input type="text" value={form.imdbRating} onChange={e => setForm(f => ({ ...f, imdbRating: e.target.value }))} className="form-input" placeholder="بۆ نموونە: 7.5" />
+                                    <button onClick={() => fetchImdbRating(form.title)} className="btn-fetch-imdb" disabled={fetchingImdbRating}>
+                                        {fetchingImdbRating ? <Loader2 size={16} className="spinning" /> : <Star size={16} />}
+                                        هێنان
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         <div className="form-footer">
@@ -297,12 +425,62 @@ export default function Admin() {
                             <button onClick={() => setEditMovie(null)} className="close-btn"><X size={20} /></button>
                         </div>
                         <div className="form-body">
-                            <div className="form-group"><label>ناو</label><input type="text" value={editMovie.title} onChange={e => setEditMovie(m => m ? { ...m, title: e.target.value } : null)} className="form-input" /></div>
-                            <div className="form-group"><label>باس</label><textarea value={editMovie.description} onChange={e => setEditMovie(m => m ? { ...m, description: e.target.value } : null)} className="form-input form-textarea" rows={3} /></div>
+                            {editMovie.posterUrl && (
+                                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '15px' }}>
+                                    <img src={editMovie.posterUrl} alt="Poster" style={{ width: '120px', borderRadius: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }} />
+                                </div>
+                            )}
+                            <div className="form-group"><label>ناو *</label><input type="text" value={editMovie.title} onChange={e => setEditMovie(m => m ? { ...m, title: e.target.value } : null)} className="form-input" /></div>
+                            
+                            <div className="form-group"><label>زمانی قسەکردن</label><input type="text" value={editMovie.language || ''} onChange={e => setEditMovie(m => m ? { ...m, language: e.target.value } : null)} className="form-input" placeholder="بۆ نموونە: English, Spanish" /></div>
+
+                            <div className="form-group"><label>باس (کوردی)</label><textarea value={editMovie.descriptionKu || editMovie.description} onChange={e => setEditMovie(m => m ? { ...m, descriptionKu: e.target.value, description: e.target.value } : null)} className="form-input form-textarea" rows={3} /></div>
+                            <div className="form-group"><label>باس (English)</label><textarea value={editMovie.descriptionEn || ''} onChange={e => setEditMovie(m => m ? { ...m, descriptionEn: e.target.value } : null)} className="form-input form-textarea" rows={2} /></div>
+                            <div className="form-group"><label>باس (عربي)</label><textarea value={editMovie.descriptionAr || ''} onChange={e => setEditMovie(m => m ? { ...m, descriptionAr: e.target.value } : null)} className="form-input form-textarea" rows={2} /></div>
+                            
+                            <div className="form-group">
+                                <label>ژانڕ</label>
+                                <div className="genre-admin-grid">
+                                    {GENRES_LIST.map(g => {
+                                        const isSelected = editMovie.genre?.split(',').map(x => x.trim()).includes(g);
+                                        return (
+                                            <label key={g} className="genre-admin-label">
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={isSelected}
+                                                    onChange={() => {
+                                                        const current = editMovie.genre?.split(',').map(x => x.trim()).filter(Boolean) || [];
+                                                        let newGenre = '';
+                                                        if (isSelected) {
+                                                            newGenre = current.filter(x => x !== g).join(', ');
+                                                        } else {
+                                                            newGenre = [...current, g].join(', ');
+                                                        }
+                                                        setEditMovie(m => m ? { ...m, genre: newGenre } : null);
+                                                    }}
+                                                />
+                                                <span className="checkbox-custom-admin"></span>
+                                                {g}
+                                            </label>
+                                        );
+                                    })}
+                                </div>
+                                <input type="text" value={editMovie.genre} onChange={e => setEditMovie(m => m ? { ...m, genre: e.target.value } : null)} className="form-input" style={{ marginTop: '8px' }} placeholder="یان لێرە بینوسە..." />
+                            </div>
+
                             <div className="form-row">
-                                <div className="form-group"><label>ژانڕ</label><input type="text" value={editMovie.genre} onChange={e => setEditMovie(m => m ? { ...m, genre: e.target.value } : null)} className="form-input" /></div>
                                 <div className="form-group"><label>ساڵ</label><input type="number" value={editMovie.year} onChange={e => setEditMovie(m => m ? { ...m, year: +e.target.value } : null)} className="form-input" /></div>
                                 <div className="form-group"><label>کات</label><input type="text" value={editMovie.duration} onChange={e => setEditMovie(m => m ? { ...m, duration: e.target.value } : null)} className="form-input" /></div>
+                            </div>
+                            <div className="form-group">
+                                <label>ڕەیتینگی IMDb</label>
+                                <div className="imdb-rating-input-group">
+                                    <input type="text" value={editMovie.imdbRating || ''} onChange={e => setEditMovie(m => m ? { ...m, imdbRating: e.target.value } : null)} className="form-input" placeholder="بۆ نموونە: 7.5" />
+                                    <button onClick={() => fetchImdbRating(editMovie.title, true)} className="btn-fetch-imdb" disabled={fetchingImdbRating}>
+                                        {fetchingImdbRating ? <Loader2 size={16} className="spinning" /> : <Star size={16} />}
+                                        هێنان
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         <div className="form-footer">
@@ -373,12 +551,12 @@ export default function Admin() {
                                     <h3 className="ac-title">{movie.title}</h3>
                                     <div className="ac-meta">
                                         <span>{movie.year}</span>
-                                        <span className={`type-badge ${movie.type}`}>{movie.type === 'movie' ? 'فیلم' : 'زنجیرە'}</span>
+                                        <span className={`type-badge ${movie.type}`}>{movie.type === 'movie' ? 'فیلم' : movie.type === 'animation' ? 'ئەنیمێشن' : 'زنجیرە'}</span>
                                     </div>
                                     <p className="ac-desc">{movie.description}</p>
                                 </div>
                                 <div className="ac-actions">
-                                    {movie.type === 'movie' && <button className="ac-btn" onClick={() => openSensitiveModal(movie.id)}><Shield size={16} /></button>}
+                                    {(movie.type === 'movie' || movie.type === 'animation') && <button className="ac-btn" onClick={() => openSensitiveModal(movie.id)}><Shield size={16} /></button>}
                                     <button className="ac-btn" onClick={() => setEditMovie(movie)}><Edit3 size={16} /></button>
                                     <button className="ac-btn" onClick={() => handleDelete(movie)}><Trash2 size={16} /></button>
                                     {movie.type === 'series' && (
