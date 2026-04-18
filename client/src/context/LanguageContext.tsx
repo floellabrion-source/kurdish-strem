@@ -43,7 +43,9 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         localStorage.setItem('ks_lang', lang);
-        document.body.dir = lang === 'en' ? 'ltr' : 'rtl';
+        const dir = lang === 'en' ? 'ltr' : 'rtl';
+        document.body.dir = dir;
+        document.documentElement.setAttribute('dir', dir);
     }, [lang]);
 
     const t = (key: string): string => {

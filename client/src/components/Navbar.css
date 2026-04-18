@@ -554,6 +554,17 @@ html[dir="ltr"] .sidebar {
     gap: 10px;
 }
 
+/* In mobile drawer, language/theme controls must always be visible */
+.mobile-drawer-footer .theme-toggles,
+.mobile-drawer-footer .lang-toggles {
+    display: flex;
+}
+
+.mobile-drawer-footer .lang-toggles button {
+    font-size: 12px;
+    padding: 8px 6px;
+}
+
 .mobile-drawer-logout {
     width: 100%;
     padding: 11px;
