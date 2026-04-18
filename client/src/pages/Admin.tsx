@@ -358,6 +358,9 @@ export default function Admin() {
                                     <Play size={18} /> ئەنیمێشن
                                 </button>
                             </div>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
+                                <button onClick={() => setForm({ title: '', description: '', descriptionKu: '', descriptionEn: '', descriptionAr: '', language: '', genre: '', year: new Date().getFullYear().toString(), duration: '', type: 'movie', imdbRating: '', posterUrl: '', seasons: [] })} className="btn-cancel" style={{ padding: '4px 10px', fontSize: '12px' }}>سڕینەوەی فۆڕم</button>
+                            </div>
                             <div className="form-group"><label>ناو *</label><input type="text" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} className="form-input" /></div>
                             
                             <div className="form-group"><label>زمانی قسەکردن</label><input type="text" value={form.language} onChange={e => setForm(f => ({ ...f, language: e.target.value }))} className="form-input" placeholder="بۆ نموونە: English, Spanish" /></div>

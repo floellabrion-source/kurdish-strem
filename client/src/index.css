@@ -81,7 +81,7 @@ body {
     flex: 1;
     margin-right: 280px; /* Sidebar width on RTL */
     padding: 0;
-    transition: margin-right 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: margin-right 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     width: calc(100% - 280px);
 }
 
@@ -90,9 +90,21 @@ body {
     width: calc(100% - 80px);
 }
 
+/* LTR (English) Adjustments */
+html[dir="ltr"] .main-content {
+    margin-right: 0;
+    margin-left: 280px;
+}
+
+html[dir="ltr"] .main-content.collapsed {
+    margin-right: 0;
+    margin-left: 80px;
+}
+
 @media (max-width: 768px) {
     .main-content, .main-content.collapsed {
         margin-right: 0 !important;
+        margin-left: 0 !important;
         padding-top: 60px; /* Mobile header */
         padding-bottom: 70px; /* Mobile nav space */
         width: 100% !important;

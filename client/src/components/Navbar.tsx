@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Play, Home as HomeIcon, Film, Tv, User, Search, Shield, Moon, Sun, Monitor, Menu, BookOpen, Sparkles } from 'lucide-react';
+import { Play, Home as HomeIcon, Film, Tv, User, Search, Shield, Moon, Sun, Monitor, Menu, BookOpen, Sparkles, Heart, Clock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import './Navbar.css';
@@ -79,6 +79,16 @@ export default function Navbar() {
                             <Link to="/flashcards" className={`mobile-drawer-item ${location.pathname === '/flashcards' ? 'active' : ''}`}>
                                 <BookOpen size={20} /><span>{t('flashcards')}</span>
                             </Link>
+                            {user && (
+                                <>
+                                    <Link to="/favorites" className={`mobile-drawer-item ${location.pathname === '/favorites' ? 'active' : ''}`}>
+                                        <Heart size={20} /><span>لیستی دڵخواز</span>
+                                    </Link>
+                                    <Link to="/watch-later" className={`mobile-drawer-item ${location.pathname === '/watch-later' ? 'active' : ''}`}>
+                                        <Clock size={20} /><span>بینینی دواتر</span>
+                                    </Link>
+                                </>
+                            )}
                             <Link to="/profile" className={`mobile-drawer-item ${location.pathname === '/profile' ? 'active' : ''}`}>
                                 <User size={20} /><span>{t('account')}</span>
                             </Link>
@@ -144,6 +154,18 @@ export default function Navbar() {
                             <BookOpen size={18} />
                             <span className="nav-text">{t('flashcards')}</span>
                         </Link>
+                        {user && (
+                            <>
+                                <Link to="/favorites" className={`nav-item ${location.pathname === '/favorites' ? 'active' : ''}`} data-tooltip="لیستی دڵخواز">
+                                    <Heart size={18} />
+                                    <span className="nav-text">لیستی دڵخواز</span>
+                                </Link>
+                                <Link to="/watch-later" className={`nav-item ${location.pathname === '/watch-later' ? 'active' : ''}`} data-tooltip="بینینی دواتر">
+                                    <Clock size={18} />
+                                    <span className="nav-text">بینینی دواتر</span>
+                                </Link>
+                            </>
+                        )}
                         <Link to="/profile" className={`nav-item ${location.pathname === '/profile' ? 'active' : ''}`} data-tooltip={t('account')}>
                             <User size={18} />
                             <span className="nav-text">{t('account')}</span>
@@ -211,8 +233,8 @@ export default function Navbar() {
                     <Link to="/animations" className={`mob-item ${location.pathname === '/animations' ? 'active' : ''}`}>
                         <Sparkles size={20} /><span>{t('animation')}</span>
                     </Link>
-                    <Link to="/flashcards" className={`mob-item ${location.pathname === '/flashcards' ? 'active' : ''}`}>
-                        <BookOpen size={20} /><span>{t('flashcards')}</span>
+                    <Link to="/favorites" className={`mob-item ${location.pathname === '/favorites' ? 'active' : ''}`}>
+                        <Heart size={20} /><span>دڵخواز</span>
                     </Link>
                     <Link to="/profile" className={`mob-item ${location.pathname === '/profile' ? 'active' : ''}`}>
                         <User size={20} /><span>{t('account')}</span>

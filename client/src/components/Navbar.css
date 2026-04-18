@@ -12,7 +12,14 @@
     padding: 24px 12px;
     z-index: 100;
     overflow-y: auto;
-    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s cubic-bezier(0.4, 0, 0.2, 1), right 0.3s, left 0.3s;
+}
+
+html[dir="ltr"] .sidebar {
+    right: auto;
+    left: 0;
+    border-left: none;
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .sidebar:hover, .sidebar.expanded {

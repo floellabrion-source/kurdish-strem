@@ -377,12 +377,55 @@
     justify-content: center;
     opacity: 0;
     transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 10;
 }
 
 .movie-card:hover .card-play-btn {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1);
     box-shadow: 0 0 30px rgba(139, 92, 246, 0.5);
+}
+
+.movie-card-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 20px 15px 15px;
+    background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 60%, transparent 100%);
+    color: white;
+    transform: translateY(100%);
+    transition: transform 0.3s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    opacity: 0;
+}
+
+.movie-card:hover .movie-card-overlay {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.overlay-rating {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: bold;
+    font-size: 14px;
+    color: #fbbf24;
+}
+
+.overlay-plot {
+    font-size: 12px;
+    line-height: 1.4;
+    color: #e2e8f0;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .card-info {

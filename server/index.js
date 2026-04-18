@@ -46,7 +46,10 @@ const readUsers = () => {
         role: u.role || (!hasAdmin && users[0]?.id === u.id ? 'admin' : 'user'),
         points: u.points || 0,
         history: u.history || {},
-        flashcards: Array.isArray(u.flashcards) ? u.flashcards : []
+        flashcards: Array.isArray(u.flashcards) ? u.flashcards : [],
+        favorites: Array.isArray(u.favorites) ? u.favorites : [],
+        watchLater: Array.isArray(u.watchLater) ? u.watchLater : [],
+        watched: Array.isArray(u.watched) ? u.watched : []
     }));
 };
 
@@ -199,6 +202,29 @@ app.post('/api/user/sync', requireAuth, (req, res) => {
 
     writeUsers(users);
     res.json({ success: true, points: users[idx].points, user: sanitizeUser(users[idx]) });
+});
+
+app.post('/api/user/toggle-list', requireAuth, (req, res) => {
+    const { listName, movieId } = req.body;
+    if (!['favorites', 'watchLater', 'watched'].includes(listName) || !movieId) {
+        return res.status(400).json({ error: 'Invalid list name or movie ID' });
+    }
+
+    const users = readUsers();
+    const idx = users.findIndex((u) => u.id === req.user.id);
+    if (idx === -1) return res.status(404).json({ error: 'User not found' });
+
+    const user = users[idx];
+    const list = user[listName] || [];
+    
+    if (list.includes(movieId)) {
+        user[listName] = list.filter(id => id !== movieId);
+    } else {
+        user[listName] = [...list, movieId];
+    }
+
+    writeUsers(users);
+    res.json({ success: true, list: user[listName], user: sanitizeUser(user) });
 });
 
 // ======= OpenRouter AI =======

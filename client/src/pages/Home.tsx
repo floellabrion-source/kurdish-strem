@@ -98,14 +98,20 @@ export default function Home({ filter }: { filter?: 'movie' | 'series' | 'animat
         filtered.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
     }
 
+    // Move watched movies to the bottom
+    if (user?.watched && user.watched.length > 0) {
+        const unwatched = filtered.filter(m => !user.watched?.includes(m.id));
+        const watched = filtered.filter(m => user.watched?.includes(m.id));
+        filtered = [...unwatched, ...watched];
+    }
+
     const toggleGenre = (g: string) => {
         setSelectedGenres(prev => 
             prev.includes(g) ? prev.filter(x => x !== g) : [...prev, g]
         );
     };
 
-    const getLink = (movie: Movie) =>
-        movie.type === 'series' ? `/series/${movie.id}` : `/watch/${movie.id}`;
+    const getLink = (movie: Movie) => `/movie/${movie.id}`;
     const getPoster = (movie: Movie) => movie.posterCloudUrl || movie.posterUrl;
 
     return (
@@ -296,6 +302,17 @@ export default function Home({ filter }: { filter?: 'movie' | 'series' | 'animat
                                         <Film size={32} color="#475569" />
                                     </div>
                                 )}
+                                <div className="movie-card-overlay">
+                                    {movie.imdbRating && (
+                                        <div className="overlay-rating">
+                                            <Star size={16} fill="#fbbf24" color="#fbbf24" />
+                                            <span>{movie.imdbRating}</span>
+                                        </div>
+                                    )}
+                                    <p className="overlay-plot">
+                                        {getDescription(movie).split('.')[0]}...
+                                    </p>
+                                </div>
                                 <div className="movie-card-badges">
                                     {movie.imdbRating && <div className="card-badge"><Star size={10} fill="#fbbf24" color="#fbbf24" /> {movie.imdbRating}</div>}
                                     <div className="card-badge">{movie.year || '2025'}</div>

@@ -9,6 +9,9 @@ interface User {
     points: number;
     history?: Record<string, { time: number; title: string; date?: string }>;
     flashcards?: any[];
+    favorites?: string[];
+    watchLater?: string[];
+    watched?: string[];
 }
 
 interface AuthContextType {
@@ -19,6 +22,7 @@ interface AuthContextType {
     register: (username: string, pass: string) => Promise<void>;
     logout: () => void;
     syncProgress: (data: { points?: number, history?: any, flashcards?: any[] }) => Promise<void>;
+    toggleList: (listName: 'favorites' | 'watchLater' | 'watched', movieId: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -86,8 +90,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
+    const toggleList = async (listName: 'favorites' | 'watchLater' | 'watched', movieId: string) => {
+        if (!user) return;
+        try {
+            const res = await axios.post('/api/user/toggle-list', { listName, movieId });
+            if (res.data.user) {
+                setUser(res.data.user);
+            }
+        } catch (e) {
+            console.error(`Failed to toggle ${listName}`, e);
+        }
+    };
+
     return (
-        <AuthContext.Provider value={{ user, token, loading, login, register, logout, syncProgress }}>
+        <AuthContext.Provider value={{ user, token, loading, login, register, logout, syncProgress, toggleList }}>
             {children}
         </AuthContext.Provider>
     );

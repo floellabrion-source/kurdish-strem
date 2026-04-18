@@ -1,6 +1,9 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Home from './pages/Home';
 import Watch from './pages/Watch';
+import MovieDetail from './pages/MovieDetail';
+import Favorites from './pages/Favorites';
+import WatchLater from './pages/WatchLater';
 import Admin from './pages/Admin';
 import SeriesPage from './pages/SeriesPage';
 import Flashcards from './pages/Flashcards';
@@ -40,6 +43,9 @@ function AppRoutes() {
                     <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                     <Route path="/watch/:id" element={<ProtectedRoute><Watch /></ProtectedRoute>} />
                     <Route path="/series/:id" element={<ProtectedRoute><SeriesPage /></ProtectedRoute>} />
+                    <Route path="/movie/:id" element={<ProtectedRoute><MovieDetail /></ProtectedRoute>} />
+                    <Route path="/favorites" element={<ProtectedRoute><Favorites /></ProtectedRoute>} />
+                    <Route path="/watch-later" element={<ProtectedRoute><WatchLater /></ProtectedRoute>} />
                     <Route path="/flashcards" element={<ProtectedRoute><Flashcards /></ProtectedRoute>} />
                     <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
                 </Routes>
