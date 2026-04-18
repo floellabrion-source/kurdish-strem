@@ -1,20 +1,41 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { LogIn, UserPlus } from 'lucide-react';
+import { LogIn, UserPlus, Eye, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import './Auth.css';
 
 export default function Auth() {
     const { login, register } = useAuth();
     const navigate = useNavigate();
     const [isLogin, setIsLogin] = useState(true);
     const [username, setUsername] = useState('');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
+
+        if (!isLogin) {
+            if (!email.includes('@')) {
+                setError('ئیمەیڵی دروست بنووسە');
+                return;
+            }
+            if (password !== confirmPassword) {
+                setError('دووپاتکردنەوەی وشەی نهێنی ڕاست نییە');
+                return;
+            }
+            if (password.length < 6) {
+                setError('وشەی نهێنی دەبێت لانیکەم ٦ پیت بێت');
+                return;
+            }
+        }
+
         setLoading(true);
         try {
             if (isLogin) {
@@ -31,53 +52,93 @@ export default function Auth() {
     };
 
     return (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#09090e', color: 'white' }}>
-            <div style={{ width: '100%', maxWidth: '400px', padding: '40px', background: 'rgba(255,255,255,0.03)', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <h2 style={{ textAlign: 'center', marginBottom: '30px', fontSize: '28px', fontWeight: 800 }}>
-                    {isLogin ? 'چوونەژوورەوە' : 'دروستکردنی هەژمار'}
-                </h2>
-                
-                {error && <div style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', padding: '12px', borderRadius: '10px', marginBottom: '20px', textAlign: 'center', fontSize: '14px' }}>{error}</div>}
+        <div className="auth-page">
+            <div className="auth-card">
+                <div className="auth-brand">
+                    <h1>{isLogin ? 'بەخێربێیت' : 'دروستکردنی هەژمار'}</h1>
+                    <p>{isLogin ? 'بچۆ ژوورەوە بۆ بینەما' : 'هەژمارێکی نوێ دروست بکە'}</p>
+                </div>
 
-                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8', fontSize: '14px' }}>ناوی بەکارهێنەر</label>
+                <div className="auth-tabs">
+                    <button className={isLogin ? 'active' : ''} onClick={() => setIsLogin(true)}>چوونەژوورەوە</button>
+                    <button className={!isLogin ? 'active' : ''} onClick={() => setIsLogin(false)}>خۆتۆمارکردن</button>
+                </div>
+                
+                {error && <div className="auth-error">{error}</div>}
+
+                <form onSubmit={handleSubmit} className="auth-form">
+                    {!isLogin && (
+                        <div className="auth-field">
+                            <label>ناوی تەواو</label>
+                            <input type="text" placeholder="ناوی تەواو" />
+                        </div>
+                    )}
+
+                    <div className="auth-field">
+                        <label>{!isLogin ? 'ئیمەیڵ' : 'ناوی بەکارهێنەر'}</label>
                         <input 
-                            type="text" 
-                            value={username} 
-                            onChange={e => setUsername(e.target.value)}
-                            style={{ width: '100%', padding: '12px', borderRadius: '10px', background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontFamily: 'inherit' }}
+                            type={!isLogin ? 'email' : 'text'}
+                            value={!isLogin ? email : username}
+                            onChange={e => !isLogin ? setEmail(e.target.value) : setUsername(e.target.value)}
+                            placeholder={!isLogin ? 'ئیمەیڵ' : 'ناوی بەکارهێنەر'}
                             required 
                         />
                     </div>
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8', fontSize: '14px' }}>وشەی نهێنی</label>
-                        <input 
-                            type="password" 
-                            value={password} 
+
+                    {!isLogin && (
+                        <div className="auth-field">
+                            <label>ناوی بەکارهێنەر</label>
+                            <input
+                                type="text"
+                                value={username}
+                                onChange={e => setUsername(e.target.value)}
+                                placeholder="ناوی بەکارهێنەر"
+                                required
+                            />
+                        </div>
+                    )}
+
+                    <div className="auth-field auth-password-wrap">
+                        <label>تێپەڕوشە</label>
+                        <input
+                            type={showPassword ? 'text' : 'password'}
+                            value={password}
                             onChange={e => setPassword(e.target.value)}
-                            style={{ width: '100%', padding: '12px', borderRadius: '10px', background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontFamily: 'inherit' }}
-                            required 
+                            placeholder="تێپەڕوشەکەت"
+                            required
                         />
+                        <button type="button" className="toggle-pass-btn" onClick={() => setShowPassword(v => !v)}>
+                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
                     </div>
-                    <button 
-                        type="submit" 
-                        disabled={loading}
-                        style={{ background: '#7c3aed', color: 'white', border: 'none', padding: '14px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '10px', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 'bold' }}
-                    >
+
+                    {!isLogin && (
+                        <div className="auth-field auth-password-wrap">
+                            <label>دڵنیابوونەوەی تێپەڕوشە</label>
+                            <input
+                                type={showConfirmPassword ? 'text' : 'password'}
+                                value={confirmPassword}
+                                onChange={e => setConfirmPassword(e.target.value)}
+                                placeholder="دووبارە تێپەڕوشەکەت بنووسە"
+                                required
+                            />
+                            <button type="button" className="toggle-pass-btn" onClick={() => setShowConfirmPassword(v => !v)}>
+                                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
+                        </div>
+                    )}
+
+                    <button type="submit" disabled={loading} className="auth-submit-btn">
                         {isLogin ? <LogIn size={18} /> : <UserPlus size={18} />}
-                        {loading ? 'چاوەڕوانبە...' : (isLogin ? 'چوونەژوورەوە' : 'تۆمارکردن')}
+                        {loading ? 'چاوەڕوانبە...' : (isLogin ? 'چوونەژوورەوە' : 'خۆتۆمارکردن')}
                     </button>
                 </form>
 
-                <div style={{ textAlign: 'center', marginTop: '20px', color: '#94a3b8', fontSize: '14px' }}>
-                    {isLogin ? 'هەژمارت نییە؟' : 'هەژمارت هەیە؟'}{' '}
-                    <span 
-                        onClick={() => setIsLogin(!isLogin)} 
-                        style={{ color: '#7c3aed', cursor: 'pointer', fontWeight: 'bold' }}
-                    >
-                        {isLogin ? 'تۆمارکردن' : 'چوونەژوورەوە'}
-                    </span>
+                <div className="auth-switch">
+                    {isLogin ? 'هەژمارت نییە؟ ' : 'هەژمارت هەیە؟ '}
+                    <button type="button" onClick={() => setIsLogin(!isLogin)}>
+                        {isLogin ? 'خۆتۆمارکردن' : 'چوونەژوورەوە'}
+                    </button>
                 </div>
             </div>
         </div>

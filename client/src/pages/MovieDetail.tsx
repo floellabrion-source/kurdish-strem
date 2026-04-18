@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Play, Heart, Clock, CheckCircle } from 'lucide-react';
+import { Play, Heart, Clock, CheckCircle, Download, Eye, Globe, Bookmark, Star } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { Movie } from '../types';
@@ -53,51 +53,55 @@ export default function MovieDetail() {
 
     return (
         <div className="movie-detail-container">
-            <div className="detail-backdrop" style={{ backgroundImage: `url(${movie.posterCloudUrl || movie.posterUrl})` }}></div>
+            <div className="detail-hero" style={{ backgroundImage: `url(${movie.posterCloudUrl || movie.posterUrl})` }}>
+                <div className="detail-hero-overlay"></div>
+                <div className="detail-hero-content">
+                    <h1 className="detail-title">{movie.title}</h1>
+                    <div className="detail-meta">
+                        <span>{movie.genre || 'نەزانراو'}</span>
+                        {movie.year && <span>{movie.year}</span>}
+                        {movie.duration && <span>{movie.duration}</span>}
+                        {movie.imdbRating && <span className="rating"><Star size={13} fill="currentColor" /> {movie.imdbRating}</span>}
+                    </div>
+                    <p className="detail-tagline">{getDescription().split('.')[0] || 'هیچ باسێک نییە.'}</p>
+
+                    <div className="detail-actions">
+                        <Link to={`/watch/${movie.id}`} className="action-btn watch-btn">
+                            <Play size={19} fill="currentColor" />
+                            سەیرکردن
+                        </Link>
+                        <button className="action-btn download-btn">
+                            <Download size={18} />
+                            داگرتن
+                        </button>
+                    </div>
+
+                    <div className="quick-actions">
+                        <button className={`quick-btn ${isFavorite ? 'active' : ''}`} onClick={() => handleAction('favorites', '/favorites')}>
+                            <Heart size={16} fill={isFavorite ? 'currentColor' : 'none'} /> لیستی دڵخواز
+                        </button>
+                        <button className={`quick-btn ${isWatchLater ? 'active' : ''}`} onClick={() => handleAction('watchLater', '/watch-later')}>
+                            <Bookmark size={16} fill={isWatchLater ? 'currentColor' : 'none'} /> بینینی دواتر
+                        </button>
+                        <button className={`quick-btn ${isWatched ? 'active' : ''}`} onClick={() => handleAction('watched')}>
+                            <CheckCircle size={16} fill={isWatched ? 'currentColor' : 'none'} /> بینراو
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <div className="detail-content">
                 <div className="detail-poster">
                     <img src={movie.posterCloudUrl || movie.posterUrl} alt={movie.title} />
                 </div>
                 <div className="detail-info">
-                    <h1 className="detail-title">{movie.title}</h1>
-                    <div className="detail-meta">
-                        <span>{movie.year}</span>
-                        <span>{movie.duration} خولەک</span>
-                        <span>{movie.genre}</span>
-                        {movie.imdbRating && <span className="rating">⭐ {movie.imdbRating}</span>}
+                    <div className="detail-pills">
+                        <span><Globe size={14} /> {movie.language?.split(',')[0] || 'N/A'}</span>
+                        {movie.imdbRating && <span><Star size={14} fill="currentColor" /> IMDb {movie.imdbRating}</span>}
+                        <span><Eye size={14} /> {user?.history && Object.keys(user.history).length ? Object.keys(user.history).length : 0}</span>
+                        <span><Clock size={14} /> {movie.duration || 'N/A'}</span>
                     </div>
                     <p className="detail-desc">{getDescription()}</p>
-
-                    <div className="detail-actions">
-                        <Link to={`/watch/${movie.id}`} className="action-btn watch-btn">
-                            <Play size={20} fill="currentColor" />
-                            سەیرکردن
-                        </Link>
-                        
-                        <button 
-                            className={`action-btn ${isFavorite ? 'active' : ''}`} 
-                            onClick={() => handleAction('favorites', '/favorites')}
-                        >
-                            <Heart size={20} fill={isFavorite ? "currentColor" : "none"} />
-                            لیستی دڵخواز
-                        </button>
-                        
-                        <button 
-                            className={`action-btn ${isWatchLater ? 'active' : ''}`} 
-                            onClick={() => handleAction('watchLater', '/watch-later')}
-                        >
-                            <Clock size={20} fill={isWatchLater ? "currentColor" : "none"} />
-                            بینینی دواتر
-                        </button>
-
-                        <button 
-                            className={`action-btn ${isWatched ? 'active' : ''}`} 
-                            onClick={() => handleAction('watched')}
-                        >
-                            <CheckCircle size={20} fill={isWatched ? "currentColor" : "none"} />
-                            بینراو
-                        </button>
-                    </div>
                 </div>
             </div>
         </div>
