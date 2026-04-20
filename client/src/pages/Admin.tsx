@@ -4,7 +4,7 @@ import {
     Plus, Film, Trash2, Edit3, Save, X,
     CheckCircle, AlertCircle, Loader2, FileText,
     Image, Video, Layers, ChevronDown, ChevronUp,
-    PlusCircle, ListVideo, Upload, Languages, Shield, Link as LinkIcon, Star, Play
+    PlusCircle, ListVideo, Upload, Languages, Shield, Link as LinkIcon, Star, Play, Search
 } from 'lucide-react';
 import { Movie, Season, Episode } from '../types';
 import SrtTranslator from './SrtTranslator';
