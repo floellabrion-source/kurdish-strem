@@ -246,40 +246,47 @@
 }
 
 .episodes-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
 .episode-card {
     display: flex;
-    flex-direction: column;
-    background: rgba(255, 255, 255, 0.04);
+    flex-direction: row;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.03);
     border-radius: 12px;
     overflow: hidden;
     text-decoration: none;
     color: #fff;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.05);
     transition: all 0.2s;
+    padding: 8px;
+    gap: 16px;
 }
 
 .episode-card:hover {
     background: rgba(255, 255, 255, 0.08);
-    transform: translateY(-4px);
+    transform: translateX(-4px);
     border-color: rgba(139, 92, 246, 0.4);
 }
 
 .episode-card.watched {
-    opacity: 0.6;
+    opacity: 0.5;
 }
 
 .episode-card.watched:hover {
-    opacity: 1;
+    opacity: 0.9;
 }
 
 .episode-thumb {
     position: relative;
-    aspect-ratio: 16/9;
+    width: 160px;
+    height: 90px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    overflow: hidden;
 }
 
 .episode-thumb img {
@@ -332,18 +339,24 @@
 }
 
 .episode-info {
-    padding: 12px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0;
 }
 
 .episode-info h4 {
-    margin: 0 0 4px;
-    font-size: 14px;
+    margin: 0 0 6px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #e2e8f0;
 }
 
 .episode-info p {
     margin: 0;
     color: #94a3b8;
-    font-size: 12px;
+    font-size: 13px;
 }
 
 @media (max-width: 1024px) {
@@ -433,8 +446,13 @@
         font-size: 13px;
     }
 
-    .episodes-list {
-        grid-template-columns: repeat(2, 1fr);
+    .episode-thumb {
+        width: 130px;
+        height: 75px;
+    }
+
+    .episode-card {
+        padding: 6px;
         gap: 12px;
     }
 }
