@@ -42,6 +42,10 @@ export default function Admin() {
 
     const [fetchingImdbRating, setFetchingImdbRating] = useState(false);
 
+    // Search & Filter State
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterType, setFilterType] = useState<'all' | 'movie' | 'series' | 'animation'>('all');
+
     const [form, setForm] = useState({
         title: '', description: '', descriptionKu: '', descriptionEn: '', descriptionAr: '', language: '', genre: '', year: new Date().getFullYear().toString(),
         duration: '', type: 'movie' as 'movie' | 'series' | 'animation', imdbRating: '' as string | number,
@@ -311,6 +315,15 @@ export default function Admin() {
         }
     };
 
+    const filteredMovies = movies.filter(m => {
+        const matchesType = filterType === 'all' || m.type === filterType;
+        const searchLower = searchTerm.toLowerCase();
+        const matchesSearch = m.title.toLowerCase().includes(searchLower) || 
+                              (m.genre && m.genre.toLowerCase().includes(searchLower)) ||
+                              (m.year && m.year.toString().includes(searchLower));
+        return matchesType && matchesSearch;
+    });
+
     return (
         <div className="admin-page">
             <div className="toast-container">
@@ -330,6 +343,36 @@ export default function Admin() {
                 <button className="btn-add" onClick={() => setShowForm(true)}>
                     <Plus size={18} /> بەرهەمی نوێ
                 </button>
+            </div>
+
+            <div className="admin-search-bar">
+                <div className="admin-search-input-wrap">
+                    <Search size={18} className="admin-search-icon" />
+                    <input 
+                        type="text" 
+                        placeholder="گەڕان بەپێی ناو، چەشن یان ساڵ..." 
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="admin-search-input"
+                    />
+                    {searchTerm && (
+                        <button className="admin-search-clear" onClick={() => setSearchTerm('')}>
+                            <X size={16} />
+                        </button>
+                    )}
+                </div>
+                <div className="admin-filter-wrap">
+                    <select 
+                        value={filterType} 
+                        onChange={(e) => setFilterType(e.target.value as any)}
+                        className="admin-filter-select"
+                    >
+                        <option value="all">هەموو جۆرەکان</option>
+                        <option value="movie">فیلم</option>
+                        <option value="series">زنجیرە</option>
+                        <option value="animation">ئەنیمێشن</option>
+                    </select>
+                </div>
             </div>
 
             <SrtTranslator />
@@ -541,9 +584,11 @@ export default function Admin() {
 
             {loading ? (
                 <div className="admin-loading"><Loader2 size={32} className="spinning" /></div>
+            ) : filteredMovies.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>هیچ بەرهەمێک نەدۆزرایەوە...</div>
             ) : (
                 <div className="movies-admin-list">
-                    {movies.map(movie => (
+                    {filteredMovies.map(movie => (
                         <div key={movie.id} className="admin-card">
                             <div className="ac-top">
                                 <div className="ac-poster" onClick={() => refs.poster.current[movie.id]?.click()}>

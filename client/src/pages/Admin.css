@@ -68,14 +68,16 @@
 }
 
 .admin-title {
-    font-size: 30px;
-    font-weight: 900;
-    margin-bottom: 4px;
+    font-size: 28px;
+    font-weight: 800;
+    color: white;
+    margin: 0 0 4px 0;
 }
 
 .admin-sub {
-    color: var(--text3);
     font-size: 14px;
+    color: #94a3b8;
+    margin: 0;
 }
 
 /* Add Button */
@@ -99,6 +101,108 @@
 .btn-add:hover {
     background: var(--accent2);
     transform: scale(1.02);
+}
+
+/* Admin Search Bar */
+.admin-search-bar {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 24px;
+    align-items: center;
+}
+
+.admin-search-input-wrap {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+.admin-search-icon {
+    position: absolute;
+    right: 16px;
+    color: #64748b;
+    pointer-events: none;
+}
+
+.admin-search-input {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    padding: 14px 16px 14px 40px;
+    padding-right: 44px; /* Space for icon in RTL */
+    border-radius: 14px;
+    font-size: 15px;
+    font-family: inherit;
+    transition: all 0.2s;
+}
+
+.admin-search-input:focus {
+    outline: none;
+    border-color: #8b5cf6;
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+}
+
+.admin-search-clear {
+    position: absolute;
+    left: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: #94a3b8;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.admin-search-clear:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.admin-filter-wrap {
+    position: relative;
+    width: 180px;
+}
+
+.admin-filter-select {
+    width: 100%;
+    appearance: none;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    padding: 14px 16px;
+    border-radius: 14px;
+    font-size: 15px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.admin-filter-select:focus {
+    outline: none;
+    border-color: #8b5cf6;
+}
+
+.admin-filter-select option {
+    background: #1e293b;
+    color: white;
+}
+
+@media (max-width: 768px) {
+    .admin-search-bar {
+        flex-direction: column;
+    }
+    
+    .admin-filter-wrap {
+        width: 100%;
+    }
 }
 
 /* Form Modal */
