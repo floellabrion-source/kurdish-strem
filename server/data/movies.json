@@ -1535,7 +1535,7 @@
             "number": 1,
             "title": "Pilot",
             "duration": "49 min",
-            "videoFile": null,
+            "videoFile": "video.mp4",
             "videoUrl": null,
             "originalSrt": null,
             "translatedSrt": null,

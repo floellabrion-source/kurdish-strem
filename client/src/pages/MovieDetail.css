@@ -216,6 +216,12 @@
     margin-bottom: 24px;
     overflow-x: auto;
     padding-bottom: 10px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+}
+
+.season-tabs::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
 }
 
 .season-tab {
@@ -390,5 +396,14 @@
 
     .series-episodes-section {
         padding: 0 16px 40px;
+    }
+
+    .season-tabs {
+        gap: 8px;
+    }
+
+    .season-tab {
+        padding: 8px 16px;
+        font-size: 13px;
     }
 }
