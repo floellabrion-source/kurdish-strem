@@ -217,11 +217,13 @@
     overflow-x: auto;
     padding-bottom: 10px;
     -webkit-overflow-scrolling: touch;
-    scrollbar-width: none; /* Firefox */
+    scrollbar-width: none;
+    /* Firefox */
 }
 
 .season-tabs::-webkit-scrollbar {
-    display: none; /* Chrome, Safari and Opera */
+    display: none;
+    /* Chrome, Safari and Opera */
 }
 
 .season-tab {
@@ -245,15 +247,15 @@
 
 .episodes-list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
 }
 
 .episode-card {
     display: flex;
     flex-direction: column;
     background: rgba(255, 255, 255, 0.04);
-    border-radius: 16px;
+    border-radius: 12px;
     overflow: hidden;
     text-decoration: none;
     color: #fff;
@@ -265,6 +267,14 @@
     background: rgba(255, 255, 255, 0.08);
     transform: translateY(-4px);
     border-color: rgba(139, 92, 246, 0.4);
+}
+
+.episode-card.watched {
+    opacity: 0.6;
+}
+
+.episode-card.watched:hover {
+    opacity: 1;
 }
 
 .episode-thumb {
@@ -280,14 +290,30 @@
 
 .episode-number {
     position: absolute;
-    top: 10px;
-    left: 10px;
+    top: 8px;
+    left: 8px;
     background: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(4px);
-    padding: 4px 10px;
+    padding: 2px 8px;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 700;
+}
+
+.episode-watched-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(76, 175, 80, 0.9);
+    backdrop-filter: blur(4px);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: white;
 }
 
 .play-overlay {
@@ -306,18 +332,18 @@
 }
 
 .episode-info {
-    padding: 16px;
+    padding: 12px;
 }
 
 .episode-info h4 {
-    margin: 0 0 6px;
-    font-size: 16px;
+    margin: 0 0 4px;
+    font-size: 14px;
 }
 
 .episode-info p {
     margin: 0;
     color: #94a3b8;
-    font-size: 13px;
+    font-size: 12px;
 }
 
 @media (max-width: 1024px) {
@@ -405,5 +431,10 @@
     .season-tab {
         padding: 8px 16px;
         font-size: 13px;
+    }
+
+    .episodes-list {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
     }
 }

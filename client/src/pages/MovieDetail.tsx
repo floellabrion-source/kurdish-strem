@@ -63,6 +63,12 @@ export default function MovieDetail() {
     const totalEpisodes = seasons.reduce((acc, s) => acc + s.episodes.length, 0);
     const activeSeasonData = seasons.find(s => s.number === activeSeason);
 
+    const isEpisodeWatched = (seasonNum: number, epNum: number) => {
+        if (!user || !user?.history) return false;
+        const key = `${movie.id}_s${seasonNum}_e${epNum}`;
+        return !!user.history[key];
+    };
+
     return (
         <div className="movie-detail-container">
             <div className="detail-hero" style={{ backgroundImage: `url(${movie.posterCloudUrl || movie.posterUrl})` }}>
@@ -152,19 +158,27 @@ export default function MovieDetail() {
                     </div>
                     
                     <div className="episodes-list">
-                        {activeSeasonData?.episodes.map(ep => (
-                            <Link to={`/watch/${movie.id}?s=${activeSeason}&e=${ep.number}`} key={ep.id} className="episode-card">
-                                <div className="episode-thumb">
-                                    <img src={movie.posterCloudUrl || movie.posterUrl} alt={ep.title} />
-                                    <div className="episode-number">{ep.number}</div>
-                                    <div className="play-overlay"><Play size={24} fill="currentColor" /></div>
-                                </div>
-                                <div className="episode-info">
-                                    <h4>{ep.title}</h4>
-                                    <p>{ep.duration} خولەک</p>
-                                </div>
-                            </Link>
-                        ))}
+                        {activeSeasonData?.episodes.map(ep => {
+                            const watched = isEpisodeWatched(activeSeason, ep.number);
+                            return (
+                                <Link to={`/watch/${movie.id}?s=${activeSeason}&e=${ep.number}`} key={ep.id} className={`episode-card ${watched ? 'watched' : ''}`}>
+                                    <div className="episode-thumb">
+                                        <img src={movie.posterCloudUrl || movie.posterUrl} alt={ep.title} />
+                                        <div className="episode-number">{ep.number}</div>
+                                        {watched && (
+                                            <div className="episode-watched-badge">
+                                                <CheckCircle size={14} fill="currentColor" /> بینراوە
+                                            </div>
+                                        )}
+                                        <div className="play-overlay"><Play size={24} fill="currentColor" /></div>
+                                    </div>
+                                    <div className="episode-info">
+                                        <h4>{ep.title}</h4>
+                                        <p>{ep.duration} خولەک</p>
+                                    </div>
+                                </Link>
+                            );
+                        })}
                     </div>
                 </div>
             )}
