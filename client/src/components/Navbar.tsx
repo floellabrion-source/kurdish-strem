@@ -82,10 +82,10 @@ export default function Navbar() {
                             {user && (
                                 <>
                                     <Link to="/favorites" className={`mobile-drawer-item ${location.pathname === '/favorites' ? 'active' : ''}`}>
-                                        <Heart size={20} /><span>لیستی دڵخواز</span>
+                                        <Heart size={20} /><span>{t('favorites')}</span>
                                     </Link>
                                     <Link to="/watch-later" className={`mobile-drawer-item ${location.pathname === '/watch-later' ? 'active' : ''}`}>
-                                        <Clock size={20} /><span>بینینی دواتر</span>
+                                        <Clock size={20} /><span>{t('watch_later')}</span>
                                     </Link>
                                 </>
                             )}
@@ -156,13 +156,13 @@ export default function Navbar() {
                         </Link>
                         {user && (
                             <>
-                                <Link to="/favorites" className={`nav-item ${location.pathname === '/favorites' ? 'active' : ''}`} data-tooltip="لیستی دڵخواز">
+                                <Link to="/favorites" className={`nav-item ${location.pathname === '/favorites' ? 'active' : ''}`} data-tooltip={t('favorites')}>
                                     <Heart size={18} />
-                                    <span className="nav-text">لیستی دڵخواز</span>
+                                    <span className="nav-text">{t('favorites')}</span>
                                 </Link>
-                                <Link to="/watch-later" className={`nav-item ${location.pathname === '/watch-later' ? 'active' : ''}`} data-tooltip="بینینی دواتر">
+                                <Link to="/watch-later" className={`nav-item ${location.pathname === '/watch-later' ? 'active' : ''}`} data-tooltip={t('watch_later')}>
                                     <Clock size={18} />
-                                    <span className="nav-text">بینینی دواتر</span>
+                                    <span className="nav-text">{t('watch_later')}</span>
                                 </Link>
                             </>
                         )}
@@ -234,7 +234,7 @@ export default function Navbar() {
                         <Sparkles size={20} /><span>{t('animation')}</span>
                     </Link>
                     <Link to="/favorites" className={`mob-item ${location.pathname === '/favorites' ? 'active' : ''}`}>
-                        <Heart size={20} /><span>دڵخواز</span>
+                        <Heart size={20} /><span>{t('favorites')}</span>
                     </Link>
                     <Link to="/profile" className={`mob-item ${location.pathname === '/profile' ? 'active' : ''}`}>
                         <User size={20} /><span>{t('account')}</span>

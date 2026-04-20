@@ -27,7 +27,9 @@ export const translations: Translations = {
     "not_found": { ku: "هیچ فیلمێک نەدۆزرایەوە", en: "No movies found", ar: "لم يتم العثور على أفلام" },
     "time": { ku: "کات:", en: "Time:", ar: "الوقت:" },
     "kurdish_stream": { ku: "بینەما", en: "Binema", ar: "بينما" },
-    "login": { ku: "چوونەژوورەوە", en: "Login", ar: "تسجيل الدخول" }
+    "login": { ku: "چوونەژوورەوە", en: "Login", ar: "تسجيل الدخول" },
+    "favorites": { ku: "لیستی دڵخواز", en: "Favorites", ar: "المفضلة" },
+    "watch_later": { ku: "بینینی دواتر", en: "Watch Later", ar: "المشاهدة لاحقاً" }
 };
 
 interface LanguageContextType {

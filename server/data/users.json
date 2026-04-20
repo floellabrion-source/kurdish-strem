@@ -68,7 +68,10 @@
       }
     },
     "flashcards": [],
-    "role": "user"
+    "role": "user",
+    "favorites": [],
+    "watchLater": [],
+    "watched": []
   },
   {
     "id": "bae2eb30-7cb5-41ee-94df-9565e4a65190",
@@ -78,7 +81,10 @@
     "points": 0,
     "history": {},
     "flashcards": [],
-    "role": "user"
+    "role": "user",
+    "favorites": [],
+    "watchLater": [],
+    "watched": []
   },
   {
     "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
@@ -243,9 +249,12 @@
         "nextReview": 1775417271635
       }
     ],
-    "token": "5ab7b30c-be91-4294-b6d1-b33b7c157e5631c3bb8f-0615-4596-87a1-c1217168bca3",
-    "tokenExpiresAt": 1777062773576,
-    "passwordHash": "$2a$10$gdjVlznMRi82lpXc0cftFeYZZXko9tOUrXQi7Gp2iE5RFD6kG/glS"
+    "token": "d4c08340-e12a-4b7f-83d6-479ca3668b4e6c604c3c-347d-4c20-8dd9-3c6e488ad2c0",
+    "tokenExpiresAt": 1777310690293,
+    "passwordHash": "$2a$10$gdjVlznMRi82lpXc0cftFeYZZXko9tOUrXQi7Gp2iE5RFD6kG/glS",
+    "favorites": [],
+    "watchLater": [],
+    "watched": []
   },
   {
     "id": "de18624b-400a-4a5c-a4ce-2a6504f58cbf",
@@ -256,6 +265,9 @@
     "history": {},
     "flashcards": [],
     "token": "4553ac8e-0119-4767-b0bf-ab1789cf5d750e7f09ae-28a2-4958-9ee5-70d4ab4b1c97",
-    "tokenExpiresAt": 1776885848050
+    "tokenExpiresAt": 1776885848050,
+    "favorites": [],
+    "watchLater": [],
+    "watched": []
   }
 ]
