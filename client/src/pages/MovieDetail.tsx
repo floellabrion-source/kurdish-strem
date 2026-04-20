@@ -15,11 +15,18 @@ export default function MovieDetail() {
     const [movie, setMovie] = useState<Movie | null>(null);
     const [loading, setLoading] = useState(true);
 
+    const [activeSeason, setActiveSeason] = useState<number>(1);
+
     useEffect(() => {
         axios.get(`/api/movies`)
             .then(res => {
                 const found = res.data.find((m: Movie) => m.id === id);
-                if (found) setMovie(found);
+                if (found) {
+                    setMovie(found);
+                    if (found.type === 'series' && found.seasons && found.seasons.length > 0) {
+                        setActiveSeason(found.seasons[0].number);
+                    }
+                }
                 setLoading(false);
             })
             .catch(() => setLoading(false));
@@ -51,6 +58,11 @@ export default function MovieDetail() {
         return movie.description;
     };
 
+    const isSeries = movie.type === 'series';
+    const seasons = movie.seasons || [];
+    const totalEpisodes = seasons.reduce((acc, s) => acc + s.episodes.length, 0);
+    const activeSeasonData = seasons.find(s => s.number === activeSeason);
+
     return (
         <div className="movie-detail-container">
             <div className="detail-hero" style={{ backgroundImage: `url(${movie.posterCloudUrl || movie.posterUrl})` }}>
@@ -66,14 +78,17 @@ export default function MovieDetail() {
                     <p className="detail-tagline">{getDescription().split('.')[0] || 'هیچ باسێک نییە.'}</p>
 
                     <div className="detail-actions">
-                        <Link to={`/watch/${movie.id}`} className="action-btn watch-btn">
-                            <Play size={19} fill="currentColor" />
-                            سەیرکردن
-                        </Link>
-                        <button className="action-btn download-btn">
-                            <Download size={18} />
-                            داگرتن
-                        </button>
+                        {isSeries && seasons[0]?.episodes[0] ? (
+                            <Link to={`/watch/${movie.id}?s=${seasons[0].number}&e=${seasons[0].episodes[0].number}`} className="action-btn watch-btn">
+                                <Play size={19} fill="currentColor" />
+                                سەیرکردن
+                            </Link>
+                        ) : (
+                            <Link to={`/watch/${movie.id}`} className="action-btn watch-btn">
+                                <Play size={19} fill="currentColor" />
+                                سەیرکردن
+                            </Link>
+                        )}
                     </div>
 
                     <div className="quick-actions">
@@ -101,9 +116,58 @@ export default function MovieDetail() {
                         <span><Eye size={14} /> {user?.history && Object.keys(user.history).length ? Object.keys(user.history).length : 0}</span>
                         <span><Clock size={14} /> {movie.duration || 'N/A'}</span>
                     </div>
+                    {isSeries && (
+                        <div className="series-stats">
+                            <div className="stat-box">
+                                <span className="stat-value">بەردەوامە</span>
+                                <span className="stat-label">باری</span>
+                            </div>
+                            <div className="stat-box">
+                                <span className="stat-value">{totalEpisodes}</span>
+                                <span className="stat-label">ئەڵقە</span>
+                            </div>
+                            <div className="stat-box">
+                                <span className="stat-value">{seasons.length}</span>
+                                <span className="stat-label">وەرز</span>
+                            </div>
+                        </div>
+                    )}
+                    <h3 className="section-heading">چیرۆک</h3>
                     <p className="detail-desc">{getDescription()}</p>
                 </div>
             </div>
+
+            {isSeries && seasons.length > 0 && (
+                <div className="series-episodes-section">
+                    <div className="season-tabs">
+                        {seasons.map(season => (
+                            <button 
+                                key={season.id} 
+                                className={`season-tab ${activeSeason === season.number ? 'active' : ''}`}
+                                onClick={() => setActiveSeason(season.number)}
+                            >
+                                وەرز {season.number}
+                            </button>
+                        ))}
+                    </div>
+                    
+                    <div className="episodes-list">
+                        {activeSeasonData?.episodes.map(ep => (
+                            <Link to={`/watch/${movie.id}?s=${activeSeason}&e=${ep.number}`} key={ep.id} className="episode-card">
+                                <div className="episode-thumb">
+                                    <img src={movie.posterCloudUrl || movie.posterUrl} alt={ep.title} />
+                                    <div className="episode-number">{ep.number}</div>
+                                    <div className="play-overlay"><Play size={24} fill="currentColor" /></div>
+                                </div>
+                                <div className="episode-info">
+                                    <h4>{ep.title}</h4>
+                                    <p>{ep.duration} خولەک</p>
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
