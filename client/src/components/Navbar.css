@@ -198,35 +198,51 @@ html[dir="ltr"] .sidebar {
 .mini-item {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 12px;
     background: rgba(255, 255, 255, 0.03);
-    padding: 8px;
+    padding: 10px;
     border-radius: 12px;
     cursor: pointer;
     transition: all 0.2s ease;
+    text-decoration: none;
 }
 
 .mini-item:hover {
     background: rgba(255, 255, 255, 0.08);
 }
 
-.mini-thumb {
-    width: 45px;
-    height: 45px;
-    border-radius: 8px;
-    background-size: cover;
-    background-position: center;
+.mini-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
 }
 
 .mini-info h4 {
     font-size: 13px;
     color: white;
-    margin-bottom: 4px;
+    margin: 0 0 4px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 150px;
 }
 
 .mini-info p {
     font-size: 11px;
     color: #888;
+    margin: 0;
+}
+
+.mini-thumb {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background-size: cover;
+    background-position: center;
+    background-color: #1f2937;
+    flex-shrink: 0;
 }
 
 /* FOOTER SETTINGS */

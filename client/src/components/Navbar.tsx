@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import axios from 'axios';
 import { Play, Home as HomeIcon, Film, Tv, User, Search, Shield, Moon, Sun, Monitor, Menu, BookOpen, Sparkles, Heart, Clock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { Movie } from '../types';
 import './Navbar.css';
 
 export default function Navbar() {
@@ -13,6 +15,7 @@ export default function Navbar() {
 
     const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('dark');
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [movies, setMovies] = useState<Movie[]>([]);
 
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', theme === 'system' ? 'dark' : theme);
@@ -23,7 +26,36 @@ export default function Navbar() {
         setMobileMenuOpen(false);
     }, [location.pathname]);
 
+    useEffect(() => {
+        if (user && user.history && Object.keys(user.history).length > 0) {
+            axios.get('/api/movies').then(res => setMovies(res.data)).catch(() => {});
+        }
+    }, [user]);
+
     if (isWatch || location.pathname === '/auth') return null;
+
+    // Process history
+    let recentHistory: { key: string, hist: any, m: Movie | undefined, link: string, epText: string }[] = [];
+    if (user?.history) {
+        recentHistory = Object.entries(user.history)
+            .sort((a, b) => new Date(b[1].date || 0).getTime() - new Date(a[1].date || 0).getTime())
+            .slice(0, 2)
+            .map(([key, hist]) => {
+                const match = key.match(/^(.+?)_s(\d+)_e(\d+)$/);
+                let link = `#`;
+                let epText = t('movies');
+                if (match) {
+                    const mId = match[1];
+                    const eNum = parseInt(match[3]);
+                    link = eNum > 0 ? `/watch/${mId}?s=${match[2]}&e=${eNum}` : `/watch/${mId}`;
+                    epText = `S${match[2]} E${match[3]}`;
+                } else {
+                    link = `/watch/${key}`;
+                }
+                const m = match ? movies.find(x => x.id === match[1]) : movies.find(x => x.id === key);
+                return { key, hist, m, link, epText };
+            });
+    }
 
     return (
         <>
@@ -182,14 +214,28 @@ export default function Navbar() {
                 <div className="sidebar-section desktop-only">
                     <p className="sidebar-label">{t('continue_watching_menu')}</p>
                     <div className="continue-mini-list">
-                        <div className="mini-item">
-                            <div className="mini-thumb" style={{ background: 'linear-gradient(135deg, #1f2937, #0f172a)' }}></div>
-                            <div className="mini-info"><h4>The 100</h4><p>2014 • S7 E2</p></div>
-                        </div>
-                        <div className="mini-item">
-                            <div className="mini-thumb" style={{ background: 'linear-gradient(135deg, #312e81, #111827)' }}></div>
-                            <div className="mini-info"><h4>Sneaky Pete</h4><p>2015 • S1 E1</p></div>
-                        </div>
+                        {recentHistory.length > 0 ? (
+                            recentHistory.map(({ key, hist, m, link, epText }) => (
+                                <Link to={link} className="mini-item" key={key}>
+                                    <div className="mini-info">
+                                        <h4>{hist.title}</h4>
+                                        <p>{epText} {m?.year ? `• ${m.year}` : ''}</p>
+                                    </div>
+                                    <div 
+                                        className="mini-thumb" 
+                                        style={{ 
+                                            backgroundImage: m?.posterCloudUrl || m?.posterUrl ? `url(${m.posterCloudUrl || m.posterUrl})` : 'linear-gradient(135deg, #1f2937, #0f172a)' 
+                                        }}
+                                    ></div>
+                                </Link>
+                            ))
+                        ) : (
+                            <div className="mini-item" style={{ opacity: 0.5, cursor: 'default' }}>
+                                <div className="mini-info">
+                                    <p>هیچ فیلمێک نییە</p>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 
