@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Play, Heart, Clock, CheckCircle, Download, Eye, Globe, Bookmark, Star } from 'lucide-react';
+import { Play, Heart, Clock, CheckCircle, Eye, Globe, Bookmark, Star } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { Movie } from '../types';
@@ -58,6 +58,22 @@ export default function MovieDetail() {
         return movie.description;
     };
 
+    const getSmartTagline = () => {
+        const raw = (getDescription() || '').replace(/\s+/g, ' ').trim();
+        if (!raw) return 'هیچ باسێکی کورت نییە.';
+
+        const firstSentence = raw.split(/[.!؟]/)[0]?.trim() || raw;
+        const candidate = firstSentence || raw;
+        const maxChars = 95;
+
+        if (candidate.length <= maxChars) return candidate;
+
+        const sliced = candidate.slice(0, maxChars);
+        const lastSpace = sliced.lastIndexOf(' ');
+        const clean = lastSpace > 85 ? sliced.slice(0, lastSpace) : sliced;
+        return `${clean}...`;
+    };
+
     const isSeries = movie.type === 'series';
     const seasons = movie.seasons || [];
     const totalEpisodes = seasons.reduce((acc, s) => acc + s.episodes.length, 0);
@@ -81,7 +97,7 @@ export default function MovieDetail() {
                         {movie.duration && <span>{movie.duration}</span>}
                         {movie.imdbRating && <span className="rating"><Star size={13} fill="currentColor" /> {movie.imdbRating}</span>}
                     </div>
-                    <p className="detail-tagline">{getDescription().split('.')[0] || 'هیچ باسێک نییە.'}</p>
+                    <p className="detail-tagline">{getSmartTagline()}</p>
 
                     <div className="detail-actions">
                         {isSeries && seasons[0]?.episodes[0] ? (
