@@ -95,7 +95,12 @@ export default function Watch() {
     const [skipIndicator, setSkipIndicator] = useState<'forward' | 'backward' | null>(null);
     const [episodeTitle, setEpisodeTitle] = useState('');
     const [resumePrompt, setResumePrompt] = useState<number | null>(null); // saved time to resume from
-    const saveTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    // Watch stats tracking
+    const accumulatedSecondsRef = useRef(0);
+    const lastVideoTimeRef = useRef<number>(0);
+    const lastSeenSubIdRef = useRef<number | null>(null);
+    const [sessionSentences, setSessionSentences] = useState(0);
 
     // localStorage key for this content
     const progressKey = `progress_${id}_s${seasonNum}_e${episodeNum}`;
@@ -524,16 +529,38 @@ Sentence: "${text}"` }] }]
     const handleTimeUpdate = () => {
         const v = videoRef.current;
         if (!v) return;
-        setCurrentTime(v.currentTime);
+        
+        const currentT = v.currentTime;
+        const diff = currentT - lastVideoTimeRef.current;
+        
+        // Track watch time based on normal playback (not seeking)
+        if (diff > 0 && diff < 1.5) { // 1.5 allows for normal fast playback
+            accumulatedSecondsRef.current += diff;
+            if (accumulatedSecondsRef.current >= 60) {
+                accumulatedSecondsRef.current -= 60; // Keep the remainder
+                if (user) {
+                    syncProgress({ watchMinutes: 1 }).catch(() => {});
+                }
+            }
+        }
+        lastVideoTimeRef.current = currentT;
+
+        setCurrentTime(currentT);
         if (v.buffered.length > 0) setBuffered(v.buffered.end(v.buffered.length - 1));
         
         // Save progress locally every 5 seconds
-        if (v.currentTime > 10) {
-            const rounded = Math.floor(v.currentTime);
-            localStorage.setItem(progressKey, String(rounded));
+        if (currentT > 10) {
+            const rounded = Math.floor(currentT);
+            // Only write to localStorage and sync if it actually changed to a new 5/15 second mark
+            if (rounded % 5 === 0 && localStorage.getItem(progressKey) !== String(rounded)) {
+                localStorage.setItem(progressKey, String(rounded));
+            }
             
             // Sync with backend every 15 seconds
-            if (rounded % 15 === 0 && user) {
+            // To prevent spamming, we check if it exactly hit the multiple and we haven't synced this second yet
+            // The frontend sends history.
+            if (rounded % 15 === 0 && localStorage.getItem(progressKey + '_synced') !== String(rounded) && user) {
+                localStorage.setItem(progressKey + '_synced', String(rounded));
                 const hKey = `${id}_s${seasonNum}_e${episodeNum}`;
                 const title = episodeNum > 0 ? episodeTitle : movie?.title || 'Unknown';
                 syncProgress({ history: { [hKey]: { time: rounded, title, date: new Date().toISOString() } } });
@@ -546,6 +573,21 @@ Sentence: "${text}"` }] }]
     const adjTime = currentTime - subDelay;
     const currentOrigSub = originalSubs.find(s => adjTime >= s.start && adjTime <= s.end);
     const currentTransSub = translatedSubs.find(s => adjTime >= s.start && adjTime <= s.end);
+
+    // Track sentences seen
+    useEffect(() => {
+        if (currentOrigSub && currentOrigSub.id !== lastSeenSubIdRef.current) {
+            lastSeenSubIdRef.current = currentOrigSub.id;
+            setSessionSentences(prev => {
+                const newCount = prev + 1;
+                // Sync every 5 sentences to avoid spamming the backend
+                if (newCount % 5 === 0 && user) {
+                    syncProgress({ sentencesSeen: 5 }).catch(err => console.error('Error syncing sentences:', err));
+                }
+                return newCount;
+            });
+        }
+    }, [currentOrigSub, user]);
 
     const backTo = () => {
         if (episodeNum > 0) navigate(`/series/${id}`);

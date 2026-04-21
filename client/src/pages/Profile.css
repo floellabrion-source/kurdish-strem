@@ -163,6 +163,109 @@
     margin: 0 auto 40px;
 }
 
+.profile-watch-stats {
+    display: flex;
+    gap: 15px;
+    margin-top: 25px;
+    width: 100%;
+    max-width: 600px;
+}
+
+.p-stat-box {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    backdrop-filter: blur(10px);
+}
+
+.p-stat-header {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+}
+
+.p-stat-body {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.p-stat-body div {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+    color: #e2e8f0;
+    font-weight: 600;
+}
+
+.p-stat-body div svg {
+    color: #38bdf8;
+}
+
+.credit-purchase-section {
+    width: 100%;
+    max-width: 600px;
+    margin-top: 25px;
+}
+
+.credit-banner {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(37, 99, 235, 0.1));
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    backdrop-filter: blur(10px);
+}
+
+.credit-info {
+    text-align: right;
+}
+
+.credit-info h3 {
+    margin: 0 0 5px 0;
+    color: #60a5fa;
+    font-size: 1.1rem;
+}
+
+.credit-info p {
+    margin: 0;
+    color: #94a3b8;
+    font-size: 0.85rem;
+}
+
+.btn-buy-credit {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.btn-buy-credit:hover {
+    background: #2563eb;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
 .fav-card {
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.08);

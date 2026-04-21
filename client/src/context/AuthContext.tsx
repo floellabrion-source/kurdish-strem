@@ -7,11 +7,13 @@ interface User {
     role: 'admin' | 'user';
     avatarUrl?: string;
     points: number;
+    credits?: number;
     history?: Record<string, { time: number; title: string; date?: string }>;
     flashcards?: any[];
     favorites?: string[];
     watchLater?: string[];
     watched?: string[];
+    dailyStats?: Record<string, { watchMinutes: number; sentencesSeen: number }>;
 }
 
 interface AuthContextType {
@@ -21,7 +23,7 @@ interface AuthContextType {
     login: (username: string, pass: string) => Promise<void>;
     register: (username: string, pass: string) => Promise<void>;
     logout: () => void;
-    syncProgress: (data: { points?: number, history?: any, flashcards?: any[] }) => Promise<void>;
+    syncProgress: (data: { points?: number, history?: any, flashcards?: any[], watchMinutes?: number, sentencesSeen?: number }) => Promise<void>;
     toggleList: (listName: 'favorites' | 'watchLater' | 'watched', movieId: string) => Promise<void>;
 }
 
@@ -76,7 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.removeItem('ks_token');
     };
 
-    const syncProgress = async (data: { points?: number, history?: any, flashcards?: any[] }) => {
+    const syncProgress = async (data: { points?: number, history?: any, flashcards?: any[], watchMinutes?: number, sentencesSeen?: number }) => {
         if (!user) return; // Silent fail if not logged in
         try {
             const res = await axios.post('/api/user/sync', data);

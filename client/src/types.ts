@@ -28,6 +28,7 @@ export interface Movie {
     language?: string;
     genre: string;
     year: number;
+    endYear?: number | null;
     duration: string;
     posterUrl: string;
     posterCloudUrl: string | null;
@@ -40,4 +41,20 @@ export interface Movie {
     imdbRating?: string | number;
     sensitiveScenes?: { start: number, end: number }[];
     seasons?: Season[];
+}
+
+export interface User {
+    id: string;
+    username: string;
+    role: 'admin' | 'user';
+    points: number;
+    credits?: number;
+    avatarUrl?: string;
+    history: Record<string, any>;
+    flashcards: any[];
+    favorites: string[];
+    watchLater: string[];
+    watched: string[];
+    token?: string;
+    dailyStats?: Record<string, { watchMinutes: number; sentencesSeen: number }>;
 }

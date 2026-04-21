@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Play, Heart, Clock, CheckCircle, Eye, Globe, Bookmark, Star } from 'lucide-react';
+import { Play, Heart, Clock, CheckCircle, Eye, Globe, Bookmark, Star, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { Movie } from '../types';
@@ -85,11 +85,23 @@ export default function MovieDetail() {
         return !!user.history[key];
     };
 
+    const goBackSafely = () => {
+        if (window.history.length > 1) {
+            navigate(-1);
+            return;
+        }
+        navigate('/');
+    };
+
     return (
         <div className="movie-detail-container">
             <div className="detail-hero" style={{ backgroundImage: `url(${movie.posterCloudUrl || movie.posterUrl})` }}>
                 <div className="detail-hero-overlay"></div>
                 <div className="detail-hero-content">
+                    <button type="button" className="back-btn" onClick={goBackSafely}>
+                        <ArrowLeft size={16} />
+                        گەڕانەوە
+                    </button>
                     <h1 className="detail-title">{movie.title}</h1>
                     <div className="detail-meta">
                         <span>{movie.genre || 'نەزانراو'}</span>
@@ -141,7 +153,7 @@ export default function MovieDetail() {
                     {isSeries && (
                         <div className="series-stats">
                             <div className="stat-box">
-                                <span className="stat-value">بەردەوامە</span>
+                                <span className="stat-value">{movie.endYear ? 'تەواو بووە' : 'بەردەوامە'}</span>
                                 <span className="stat-label">باری</span>
                             </div>
                             <div className="stat-box">
