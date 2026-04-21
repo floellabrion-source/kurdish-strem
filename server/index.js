@@ -7,7 +7,15 @@ const { v4: uuidv4 } = require('uuid');
 const multer = require('multer');
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
 const axios = require('axios');
-require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+const dotenv = require('dotenv');
+
+// Load env from common locations so both local and server setups work.
+[
+    path.join(__dirname, '..', '.env'),
+    path.join(__dirname, '.env')
+].forEach((envPath) => {
+    if (fs.existsSync(envPath)) dotenv.config({ path: envPath });
+});
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -17,14 +25,36 @@ const TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const MOVIES_DIR = path.join(__dirname, '..', 'uploads', 'movies');
 const DATA_FILE = path.join(__dirname, 'data', 'movies.json');
 const USERS_FILE = path.join(__dirname, 'data', 'users.json');
+const ANALYTICS_FILE = path.join(__dirname, 'data', 'analytics.json');
 
 if (!fs.existsSync(MOVIES_DIR)) fs.mkdirSync(MOVIES_DIR, { recursive: true });
 if (!fs.existsSync(path.join(__dirname, 'data'))) fs.mkdirSync(path.join(__dirname, 'data'), { recursive: true });
 if (!fs.existsSync(DATA_FILE)) fs.writeFileSync(DATA_FILE, '[]');
 if (!fs.existsSync(USERS_FILE)) fs.writeFileSync(USERS_FILE, '[]');
+if (!fs.existsSync(ANALYTICS_FILE)) fs.writeFileSync(ANALYTICS_FILE, JSON.stringify({ visits: [] }));
 
 app.use(cors());
 app.use(express.json({ limit: '20mb' }));
+
+// Analytics middleware
+app.use((req, res, next) => {
+    // Only track non-API and specific API routes if desired, but here we track generic visits
+    // Let's say we only track if it's not a static asset
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    
+    // We can debounce this to avoid writing to file on every request.
+    // But since it's a small app, we'll do it simple. We only track distinct IPs per day.
+    const analytics = readAnalytics();
+    if (!analytics.visits) analytics.visits = [];
+    
+    const existingVisit = analytics.visits.find(v => v.ip === ip && v.date === today);
+    if (!existingVisit) {
+        analytics.visits.push({ ip, date: today, timestamp: Date.now() });
+        writeAnalytics(analytics);
+    }
+    next();
+});
 
 const readMovies = () => {
     const data = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
@@ -45,15 +75,31 @@ const readUsers = () => {
         ...u,
         role: u.role || (!hasAdmin && users[0]?.id === u.id ? 'admin' : 'user'),
         points: u.points || 0,
+        credits: u.credits || 0,
+        creditUsage: Array.isArray(u.creditUsage) ? u.creditUsage : [],
+        suspendedUntil: u.suspendedUntil || null,
+        suspensionReason: u.suspensionReason || null,
+        notifications: Array.isArray(u.notifications) ? u.notifications : [],
         history: u.history || {},
         flashcards: Array.isArray(u.flashcards) ? u.flashcards : [],
         favorites: Array.isArray(u.favorites) ? u.favorites : [],
         watchLater: Array.isArray(u.watchLater) ? u.watchLater : [],
-        watched: Array.isArray(u.watched) ? u.watched : []
+        watched: Array.isArray(u.watched) ? u.watched : [],
+        dailyStats: u.dailyStats || {}
     }));
 };
 
 const writeUsers = (data) => fs.writeFileSync(USERS_FILE, JSON.stringify(data, null, 2));
+
+const readAnalytics = () => {
+    try {
+        return JSON.parse(fs.readFileSync(ANALYTICS_FILE, 'utf-8'));
+    } catch {
+        return { visits: [] };
+    }
+};
+
+const writeAnalytics = (data) => fs.writeFileSync(ANALYTICS_FILE, JSON.stringify(data, null, 2));
 
 const sanitizeUser = (user) => {
     const { password, passwordHash, ...safe } = user;
@@ -79,6 +125,11 @@ const getUser = (req) => {
 const requireAuth = (req, res, next) => {
     const user = getUser(req);
     if (!user) return res.status(401).json({ error: 'Unauthorized' });
+    
+    if (user.suspendedUntil && new Date(user.suspendedUntil).getTime() > Date.now()) {
+        return res.status(403).json({ error: `ئەکاونتەکەت ڕاگیراوە بەهۆی: ${user.suspensionReason || 'سەرپێچی'} تا کاتی: ${new Date(user.suspendedUntil).toLocaleString()}` });
+    }
+
     req.user = user;
     next();
 };
@@ -102,8 +153,17 @@ const makeStorage = (getDir, getFilename) => multer({
 });
 
 const cloudUpload = multer({
-    storage: multer.memoryStorage(),
-    limits: { fileSize: 1024 * 1024 * 1024 } // 1GB
+    storage: multer.diskStorage({
+        destination: (req, file, cb) => {
+            const tempDir = path.join(__dirname, '..', 'uploads', 'temp');
+            if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
+            cb(null, tempDir);
+        },
+        filename: (req, file, cb) => {
+            cb(null, Date.now() + '_' + file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_'));
+        }
+    }),
+    limits: { fileSize: 2000 * 1024 * 1024 } // 2GB limit to prevent massive files from failing
 });
 
 const R2_CONFIG = {
@@ -181,6 +241,10 @@ app.post('/api/auth/login', async (req, res) => {
 
     if (!isValid) return res.status(401).json({ error: 'ناو یان وشەی نهێنی هەڵەیە' });
 
+    if (user.suspendedUntil && new Date(user.suspendedUntil).getTime() > Date.now()) {
+        return res.status(403).json({ error: `ئەکاونتەکەت ڕاگیراوە بەهۆی: ${user.suspensionReason || 'سەرپێچی'} تا کاتی: ${new Date(user.suspendedUntil).toLocaleString()}` });
+    }
+
     issueToken(user);
     writeUsers(users);
     res.json({ token: user.token, user: sanitizeUser(user) });
@@ -195,10 +259,22 @@ app.post('/api/user/sync', requireAuth, (req, res) => {
     const idx = users.findIndex((u) => u.id === req.user.id);
     if (idx === -1) return res.status(404).json({ error: 'User not found' });
 
-    const { points, history, flashcards } = req.body;
+    const { points, history, flashcards, watchMinutes, sentencesSeen } = req.body;
     if (points !== undefined) users[idx].points = (users[idx].points || 0) + Number(points || 0);
     if (history && typeof history === 'object') users[idx].history = { ...users[idx].history, ...history };
     if (Array.isArray(flashcards)) users[idx].flashcards = flashcards;
+
+    const today = new Date().toISOString().split('T')[0];
+    if (!users[idx].dailyStats) users[idx].dailyStats = {};
+    if (!users[idx].dailyStats[today]) {
+        users[idx].dailyStats[today] = { watchMinutes: 0, sentencesSeen: 0 };
+    }
+    if (watchMinutes) {
+        users[idx].dailyStats[today].watchMinutes += Number(watchMinutes);
+    }
+    if (sentencesSeen) {
+        users[idx].dailyStats[today].sentencesSeen += Number(sentencesSeen);
+    }
 
     writeUsers(users);
     res.json({ success: true, points: users[idx].points, user: sanitizeUser(users[idx]) });
@@ -492,6 +568,22 @@ app.get('/api/omdb-rating', requireAuth, requireAdmin, async (req, res) => {
                 plotAr = await translateText(plotEn, 'ar');
             } catch(e) { console.error('Arabic translation failed', e.message); }
 
+            let yearVal = new Date().getFullYear();
+            let endYearVal = null;
+            if (data.Year && data.Year !== 'N/A') {
+                const yearParts = data.Year.split('–');
+                yearVal = parseInt(yearParts[0]);
+                if (yearParts.length > 1 && yearParts[1]) {
+                    endYearVal = parseInt(yearParts[1]);
+                } else if (yearParts.length > 1 && !yearParts[1]) {
+                    // Ongoing series has a dash but no end year like "2008–"
+                    endYearVal = null;
+                } else {
+                    // Just one year, might be finished or movie
+                    endYearVal = mappedType === 'series' ? yearVal : null;
+                }
+            }
+
             res.json({ 
                 imdbRating: isNaN(imdbRating) ? null : imdbRating,
                 plot: plotKu,
@@ -499,7 +591,8 @@ app.get('/api/omdb-rating', requireAuth, requireAdmin, async (req, res) => {
                 plotEn: plotEn,
                 plotAr: plotAr,
                 genre: data.Genre && data.Genre !== 'N/A' ? data.Genre : '',
-                year: data.Year && data.Year !== 'N/A' ? parseInt(data.Year.substring(0, 4)) : new Date().getFullYear(),
+                year: yearVal,
+                endYear: endYearVal,
                 runtime: data.Runtime && data.Runtime !== 'N/A' ? data.Runtime : '',
                 poster: data.Poster && data.Poster !== 'N/A' ? data.Poster : '',
                 type: mappedType,
@@ -525,7 +618,7 @@ app.get('/api/omdb-rating', requireAuth, requireAdmin, async (req, res) => {
 
 // ======= ADMIN Routes =======
 app.post('/api/admin/movies', requireAuth, requireAdmin, (req, res) => {
-    const { title, description, descriptionKu, descriptionEn, descriptionAr, language, genre, year, duration, type, imdbRating, posterUrl, seasons } = req.body;
+    const { title, description, descriptionKu, descriptionEn, descriptionAr, language, genre, year, endYear, duration, type, imdbRating, posterUrl, seasons } = req.body;
     const id = uuidv4();
     fs.mkdirSync(path.join(MOVIES_DIR, id), { recursive: true });
 
@@ -540,6 +633,7 @@ app.post('/api/admin/movies', requireAuth, requireAdmin, (req, res) => {
         language: language || '',
         genre: genre || '',
         year: +year || new Date().getFullYear(),
+        endYear: endYear || null,
         duration: duration || '',
         posterUrl: posterUrl || '',
         posterCloudUrl: null,
@@ -734,13 +828,20 @@ app.post('/api/admin/movies/:id/seasons/:seasonNum/episodes/:episodeNum/srt/:typ
 
 app.post('/api/admin/r2/upload', requireAuth, requireAdmin, cloudUpload.single('file'), async (req, res) => {
     if (!hasR2Config()) {
+        if (req.file) fs.unlinkSync(req.file.path);
         return res.status(503).json({ error: 'R2 config missing on server (.env)' });
     }
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
     const { movieId, target, season, episodeId } = req.body;
-    if (!movieId || !target) return res.status(400).json({ error: 'movieId/target required' });
-    if (!['video', 'poster'].includes(target)) return res.status(400).json({ error: 'invalid target' });
+    if (!movieId || !target) {
+        fs.unlinkSync(req.file.path);
+        return res.status(400).json({ error: 'movieId/target required' });
+    }
+    if (!['video', 'poster'].includes(target)) {
+        fs.unlinkSync(req.file.path);
+        return res.status(400).json({ error: 'invalid target' });
+    }
 
     const timestamp = Date.now();
     const cleanName = safeCloudName(req.file.originalname);
@@ -748,12 +849,17 @@ app.post('/api/admin/r2/upload', requireAuth, requireAdmin, cloudUpload.single('
 
     try {
         const client = getR2Client();
+        const fileStream = fs.createReadStream(req.file.path);
+        
         await client.send(new PutObjectCommand({
             Bucket: R2_CONFIG.bucket,
             Key: r2Path,
-            Body: req.file.buffer,
+            Body: fileStream,
             ContentType: req.file.mimetype || 'application/octet-stream'
         }));
+
+        // Delete temp file after successful upload
+        fs.unlinkSync(req.file.path);
 
         const finalUrl = `${R2_CONFIG.publicUrl}/${r2Path}`;
         const movies = readMovies();
@@ -776,8 +882,114 @@ app.post('/api/admin/r2/upload', requireAuth, requireAdmin, cloudUpload.single('
         res.json({ success: true, url: finalUrl });
     } catch (err) {
         console.error('[R2 Upload Error]', err);
+        // Ensure temp file is deleted on error
+        if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
         res.status(500).json({ error: 'R2 upload failed' });
     }
+});
+
+app.get('/api/admin/users', requireAuth, requireAdmin, (req, res) => {
+    const users = readUsers().map(u => ({
+        id: u.id,
+        username: u.username,
+        role: u.role,
+        credits: u.credits || 0,
+        creditUsage: u.creditUsage || [],
+        flashcardsCount: u.flashcards ? u.flashcards.length : 0,
+        flashcards: u.flashcards || [],
+        suspendedUntil: u.suspendedUntil,
+        suspensionReason: u.suspensionReason,
+        dailyStats: u.dailyStats || {}
+    }));
+    res.json(users);
+});
+
+app.post('/api/admin/users/:id/suspend', requireAuth, requireAdmin, (req, res) => {
+    const { duration, reason } = req.body;
+    const users = readUsers();
+    const idx = users.findIndex(u => u.id === req.params.id);
+    if (idx === -1) return res.status(404).json({ error: 'User not found' });
+
+    let suspendedUntil = null;
+    const now = Date.now();
+    if (duration === 'week') suspendedUntil = now + 7 * 24 * 60 * 60 * 1000;
+    else if (duration === 'month') suspendedUntil = now + 30 * 24 * 60 * 60 * 1000;
+    else if (duration === 'year') suspendedUntil = now + 365 * 24 * 60 * 60 * 1000;
+    else if (duration === 'permanent') suspendedUntil = now + 100 * 365 * 24 * 60 * 60 * 1000; // 100 years
+
+    users[idx].suspendedUntil = suspendedUntil ? new Date(suspendedUntil).toISOString() : null;
+    users[idx].suspensionReason = reason || 'سەرپێچی';
+
+    // Add notification
+    users[idx].notifications = users[idx].notifications || [];
+    users[idx].notifications.push({
+        id: uuidv4(),
+        message: `ئەکاونتەکەت ڕاگیراوە بەهۆی: ${reason}. تا کاتی: ${users[idx].suspendedUntil}`,
+        date: new Date().toISOString(),
+        read: false
+    });
+
+    writeUsers(users);
+    res.json({ success: true, user: sanitizeUser(users[idx]) });
+});
+
+app.post('/api/admin/users/:id/unsuspend', requireAuth, requireAdmin, (req, res) => {
+    const users = readUsers();
+    const idx = users.findIndex(u => u.id === req.params.id);
+    if (idx === -1) return res.status(404).json({ error: 'User not found' });
+
+    users[idx].suspendedUntil = null;
+    users[idx].suspensionReason = null;
+    writeUsers(users);
+    res.json({ success: true, user: sanitizeUser(users[idx]) });
+});
+
+app.post('/api/admin/users/:id/credits', requireAuth, requireAdmin, (req, res) => {
+    const { amount } = req.body;
+    const numAmount = parseInt(amount, 10);
+    if (isNaN(numAmount) || numAmount <= 0) return res.status(400).json({ error: 'Invalid amount' });
+
+    const users = readUsers();
+    const idx = users.findIndex(u => u.id === req.params.id);
+    if (idx === -1) return res.status(404).json({ error: 'User not found' });
+
+    users[idx].credits = (users[idx].credits || 0) + numAmount;
+    writeUsers(users);
+    res.json({ success: true, user: sanitizeUser(users[idx]) });
+});
+
+app.get('/api/admin/analytics', requireAuth, requireAdmin, (req, res) => {
+    const analytics = readAnalytics();
+    const users = readUsers();
+    const movies = readMovies();
+
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay());
+    const weekStr = startOfWeek.toISOString().split('T')[0];
+
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthStr = startOfMonth.toISOString().split('T')[0];
+
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+    const yearStr = startOfYear.toISOString().split('T')[0];
+
+    const visits = analytics.visits || [];
+
+    const stats = {
+        totalUsers: users.length,
+        totalMovies: movies.length,
+        visitors: {
+            daily: visits.filter(v => v.date === todayStr).length,
+            weekly: visits.filter(v => new Date(v.date) >= startOfWeek).length,
+            monthly: visits.filter(v => new Date(v.date) >= startOfMonth).length,
+            yearly: visits.filter(v => new Date(v.date) >= startOfYear).length,
+        }
+    };
+
+    res.json(stats);
 });
 
 app.listen(PORT, () => {
