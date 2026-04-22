@@ -73,7 +73,7 @@ const readUsers = () => {
     const hasAdmin = users.some((u) => u.role === 'admin');
     return users.map((u) => ({
         ...u,
-        role: u.role || (!hasAdmin && users[0]?.id === u.id ? 'admin' : 'user'),
+        role: hasAdmin ? (u.role || 'user') : (users[0]?.id === u.id ? 'admin' : 'user'),
         points: u.points || 0,
         credits: u.credits || 0,
         creditUsage: Array.isArray(u.creditUsage) ? u.creditUsage : [],
@@ -535,17 +535,28 @@ app.get('/api/omdb-rating', requireAuth, requireAdmin, async (req, res) => {
                     try {
                         const sRes = await axios.get(`http://www.omdbapi.com/?t=${encodeURIComponent(title)}&Season=${i}&apikey=${actualKey}`);
                         if (sRes.data.Response === 'True' && sRes.data.Episodes) {
-                            const episodes = sRes.data.Episodes.map(ep => ({
-                                id: uuidv4(),
-                                number: parseInt(ep.Episode) || 0,
-                                title: ep.Title !== 'N/A' ? ep.Title : `ئەڵقەی ${ep.Episode}`,
-                                duration: data.Runtime && data.Runtime !== 'N/A' ? data.Runtime : '',
-                                videoFile: null,
-                                videoUrl: null,
-                                originalSrt: null,
-                                translatedSrt: null,
-                                sensitiveScenes: []
-                            }));
+                            let maxEpNum = 0;
+                            sRes.data.Episodes.forEach(ep => {
+                                const num = parseInt(ep.Episode) || 0;
+                                if (num > maxEpNum) maxEpNum = num;
+                            });
+
+                            const episodes = [];
+                            for (let eNum = 1; eNum <= maxEpNum; eNum++) {
+                                const omdbEp = sRes.data.Episodes.find(ep => parseInt(ep.Episode) === eNum);
+                                episodes.push({
+                                    id: uuidv4(),
+                                    number: eNum,
+                                    title: omdbEp && omdbEp.Title !== 'N/A' ? omdbEp.Title : `ئەڵقەی ${eNum}`,
+                                    duration: data.Runtime && data.Runtime !== 'N/A' ? data.Runtime : '',
+                                    videoFile: null,
+                                    videoUrl: null,
+                                    originalSrt: null,
+                                    translatedSrt: null,
+                                    sensitiveScenes: []
+                                });
+                            }
+
                             seasonsData.push({
                                 id: uuidv4(),
                                 number: i,
@@ -715,10 +726,11 @@ app.post('/api/admin/movies/:id/seasons', requireAuth, requireAdmin, (req, res) 
     if (idx === -1) return res.status(404).json({ error: 'Not found' });
 
     const seasons = movies[idx].seasons || [];
+    const maxNum = seasons.reduce((max, s) => Math.max(max, s.number), 0);
     const newSeason = {
         id: uuidv4(),
-        number: seasons.length + 1,
-        title: req.body.title || `سیزنی ${seasons.length + 1}`,
+        number: maxNum + 1,
+        title: req.body.title || `سیزنی ${maxNum + 1}`,
         episodes: []
     };
     movies[idx].seasons = [...seasons, newSeason];
@@ -735,10 +747,15 @@ app.post('/api/admin/movies/:id/seasons/:seasonNum/episodes', requireAuth, requi
     if (sIdx === -1) return res.status(404).json({ error: 'Season not found' });
 
     const eps = movies[idx].seasons[sIdx].episodes;
+    const existingNumbers = new Set(eps.map(ep => ep.number));
+    let newNum = 1;
+    while (existingNumbers.has(newNum)) {
+        newNum++;
+    }
     const newEp = {
         id: uuidv4(),
-        number: eps.length + 1,
-        title: req.body.title || `ئالقەی ${eps.length + 1}`,
+        number: newNum,
+        title: req.body.title || `ئالقەی ${newNum}`,
         description: req.body.description || '',
         duration: req.body.duration || '',
         videoFile: null,
@@ -767,13 +784,19 @@ app.post('/api/admin/movies/:id/seasons/:seasonNum/episodes/bulk', requireAuth, 
     if (sIdx === -1) return res.status(404).json({ error: 'Season not found' });
 
     const created = [];
+    const existingNumbers = new Set(movies[idx].seasons[sIdx].episodes.map(ep => ep.number));
+    
     for (let i = 0; i < count; i++) {
-        const eps = movies[idx].seasons[sIdx].episodes;
-        const num = eps.length + 1;
+        let numToUse = 1;
+        while (existingNumbers.has(numToUse)) {
+            numToUse++;
+        }
+        existingNumbers.add(numToUse);
+        
         const newEp = {
             id: uuidv4(),
-            number: num,
-            title: `ئالقەی ${num}`,
+            number: numToUse,
+            title: `ئالقەی ${numToUse}`,
             description: '',
             duration: '',
             videoFile: null,
@@ -783,7 +806,7 @@ app.post('/api/admin/movies/:id/seasons/:seasonNum/episodes/bulk', requireAuth, 
         };
         movies[idx].seasons[sIdx].episodes.push(newEp);
         created.push(newEp);
-        const epDir = path.join(MOVIES_DIR, req.params.id, 'seasons', `s${req.params.seasonNum}`, `e${num}`);
+        const epDir = path.join(MOVIES_DIR, req.params.id, 'seasons', `s${req.params.seasonNum}`, `e${numToUse}`);
         fs.mkdirSync(epDir, { recursive: true });
     }
 

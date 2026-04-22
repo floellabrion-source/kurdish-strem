@@ -17,14 +17,18 @@ interface AnalyticsData {
 export default function AdminAnalytics() {
     const [data, setData] = useState<AnalyticsData | null>(null);
     const [loading, setLoading] = useState(true);
+    const [errorMsg, setErrorMsg] = useState('');
 
     useEffect(() => {
         const loadAnalytics = async () => {
             try {
+                setErrorMsg('');
                 const res = await axios.get('/api/admin/analytics');
                 setData(res.data);
             } catch (error) {
                 console.error('Error loading analytics:', error);
+                const msg = (error as any)?.response?.data?.error || 'ناتوانرێت داتای ئامار بخوێندرێتەوە.';
+                setErrorMsg(msg);
             } finally {
                 setLoading(false);
             }
@@ -38,7 +42,7 @@ export default function AdminAnalytics() {
     }
 
     if (!data) {
-        return <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>هیچ داتایەک نییە</div>;
+        return <div style={{ textAlign: 'center', padding: '40px', color: errorMsg ? '#f87171' : '#64748b' }}>{errorMsg || 'هیچ داتایەک نییە'}</div>;
     }
 
     return (

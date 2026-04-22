@@ -56,6 +56,7 @@ const getStats = (dailyStats: Record<string, { watchMinutes: number; sentencesSe
 export default function AdminUsers() {
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
+    const [errorMsg, setErrorMsg] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     
     const [suspendModal, setSuspendModal] = useState<User | null>(null);
@@ -70,10 +71,13 @@ export default function AdminUsers() {
     const loadUsers = async () => {
         try {
             setLoading(true);
+            setErrorMsg('');
             const res = await axios.get('/api/admin/users');
             setUsers(res.data);
         } catch (error) {
             console.error('Error loading users:', error);
+            const msg = (error as any)?.response?.data?.error || 'ناتوانرێت داتای بەکارهێنەران بخوێندرێتەوە.';
+            setErrorMsg(msg);
         } finally {
             setLoading(false);
         }
@@ -128,6 +132,10 @@ export default function AdminUsers() {
 
     if (loading) {
         return <div className="admin-loading"><Loader2 size={32} className="spinning" /></div>;
+    }
+
+    if (errorMsg) {
+        return <div style={{ textAlign: 'center', padding: '40px', color: '#f87171' }}>{errorMsg}</div>;
     }
 
     return (
