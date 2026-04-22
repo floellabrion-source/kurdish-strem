@@ -57,7 +57,8 @@ Critical rules:
 4) Match the speaker's tone (angry, formal, informal, slang).
 5) Use fluent spoken Kurdish Sorani in Arabic script only (no Latin letters).
 6) Keep <br> exactly as line-break markers within the translation if they exist in "current_to_translate".
-7) Return ONLY a JSON object with a "translations" array containing the translated strings in the exact same order. Do NOT include anything else.
+7) DO NOT merge or skip any lines. You MUST translate every single item provided in the input array.
+8) Return ONLY a JSON object with a "translations" array of objects. Each object MUST contain the original "id" and the translated "text". Do NOT include anything else.
 
 Input Data:
 [
@@ -65,7 +66,12 @@ ${inputItems}
 ]
 
 Expected Output Format (STRICT JSON ONLY):
-{"translations":["translated line 1","translated line 2",...]}
+{
+  "translations": [
+    {"id": 1, "text": "translated line 1"},
+    {"id": 2, "text": "translated line 2"}
+  ]
+}
 `;
 
     const resp = await axios.post('/api/ai/generate', {
@@ -73,16 +79,19 @@ Expected Output Format (STRICT JSON ONLY):
     });
     const raw: string = resp.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
-    const result: string[] = texts.map(t => t); // default to original
+    const result: string[] = [...texts]; // default to original
     
     try {
         const jsonMatch = raw.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
             const parsed = JSON.parse(jsonMatch[0]);
             if (Array.isArray(parsed?.translations)) {
-                parsed.translations.forEach((line: string, idx: number) => {
-                    if (idx < result.length && typeof line === 'string') {
-                        result[idx] = line.replace(/<br>/g, '\n').trim();
+                parsed.translations.forEach((item: any) => {
+                    if (item && typeof item.id === 'number' && typeof item.text === 'string') {
+                        const originalIndex = item.id - 1;
+                        if (originalIndex >= 0 && originalIndex < result.length) {
+                            result[originalIndex] = item.text.replace(/<br>/g, '\n').trim();
+                        }
                     }
                 });
                 return result;
@@ -92,8 +101,6 @@ Expected Output Format (STRICT JSON ONLY):
         console.warn("JSON parsing failed, trying to fallback...", raw);
     }
 
-    // Fallback: If it returns just strings without json, let's try to extract them line by line
-    // Though it's less likely to hit this with the STRICT JSON rule.
     return result;
 };
 
