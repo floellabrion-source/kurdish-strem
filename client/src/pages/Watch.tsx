@@ -714,7 +714,7 @@ Sentence: "${text}"` }] }]
                                 localStorage.removeItem(progressKey);
                                 if (videoRef.current) videoRef.current.play().then(() => setIsPlaying(true));
                                 setResumePrompt(null);
-                            }}>سەرەوە دەستپێبکە</button>
+                            }}>سەرەتاوە دەستپێبکە</button>
                         </div>
                     </div>
                 </div>

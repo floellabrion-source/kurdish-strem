@@ -44,6 +44,9 @@ export default function Admin() {
     const [sensitiveTarget, setSensitiveTarget] = useState<{ movieId: string, seasonNum?: number, episodeId?: string } | null>(null);
     const [sensitiveScenes, setSensitiveScenes] = useState<{ start: number, end: number }[]>([]);
 
+    const [editEpisodeTarget, setEditEpisodeTarget] = useState<{ movieId: string, seasonNum: number, epId: string } | null>(null);
+    const [editEpForm, setEditEpForm] = useState({ title: '', description: '', duration: '' });
+
     const [fetchingImdbRating, setFetchingImdbRating] = useState(false);
 
     // Search & Filter State
@@ -150,6 +153,32 @@ export default function Admin() {
         }
     };
 
+    const openEditEpisodeModal = (movieId: string, seasonNum: number, ep: Episode) => {
+        setEditEpisodeTarget({ movieId, seasonNum, epId: ep.id });
+        setEditEpForm({ title: ep.title || '', description: ep.description || '', duration: ep.duration || '' });
+    };
+
+    const saveEpisodeEdit = async () => {
+        if (!editEpisodeTarget) return;
+        const { movieId, seasonNum, epId } = editEpisodeTarget;
+        const m = movies.find(x => x.id === movieId);
+        if (!m) return;
+        const updated = JSON.parse(JSON.stringify(m));
+        const season = updated.seasons?.find((s: Season) => s.number === seasonNum);
+        const ep = season?.episodes.find((e: Episode) => e.id === epId);
+        if (ep) {
+            ep.title = editEpForm.title;
+            ep.description = editEpForm.description;
+            ep.duration = editEpForm.duration;
+        }
+        try {
+            await axios.put(`/api/admin/movies/${movieId}`, updated);
+            toast('زانیاری ئەڵقە پاشەکەوت کرا ✓');
+            setEditEpisodeTarget(null);
+            load();
+        } catch { toast('کێشەیەک ڕووی دا', 'error'); }
+    };
+
     const doUpload = async (movieId: string, file: File, type: string, extra?: { season?: number; episode?: number; srtType?: string }) => {
         const key = `${movieId}-${type}-${extra?.season || 0}-${extra?.episode || 0}`;
         setUploading(u => ({ ...u, [key]: true }));
@@ -219,17 +248,12 @@ export default function Admin() {
     };
 
     const addSeason = async (movieId: string) => {
-        const m = movies.find(x => x.id === movieId);
-        const n = (m?.seasons?.length || 0) + 1;
-        try { await axios.post(`/api/admin/movies/${movieId}/seasons`, { title: `سیزنی ${n}` }); toast(`سیزنی ${n} زیاد کرا ✓`); load(); }
+        try { await axios.post(`/api/admin/movies/${movieId}/seasons`); toast(`سیزن زیاد کرا ✓`); load(); }
         catch { toast('کێشەیەک ڕووی دا', 'error'); }
     };
 
     const addEpisode = async (movieId: string, seasonNum: number) => {
-        const m = movies.find(x => x.id === movieId);
-        const s = m?.seasons?.find(s => s.number === seasonNum);
-        const n = (s?.episodes.length || 0) + 1;
-        try { await axios.post(`/api/admin/movies/${movieId}/seasons/${seasonNum}/episodes`, { title: `ئالقەی ${n}` }); toast(`ئالقەی ${n} زیاد کرا ✓`); load(); }
+        try { await axios.post(`/api/admin/movies/${movieId}/seasons/${seasonNum}/episodes`); toast(`ئەڵقە زیاد کرا ✓`); load(); }
         catch { toast('کێشەیەک ڕووی دا', 'error'); }
     };
 
@@ -607,6 +631,26 @@ export default function Admin() {
                 </div>
             )}
 
+            {editEpisodeTarget && (
+                <div className="form-overlay" onClick={() => setEditEpisodeTarget(null)}>
+                    <div className="form-modal" onClick={e => e.stopPropagation()}>
+                        <div className="form-header">
+                            <h2>دەستکاریکردنی ئەڵقە</h2>
+                            <button onClick={() => setEditEpisodeTarget(null)} className="close-btn"><X size={20} /></button>
+                        </div>
+                        <div className="form-body">
+                            <div className="form-group"><label>ناوی ئەڵقە</label><input type="text" value={editEpForm.title} onChange={e => setEditEpForm(f => ({ ...f, title: e.target.value }))} className="form-input" /></div>
+                            <div className="form-group"><label>کورتە</label><textarea value={editEpForm.description} onChange={e => setEditEpForm(f => ({ ...f, description: e.target.value }))} className="form-input form-textarea" rows={3} /></div>
+                            <div className="form-group"><label>کات (بۆ نموونە: 45 min)</label><input type="text" value={editEpForm.duration} onChange={e => setEditEpForm(f => ({ ...f, duration: e.target.value }))} className="form-input" /></div>
+                        </div>
+                        <div className="form-footer">
+                            <button onClick={() => setEditEpisodeTarget(null)} className="btn-cancel">پاشگەز</button>
+                            <button onClick={saveEpisodeEdit} className="btn-save"><Save size={16} /> پاشەکەوتکردن</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {loading ? (
                 <div className="admin-loading"><Loader2 size={32} className="spinning" /></div>
             ) : filteredMovies.length === 0 ? (
@@ -714,6 +758,7 @@ export default function Admin() {
                                             epOrigSrtRef={refs.epOrigSrt}
                                             epTransSrtRef={refs.epTransSrt}
                                             r2EpVideoRef={refs.r2EpVideo}
+                                            onEditEpisode={(ep: Episode) => openEditEpisodeModal(movie.id, season.number, ep)}
                                         />
                                     ))}
                                 </div>
@@ -731,9 +776,11 @@ export default function Admin() {
     );
 }
 
-function SeasonPanel({ season, movieId, onAddEpisode, onBulkAdd, onEpVideo, onEpSrt, onSensitive, onEpVideoUrl, onR2Upload, uploading, uploadProgress, epVideoRef, epOrigSrtRef, epTransSrtRef, r2EpVideoRef }: any) {
+function SeasonPanel({ season, movieId, onAddEpisode, onBulkAdd, onEpVideo, onEpSrt, onSensitive, onEpVideoUrl, onR2Upload, uploading, uploadProgress, epVideoRef, epOrigSrtRef, epTransSrtRef, r2EpVideoRef, onEditEpisode }: any) {
     const [open, setOpen] = useState(true);
     const [bulkCount, setBulkCount] = useState('');
+
+    const sortedEpisodes = [...season.episodes].sort((a: any, b: any) => a.number - b.number);
 
     return (
         <div className="season-block">
@@ -743,12 +790,31 @@ function SeasonPanel({ season, movieId, onAddEpisode, onBulkAdd, onEpVideo, onEp
             </div>
             {open && (
                 <div className="episodes-list">
-                    <div className="bulk-add-row" onClick={e => e.stopPropagation()}>
-                        <input type="number" value={bulkCount} onChange={e => setBulkCount(e.target.value)} placeholder="ژمارە" />
-                        <button onClick={() => onBulkAdd(Number(bulkCount))}>زیادکردن</button>
+                    <div className="modern-bulk-add" onClick={e => e.stopPropagation()}>
+                        <div className="modern-bulk-input-wrap">
+                            <PlusCircle size={16} className="bulk-icon" />
+                            <input 
+                                type="number" 
+                                min="1" 
+                                max="50"
+                                value={bulkCount} 
+                                onChange={e => setBulkCount(e.target.value)} 
+                                placeholder="ژمارەی ئەڵقەکان" 
+                            />
+                        </div>
+                        <button 
+                            className="modern-bulk-btn" 
+                            disabled={!bulkCount || Number(bulkCount) <= 0}
+                            onClick={() => {
+                                onBulkAdd(Number(bulkCount));
+                                setBulkCount('');
+                            }}
+                        >
+                            زیادکردن
+                        </button>
                     </div>
                     <div className="ep-grid">
-                        {season.episodes.map((ep: Episode) => (
+                        {sortedEpisodes.map((ep: Episode) => (
                             <div key={ep.id} className="ep-grid-card">
                                 <div className="ep-grid-title">{ep.number}. {ep.title}</div>
                                 <div className="ep-grid-btns">
@@ -781,6 +847,8 @@ function SeasonPanel({ season, movieId, onAddEpisode, onBulkAdd, onEpVideo, onEp
                                     <button className={`ep-mini-btn ${ep.translatedSrt ? 'done' : ''}`} onClick={() => epTransSrtRef.current[ep.id]?.click()}><Languages size={11} /></button>
                                     
                                     <button className={`ep-mini-btn ${ep.sensitiveScenes?.length ? 'done-alert' : ''}`} onClick={() => onSensitive(ep.id)}><Shield size={11} /></button>
+
+                                    <button className="ep-mini-btn" onClick={() => onEditEpisode(ep)}><Edit3 size={11} /></button>
                                 </div>
                             </div>
                         ))}

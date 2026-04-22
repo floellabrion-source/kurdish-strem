@@ -107,7 +107,7 @@ export default function SeriesPage() {
                 {/* Episodes Grid */}
                 {currentSeason && (
                     <div className="episodes-grid">
-                        {currentSeason.episodes.map(episode => (
+                        {[...currentSeason.episodes].sort((a, b) => a.number - b.number).map(episode => (
                             <EpisodeCard
                                 key={episode.id}
                                 episode={episode}

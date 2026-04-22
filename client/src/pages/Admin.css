@@ -1119,7 +1119,79 @@
     flex-wrap: wrap;
 }
 
-/* Bulk add row */
+/* Modern bulk add */
+.modern-bulk-add {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 8px 12px;
+    margin-bottom: 12px;
+    transition: border-color 0.2s;
+}
+
+.modern-bulk-add:hover {
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.modern-bulk-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+}
+
+.bulk-icon {
+    color: var(--text3);
+}
+
+.modern-bulk-input-wrap input {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 600;
+    outline: none;
+    width: 100%;
+}
+
+.modern-bulk-input-wrap input::placeholder {
+    color: var(--text3);
+    font-weight: 500;
+}
+
+.modern-bulk-btn {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(79, 70, 229, 0.2));
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    color: #a5b4fc;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.modern-bulk-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(79, 70, 229, 0.3));
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+}
+
+.modern-bulk-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--border);
+    color: var(--text3);
+}
+
+/* Bulk add row (old, kept for fallback) */
 .bulk-add-row {
     display: flex;
     align-items: center;

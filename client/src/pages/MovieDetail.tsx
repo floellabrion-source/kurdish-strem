@@ -186,7 +186,7 @@ export default function MovieDetail() {
                     </div>
                     
                     <div className="episodes-list">
-                        {activeSeasonData?.episodes.map(ep => {
+                        {[...(activeSeasonData?.episodes || [])].sort((a, b) => a.number - b.number).map(ep => {
                             const watched = isEpisodeWatched(activeSeason, ep.number);
                             return (
                                 <Link to={`/watch/${movie.id}?s=${activeSeason}&e=${ep.number}`} key={ep.id} className={`episode-card ${watched ? 'watched' : ''}`}>
