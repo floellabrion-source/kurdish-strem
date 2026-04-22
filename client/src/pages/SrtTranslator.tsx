@@ -29,60 +29,71 @@ const parseSRT = (raw: string): SubBlock[] => {
 const toSrtString = (blocks: SubBlock[]): string =>
     blocks.map(b => `${b.id}\n${b.time}\n${b.text}`).join('\n\n');
 
-const translateBatch = async (texts: string[]): Promise<string[]> => {
-    const flatTexts = texts.map(t => t.replace(/\n/g, '<br>'));
-    const input = flatTexts.map((t, i) => `${i + 1}. ${t}`).join('\n');
+const translateBatch = async (texts: string[], fullBlocks: SubBlock[], batchStartIndex: number): Promise<string[]> => {
+    const inputItems = texts.map((t, idx) => {
+        const blockIndex = batchStartIndex + idx;
+        const prev1 = blockIndex > 0 ? fullBlocks[blockIndex - 1].text.replace(/\n/g, ' ') : '';
+        const prev2 = blockIndex > 1 ? fullBlocks[blockIndex - 2].text.replace(/\n/g, ' ') : '';
+        const next1 = blockIndex < fullBlocks.length - 1 ? fullBlocks[blockIndex + 1].text.replace(/\n/g, ' ') : '';
+        const next2 = blockIndex < fullBlocks.length - 2 ? fullBlocks[blockIndex + 2].text.replace(/\n/g, ' ') : '';
+        
+        return JSON.stringify({
+            id: idx + 1,
+            context_before: `${prev2} | ${prev1}`.trim(),
+            current_to_translate: t.replace(/\n/g, '<br>'),
+            context_after: `${next1} | ${next2}`.trim()
+        });
+    }).join(',\n');
 
-    const prompt = `You are a professional subtitle translator. Translate the following numbered subtitle lines to Kurdish Sorani (کوردی سۆرانی).
+    const prompt = `You are an expert Kurdish Sorani (Central Kurdish) translator for movies and TV series.
 
-Rules:
-- Return ONLY the translations, numbered the same way
-- Do NOT add explanations or notes
-- Keep <br> as is
-- Keep names if they don't have Kurdish equivalents
-- Use natural spoken Kurdish Sorani dialect
-- WARNING: You MUST use the Arabic alphabet for Kurdish texts. DO NOT use Latin letters for Kurdish!
+Goal:
+Translate the "current_to_translate" subtitle lines into natural, conversational, and idiomatic Kurdish Sorani. Do NOT translate literally (word-by-word). Adapt English idioms, slang, and expressions to how Kurdish speakers naturally talk.
 
-Subtitles to translate:
-${input}
+Critical rules:
+1) You will receive a JSON array of objects. Each object has "id", "context_before" (previous lines), "current_to_translate" (the line to translate), and "context_after" (next lines).
+2) Translate ONLY the "current_to_translate" text. Use the context fields ONLY to understand the situation (e.g., who is talking, what is the topic).
+3) Make it sound natural to a native Kurdish speaker. (e.g., "Take my fucking car" -> "سەیارە نەفرەتییەکەم ببە", "Get out of here" -> "لێرە بڕۆ دەرەوە", "grab a chair" -> "کورسییەک بهێنە").
+4) Match the speaker's tone (angry, formal, informal, slang).
+5) Use fluent spoken Kurdish Sorani in Arabic script only (no Latin letters).
+6) Keep <br> exactly as line-break markers within the translation if they exist in "current_to_translate".
+7) Return ONLY a JSON object with a "translations" array containing the translated strings in the exact same order. Do NOT include anything else.
 
-Kurdish Sorani translations (same numbering):`;
+Input Data:
+[
+${inputItems}
+]
+
+Expected Output Format (STRICT JSON ONLY):
+{"translations":["translated line 1","translated line 2",...]}
+`;
 
     const resp = await axios.post('/api/ai/generate', {
         contents: [{ parts: [{ text: prompt }] }]
     });
     const raw: string = resp.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
-    // Parse numbered lines: "1. text", "2. text", etc.
     const result: string[] = texts.map(t => t); // default to original
-    const linePattern = /^(\d+)\.\s+(.+)$/;
-
-    // Split into lines and collect
-    const outputLines = raw.split('\n');
-    let i = 0;
-    while (i < outputLines.length) {
-        const line = outputLines[i].trim();
-        const match = line.match(linePattern);
-        if (match) {
-            const idx = parseInt(match[1]) - 1;
-            if (idx >= 0 && idx < texts.length) {
-                // Collect continuation lines (lines that don't start with a number)
-                let content = match[2];
-                let j = i + 1;
-                while (j < outputLines.length && !outputLines[j].trim().match(/^\d+\.\s+/)) {
-                    const nextLine = outputLines[j].trim();
-                    if (nextLine) content += '\n' + nextLine;
-                    j++;
-                }
-                // Restore <br> back to actual newlines
-                result[idx] = content.replace(/<br>/g, '\n').trim();
-                i = j;
-                continue;
+    
+    try {
+        const jsonMatch = raw.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+            const parsed = JSON.parse(jsonMatch[0]);
+            if (Array.isArray(parsed?.translations)) {
+                parsed.translations.forEach((line: string, idx: number) => {
+                    if (idx < result.length && typeof line === 'string') {
+                        result[idx] = line.replace(/<br>/g, '\n').trim();
+                    }
+                });
+                return result;
             }
         }
-        i++;
+    } catch {
+        console.warn("JSON parsing failed, trying to fallback...", raw);
     }
 
+    // Fallback: If it returns just strings without json, let's try to extract them line by line
+    // Though it's less likely to hit this with the STRICT JSON rule.
     return result;
 };
 
@@ -136,7 +147,7 @@ export default function SrtTranslator() {
                 
                 while (retries > 0 && !success) {
                     try {
-                        translatedTexts = await translateBatch(texts);
+                        translatedTexts = await translateBatch(texts, blocks, done);
                         success = true;
                     } catch (err: any) {
                         if (err?.response?.status === 429) {
@@ -195,7 +206,7 @@ export default function SrtTranslator() {
         <div className="srt-translator-wrap">
             <button className="srt-toggle-btn" onClick={() => setOpen(!open)}>
                 <Languages size={18} />
-                وەرگێرانی SRT بۆ کوردی (Gemini AI)
+                وەرگێرانی SRT بۆ کوردی (AI)
                 <span className={`srt-chevron ${open ? 'open' : ''}`}>▼</span>
             </button>
 
