@@ -59,7 +59,10 @@ server {
     root /var/www/kurdish-stream/client/dist;
     index index.html;
 
-    client_max_body_size 500M;
+    client_max_body_size 5000M;
+    proxy_read_timeout 1800s;
+    proxy_connect_timeout 1800s;
+    proxy_send_timeout 1800s;
 
     location /api/ {
         proxy_pass http://127.0.0.1:3001;
