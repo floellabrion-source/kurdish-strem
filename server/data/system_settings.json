@@ -1,0 +1,11 @@
+{
+  "dualSubTrialMinutes": 30,
+  "dualSubResetHours": 24,
+  "dualSubTrialActive": true,
+  "dualSubExpiredAction": "block_all",
+  "updatedAt": 1788039014950,
+  "updatedBy": {
+    "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+    "username": "maher2"
+  }
+}

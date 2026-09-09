@@ -1,0 +1,127 @@
+[
+  {
+    "id": "939c22e8-1118-4ad4-a471-4688ac9cab1d",
+    "movieId": "ef708ceb-6b78-4d58-aa24-47d34a31f33d",
+    "seasonNum": 1,
+    "episodeNum": 4,
+    "author": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "text": "📌 تێبینی سەرۆک بۆ @1: تێبینی لەسەر دێڕەکانی (1، 2): [هەڵەی ڕێنووس و تایپ (Typo)] - هحهحۆحۆ",
+    "flaggedLines": [
+      1,
+      2
+    ],
+    "createdAt": "2026-08-28T20:00:27.044Z"
+  },
+  {
+    "id": "728e22bf-4986-4d46-a0e2-7feddcdb816b",
+    "movieId": "15fb40ba-f63a-4a46-8a75-70f28a10b531",
+    "author": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "text": "📌 تێبینی سەرۆک بۆ @maher: تێبینی لەسەر دێڕەکانی (1، 2، 3، 4): [دێڕی بەتاڵ یان وەرنەگێڕدراو] - چاکی بکە",
+    "flaggedLines": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "createdAt": "2026-08-14T23:44:55.603Z"
+  },
+  {
+    "id": "3871fbee-fca3-4e7d-abf6-7cd822e94fc0",
+    "movieId": "15fb40ba-f63a-4a46-8a75-70f28a10b531",
+    "author": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "text": "📌 تێبینی سەرۆک بۆ @1: تێبینی لەسەر دێڕەکانی (391): [ڕێکخستنەوەی ڕستە و دەربڕین]",
+    "flaggedLines": [
+      391
+    ],
+    "createdAt": "2026-08-14T23:43:35.553Z"
+  },
+  {
+    "id": "cbfb61b9-3d2b-4c41-99fb-19f666d87808",
+    "movieId": "15fb40ba-f63a-4a46-8a75-70f28a10b531",
+    "author": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "text": "📌 تێبینی سەرۆک بۆ @maher: تێبینی لەسەر دێڕەکانی (391، 393): [وەرگێڕانی ناڕوون یان هەڵە] - رت",
+    "flaggedLines": [
+      391,
+      393
+    ],
+    "createdAt": "2026-08-14T23:35:38.060Z"
+  },
+  {
+    "id": "fd702ad8-eb01-4f9d-b311-b316a8fe5d4c",
+    "movieId": "15fb40ba-f63a-4a46-8a75-70f28a10b531",
+    "author": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "text": "📌 تێبینی سەرۆک بۆ @1: تێبینی لەسەر دێڕەکانی (30، 31): [کێشەی کات و هاوکاتکردن (Sync)] - ۆۆۆۆۆ",
+    "flaggedLines": [
+      30,
+      31
+    ],
+    "createdAt": "2026-08-14T23:27:24.064Z"
+  },
+  {
+    "id": "97278f89-e7b1-44ed-80e5-544afd8fd9b7",
+    "movieId": "15fb40ba-f63a-4a46-8a75-70f28a10b531",
+    "author": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "text": "📌 تێبینی سەرۆک بۆ @1: تێبینی لەسەر دێڕەکانی (391): [ڕێکخستنەوەی ڕستە و دەربڕین]",
+    "flaggedLines": [
+      391
+    ],
+    "createdAt": "2026-08-14T23:23:24.857Z"
+  },
+  {
+    "id": "a46c75ec-76a9-42c2-bcfd-0197442713f6",
+    "movieId": "15fb40ba-f63a-4a46-8a75-70f28a10b531",
+    "author": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "text": "📌 تێبینی سەرۆک بۆ @1: تێبینی لەسەر دێڕەکانی (30، 31، 32): [وەرگێڕانی ناڕوون یان هەڵە] - بۆ",
+    "flaggedLines": [
+      30,
+      31,
+      32
+    ],
+    "createdAt": "2026-08-14T23:23:15.861Z"
+  },
+  {
+    "id": "3854fcfe-918d-4f6c-831f-38ef71d35e82",
+    "movieId": "15fb40ba-f63a-4a46-8a75-70f28a10b531",
+    "author": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "text": "📌 تێبینی سەرۆک بۆ @1: تێبینی لەسەر دێڕەکانی (30، 32، 150، 151): [کێشەی کات و هاوکاتکردن (Sync)]",
+    "flaggedLines": [
+      30,
+      32,
+      150,
+      151
+    ],
+    "createdAt": "2026-08-14T23:22:56.034Z"
+  }
+]

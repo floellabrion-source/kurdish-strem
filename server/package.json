@@ -9,13 +9,21 @@
     },
     "dependencies": {
         "@aws-sdk/client-s3": "^3.1025.0",
+        "@google-cloud/vertexai": "^1.12.0",
+        "@supabase/supabase-js": "^2.112.2",
         "axios": "^1.15.0",
         "bcryptjs": "^2.4.3",
         "cors": "^2.8.5",
         "dotenv": "^16.6.1",
         "express": "^4.18.2",
+        "express-rate-limit": "^8.6.2",
         "multer": "^1.4.5-lts.1",
-        "uuid": "^9.0.0"
+        "nodemailer": "^9.0.5",
+        "sharp": "^0.35.3",
+        "ssh2": "^1.17.0",
+        "uuid": "^9.0.0",
+        "web-push": "^3.6.7",
+        "ws": "^8.21.3"
     },
     "devDependencies": {
         "nodemon": "^3.0.2"

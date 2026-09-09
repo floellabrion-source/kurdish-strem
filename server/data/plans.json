@@ -1,0 +1,124 @@
+[
+  {
+    "id": "plan_starter",
+    "name": "Starter",
+    "credits": 0,
+    "price": "0",
+    "originalPrice": "",
+    "discountPercent": "",
+    "currency": "IQD",
+    "color": "#64748b",
+    "badge": "",
+    "descriptionEn": "Free basic access for testing and exploration.",
+    "descriptionKu": "دەستگەیشتنی بنەڕەتی بێبەرامبەر بۆ تاقیکردنەوە و گەڕان.",
+    "featuresEn": [
+      "Full website access",
+      "Free basic content",
+      "0 AI Credits balance",
+      "Standard audio playback"
+    ],
+    "featuresKu": [
+      "دەستگەیشتن بە تەواوی وێبسایت",
+      "سەیرکردنی فیلم و زنجیرەکان",
+      "٠ کرێدیتی زیرەکی دەستکرد",
+      "کوالێتی دەنگ و ڕەنگی ستاندارد"
+    ],
+    "featured": false,
+    "active": true,
+    "order": 1
+  },
+  {
+    "id": "plan_popular",
+    "name": "Pro",
+    "credits": 150,
+    "price": "2,500",
+    "originalPrice": "3,500",
+    "discountPercent": "30% OFF",
+    "currency": "IQD",
+    "color": "#10b981",
+    "badge": "MOST POPULAR / پڕفرۆشترین",
+    "descriptionEn": "Most popular choice for students and regular movie watchers.",
+    "descriptionKu": "پڕفرۆشترین و گونجاوترین پاکێج بۆ فێرخوازان و سەیرکردنی فیلم.",
+    "featuresEn": [
+      "Full website access",
+      "150 AI Credits balance",
+      "50 Sentence & Grammar analyses",
+      "50 Voice & Pronunciation tests",
+      "Instant automatic verification"
+    ],
+    "featuresKu": [
+      "دەستگەیشتن بە تەواوی وێبسایت",
+      "١٥٠ کرێدیتی زیرەکی دەستکرد (AI)",
+      "٥٠ شیکاری ڕێزمان و ڕستە",
+      "٥٠ ڕێنمایی دەنگ و گۆکردن (٣ کرێدیت)",
+      "پشتڕاستکردنەوەی خێرای سیستەم"
+    ],
+    "featured": true,
+    "active": true,
+    "order": 2
+  },
+  {
+    "id": "plan_gold",
+    "name": "Gold",
+    "credits": 350,
+    "price": "5,000",
+    "originalPrice": "7,000",
+    "discountPercent": "28% OFF",
+    "currency": "IQD",
+    "color": "#8b5cf6",
+    "badge": "RECOMMENDED / پێشنیارکراو",
+    "descriptionEn": "Ideal for intensive English learners and daily users.",
+    "descriptionKu": "باشترین هەڵبژاردن بۆ فێربوونی چڕی ئینگلیزی و بەکارهێنانی ڕۆژانە.",
+    "featuresEn": [
+      "Full website access",
+      "350 AI Credits balance",
+      "116 Sentence & Grammar analyses",
+      "116 Voice & Pronunciation tests",
+      "Smart vocabulary flashcards",
+      "Priority customer support"
+    ],
+    "featuresKu": [
+      "دەستگەیشتن بە تەواوی وێبسایت",
+      "٣٥٠ کرێدیتی زیرەکی دەستکرد (AI)",
+      "١١٦ شیکاری ڕێزمان و ڕستە",
+      "١١٦ ڕێنمایی دەنگ و گۆکردن (٣ کرێدیت)",
+      "فلاشکارتی وشە گرنگەکان",
+      "پشتگیری و خزمەتگوزاری لەپێشینە"
+    ],
+    "featured": false,
+    "active": true,
+    "order": 3
+  },
+  {
+    "id": "plan_vip",
+    "name": "VIP",
+    "credits": 800,
+    "price": "10,000",
+    "originalPrice": "15,000",
+    "discountPercent": "33% OFF",
+    "currency": "IQD",
+    "color": "#ec4899",
+    "badge": "VIP / شاهانە",
+    "descriptionEn": "Best value long-term package for unlimited learning and mastery.",
+    "descriptionKu": "گەورەترین و پڕداشکاندنترین پاکێج بۆ فێربوونی بەردەوام و بێسنوور.",
+    "featuresEn": [
+      "Full website access",
+      "800 AI Credits balance",
+      "266 Sentence & Grammar analyses",
+      "266 Voice & Pronunciation tests",
+      "Full subtitle translation tools",
+      "VIP dedicated support"
+    ],
+    "featuresKu": [
+      "دەستگەیشتن بە تەواوی وێبسایت",
+      "٨٠٠ کرێدیتی زیرەکی دەستکرد (AI)",
+      "٢٦٦ شیکاری ڕێزمان و ڕستە",
+      "٢٦٦ ڕێنمایی دەنگ و گۆکردن (٣ کرێدیت)",
+      "ئامرازەکانی وەرگێڕانی سەبتایتڵ",
+      "پشتگیری تایبەتی VIP"
+    ],
+    "featured": false,
+    "active": true,
+    "order": 4
+  }
+]

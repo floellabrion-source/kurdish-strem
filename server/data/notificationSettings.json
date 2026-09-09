@@ -1,0 +1,12 @@
+{
+  "inactivityReminderDays": 3,
+  "inactivityPenaltyXP": 20,
+  "reminderFrequencyDays": 14,
+  "autoNewContentPush": true,
+  "autoCreditStatusPush": true,
+  "quietHoursEnabled": false,
+  "quietHoursStart": "23:00",
+  "quietHoursEnd": "08:00",
+  "lastUpdatedBy": "maher2",
+  "lastUpdatedAt": 1787251312336
+}

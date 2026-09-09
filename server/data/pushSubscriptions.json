@@ -1,0 +1,16 @@
+[
+  {
+    "id": "004981e0-757d-4147-a514-968db64f5646",
+    "userId": null,
+    "subscription": {
+      "endpoint": "https://wns2-pn1p.notify.windows.com/w/?token=BQYAAABLOx407A9uaoKFHWmNfiMelfVQAn%2fTWpsJ%2bPeoljbICRKS3kUhwSLJY0%2bdDH3KY7OHw9D1KnlXkjQESfnOPcDp%2fTZW7675%2fAnEhr1iRStx7sVyqrOyIrShZVyOjXf1M4%2fYgoPLuSKX9QTtMxRbflwIOGN5S7E3fy1aL7dK7VVYqCLHI%2bNkyX1H3qBmOc8MgWUKK%2fWu8PJeU%2fs0Fs5pnrDbM6lXIPvunKwQx1gcEFzzwmAypGtrv9gtyG%2b1tBIUE3wLhT3oSDx%2bpnlRtsoV%2fausAC4BBClEv1rfCaYSiGxKiRZPFAFn9B%2fsDOH79jhbtqo%3d",
+      "expirationTime": null,
+      "keys": {
+        "p256dh": "BDCdzXQpJ7syuvWUmixMuokhR7F513Q06Mq3CfHfdsPDGg3w0zmjIal6-Xk9FELJXCJ3KgnXqiEzNl6urPtEYGA",
+        "auth": "1hBzppZLP2pt7FEH0rkuHg"
+      }
+    },
+    "createdAt": 1787252389736,
+    "updatedAt": 1787252389736
+  }
+]

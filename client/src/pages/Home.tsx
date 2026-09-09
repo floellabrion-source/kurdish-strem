@@ -1,17 +1,62 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
-import axios from 'axios';
-import { Play, Clock, Calendar, Star, Film, Search, Layers, User, Filter, Eye, ChevronDown } from 'lucide-react';
-import { Movie } from '../types';
+import { Link, useSearchParams } from 'react-router-dom';
+import apiClient from '../api/client';
+import { Play, Clock, Calendar, Star, Film, Search, Layers, User, Filter, Eye, ChevronDown, ChevronLeft, ChevronRight, Brain, Sparkles, Flame } from 'lucide-react';
+import { Movie, getCefrDisplayLevel, getCefrColor } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { OptimizedImage } from '../components/OptimizedImage';
 import './Home.css';
 
-const GENRES_LIST = [
-    'تاوانکاری', 'دراما', 'زانستی خەیاڵی', 'هەستبزوێن', 'ئاکشن', 'سەرکێشی', 'خێزانی', 'خەیاڵی',
-    'موزیک', 'مێژوویی', 'ترسناک', 'دۆکیۆمێنتاری', 'کۆمێدی', 'ڕۆژئاوایی', 'وەرزشی', 'پزیشکی',
-    'کورتە', 'کۆمەڵایەتی', 'تراژیدی', 'سیخوڕی', 'کلاسیک', 'سامۆرای', 'بیۆگرافی', 'جەنگ'
+export interface GenreItem {
+    id: string;
+    ku: string;
+    en: string;
+}
+
+export const GENRES: GenreItem[] = [
+    { id: 'crime', ku: 'تاوانکاری', en: 'Crime' },
+    { id: 'drama', ku: 'دراما', en: 'Drama' },
+    { id: 'scifi', ku: 'زانستی خەیاڵی', en: 'Sci-Fi' },
+    { id: 'thriller', ku: 'هەستبزوێن', en: 'Thriller' },
+    { id: 'action', ku: 'ئاکشن', en: 'Action' },
+    { id: 'adventure', ku: 'سەرکێشی', en: 'Adventure' },
+    { id: 'family', ku: 'خێزانی', en: 'Family' },
+    { id: 'fantasy', ku: 'خەیاڵی', en: 'Fantasy' },
+    { id: 'music', ku: 'موزیک', en: 'Music' },
+    { id: 'history', ku: 'مێژوویی', en: 'History' },
+    { id: 'horror', ku: 'ترسناک', en: 'Horror' },
+    { id: 'documentary', ku: 'دۆکیۆمێنتاری', en: 'Documentary' },
+    { id: 'comedy', ku: 'کۆمێدی', en: 'Comedy' },
+    { id: 'western', ku: 'ڕۆژئاوایی', en: 'Western' },
+    { id: 'sport', ku: 'وەرزشی', en: 'Sport' },
+    { id: 'medical', ku: 'پزیشکی', en: 'Medical' },
+    { id: 'short', ku: 'کورتە', en: 'Short' },
+    { id: 'social', ku: 'کۆمەڵایەتی', en: 'Social' },
+    { id: 'tragedy', ku: 'تراژیدی', en: 'Tragedy' },
+    { id: 'mystery', ku: 'سیخوڕی', en: 'Mystery' },
+    { id: 'classic', ku: 'کلاسیک', en: 'Classic' },
+    { id: 'samurai', ku: 'سامۆرای', en: 'Samurai' },
+    { id: 'biography', ku: 'بیۆگرافی', en: 'Biography' },
+    { id: 'war', ku: 'جەنگ', en: 'War' }
 ];
+
+export const translateGenre = (genreStr: string | undefined, lang: string) => {
+    if (!genreStr) return '';
+    const parts = genreStr.split(/[,،/|]/).map(s => s.trim()).filter(Boolean);
+    const translated = parts.map(p => {
+        const match = GENRES.find(g => 
+            g.ku.toLowerCase() === p.toLowerCase() || 
+            g.en.toLowerCase() === p.toLowerCase() || 
+            g.id.toLowerCase() === p.toLowerCase()
+        );
+        if (match) {
+            return lang === 'en' ? match.en : match.ku;
+        }
+        return p;
+    });
+    return translated.join(', ');
+};
 
 const YEARS_LIST = [
     '1950', '1951', '1952', '1953', '1954', '1955', '1956', '1957', '1958', '1959',
@@ -25,21 +70,58 @@ const YEARS_LIST = [
 ].reverse();
 
 export default function Home({ filter }: { filter?: 'movie' | 'series' | 'animation' }) {
-    const [movies, setMovies] = useState<Movie[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [search, setSearch] = useState('');
+    const [searchParams] = useSearchParams();
+    const [movies, setMovies] = useState<Movie[]>(() => {
+        try {
+            const cached = localStorage.getItem('ks_cached_movies');
+            return cached ? JSON.parse(cached) : [];
+        } catch {
+            return [];
+        }
+    });
+    const [loading, setLoading] = useState(() => !Boolean(localStorage.getItem('ks_cached_movies')));
+    const [search, setSearch] = useState(() => searchParams.get('q') || '');
     const [featured, setFeatured] = useState<Movie | null>(null);
     const [secondary, setSecondary] = useState<Movie | null>(null);
     
     // Filters state
     const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
     const [selectedYear, setSelectedYear] = useState<string>('');
-    const [sortByViews, setSortByViews] = useState(false);
+    const [selectedLevel, setSelectedLevel] = useState<string>(() => searchParams.get('level') || '');
+    const [sortBy, setSortBy] = useState<'latest' | 'views'>('latest');
+    const [liveViewers, setLiveViewers] = useState<Record<string, number>>({});
     const [showGenreMenu, setShowGenreMenu] = useState(false);
     const [showYearMenu, setShowYearMenu] = useState(false);
+    const [showLevelMenu, setShowLevelMenu] = useState(false);
     const filtersRef = useRef<HTMLDivElement>(null);
     const { user } = useAuth();
     const { lang, t } = useLanguage();
+
+    const [heroIndex, setHeroIndex] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 18; // 9 rows of 2 items on mobile
+
+    useEffect(() => {
+        if (user?.role === 'admin' || user?.role === 'super_admin') {
+            const fetchLive = () => {
+                apiClient.get('/api/movies-live-viewers').then(res => {
+                    setLiveViewers(res.data || {});
+                }).catch(() => {});
+            };
+            fetchLive();
+            const timer = setInterval(fetchLive, 5000);
+            return () => clearInterval(timer);
+        }
+    }, [user?.role]);
+
+    useEffect(() => {
+        const lvl = searchParams.get('level');
+        setSelectedLevel(lvl || '');
+        const q = searchParams.get('q');
+        if (q !== null) {
+            setSearch(q);
+        }
+    }, [searchParams]);
 
     const getDescription = (movie: Movie) => {
         if (lang === 'ku' && movie.descriptionKu) return movie.descriptionKu;
@@ -49,8 +131,13 @@ export default function Home({ filter }: { filter?: 'movie' | 'series' | 'animat
     };
 
     useEffect(() => {
-        axios.get('/api/movies').then(res => {
+        apiClient.get('/api/movies').then(res => {
             const data: Movie[] = res.data;
+            if (Array.isArray(data)) {
+                try {
+                    localStorage.setItem('ks_cached_movies', JSON.stringify(data));
+                } catch {}
+            }
             const filteredData = filter ? data.filter(m => m.type === filter) : data;
             
             setMovies(filteredData);
@@ -74,27 +161,72 @@ export default function Home({ filter }: { filter?: 'movie' | 'series' | 'animat
             if (filtersRef.current && !filtersRef.current.contains(event.target as Node)) {
                 setShowGenreMenu(false);
                 setShowYearMenu(false);
+                setShowLevelMenu(false);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    let filtered = movies.filter(m =>
-        m.title?.toLowerCase().includes(search.toLowerCase()) ||
-        m.genre?.toLowerCase().includes(search.toLowerCase())
-    );
+    // Live filtering
+    let filtered = movies.filter(m => {
+        if (!search.trim()) return true;
+        const query = search.trim().toLowerCase();
+        const titleMatch = m.title?.toLowerCase().includes(query);
+        const titleKuMatch = (m as any).titleKu?.toLowerCase().includes(query);
+        const genreMatch = m.genre?.toLowerCase().includes(query);
+        const actorsMatch = Array.isArray((m as any).actors) && (m as any).actors.some((a: string) => typeof a === 'string' && a.toLowerCase().includes(query));
+        const directorMatch = typeof (m as any).director === 'string' && (m as any).director.toLowerCase().includes(query);
+        return titleMatch || titleKuMatch || genreMatch || actorsMatch || directorMatch;
+    });
 
     if (selectedGenres.length > 0) {
-        filtered = filtered.filter(m => selectedGenres.some(g => m.genre?.includes(g)));
+        filtered = filtered.filter(m => {
+            if (!m.genre) return false;
+            const lowerGenre = m.genre.toLowerCase();
+            return selectedGenres.some(gId => {
+                const item = GENRES.find(x => x.id === gId || x.ku === gId || x.en === gId);
+                if (!item) return lowerGenre.includes(gId.toLowerCase());
+                return lowerGenre.includes(item.ku.toLowerCase()) || lowerGenre.includes(item.en.toLowerCase());
+            });
+        });
     }
 
     if (selectedYear) {
         filtered = filtered.filter(m => m.year?.toString() === selectedYear);
     }
 
-    if (sortByViews) {
-        // Just sort by views if we have them, else sort by ID or a dummy metric
+    if (selectedLevel) {
+        const lvl = selectedLevel.trim();
+        const lvlUpper = lvl.toUpperCase();
+        const cefrMap: Record<string, string[]> = {
+            'A1': ['A1', 'ئاسان'],
+            'A2': ['A2', 'ئاسان'],
+            'B1': ['B1', 'مامناوەند'],
+            'B2': ['B2', 'مامناوەند'],
+            'C1': ['C1', 'قورس'],
+            'C2': ['C2', 'قورس'],
+            'ئاسان': ['A1', 'A2', 'ئاسان'],
+            'مامناوەند': ['B1', 'B2', 'مامناوەند'],
+            'قورس': ['C1', 'C2', 'قورس']
+        };
+        const acceptable = (cefrMap[lvl] || cefrMap[lvlUpper] || [lvl, lvlUpper]).map(x => x.toUpperCase());
+        filtered = filtered.filter(m => {
+            const mCefr = m.languageMetrics?.cefrLevel?.toUpperCase();
+            const mLevel = (m as any).level?.toString().toUpperCase();
+            const mDirectCefr = (m as any).cefrLevel?.toString().toUpperCase();
+            return (
+                (mCefr && acceptable.includes(mCefr)) ||
+                (mLevel && acceptable.includes(mLevel)) ||
+                (mDirectCefr && acceptable.includes(mDirectCefr))
+            );
+        });
+    }
+
+    // Sort by live viewers or latest
+    if (sortBy === 'views') {
+        filtered.sort((a, b) => ((liveViewers[b.id] || 0) - (liveViewers[a.id] || 0) || (b.realViews ?? b.views ?? 0) - (a.realViews ?? a.views ?? 0) || (b.createdAt || 0) - (a.createdAt || 0)));
+    } else {
         filtered.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
     }
 
@@ -105,6 +237,61 @@ export default function Home({ filter }: { filter?: 'movie' | 'series' | 'animat
         filtered = [...unwatched, ...watched];
     }
 
+    const explicitFeatured = movies.filter(m => m.isFeatured && (m.posterCloudUrl || m.posterUrl));
+    const heroMovies = explicitFeatured.length > 0
+        ? explicitFeatured.slice(0, 10)
+        : movies.filter(m => m.posterCloudUrl || m.posterUrl).length > 0
+            ? movies.filter(m => m.posterCloudUrl || m.posterUrl).slice(0, 5)
+            : movies.slice(0, 5);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [search, selectedGenres, selectedYear, selectedLevel, sortBy, filter]);
+
+    useEffect(() => {
+        if (heroMovies.length <= 1) return;
+        const timer = setInterval(() => {
+            setHeroIndex(prev => (prev + 1) % heroMovies.length);
+        }, 6000);
+        return () => clearInterval(timer);
+    }, [heroMovies.length]);
+
+    const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE) || 1;
+    const paginatedMovies = filtered.slice(
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE
+    );
+
+    const handlePageChange = (newPage: number) => {
+        if (newPage < 1 || newPage > totalPages) return;
+        setCurrentPage(newPage);
+        const section = document.querySelector('.section-header');
+        if (section) {
+            section.scrollIntoView({ behavior: 'smooth' });
+        }
+    };
+
+    const getPageNumbers = () => {
+        const pages: (number | string)[] = [];
+        if (totalPages <= 7) {
+            for (let i = 1; i <= totalPages; i++) pages.push(i);
+        } else {
+            pages.push(1);
+            if (currentPage > 3) pages.push('...');
+            
+            const start = Math.max(2, currentPage - 1);
+            const end = Math.min(totalPages - 1, currentPage + 1);
+            
+            for (let i = start; i <= end; i++) {
+                if (!pages.includes(i)) pages.push(i);
+            }
+            
+            if (currentPage < totalPages - 2) pages.push('...');
+            pages.push(totalPages);
+        }
+        return pages;
+    };
+
     const toggleGenre = (g: string) => {
         setSelectedGenres(prev => 
             prev.includes(g) ? prev.filter(x => x !== g) : [...prev, g]
@@ -114,106 +301,100 @@ export default function Home({ filter }: { filter?: 'movie' | 'series' | 'animat
     const getLink = (movie: Movie) => `/movie/${movie.id}`;
     const getPoster = (movie: Movie) => movie.posterCloudUrl || movie.posterUrl;
 
+    const currentHero = heroMovies[heroIndex] || featured;
+
     return (
-        <div className="home">
-            {/* Top Search Bar placed at absolute top left */}
-            <div className="top-search-area">
-                <div className="search-box">
-                    <Search size={16} className="search-icon" />
-                    <input 
-                        type="text" 
-                        placeholder={t('search_placeholder')} 
-                        value={search} 
-                        onChange={e => setSearch(e.target.value)} 
-                        className="search-input" 
-                    />
-                </div>
-                
-                {/* Filters Section */}
-                <div className="filters-right" ref={filtersRef}>
-                    <div className="filter-dropdown">
-                        <button className="filter-btn" onClick={() => { setShowGenreMenu(!showGenreMenu); setShowYearMenu(false); }}>
-                            <Filter size={16} /> چەشنەکان <ChevronDown size={14} />
-                        </button>
-                        {showGenreMenu && (
-                            <div className="filter-menu genre-menu">
-                                {GENRES_LIST.map(g => (
-                                    <label key={g} className="filter-option">
-                                        <input type="checkbox" checked={selectedGenres.includes(g)} onChange={() => toggleGenre(g)} />
-                                        <span>{g}</span>
-                                    </label>
-                                ))}
-                            </div>
-                        )}
-                    </div>
+        <div className={`home ${lang === 'en' ? 'ltr' : ''}`} dir={lang === 'en' ? 'ltr' : 'rtl'}>
+            {/* Mobile Menu Overlay */}
+            {(showGenreMenu || showLevelMenu) && (
+                <div 
+                    className="menu-overlay-mobile" 
+                    onClick={() => {
+                        setShowGenreMenu(false);
+                        setShowLevelMenu(false);
+                    }}
+                />
+            )}
 
-                    <div className="filter-dropdown">
-                        <button className="filter-btn" onClick={() => { setShowYearMenu(!showYearMenu); setShowGenreMenu(false); }}>
-                            <Calendar size={16} /> ساڵ <ChevronDown size={14} />
-                        </button>
-                        {showYearMenu && (
-                            <div className="filter-menu year-menu">
-                                <label className="filter-option">
-                                    <input type="radio" name="year" checked={selectedYear === ''} onChange={() => setSelectedYear('')} />
-                                    <span>هەموو</span>
-                                </label>
-                                {YEARS_LIST.map(y => (
-                                    <label key={y} className="filter-option">
-                                        <input type="radio" name="year" checked={selectedYear === y} onChange={() => setSelectedYear(y)} />
-                                        <span>{y}</span>
-                                    </label>
-                                ))}
-                            </div>
-                        )}
-                    </div>
 
-                    <button className={`filter-btn ${sortByViews ? 'active' : ''}`} onClick={() => setSortByViews(!sortByViews)}>
-                        <Eye size={16} /> پڕبینەرترین
-                    </button>
-                </div>
-            </div>
-
-            {featured && !loading && (
+            {currentHero && !loading && (
                 <div className="hero-carousel">
-                    <div className="hero" style={{ backgroundImage: getPoster(featured) ? `url(${getPoster(featured)})` : 'linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%)' }}>
+                    <div className="hero">
+                        <div className="hero-blur-bg" style={{ backgroundImage: getPoster(currentHero) ? `url(${getPoster(currentHero)})` : 'none' }} />
                         <div className="hero-overlay" />
-                        <div className="hero-content animate-fade">
-                            <h1 className="hero-title">{featured.title}</h1>
-                            <div className="hero-meta">
-                                {featured.type === 'series' ? 
-                                    <span className="hero-badge"><Layers size={12} /> {t('series')}</span> : 
-                                 featured.type === 'animation' ? 
-                                    <span className="hero-badge"><Film size={12} /> {t('animation')}</span> :
-                                    <span className="hero-badge"><Film size={12} /> {t('movies')}</span>
-                                }
-                                {featured.year && <span><Calendar size={14} />{featured.year}</span>}
-                                {featured.duration && <span><Clock size={14} />{featured.duration}</span>}
-                                {featured.genre && <span>{featured.genre}</span>}
-                                {featured.language && <span>{featured.language.split(',')[0]}</span>}
-                                {featured.imdbRating && (
-                                    <span style={{ color: '#fbbf24', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'bold' }}>
-                                        <Star size={14} fill="currentColor" /> {featured.imdbRating}
-                                    </span>
-                                )}
+                        
+                        <div className="hero-container">
+                            {/* Desktop Poster Card */}
+                            {getPoster(currentHero) && (
+                                <div className="hero-poster-desktop">
+                                    <img src={getPoster(currentHero)} alt={currentHero.title} className="hero-poster-img" />
+                                </div>
+                            )}
+
+                            {/* Content Side */}
+                            <div className="hero-content animate-fade">
+                                <h1 className="hero-title">{currentHero.title}</h1>
+                                <div className="hero-meta">
+                                    {currentHero.imdbRating && (
+                                        <span className="hero-imdb-badge">
+                                            <span className="imdb-label">IMDb</span> {currentHero.imdbRating} <Star size={14} fill="#fbbf24" color="#fbbf24" />
+                                        </span>
+                                    )}
+                                    {currentHero.type === 'series' ? 
+                                        <span className="hero-badge"><Layers size={12} /> {t('series')}</span> : 
+                                     currentHero.type === 'animation' ? 
+                                        <span className="hero-badge"><Film size={12} /> {t('animation')}</span> :
+                                        <span className="hero-badge"><Film size={12} /> {t('movies')}</span>
+                                    }
+                                    {currentHero.year && <><span className="hero-separator">|</span><span>{currentHero.year}</span></>}
+                                    {currentHero.duration && <><span className="hero-separator">|</span><span>{currentHero.duration}</span></>}
+                                    {currentHero.genre && <><span className="hero-separator">|</span><span>{translateGenre(currentHero.genre, lang)}</span></>}
+                                </div>
+                                <Link to={getLink(currentHero)} className="btn-play">
+                                    <Play size={20} fill="currentColor" /> {t('watch_now')}
+                                </Link>
                             </div>
-                            <Link to={getLink(featured)} className="btn-play">
-                                <Play size={20} fill="currentColor" /> سەیرکردن
-                            </Link>
                         </div>
+                        {heroMovies.length > 1 && (
+                            <>
+                                <button 
+                                    className="hero-nav-btn hero-nav-prev" 
+                                    onClick={() => setHeroIndex(prev => (prev - 1 + heroMovies.length) % heroMovies.length)} 
+                                    aria-label="Previous"
+                                    title={lang === 'en' ? 'Previous' : 'پێشوو'}
+                                >
+                                    <ChevronRight size={26} />
+                                </button>
+                                <button 
+                                    className="hero-nav-btn hero-nav-next" 
+                                    onClick={() => setHeroIndex(prev => (prev + 1) % heroMovies.length)} 
+                                    aria-label="Next"
+                                    title={lang === 'en' ? 'Next' : 'داهاتوو'}
+                                >
+                                    <ChevronLeft size={26} />
+                                </button>
+                            </>
+                        )}
+                        {heroMovies.length > 1 && (
+                            <div className="hero-dots">
+                                {heroMovies.map((_, i) => (
+                                    <button
+                                        key={i}
+                                        className={`hero-dot ${i === heroIndex ? 'active' : ''}`}
+                                        onClick={() => setHeroIndex(i)}
+                                    />
+                                ))}
+                            </div>
+                        )}
                     </div>
-                    {secondary && (
-                        <Link to={getLink(secondary)} className="hero-secondary" style={{ backgroundImage: getPoster(secondary) ? `url(${getPoster(secondary)})` : 'none' }}>
-                             <div className="hero-overlay" style={{ background: 'linear-gradient(to top, rgba(9, 9, 11, 0.9) 0%, transparent 50%)' }} />
-                        </Link>
-                    )}
                 </div>
             )}
 
-            {!featured && !loading && (
+            {!currentHero && !loading && (
                 <div className="hero hero-empty">
                     <div className="hero-content hero-empty-content animate-fade">
                         <Film size={64} className="empty-hero-icon" />
-                        <h1>Kurdish Stream</h1>
+                        <h1>KST</h1>
                         <p>{t('no_movies')}</p>
                     </div>
                 </div>
@@ -228,7 +409,7 @@ export default function Home({ filter }: { filter?: 'movie' | 'series' | 'animat
                         <div className="continue-grid">
                             {Object.entries(user.history as Record<string, { time: number; title: string; date?: string }>)
                                 .sort((a, b) => new Date(b[1].date || 0).getTime() - new Date(a[1].date || 0).getTime())
-                                .slice(0, 3)
+                                .slice(0, 4)
                                 .map(([key, hist]) => {
                                     const match = key.match(/^(.+?)_s(\d+)_e(\d+)$/);
                                     let link = `#`;
@@ -242,26 +423,30 @@ export default function Home({ filter }: { filter?: 'movie' | 'series' | 'animat
                                     
                                     return (
                                         <Link to={link || "#"} key={key} className="history-card">
-                                            {m && getPoster(m) && <div className="history-bg" style={{ backgroundImage: `url(${getPoster(m)})`}}></div>}
-                                            <div className="history-card-inner">
-                                                {m && getPoster(m) ? (
-                                                    <img src={getPoster(m)} alt="" style={{width: '100px', height: '65px', borderRadius: '8px', objectFit: 'cover'}} />
-                                                ) : (
-                                                    <div style={{width: '100px', height: '65px', borderRadius: '8px', background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-                                                        <Film size={20} color="#64748b" />
+                                            <div className="history-poster-wrap">
+                                                <OptimizedImage
+                                                    src={m ? getPoster(m) : null}
+                                                    alt={hist.title}
+                                                    isThumbnail={true}
+                                                    aspectRatio="16/9"
+                                                    className="history-poster-img"
+                                                />
+                                                <div className="history-play-btn">
+                                                    <Play size={22} fill="white" color="white" />
+                                                </div>
+                                                <div className="history-card-gradient" />
+                                                <div className="history-card-info">
+                                                    <h4 className="history-title">{hist.title}</h4>
+                                                    <div className="history-sub-info">
+                                                        <span>{match && parseInt(match[3]) > 0 ? `وەرز ${match[2]} - ئەڵقەی ${match[3]}` : t('movies')}</span>
+                                                        {hist.time > 0 && <span className="history-time">له‌ خوله‌كی {Math.floor(hist.time / 60)}</span>}
                                                     </div>
-                                                )}
-                                                <div style={{ flex: 1, overflow: 'hidden' }}>
-                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                                                        <span style={{ fontSize: '11px', color: '#e2e8f0', background: 'rgba(0,0,0,0.5)', padding: '2px 8px', borderRadius: '100px' }}>
-                                                            {match && parseInt(match[3]) > 0 ? `S${match[2]}E${match[3]}` : t('movies')}
-                                                        </span>
-                                                        <span style={{ fontSize: '11px', color: '#94a3b8' }}>{t('time')} {Math.floor(hist.time / 60)}:{String(hist.time % 60).padStart(2, '0')}</span>
-                                                    </div>
-                                                    <h4 style={{ margin: '0 0 10px 0', fontSize: '15px', color: 'white', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{hist.title}</h4>
-                                                    <div style={{ background: 'rgba(255,255,255,0.1)', height: '4px', borderRadius: '2px', overflow: 'hidden' }}>
-                                                        <div style={{ background: '#e4e4e7', width: m?.duration && typeof m.duration === 'string' && m.duration.includes(':') ? `${(hist.time / (parseInt(m.duration.split(':')[0]) * 60 + parseInt(m.duration.split(':')[1]))) * 100}%` : '50%', height: '100%' }}></div>
-                                                    </div>
+                                                </div>
+                                                <div className="history-progress-bar">
+                                                    <div 
+                                                        className="history-progress-fill" 
+                                                        style={{ width: m?.duration && typeof m.duration === 'string' && m.duration.includes(':') ? `${Math.min(100, Math.max(5, (hist.time / (parseInt(m.duration.split(':')[0]) * 60 + parseInt(m.duration.split(':')[1]))) * 100))}%` : '50%' }} 
+                                                    />
                                                 </div>
                                             </div>
                                         </Link>
@@ -271,11 +456,121 @@ export default function Home({ filter }: { filter?: 'movie' | 'series' | 'animat
                     </div>
                 )}
 
+                {/* Level Assessment CTA Banner (Shown only if not taken or if 7 days passed) */}
+                {(() => {
+                    const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+                    const lastAssessmentDate = user?.assessmentResult?.date || Number(localStorage.getItem('kurdish_stream_assessment_date') || 0);
+                    const hasValidLevel = Boolean(user?.level || localStorage.getItem('kurdish_stream_user_level'));
+                    const isRecentAssessment = hasValidLevel && (lastAssessmentDate > 0 ? (Date.now() - lastAssessmentDate < SEVEN_DAYS_MS) : true);
+
+                    if (isRecentAssessment) return null;
+
+                    return (
+                        <div className="home-level-banner">
+                            <div className="hlb-main">
+                                <div className="hlb-icon">
+                                    <Brain size={20} />
+                                </div>
+                                <div className="hlb-text">
+                                    <h3 className="hlb-title">
+                                        {lang === 'en' ? '🎯 Discover Your English Level' : '🎯 ئاستی زمانی ئینگلیزیت دیاری بکە'}
+                                    </h3>
+                                    <p className="hlb-desc">
+                                        {lang === 'en' ? 'Take our 3-minute quiz for personalized movie recommendations.' : 'بە تاقیکردنەوەیەکی ٣ خولەکی فیلم و زنجیرەی گونجاو بە ئاستەکەت بدۆزەرەوە.'}
+                                    </p>
+                                </div>
+                            </div>
+                            <Link to="/assessment" className="hlb-btn">
+                                <Sparkles size={14} />
+                                <span>{lang === 'en' ? 'Start' : 'دەستپێکردن'}</span>
+                            </Link>
+                        </div>
+                    );
+                })()}
+
                 <div className="section-header">
-                    <h2 className="section-title">
-                        {filter === 'movie' ? t('movies') : filter === 'series' ? t('series') : filter === 'animation' ? t('animation') : t('popular_movies')}
-                    </h2>
-                    <span className="count-badge">{filtered.length}</span>
+                    <div className="section-title-wrap">
+                        <h2 className="section-title">
+                            {filter === 'movie' ? t('movies') : filter === 'series' ? t('series') : filter === 'animation' ? t('animation') : t('movies')}
+                        </h2>
+                        {(user?.role === 'admin' || user?.role === 'super_admin') && (
+                            <span className="count-badge">{filtered.length}</span>
+                        )}
+                    </div>
+
+                    {/* Integrated Modern Filter Controls */}
+                    <div className="section-filters-group" ref={filtersRef}>
+                        <div className={`filter-dropdown ${showGenreMenu ? 'active' : ''}`}>
+                            <button className={`filter-btn ${selectedGenres.length > 0 ? 'active' : ''}`} onClick={() => { setShowGenreMenu(!showGenreMenu); setShowLevelMenu(false); }} title={t('genres')}>
+                                <Filter size={16} /> 
+                                <span className="filter-btn-text">{t('genres')}</span> 
+                                {selectedGenres.length > 0 && <span className="filter-badge">{selectedGenres.length}</span>} 
+                                <ChevronDown size={14} className={`chevron ${showGenreMenu ? 'open' : ''}`} />
+                            </button>
+                            {showGenreMenu && (
+                                <div className="filter-menu genre-menu modern-menu">
+                                    <div className="menu-header">
+                                        <span>{t('select_genre')}</span>
+                                        {selectedGenres.length > 0 && <button className="clear-btn-small" onClick={() => setSelectedGenres([])}>{t('clear')}</button>}
+                                    </div>
+                                    <div className="genre-grid-modern">
+                                        {GENRES.map(g => {
+                                            const label = lang === 'en' ? g.en : g.ku;
+                                            const isSelected = selectedGenres.includes(g.id);
+                                            return (
+                                                <label key={g.id} className={`filter-option modern-option ${isSelected ? 'selected' : ''}`}>
+                                                    <input type="checkbox" checked={isSelected} onChange={() => toggleGenre(g.id)} />
+                                                    <span>{label}</span>
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className={`filter-dropdown ${showLevelMenu ? 'active' : ''}`}>
+                            <button className={`filter-btn ${selectedLevel ? 'active' : ''}`} onClick={() => { setShowLevelMenu(!showLevelMenu); setShowGenreMenu(false); }} title={t('language_level')}>
+                                <Layers size={16} /> 
+                                <span className="filter-btn-text">{selectedLevel || t('language_level')}</span> 
+                                {selectedLevel && <span className="filter-badge level-badge-dot">{selectedLevel}</span>}
+                                <ChevronDown size={14} className={`chevron ${showLevelMenu ? 'open' : ''}`} />
+                            </button>
+                            {showLevelMenu && (
+                                <div className="filter-menu year-menu modern-menu">
+                                    <div className="menu-header">
+                                        <span>{t('language_level')}</span>
+                                        {selectedLevel && <button className="clear-btn-small" onClick={() => setSelectedLevel('')}>{t('clear')}</button>}
+                                    </div>
+                                    <div className="year-grid-modern">
+                                        <label className={`year-btn-modern ${selectedLevel === '' ? 'active' : ''}`}>
+                                            <input type="radio" name="level" checked={selectedLevel === ''} onChange={() => setSelectedLevel('')} style={{ display: 'none' }} />
+                                            {t('all_filter')}
+                                        </label>
+                                        {['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].map(l => (
+                                            <label key={l} className={`year-btn-modern ${selectedLevel === l ? 'active' : ''}`}>
+                                                <input type="radio" name="level" checked={selectedLevel === l} onChange={() => setSelectedLevel(l)} style={{ display: 'none' }} />
+                                                {l}
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Most Watched Button - Super Admin Only */}
+                        {user?.role === 'super_admin' && (
+                            <button 
+                                type="button"
+                                className={`filter-btn most-watched-btn ${sortBy === 'views' ? 'active' : ''}`}
+                                onClick={() => setSortBy(prev => prev === 'views' ? 'latest' : 'views')}
+                                title={lang === 'en' ? 'Sort by Most Watched (Super Admin Only)' : 'ڕیزبەندی بەپێی پڕبینەرترین (تەنها سەرۆک)'}
+                            >
+                                <Flame size={16} color={sortBy === 'views' ? '#f59e0b' : 'currentColor'} /> 
+                                <span className="filter-btn-text">{lang === 'en' ? 'Most Watched' : 'پڕبینەرترین'}</span>
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 {loading ? (
@@ -287,43 +582,125 @@ export default function Home({ filter }: { filter?: 'movie' | 'series' | 'animat
                         ))}
                     </div>
                 ) : filtered.length === 0 ? (
-                    <div className="empty-state" style={{ textAlign: 'center', padding: '60px', opacity: 0.5 }}>
-                        <Search size={48} style={{ marginBottom: '16px' }} />
-                        <h3>{t('not_found')}</h3>
+                    <div className="empty-state" style={{ textAlign: 'center', padding: '60px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+                        <Search size={48} style={{ opacity: 0.4 }} />
+                        <h3 style={{ fontSize: '18px', fontWeight: 800 }}>{t('not_found')}</h3>
+                        {(search || selectedGenres.length > 0 || selectedYear || selectedLevel) && (
+                            <button 
+                                type="button"
+                                onClick={() => {
+                                    setSearch('');
+                                    setSelectedGenres([]);
+                                    setSelectedYear('');
+                                    setSelectedLevel('');
+                                }}
+                                style={{
+                                    background: 'linear-gradient(135deg, #8b5cf6, #6366f1)',
+                                    color: '#ffffff',
+                                    border: 'none',
+                                    padding: '10px 20px',
+                                    borderRadius: '12px',
+                                    fontWeight: 700,
+                                    fontSize: '13.5px',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 4px 15px rgba(139, 92, 246, 0.35)'
+                                }}
+                            >
+                                {lang === 'en' ? 'Reset All Filters & Show All' : 'پاککردنەوەی فلتەرەکان و پیشاندانی هەموو فیلمەکان 🔄'}
+                            </button>
+                        )}
                     </div>
                 ) : (
-                    <div className="movies-grid animate-fade">
-                        {filtered.map(movie => (
-                            <Link to={getLink(movie)} key={movie.id} className="movie-card">
-                                {getPoster(movie) ? (
-                                    <img src={getPoster(movie)} alt={movie.title} className="card-poster" loading="lazy" />
-                                ) : (
-                                    <div className="card-poster" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1a1a24' }}>
-                                        <Film size={32} color="#475569" />
+                    <>
+                        <div className="movies-grid animate-fade">
+                            {paginatedMovies.map(movie => (
+                                <Link to={getLink(movie)} key={movie.id} className="movie-card">
+                                    <OptimizedImage
+                                        src={getPoster(movie)}
+                                        alt={movie.title}
+                                        isThumbnail={true}
+                                        className="card-poster"
+                                    />
+                                    <div className="movie-card-overlay">
+                                        <div className="overlay-header">
+                                            {movie.imdbRating ? (
+                                                <div className="overlay-rating">
+                                                    <Star size={13} fill="#fbbf24" color="#fbbf24" />
+                                                    <span>{movie.imdbRating}</span>
+                                                </div>
+                                            ) : <div />}
+                                            {(() => {
+                                                const lvl = getCefrDisplayLevel(movie.level, movie.languageMetrics?.cefrLevel);
+                                                if (!lvl) return null;
+                                                const colorInfo = getCefrColor(lvl);
+                                                return (
+                                                    <div 
+                                                        className="overlay-level-badge" 
+                                                        style={{
+                                                            background: colorInfo.bg,
+                                                            color: colorInfo.text
+                                                        }}
+                                                    >
+                                                        {lvl}
+                                                    </div>
+                                                );
+                                            })()}
+                                        </div>
+                                        <p className="overlay-plot">
+                                            {getDescription(movie).split('.')[0]}...
+                                        </p>
                                     </div>
-                                )}
-                                <div className="movie-card-overlay">
-                                    {movie.imdbRating && (
-                                        <div className="overlay-rating">
-                                            <Star size={16} fill="#fbbf24" color="#fbbf24" />
-                                            <span>{movie.imdbRating}</span>
+                                    <div className="movie-card-badges">
+                                        {movie.imdbRating && <div className="card-badge"><Star size={10} fill="#fbbf24" color="#fbbf24" /> {movie.imdbRating}</div>}
+                                    </div>
+                                    {movie.year && <div className="card-badge-right">{movie.year}</div>}
+                                    {user?.role === 'super_admin' && (
+                                        <div className={`card-admin-views ${(liveViewers[movie.id] || 0) > 0 ? 'has-live' : 'is-zero'}`} title={lang === 'en' ? 'Live Viewers Right Now (Super Admin Only)' : 'بینەری ڕاستەوخۆ لەم چرکەیەدا (تەنها سەرۆک دەیبینێت)'}>
+                                            <span className={`live-dot ${(liveViewers[movie.id] || 0) > 0 ? 'active-pulse' : 'idle'}`} />
+                                            <span>{lang === 'en' ? 'Viewers ' : 'بینەر '}{liveViewers[movie.id] || 0}</span>
                                         </div>
                                     )}
-                                    <p className="overlay-plot">
-                                        {getDescription(movie).split('.')[0]}...
-                                    </p>
+                                </Link>
+                            ))}
+                        </div>
+
+                        {/* Pagination Control Bar */}
+                        {totalPages > 1 && (
+                            <div className="pagination-container">
+                                <button 
+                                    className="pagination-btn pagination-nav" 
+                                    disabled={currentPage === 1}
+                                    onClick={() => handlePageChange(currentPage - 1)}
+                                >
+                                    {t('previous')}
+                                </button>
+
+                                <div className="pagination-numbers">
+                                    {getPageNumbers().map((p, idx) => 
+                                        typeof p === 'number' ? (
+                                            <button
+                                                key={idx}
+                                                className={`pagination-btn pagination-num ${p === currentPage ? 'active' : ''}`}
+                                                onClick={() => handlePageChange(p)}
+                                            >
+                                                {p}
+                                            </button>
+                                        ) : (
+                                            <span key={idx} className="pagination-ellipsis">...</span>
+                                        )
+                                    )}
                                 </div>
-                                <div className="movie-card-badges">
-                                    {movie.imdbRating && <div className="card-badge"><Star size={10} fill="#fbbf24" color="#fbbf24" /> {movie.imdbRating}</div>}
-                                    <div className="card-badge">{movie.year || '2025'}</div>
-                                </div>
-                                <div className="card-play-btn">
-                                    <Play size={24} fill="currentColor" style={{ marginLeft: '4px' }} />
-                                </div>
-                                {/* Clean bottom padding if needed, but modern cards often just show poster */}
-                            </Link>
-                        ))}
-                    </div>
+
+                                <button 
+                                    className="pagination-btn pagination-nav" 
+                                    disabled={currentPage === totalPages}
+                                    onClick={() => handlePageChange(currentPage + 1)}
+                                >
+                                    {t('next')}
+                                </button>
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
         </div>

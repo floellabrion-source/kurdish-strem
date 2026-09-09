@@ -1,0 +1,4813 @@
+[
+  {
+    "id": "ec945e47-b54c-4940-bb4b-de0db6f5c902",
+    "eventType": "subtitle_edit",
+    "category": "content",
+    "status": "info",
+    "admin": {
+      "id": "bae2eb30-7cb5-41ee-94df-9565e4a65190",
+      "username": "1",
+      "role": "admin"
+    },
+    "target": {
+      "id": "25e932e2-0688-4e73-944b-ae4ca235955c",
+      "title": "The Holiday"
+    },
+    "details": {
+      "linesChanged": 0,
+      "wordsAdded": 0,
+      "wordsRemoved": 0
+    },
+    "ip": "",
+    "userAgent": "",
+    "location": null,
+    "timestamp": "2026-09-04T22:34:17.663Z"
+  },
+  {
+    "id": "8a86c7b6-f8b2-4837-981d-cd6a22586320",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Mobile Safari/537.36"
+    },
+    "ip": "127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Mobile Safari/537.36",
+    "location": {
+      "ip": "127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-09-04T22:18:48.563Z"
+  },
+  {
+    "id": "7ea79c9b-40d0-406b-b992-130edc98e263",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Mobile Safari/537.36"
+    },
+    "ip": "127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Mobile Safari/537.36",
+    "location": {
+      "ip": "127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-09-04T22:18:33.833Z"
+  },
+  {
+    "id": "18eaa1a6-aade-4b6f-8e67-f5907fd04d75",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "bae2eb30-7cb5-41ee-94df-9565e4a65190",
+      "username": "1",
+      "role": "admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: 1"
+    },
+    "details": {
+      "username": "1",
+      "role": "admin",
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0"
+    },
+    "ip": "127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0",
+    "location": {
+      "ip": "127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-09-04T22:14:49.620Z"
+  },
+  {
+    "id": "58165637-9f00-4e3a-a82d-ee15067b8179",
+    "eventType": "login_failed",
+    "category": "security",
+    "status": "warning",
+    "admin": {
+      "id": "system",
+      "username": "admin",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "هەوڵی چوونەژوورەوەی شکستخواردوو"
+    },
+    "details": {
+      "attemptedUsername": "admin",
+      "reason": "وشەی نهێنی هەڵەیە",
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0"
+    },
+    "ip": "127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0",
+    "location": {
+      "ip": "127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-09-04T22:14:35.046Z"
+  },
+  {
+    "id": "54581281-3f5c-4194-98ff-253f71c929b6",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5d24f936-2474-4ddd-80eb-287799a77f25",
+      "username": "ما",
+      "role": "user"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: ما"
+    },
+    "details": {
+      "username": "ما",
+      "role": "user",
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0"
+    },
+    "ip": "127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0",
+    "location": {
+      "ip": "127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-09-04T22:14:15.697Z"
+  },
+  {
+    "id": "a6ee21cf-dac9-47bd-9650-df2f93a87d7e",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-09-04T22:12:21.812Z"
+  },
+  {
+    "id": "fdd74fb5-2b6c-4582-b9dd-14e98b766293",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Mobile Safari/537.36"
+    },
+    "ip": "127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Mobile Safari/537.36",
+    "location": {
+      "ip": "127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-09-04T22:11:55.116Z"
+  },
+  {
+    "id": "73184aae-2c60-4022-a5b9-aeb4fa7af7db",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5d24f936-2474-4ddd-80eb-287799a77f25",
+      "username": "ما",
+      "role": "user"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: ما"
+    },
+    "details": {
+      "username": "ما",
+      "role": "user",
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-09-04T21:10:53.102Z"
+  },
+  {
+    "id": "db03384c-e548-4865-8320-fdfe8c68c457",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "bae2eb30-7cb5-41ee-94df-9565e4a65190",
+      "username": "1",
+      "role": "admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: 1"
+    },
+    "details": {
+      "username": "1",
+      "role": "admin",
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-09-04T20:51:51.816Z"
+  },
+  {
+    "id": "840b21dd-7d8a-44bf-be1a-0ac8d0395f23",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "bae2eb30-7cb5-41ee-94df-9565e4a65190",
+      "username": "1",
+      "role": "admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: 1"
+    },
+    "details": {
+      "username": "1",
+      "role": "admin",
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-09-04T20:43:31.492Z"
+  },
+  {
+    "id": "7512b846-0989-49c9-842b-3010e2c7fbad",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "bae2eb30-7cb5-41ee-94df-9565e4a65190",
+      "username": "1",
+      "role": "admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: 1"
+    },
+    "details": {
+      "username": "1",
+      "role": "admin",
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-09-04T20:31:34.339Z"
+  },
+  {
+    "id": "0555bf9d-a8ac-43c4-901b-44e2c2b4bdfb",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Mobile Safari/537.36"
+    },
+    "ip": "127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Mobile Safari/537.36",
+    "location": {
+      "ip": "127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-09-04T19:53:11.203Z"
+  },
+  {
+    "id": "cb59e6ab-3952-43a2-8936-d4aaaf5b704e",
+    "eventType": "subtitle_edit",
+    "category": "content",
+    "status": "info",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "id": "0126d3a0-9874-4adb-a562-45a5cb309c2f",
+      "title": "Breaking Bad",
+      "seasonNum": 1,
+      "episodeNum": 1
+    },
+    "details": {
+      "linesChanged": 7,
+      "wordsAdded": 7,
+      "wordsRemoved": 0
+    },
+    "ip": "",
+    "userAgent": "",
+    "location": null,
+    "timestamp": "2026-09-01T21:38:55.338Z"
+  },
+  {
+    "id": "be95ccac-8656-4549-978b-43f52b63ce27",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0"
+    },
+    "ip": "127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0",
+    "location": {
+      "ip": "127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-09-01T19:54:59.210Z"
+  },
+  {
+    "id": "409081ab-1d5b-490e-8d16-4cc11c8e4b10",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "bae2eb30-7cb5-41ee-94df-9565e4a65190",
+      "username": "1",
+      "role": "admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: 1"
+    },
+    "details": {
+      "username": "1",
+      "role": "admin",
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Mobile Safari/537.36"
+    },
+    "ip": "127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Mobile Safari/537.36",
+    "location": {
+      "ip": "127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-09-01T19:53:02.333Z"
+  },
+  {
+    "id": "4148a2fb-fe6f-4eb5-bb02-bb6eb621cb6f",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5d24f936-2474-4ddd-80eb-287799a77f25",
+      "username": "ما",
+      "role": "user"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: ما"
+    },
+    "details": {
+      "username": "ما",
+      "role": "user",
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-09-01T19:40:51.654Z"
+  },
+  {
+    "id": "30351e2e-2a62-4e31-ba7c-424942fd68e1",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "de18624b-400a-4a5c-a4ce-2a6504f58cbf",
+      "username": "admin",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: admin"
+    },
+    "details": {
+      "username": "admin",
+      "role": "super_admin",
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-31T21:41:06.180Z"
+  },
+  {
+    "id": "f2d19562-da9f-4734-be77-6bd57c0ed25c",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "bae2eb30-7cb5-41ee-94df-9565e4a65190",
+      "username": "1",
+      "role": "admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: 1"
+    },
+    "details": {
+      "username": "1",
+      "role": "admin",
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36"
+    },
+    "ip": "127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36",
+    "location": {
+      "ip": "127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-31T21:36:04.224Z"
+  },
+  {
+    "id": "7ef78e9f-4b32-4930-8f04-d300b0c9a501",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "bae2eb30-7cb5-41ee-94df-9565e4a65190",
+      "username": "1",
+      "role": "admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: 1"
+    },
+    "details": {
+      "username": "1",
+      "role": "admin",
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-31T21:35:44.050Z"
+  },
+  {
+    "id": "8965dbb9-a314-46ab-ba15-e2031ec58483",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "bae2eb30-7cb5-41ee-94df-9565e4a65190",
+      "username": "1",
+      "role": "admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: 1"
+    },
+    "details": {
+      "username": "1",
+      "role": "admin",
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-31T20:40:57.827Z"
+  },
+  {
+    "id": "d1b2ad9e-9ca2-4f1f-a04a-830da03d458f",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-31T20:39:11.425Z"
+  },
+  {
+    "id": "cd066a6e-33d2-4d6c-870d-b1e6a5e7c0f0",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0"
+    },
+    "ip": "127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0",
+    "location": {
+      "ip": "127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-30T21:29:56.030Z"
+  },
+  {
+    "id": "84559f69-7c2b-476f-96cd-7916afb9e972",
+    "eventType": "subtitle_edit",
+    "category": "content",
+    "status": "info",
+    "admin": {
+      "id": "bae2eb30-7cb5-41ee-94df-9565e4a65190",
+      "username": "1",
+      "role": "admin"
+    },
+    "target": {
+      "id": "25e932e2-0688-4e73-944b-ae4ca235955c",
+      "title": "The Holiday"
+    },
+    "details": {
+      "linesChanged": 1,
+      "wordsAdded": 3,
+      "wordsRemoved": 4
+    },
+    "ip": "",
+    "userAgent": "",
+    "location": null,
+    "timestamp": "2026-08-30T21:20:07.508Z"
+  },
+  {
+    "id": "604aa9d6-58f2-4785-8092-704a8ca046f4",
+    "eventType": "subtitle_edit",
+    "category": "content",
+    "status": "info",
+    "admin": {
+      "id": "bae2eb30-7cb5-41ee-94df-9565e4a65190",
+      "username": "1",
+      "role": "admin"
+    },
+    "target": {
+      "id": "25e932e2-0688-4e73-944b-ae4ca235955c",
+      "title": "The Holiday"
+    },
+    "details": {
+      "linesChanged": 1,
+      "wordsAdded": 2,
+      "wordsRemoved": 6
+    },
+    "ip": "",
+    "userAgent": "",
+    "location": null,
+    "timestamp": "2026-08-30T21:11:51.434Z"
+  },
+  {
+    "id": "3447907b-76df-4864-a075-6a30c04ef4c3",
+    "eventType": "subtitle_edit",
+    "category": "content",
+    "status": "info",
+    "admin": {
+      "id": "bae2eb30-7cb5-41ee-94df-9565e4a65190",
+      "username": "1",
+      "role": "admin"
+    },
+    "target": {
+      "id": "25e932e2-0688-4e73-944b-ae4ca235955c",
+      "title": "The Holiday"
+    },
+    "details": {
+      "linesChanged": 10,
+      "wordsAdded": 37,
+      "wordsRemoved": 42
+    },
+    "ip": "",
+    "userAgent": "",
+    "location": null,
+    "timestamp": "2026-08-30T21:07:02.123Z"
+  },
+  {
+    "id": "df4988a8-3384-45a6-b7d6-6c0b6d6ed6a6",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "bae2eb30-7cb5-41ee-94df-9565e4a65190",
+      "username": "1",
+      "role": "admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: 1"
+    },
+    "details": {
+      "username": "1",
+      "role": "admin",
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-30T21:06:05.476Z"
+  },
+  {
+    "id": "dba4135a-c006-4f9a-b5f8-aaa70261e28d",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36"
+    },
+    "ip": "127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36",
+    "location": {
+      "ip": "127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-30T21:04:24.999Z"
+  },
+  {
+    "id": "c779cf29-4e10-46a0-962f-ddd07de00d3e",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "bae2eb30-7cb5-41ee-94df-9565e4a65190",
+      "username": "1",
+      "role": "admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: 1"
+    },
+    "details": {
+      "username": "1",
+      "role": "admin",
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36"
+    },
+    "ip": "127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36",
+    "location": {
+      "ip": "127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-30T21:00:11.240Z"
+  },
+  {
+    "id": "7ca13414-baed-42f6-99dd-e15a5cafcfb8",
+    "eventType": "update_dual_sub_quota",
+    "category": "content",
+    "status": "info",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "id": "dual_sub_quota",
+      "title": "ڕێکخستنی کاتی تاقیکردنەوەی سەبتایتڵی جووت"
+    },
+    "details": {
+      "oldMinutes": 60,
+      "newMinutes": 1,
+      "active": true,
+      "expiredAction": "block_all",
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T21:30:14.954Z"
+  },
+  {
+    "id": "ddbbe52b-47c5-4fb7-8441-54ad63862ae2",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5978ef50-fb6c-4f51-a252-3910e9b99901",
+      "username": "ن...",
+      "role": "user"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: ن..."
+    },
+    "details": {
+      "username": "ن...",
+      "role": "user",
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0"
+    },
+    "ip": "127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0",
+    "location": {
+      "ip": "127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T21:21:34.956Z"
+  },
+  {
+    "id": "a20bc99f-6fc9-488a-bf2a-9616600e37ed",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5d24f936-2474-4ddd-80eb-287799a77f25",
+      "username": "ما",
+      "role": "user"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: ما"
+    },
+    "details": {
+      "username": "ما",
+      "role": "user",
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0"
+    },
+    "ip": "127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0",
+    "location": {
+      "ip": "127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T21:20:19.146Z"
+  },
+  {
+    "id": "ba5d354f-8ff8-478d-8243-20deeee5f760",
+    "eventType": "update_dual_sub_quota",
+    "category": "content",
+    "status": "info",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "id": "dual_sub_quota",
+      "title": "ڕێکخستنی کاتی تاقیکردنەوەی سەبتایتڵی جووت"
+    },
+    "details": {
+      "oldMinutes": 60,
+      "newMinutes": 1,
+      "active": true,
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T21:20:07.757Z"
+  },
+  {
+    "id": "5d145305-e1e9-43a6-9ab1-b66562837a6e",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T21:19:30.823Z"
+  },
+  {
+    "id": "397882d1-2b53-4f34-bbbf-716963df0eca",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5d24f936-2474-4ddd-80eb-287799a77f25",
+      "username": "ما",
+      "role": "user"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: ما"
+    },
+    "details": {
+      "username": "ما",
+      "role": "user",
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T21:15:41.057Z"
+  },
+  {
+    "id": "a19007fa-7794-4e54-9ad5-1ae2df0f3c4e",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "de18624b-400a-4a5c-a4ce-2a6504f58cbf",
+      "username": "admin",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: admin"
+    },
+    "details": {
+      "username": "admin",
+      "role": "super_admin",
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T21:15:33.975Z"
+  },
+  {
+    "id": "8b32a5fa-8c6b-4c5f-b858-b1ef14ac4ed5",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "bae2eb30-7cb5-41ee-94df-9565e4a65190",
+      "username": "1",
+      "role": "admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: 1"
+    },
+    "details": {
+      "username": "1",
+      "role": "admin",
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T21:15:17.429Z"
+  },
+  {
+    "id": "0e1b0235-9d1b-4a62-92c4-0907ab607382",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T21:14:58.522Z"
+  },
+  {
+    "id": "a105d386-6ece-45e9-a478-435ec79ae0e3",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "127.0.0.1",
+      "userAgent": "axios/1.15.0"
+    },
+    "ip": "127.0.0.1",
+    "userAgent": "axios/1.15.0",
+    "location": {
+      "ip": "127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T21:14:38.509Z"
+  },
+  {
+    "id": "8b5cdf9a-43da-4d82-9382-45732d48a8d9",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T21:12:05.745Z"
+  },
+  {
+    "id": "3e0f0e08-c415-4d0e-9d23-414cfceac8f4",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T21:11:52.207Z"
+  },
+  {
+    "id": "2b5a3c23-ed89-4d86-a7ad-51e71e53a4fd",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::1",
+      "userAgent": "axios/1.15.0"
+    },
+    "ip": "::1",
+    "userAgent": "axios/1.15.0",
+    "location": {
+      "ip": "::1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T21:10:14.550Z"
+  },
+  {
+    "id": "ec32eb63-682a-48a3-ad79-ebad617fc4a4",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T21:08:08.800Z"
+  },
+  {
+    "id": "8ffbb254-eb28-4246-b1a2-20cc43f99510",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T21:08:04.740Z"
+  },
+  {
+    "id": "01bf64ce-af81-47ee-90f9-7cf6153f3995",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T21:07:21.886Z"
+  },
+  {
+    "id": "19145f01-91c1-4b34-ab7a-69c237ebe0e8",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T21:07:20.459Z"
+  },
+  {
+    "id": "dc08b82d-34ec-47c4-af0b-f27426103ee5",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T21:04:39.972Z"
+  },
+  {
+    "id": "be14fdbc-ca1e-4e1f-930b-9585a2dbe519",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T21:04:39.102Z"
+  },
+  {
+    "id": "b7d6e9ec-5e82-412c-89bb-94f57a2c234d",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T21:04:31.332Z"
+  },
+  {
+    "id": "20d30456-c2f1-4381-9df6-21744e1a9e23",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T21:04:30.407Z"
+  },
+  {
+    "id": "92d1e668-154c-40f1-8d42-3c6501849681",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T21:04:26.819Z"
+  },
+  {
+    "id": "df2acc79-7797-4b1a-8886-771593411c1c",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T21:04:26.010Z"
+  },
+  {
+    "id": "1c8a4a6f-967f-4bde-bdef-ee200f41756d",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T21:02:48.799Z"
+  },
+  {
+    "id": "57a383dc-4d6a-4c7a-8b49-f713626029e2",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T21:02:20.609Z"
+  },
+  {
+    "id": "3ee52815-c757-41c4-9210-d89aaf94d3cf",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T21:02:17.271Z"
+  },
+  {
+    "id": "be2f4e5e-2be6-47dd-ae83-0957e78e72d9",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T21:01:58.273Z"
+  },
+  {
+    "id": "09d194c9-300d-4c0b-a1e7-5055271c626c",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T21:01:56.479Z"
+  },
+  {
+    "id": "ac13de6d-6ed1-4c94-959c-a8d627b8a934",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T20:58:14.153Z"
+  },
+  {
+    "id": "a047daca-def0-4acd-86cd-e51057d6efb7",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T20:58:03.672Z"
+  },
+  {
+    "id": "c6d529cd-3ae0-446d-9dbe-22c1b1e0bc94",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "bae2eb30-7cb5-41ee-94df-9565e4a65190",
+      "username": "1",
+      "role": "admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: 1"
+    },
+    "details": {
+      "username": "1",
+      "role": "admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T20:57:51.878Z"
+  },
+  {
+    "id": "a142b7eb-23c1-4b55-8da8-66a746b63520",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "bae2eb30-7cb5-41ee-94df-9565e4a65190",
+      "username": "1",
+      "role": "admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: 1"
+    },
+    "details": {
+      "username": "1",
+      "role": "admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T20:57:35.052Z"
+  },
+  {
+    "id": "1f5f9644-b0d9-4d9e-9ca0-466c194ae78f",
+    "eventType": "user_register",
+    "category": "content",
+    "status": "info",
+    "admin": {
+      "id": "86d9bb1a-ae71-4f6b-af3c-91a97acedd00",
+      "username": "٢٢٢٢٢٢",
+      "role": "user"
+    },
+    "target": {
+      "title": "تۆماربوونی هەژماری نوێ: ٢٢٢٢٢٢"
+    },
+    "details": {
+      "username": "٢٢٢٢٢٢",
+      "role": "user",
+      "email": "floellabrio33n@gmail.com",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T20:57:02.170Z"
+  },
+  {
+    "id": "de08ea6a-367d-41d1-a58a-f5864c0ef53c",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T20:55:10.820Z"
+  },
+  {
+    "id": "526f2ee6-94e7-445c-b076-164a3de26002",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T20:54:59.883Z"
+  },
+  {
+    "id": "740b9a1d-f1d2-4fd4-b58b-9343ea0a16de",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::1",
+      "userAgent": "axios/1.15.0"
+    },
+    "ip": "::1",
+    "userAgent": "axios/1.15.0",
+    "location": {
+      "ip": "::1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T20:53:26.176Z"
+  },
+  {
+    "id": "59bf4fbf-6c20-4db7-a69f-718c3da6afb6",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::1",
+      "userAgent": "axios/1.15.0"
+    },
+    "ip": "::1",
+    "userAgent": "axios/1.15.0",
+    "location": {
+      "ip": "::1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T20:53:10.521Z"
+  },
+  {
+    "id": "e84fa1b3-0f27-45a0-a771-d124b7135dc6",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "bae2eb30-7cb5-41ee-94df-9565e4a65190",
+      "username": "1",
+      "role": "admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: 1"
+    },
+    "details": {
+      "username": "1",
+      "role": "admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T20:52:51.860Z"
+  },
+  {
+    "id": "4bfe2d52-a10f-473a-86c2-ebf7721ef86f",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "bae2eb30-7cb5-41ee-94df-9565e4a65190",
+      "username": "1",
+      "role": "admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: 1"
+    },
+    "details": {
+      "username": "1",
+      "role": "admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T20:49:09.271Z"
+  },
+  {
+    "id": "ea049074-ec83-4f45-90c8-92d3cc06c5b6",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T20:48:14.638Z"
+  },
+  {
+    "id": "a82e8f47-bc2f-4f87-aeff-85571c56badc",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T20:44:53.530Z"
+  },
+  {
+    "id": "d7111dfe-3316-4161-87f6-d2fad899c0c7",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T20:43:59.287Z"
+  },
+  {
+    "id": "927374c0-c4c8-48a2-a6c9-6f9e408acb91",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T20:42:39.302Z"
+  },
+  {
+    "id": "245cead9-87f4-4892-9468-8b57d9842602",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "de18624b-400a-4a5c-a4ce-2a6504f58cbf",
+      "username": "admin",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: admin"
+    },
+    "details": {
+      "username": "admin",
+      "role": "super_admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T20:39:56.769Z"
+  },
+  {
+    "id": "75b67f0b-2d83-4c83-8028-4773b71b2568",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "bae2eb30-7cb5-41ee-94df-9565e4a65190",
+      "username": "1",
+      "role": "admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: 1"
+    },
+    "details": {
+      "username": "1",
+      "role": "admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T20:36:29.065Z"
+  },
+  {
+    "id": "b5c875a5-13f6-47c9-a26c-0b1d46e70bdd",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "de18624b-400a-4a5c-a4ce-2a6504f58cbf",
+      "username": "admin",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: admin"
+    },
+    "details": {
+      "username": "admin",
+      "role": "super_admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T20:35:48.944Z"
+  },
+  {
+    "id": "d44c2ccc-9cf6-4a5c-b81d-b92a1caa58cb",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T20:35:21.422Z"
+  },
+  {
+    "id": "e43dd4ff-698e-46d5-8be3-39a83731fe82",
+    "eventType": "login_google",
+    "category": "security",
+    "status": "info",
+    "admin": {
+      "id": "5978ef50-fb6c-4f51-a252-3910e9b99901",
+      "username": "ن...",
+      "role": "user"
+    },
+    "target": {
+      "title": "چوونەژوورەوە لەڕێگەی گووگڵ: ن..."
+    },
+    "details": {
+      "email": "floellabrion@gmail.com",
+      "username": "ن...",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T20:35:06.157Z"
+  },
+  {
+    "id": "69ab17bf-290a-46ac-8f28-6c8a7110a6f6",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T20:34:43.406Z"
+  },
+  {
+    "id": "6dc1dbb3-de41-4dd2-af30-66fa5898d1a7",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T20:33:19.911Z"
+  },
+  {
+    "id": "53dd3951-f3f8-4231-8b8a-92a2b945abca",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::1",
+      "userAgent": "axios/1.15.0"
+    },
+    "ip": "::1",
+    "userAgent": "axios/1.15.0",
+    "location": {
+      "ip": "::1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T20:31:42.656Z"
+  },
+  {
+    "id": "b93dda0d-6554-4742-9714-2430b07a67b7",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Mobile Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Mobile Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T20:29:08.951Z"
+  },
+  {
+    "id": "0c86592a-dd5a-460f-a28e-6e135613fa68",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T20:27:50.656Z"
+  },
+  {
+    "id": "250f9535-8788-4b98-9e1f-93728f548421",
+    "eventType": "login_failed",
+    "category": "security",
+    "status": "warning",
+    "admin": {
+      "id": "system",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "هەوڵی چوونەژوورەوەی شکستخواردوو"
+    },
+    "details": {
+      "attemptedUsername": "maher2",
+      "reason": "وشەی نهێنی هەڵەیە",
+      "ip": "::1",
+      "userAgent": "axios/1.15.0"
+    },
+    "ip": "::1",
+    "userAgent": "axios/1.15.0",
+    "location": {
+      "ip": "::1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T20:25:24.253Z"
+  },
+  {
+    "id": "bd8ebe82-6200-46f8-b5e7-6c3781495cc5",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "bae2eb30-7cb5-41ee-94df-9565e4a65190",
+      "username": "1",
+      "role": "admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: 1"
+    },
+    "details": {
+      "username": "1",
+      "role": "admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T20:23:47.809Z"
+  },
+  {
+    "id": "9bd9f834-bd3c-40bd-adeb-0f6336a0a3be",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T20:23:36.270Z"
+  },
+  {
+    "id": "7f209d55-2a4f-44bc-9f64-d13de56ab6ec",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T20:16:32.511Z"
+  },
+  {
+    "id": "eb0868c5-32bd-478c-b4da-6fb7b2c4928d",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-29T20:16:20.137Z"
+  },
+  {
+    "id": "1a9d9e62-3c30-436d-99de-fd735152721c",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "bae2eb30-7cb5-41ee-94df-9565e4a65190",
+      "username": "1",
+      "role": "admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: 1"
+    },
+    "details": {
+      "username": "1",
+      "role": "admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-28T21:12:56.939Z"
+  },
+  {
+    "id": "ffb77642-2047-463d-bd50-7efa1cab9f21",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5d24f936-2474-4ddd-80eb-287799a77f25",
+      "username": "ما",
+      "role": "user"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: ما"
+    },
+    "details": {
+      "username": "ما",
+      "role": "user",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-28T21:12:48.648Z"
+  },
+  {
+    "id": "7f53180f-55de-47ab-838c-27f14e03d1a2",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "bae2eb30-7cb5-41ee-94df-9565e4a65190",
+      "username": "1",
+      "role": "admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: 1"
+    },
+    "details": {
+      "username": "1",
+      "role": "admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-28T20:54:40.112Z"
+  },
+  {
+    "id": "7237a4c8-923e-41ca-a22a-fe3b9f5e5675",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "bae2eb30-7cb5-41ee-94df-9565e4a65190",
+      "username": "1",
+      "role": "admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: 1"
+    },
+    "details": {
+      "username": "1",
+      "role": "admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-28T20:39:12.100Z"
+  },
+  {
+    "id": "b9da2407-75b2-47d1-9247-1c29b7c91221",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-28T20:31:36.778Z"
+  },
+  {
+    "id": "4f67e9e6-a636-427a-9bde-e1bc1b4d4699",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "bae2eb30-7cb5-41ee-94df-9565e4a65190",
+      "username": "1",
+      "role": "admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: 1"
+    },
+    "details": {
+      "username": "1",
+      "role": "admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-28T19:40:19.544Z"
+  },
+  {
+    "id": "60380fc1-d13a-443c-9348-9f79ab6e8ca1",
+    "eventType": "login_failed",
+    "category": "security",
+    "status": "warning",
+    "admin": {
+      "id": "system",
+      "username": "١١١",
+      "role": "guest"
+    },
+    "target": {
+      "title": "هەوڵی چوونەژوورەوەی شکستخواردوو"
+    },
+    "details": {
+      "attemptedUsername": "١١١",
+      "reason": "ناوی بەکارهێنەر/ئیمەیل بوونی نییە",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-28T19:39:20.600Z"
+  },
+  {
+    "id": "e07c8903-d597-4571-913b-22c8ab7d6c8c",
+    "eventType": "login_failed",
+    "category": "security",
+    "status": "warning",
+    "admin": {
+      "id": "system",
+      "username": "١",
+      "role": "guest"
+    },
+    "target": {
+      "title": "هەوڵی چوونەژوورەوەی شکستخواردوو"
+    },
+    "details": {
+      "attemptedUsername": "١",
+      "reason": "ناوی بەکارهێنەر/ئیمەیل بوونی نییە",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-28T19:39:17.396Z"
+  },
+  {
+    "id": "390bb811-a37e-4c18-828e-942f7aefdfa7",
+    "eventType": "login_failed",
+    "category": "security",
+    "status": "warning",
+    "admin": {
+      "id": "system",
+      "username": "ن...",
+      "role": "user"
+    },
+    "target": {
+      "title": "هەوڵی چوونەژوورەوەی شکستخواردوو"
+    },
+    "details": {
+      "attemptedUsername": "floellabrion@gmail.com",
+      "reason": "وشەی نهێنی هەڵەیە",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-28T19:38:19.176Z"
+  },
+  {
+    "id": "a36518ab-9ced-4ae3-982a-862dd0c06c34",
+    "eventType": "subtitle_edit",
+    "category": "content",
+    "status": "info",
+    "admin": {
+      "id": "bae2eb30-7cb5-41ee-94df-9565e4a65190",
+      "username": "1",
+      "role": "admin"
+    },
+    "target": {
+      "id": "ef708ceb-6b78-4d58-aa24-47d34a31f33d",
+      "title": "The walking dead",
+      "seasonNum": 4,
+      "episodeNum": 2
+    },
+    "details": {
+      "linesChanged": 58,
+      "wordsAdded": 257,
+      "wordsRemoved": 249
+    },
+    "ip": "",
+    "userAgent": "",
+    "location": null,
+    "timestamp": "2026-08-26T19:54:34.226Z"
+  },
+  {
+    "id": "34817859-9734-4d74-9b4b-421f14913c44",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "71ea823a-dadc-45dd-bfad-4b4df1806cf2",
+      "username": "2",
+      "role": "user"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: 2"
+    },
+    "details": {
+      "username": "2",
+      "role": "user",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-26T19:51:58.338Z"
+  },
+  {
+    "id": "aa913e67-dd8f-4f3c-b642-802767bd8535",
+    "eventType": "login_failed",
+    "category": "security",
+    "status": "warning",
+    "admin": {
+      "id": "system",
+      "username": "ما",
+      "role": "user"
+    },
+    "target": {
+      "title": "هەوڵی چوونەژوورەوەی شکستخواردوو"
+    },
+    "details": {
+      "attemptedUsername": "ما",
+      "reason": "وشەی نهێنی هەڵەیە",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-26T19:50:32.628Z"
+  },
+  {
+    "id": "bd554f05-c8a3-4f99-bfb8-3456fcc08374",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "bae2eb30-7cb5-41ee-94df-9565e4a65190",
+      "username": "1",
+      "role": "admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: 1"
+    },
+    "details": {
+      "username": "1",
+      "role": "admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 Edg/151.0.0.0"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 Edg/151.0.0.0",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-26T19:45:56.058Z"
+  },
+  {
+    "id": "3cba8fef-2cd0-4064-bc17-5c1d1ad415e5",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "bae2eb30-7cb5-41ee-94df-9565e4a65190",
+      "username": "1",
+      "role": "admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: 1"
+    },
+    "details": {
+      "username": "1",
+      "role": "admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-26T19:45:04.000Z"
+  },
+  {
+    "id": "5a50a401-5324-4b41-9c73-b7801795cd90",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "bae2eb30-7cb5-41ee-94df-9565e4a65190",
+      "username": "1",
+      "role": "admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: 1"
+    },
+    "details": {
+      "username": "1",
+      "role": "admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 Edg/151.0.0.0"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 Edg/151.0.0.0",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-26T19:44:08.588Z"
+  },
+  {
+    "id": "ba00662a-3e93-4f1c-b7a7-a6595feafb0a",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5d24f936-2474-4ddd-80eb-287799a77f25",
+      "username": "ما",
+      "role": "user"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: ما"
+    },
+    "details": {
+      "username": "ما",
+      "role": "user",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 Edg/151.0.0.0"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 Edg/151.0.0.0",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-26T19:43:57.470Z"
+  },
+  {
+    "id": "dcf52008-e7ef-4feb-90c9-1d9acc7f3b37",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5978ef50-fb6c-4f51-a252-3910e9b99901",
+      "username": "ن...",
+      "role": "user"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: ن..."
+    },
+    "details": {
+      "username": "ن...",
+      "role": "user",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 Edg/151.0.0.0"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 Edg/151.0.0.0",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-26T19:43:42.794Z"
+  },
+  {
+    "id": "c582f6a0-7526-4ec0-bb2d-11efb42a7dd9",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "bae2eb30-7cb5-41ee-94df-9565e4a65190",
+      "username": "1",
+      "role": "admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: 1"
+    },
+    "details": {
+      "username": "1",
+      "role": "admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-26T19:33:27.323Z"
+  },
+  {
+    "id": "8a27e90e-d483-4298-8534-a5947b57f916",
+    "eventType": "login_failed",
+    "category": "security",
+    "status": "warning",
+    "admin": {
+      "id": "system",
+      "username": "ن...",
+      "role": "user"
+    },
+    "target": {
+      "title": "هەوڵی چوونەژوورەوەی شکستخواردوو"
+    },
+    "details": {
+      "attemptedUsername": "floellabrion@gmail.com",
+      "reason": "وشەی نهێنی هەڵەیە",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-26T19:33:14.155Z"
+  },
+  {
+    "id": "2f4c46e9-568e-41e6-a248-60790f46fbf2",
+    "eventType": "plan_edit",
+    "category": "pricing",
+    "status": "info",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "id": "plan_pro",
+      "title": "Premium"
+    },
+    "details": {
+      "name": "Premium",
+      "oldPrice": "50,000",
+      "newPrice": "50,000",
+      "oldCredits": 1500,
+      "newCredits": 1500,
+      "oldOriginalPrice": "",
+      "newOriginalPrice": "",
+      "discountPercent": "",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-25T21:15:12.812Z"
+  },
+  {
+    "id": "a4d44ed8-777b-475a-92c8-24406d6227f5",
+    "eventType": "plan_create",
+    "category": "pricing",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "id": "plan_1787692506571",
+      "title": "vvip"
+    },
+    "details": {
+      "name": "vvip",
+      "price": "15,000",
+      "credits": 1500,
+      "currency": "IQD",
+      "originalPrice": "",
+      "discountPercent": "",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-25T21:15:06.575Z"
+  },
+  {
+    "id": "612e75d4-0c15-40f0-aeef-a25d2104899b",
+    "eventType": "plan_edit",
+    "category": "pricing",
+    "status": "info",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "id": "plan_pro",
+      "title": "Premium"
+    },
+    "details": {
+      "name": "Premium",
+      "oldPrice": "50,000",
+      "newPrice": "50,000",
+      "oldCredits": 1500,
+      "newCredits": 1500,
+      "oldOriginalPrice": "",
+      "newOriginalPrice": "",
+      "discountPercent": "",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-25T21:12:38.507Z"
+  },
+  {
+    "id": "34bb6653-fe1f-405b-9203-7711262ed4c9",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-25T18:06:25.818Z"
+  },
+  {
+    "id": "be71ecc1-0383-4589-a1c1-15afc07d2767",
+    "eventType": "subtitle_edit",
+    "category": "content",
+    "status": "info",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "id": "ef708ceb-6b78-4d58-aa24-47d34a31f33d",
+      "title": "The walking dead",
+      "seasonNum": 4,
+      "episodeNum": 1
+    },
+    "details": {
+      "linesChanged": 57,
+      "wordsAdded": 251,
+      "wordsRemoved": 248
+    },
+    "ip": "",
+    "userAgent": "",
+    "location": null,
+    "timestamp": "2026-08-24T23:15:14.766Z"
+  },
+  {
+    "id": "0c6436bb-2775-4bfd-b5fb-987ec23fffca",
+    "eventType": "subtitle_edit",
+    "category": "content",
+    "status": "info",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "id": "ef708ceb-6b78-4d58-aa24-47d34a31f33d",
+      "title": "The walking dead",
+      "seasonNum": 4,
+      "episodeNum": 1
+    },
+    "details": {
+      "linesChanged": 29,
+      "wordsAdded": 116,
+      "wordsRemoved": 0
+    },
+    "ip": "",
+    "userAgent": "",
+    "location": null,
+    "timestamp": "2026-08-24T23:14:40.812Z"
+  },
+  {
+    "id": "6afa2525-05b5-4645-a838-223715b52ba7",
+    "eventType": "subtitle_edit",
+    "category": "content",
+    "status": "info",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "id": "ef708ceb-6b78-4d58-aa24-47d34a31f33d",
+      "title": "The walking dead",
+      "seasonNum": 4,
+      "episodeNum": 1
+    },
+    "details": {
+      "linesChanged": 35,
+      "wordsAdded": 198,
+      "wordsRemoved": 0
+    },
+    "ip": "",
+    "userAgent": "",
+    "location": null,
+    "timestamp": "2026-08-24T23:14:16.037Z"
+  },
+  {
+    "id": "214e276c-fa71-45a9-a119-f8b4c361acac",
+    "eventType": "subtitle_edit",
+    "category": "content",
+    "status": "info",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "id": "ef708ceb-6b78-4d58-aa24-47d34a31f33d",
+      "title": "The walking dead",
+      "seasonNum": 4,
+      "episodeNum": 1
+    },
+    "details": {
+      "linesChanged": 98,
+      "wordsAdded": 164,
+      "wordsRemoved": 0
+    },
+    "ip": "",
+    "userAgent": "",
+    "location": null,
+    "timestamp": "2026-08-24T23:13:37.222Z"
+  },
+  {
+    "id": "d6035f60-86db-43b2-8860-ab9dad825d49",
+    "eventType": "subtitle_edit",
+    "category": "content",
+    "status": "info",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "id": "ef708ceb-6b78-4d58-aa24-47d34a31f33d",
+      "title": "The walking dead",
+      "seasonNum": 4,
+      "episodeNum": 2
+    },
+    "details": {
+      "linesChanged": 29,
+      "wordsAdded": 115,
+      "wordsRemoved": 0
+    },
+    "ip": "",
+    "userAgent": "",
+    "location": null,
+    "timestamp": "2026-08-24T23:02:42.231Z"
+  },
+  {
+    "id": "ad8c717b-fe80-4559-a7f1-132561c6025c",
+    "eventType": "subtitle_edit",
+    "category": "content",
+    "status": "info",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "id": "ef708ceb-6b78-4d58-aa24-47d34a31f33d",
+      "title": "The walking dead",
+      "seasonNum": 4,
+      "episodeNum": 2
+    },
+    "details": {
+      "linesChanged": 35,
+      "wordsAdded": 200,
+      "wordsRemoved": 0
+    },
+    "ip": "",
+    "userAgent": "",
+    "location": null,
+    "timestamp": "2026-08-24T23:01:58.675Z"
+  },
+  {
+    "id": "27bdb59b-1f57-40b3-9a00-af18d7713bfc",
+    "eventType": "subtitle_edit",
+    "category": "content",
+    "status": "info",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "id": "ef708ceb-6b78-4d58-aa24-47d34a31f33d",
+      "title": "The walking dead",
+      "seasonNum": 4,
+      "episodeNum": 2
+    },
+    "details": {
+      "linesChanged": 98,
+      "wordsAdded": 158,
+      "wordsRemoved": 0
+    },
+    "ip": "",
+    "userAgent": "",
+    "location": null,
+    "timestamp": "2026-08-24T22:57:29.561Z"
+  },
+  {
+    "id": "5c02b07b-e2cf-4f58-a8d4-7e063f855bf8",
+    "eventType": "subtitle_edit",
+    "category": "content",
+    "status": "info",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "id": "ef708ceb-6b78-4d58-aa24-47d34a31f33d",
+      "title": "The walking dead",
+      "seasonNum": 4,
+      "episodeNum": 2
+    },
+    "details": {
+      "linesChanged": 35,
+      "wordsAdded": 103,
+      "wordsRemoved": 0
+    },
+    "ip": "",
+    "userAgent": "",
+    "location": null,
+    "timestamp": "2026-08-24T22:48:45.927Z"
+  },
+  {
+    "id": "6df7b5cf-4e0a-4abb-b4bc-9dc521be1e5a",
+    "eventType": "subtitle_edit",
+    "category": "content",
+    "status": "info",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "id": "ef708ceb-6b78-4d58-aa24-47d34a31f33d",
+      "title": "The walking dead",
+      "seasonNum": 4,
+      "episodeNum": 2
+    },
+    "details": {
+      "linesChanged": 463,
+      "wordsAdded": 129,
+      "wordsRemoved": 0
+    },
+    "ip": "",
+    "userAgent": "",
+    "location": null,
+    "timestamp": "2026-08-24T22:48:19.269Z"
+  },
+  {
+    "id": "86328161-f9d7-47f0-8e3d-65842a1c9888",
+    "eventType": "subtitle_edit",
+    "category": "content",
+    "status": "info",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "id": "ef708ceb-6b78-4d58-aa24-47d34a31f33d",
+      "title": "The walking dead",
+      "seasonNum": 1,
+      "episodeNum": 4
+    },
+    "details": {
+      "linesChanged": 507,
+      "wordsAdded": 2391,
+      "wordsRemoved": 2378
+    },
+    "ip": "",
+    "userAgent": "",
+    "location": null,
+    "timestamp": "2026-08-24T20:24:21.650Z"
+  },
+  {
+    "id": "49fc24d7-394d-4b14-b241-5d020b92970d",
+    "eventType": "GLOSSARY_ADD",
+    "category": "گشتی",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "id": "03df3efa-e9fd-4cb8-abf4-a40d634e0708",
+      "title": "barn ➜ تەوێلە"
+    },
+    "details": {
+      "category": "گشتی"
+    },
+    "ip": "",
+    "userAgent": "",
+    "location": null,
+    "timestamp": "2026-08-24T20:22:20.300Z"
+  },
+  {
+    "id": "6cf07941-9f94-4d13-b9cf-0d82b2368d96",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-24T20:21:29.902Z"
+  },
+  {
+    "id": "5af948e6-6e2f-49a2-9007-53cb8d28083e",
+    "eventType": "subtitle_edit",
+    "category": "content",
+    "status": "info",
+    "admin": {
+      "id": "bae2eb30-7cb5-41ee-94df-9565e4a65190",
+      "username": "1",
+      "role": "admin"
+    },
+    "target": {
+      "id": "ef708ceb-6b78-4d58-aa24-47d34a31f33d",
+      "title": "The walking dead",
+      "seasonNum": 1,
+      "episodeNum": 4
+    },
+    "details": {
+      "linesChanged": 548,
+      "wordsAdded": 2667,
+      "wordsRemoved": 0
+    },
+    "ip": "",
+    "userAgent": "",
+    "location": null,
+    "timestamp": "2026-08-24T20:08:12.686Z"
+  },
+  {
+    "id": "8d3fecbc-27be-4975-953b-d73c472cbd7c",
+    "eventType": "subtitle_edit",
+    "category": "content",
+    "status": "info",
+    "admin": {
+      "id": "bae2eb30-7cb5-41ee-94df-9565e4a65190",
+      "username": "1",
+      "role": "admin"
+    },
+    "target": {
+      "id": "ef708ceb-6b78-4d58-aa24-47d34a31f33d",
+      "title": "The walking dead",
+      "seasonNum": 1,
+      "episodeNum": 4
+    },
+    "details": {
+      "linesChanged": 548,
+      "wordsAdded": 2637,
+      "wordsRemoved": 3075
+    },
+    "ip": "",
+    "userAgent": "",
+    "location": null,
+    "timestamp": "2026-08-24T20:07:59.479Z"
+  },
+  {
+    "id": "00516f01-5a94-4663-b7f2-7b0c718f5593",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-23T22:23:06.652Z"
+  },
+  {
+    "id": "7c9fc967-ddaf-40f1-9519-100c52179ed6",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "bae2eb30-7cb5-41ee-94df-9565e4a65190",
+      "username": "1",
+      "role": "admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: 1"
+    },
+    "details": {
+      "username": "1",
+      "role": "admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-23T20:34:03.573Z"
+  },
+  {
+    "id": "e3832fed-8364-41c2-95e0-85f519d982aa",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-23T20:32:09.792Z"
+  },
+  {
+    "id": "96fe9ac1-6f66-42cd-8235-244ac008e273",
+    "eventType": "login_failed",
+    "category": "security",
+    "status": "warning",
+    "admin": {
+      "id": "system",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "هەوڵی چوونەژوورەوەی شکستخواردوو"
+    },
+    "details": {
+      "attemptedUsername": "maher2",
+      "reason": "وشەی نهێنی هەڵەیە",
+      "ip": "::ffff:127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36"
+    },
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36",
+    "location": {
+      "ip": "::ffff:127.0.0.1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-23T20:21:10.421Z"
+  },
+  {
+    "id": "11075d7d-03fd-4cd7-bb09-35b0a085e286",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "0391c8b7-e299-4e70-ae41-344d7b95b3c8",
+      "username": "maher_desgenr",
+      "role": "user"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher_desgenr"
+    },
+    "details": {
+      "username": "maher_desgenr",
+      "role": "user",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 Edg/151.0.0.0"
+    },
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 Edg/151.0.0.0",
+    "location": {
+      "ip": "::1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-21T00:51:50.803Z"
+  },
+  {
+    "id": "bd1a1384-3321-408a-ae9e-78ec55d43cf5",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "0391c8b7-e299-4e70-ae41-344d7b95b3c8",
+      "username": "maher_desgenr",
+      "role": "user"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher_desgenr"
+    },
+    "details": {
+      "username": "maher_desgenr",
+      "role": "user",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 Edg/151.0.0.0"
+    },
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 Edg/151.0.0.0",
+    "location": {
+      "ip": "::1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-21T00:51:26.088Z"
+  },
+  {
+    "id": "a0c33dc0-4faa-46cb-90c2-41f1aeb71ede",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36"
+    },
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-21T00:49:32.398Z"
+  },
+  {
+    "id": "4a3d9c05-7cc6-48da-87a3-3224cef8ac90",
+    "eventType": "login_failed",
+    "category": "security",
+    "status": "warning",
+    "admin": {
+      "id": "system",
+      "username": "Maher Desgenr",
+      "role": "guest"
+    },
+    "target": {
+      "title": "هەوڵی چوونەژوورەوەی شکستخواردوو"
+    },
+    "details": {
+      "attemptedUsername": "Maher Desgenr",
+      "reason": "ناوی بەکارهێنەر/ئیمەیل بوونی نییە",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36"
+    },
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-21T00:49:23.518Z"
+  },
+  {
+    "id": "9f876f49-6d2c-4f42-9cd2-f4aa768c9f7b",
+    "eventType": "login_google",
+    "category": "security",
+    "status": "info",
+    "admin": {
+      "id": "0391c8b7-e299-4e70-ae41-344d7b95b3c8",
+      "username": "maher_desgenr",
+      "role": "user"
+    },
+    "target": {
+      "title": "چوونەژوورەوە لەڕێگەی گووگڵ: maher_desgenr"
+    },
+    "details": {
+      "email": "mahir.desgnr@gmail.com",
+      "username": "maher_desgenr",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36"
+    },
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-21T00:49:13.344Z"
+  },
+  {
+    "id": "7b44326e-3349-44c8-86f4-66eafd477b42",
+    "eventType": "login_google",
+    "category": "security",
+    "status": "info",
+    "admin": {
+      "id": "0391c8b7-e299-4e70-ae41-344d7b95b3c8",
+      "username": "maher_desgenr",
+      "role": "user"
+    },
+    "target": {
+      "title": "چوونەژوورەوە لەڕێگەی گووگڵ: maher_desgenr"
+    },
+    "details": {
+      "email": "mahir.desgnr@gmail.com",
+      "username": "maher_desgenr",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36"
+    },
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-21T00:45:34.439Z"
+  },
+  {
+    "id": "f324ecbb-39e1-4fcb-a289-1e0a1a0fb34e",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36"
+    },
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-21T00:44:19.862Z"
+  },
+  {
+    "id": "df2d5895-3167-44aa-8022-e0a140d574c7",
+    "eventType": "login_google",
+    "category": "security",
+    "status": "info",
+    "admin": {
+      "id": "5978ef50-fb6c-4f51-a252-3910e9b99901",
+      "username": "ن...",
+      "role": "user"
+    },
+    "target": {
+      "title": "چوونەژوورەوە لەڕێگەی گووگڵ: ن..."
+    },
+    "details": {
+      "email": "floellabrion@gmail.com",
+      "username": "ن...",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36"
+    },
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-21T00:43:42.340Z"
+  },
+  {
+    "id": "b607f764-4e95-4156-b938-9f41dc7212b0",
+    "eventType": "login_google",
+    "category": "security",
+    "status": "info",
+    "admin": {
+      "id": "0391c8b7-e299-4e70-ae41-344d7b95b3c8",
+      "username": "maher_desgenr",
+      "role": "user"
+    },
+    "target": {
+      "title": "چوونەژوورەوە لەڕێگەی گووگڵ: maher_desgenr"
+    },
+    "details": {
+      "email": "mahir.desgnr@gmail.com",
+      "username": "maher_desgenr",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36"
+    },
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-21T00:42:18.269Z"
+  },
+  {
+    "id": "58ce8728-c9ee-4fc1-97d2-8cfedad6f46a",
+    "eventType": "user_register_google",
+    "category": "content",
+    "status": "info",
+    "admin": {
+      "id": "0391c8b7-e299-4e70-ae41-344d7b95b3c8",
+      "username": "maher_desgenr",
+      "role": "user"
+    },
+    "target": {
+      "title": "تۆماربوونی هەژماری نوێ لەڕێگەی گووگڵ: maher_desgenr"
+    },
+    "details": {
+      "email": "mahir.desgnr@gmail.com",
+      "username": "maher_desgenr",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36"
+    },
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-21T00:42:08.024Z"
+  },
+  {
+    "id": "ba413160-d1b3-49e8-af83-504434e76e84",
+    "eventType": "user_register",
+    "category": "content",
+    "status": "info",
+    "admin": {
+      "id": "5978ef50-fb6c-4f51-a252-3910e9b99901",
+      "username": "ن...",
+      "role": "user"
+    },
+    "target": {
+      "title": "تۆماربوونی هەژماری نوێ: ن..."
+    },
+    "details": {
+      "username": "ن...",
+      "role": "user",
+      "email": "floellabrion@gmail.com",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 Edg/151.0.0.0"
+    },
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 Edg/151.0.0.0",
+    "location": {
+      "ip": "::1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-20T23:44:33.966Z"
+  },
+  {
+    "id": "62634afb-a4d2-483f-9456-7b0fb322a4ad",
+    "eventType": "notification_broadcast",
+    "category": "content",
+    "status": "info",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "ددد"
+    },
+    "details": {
+      "message": "سلاو",
+      "url": "/buy-credits",
+      "pushResult": {
+        "total": 1,
+        "sent": 1
+      },
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36"
+    },
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-20T19:00:11.458Z"
+  },
+  {
+    "id": "432d1ea7-b98a-45b6-8e62-9a80855c98fa",
+    "eventType": "notification_broadcast",
+    "category": "content",
+    "status": "info",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "من ناوم ماهیرە خاوەنی ئەم وێبسایتە"
+    },
+    "details": {
+      "message": "من وەک دیڤلۆپەرێک پەرەبئیدانی بەرنامەکان",
+      "url": "/",
+      "pushResult": {
+        "total": 0,
+        "sent": 0
+      },
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36"
+    },
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-20T18:59:06.323Z"
+  },
+  {
+    "id": "a4229541-fea7-431c-b145-608f843cef96",
+    "eventType": "notification_settings_update",
+    "category": "content",
+    "status": "info",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "Notification Timing & Automation Settings"
+    },
+    "details": {
+      "old": {
+        "inactivityReminderDays": 3,
+        "inactivityPenaltyXP": 20,
+        "reminderFrequencyDays": 3,
+        "autoNewContentPush": true,
+        "autoCreditStatusPush": true,
+        "quietHoursEnabled": false,
+        "quietHoursStart": "23:00",
+        "quietHoursEnd": "08:00",
+        "lastUpdatedBy": "Super Admin",
+        "lastUpdatedAt": 1787251076697
+      },
+      "updated": {
+        "inactivityReminderDays": 3,
+        "inactivityPenaltyXP": 20,
+        "reminderFrequencyDays": 14,
+        "autoNewContentPush": true,
+        "autoCreditStatusPush": true,
+        "quietHoursEnabled": false,
+        "quietHoursStart": "23:00",
+        "quietHoursEnd": "08:00",
+        "lastUpdatedBy": "maher2",
+        "lastUpdatedAt": 1787251312336
+      },
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36"
+    },
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-20T18:41:52.338Z"
+  },
+  {
+    "id": "d267da88-9dce-4267-acdb-08e7b752d091",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "203ac76c-67a1-4889-9bed-24e8a28d5031",
+      "username": "barca",
+      "role": "user"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: barca"
+    },
+    "details": {
+      "username": "barca",
+      "role": "user",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 Edg/151.0.0.0"
+    },
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 Edg/151.0.0.0",
+    "location": {
+      "ip": "::1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-19T23:08:19.318Z"
+  },
+  {
+    "id": "d8f47434-168c-49b5-8655-1a3a966dc7fb",
+    "eventType": "backup_create",
+    "category": "content",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "backup_2026-08-19T22-14-07.json.gz"
+    },
+    "details": {
+      "reason": "باکئەپی دەستی بە کلیکی ئەدمین",
+      "size": "476.4 KB",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36"
+    },
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-19T22:14:07.723Z"
+  },
+  {
+    "id": "fe91cedd-b9c1-485f-9b43-beb51541902d",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36"
+    },
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "location": {
+      "ip": "::1",
+      "city": "هەولێر (خۆماڵی)",
+      "cityEn": "Erbil (Local)",
+      "country": "کوردستان",
+      "countryEn": "Kurdistan",
+      "flag": "☀️",
+      "isKurdish": true,
+      "label": "هەولێر ☀️"
+    },
+    "timestamp": "2026-08-19T21:54:51.161Z"
+  },
+  {
+    "id": "f695345e-a68b-4d1a-871c-4ef4b70a03ec",
+    "eventType": "login_failed",
+    "category": "security",
+    "status": "warning",
+    "admin": {
+      "id": "system",
+      "username": "1",
+      "role": "admin"
+    },
+    "target": {
+      "title": "هەوڵی چوونەژوورەوەی شکستخواردوو"
+    },
+    "details": {
+      "attemptedUsername": "1",
+      "reason": "وشەی نهێنی هەڵەیە",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 Edg/151.0.0.0"
+    },
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 Edg/151.0.0.0",
+    "timestamp": "2026-08-19T21:42:56.114Z"
+  },
+  {
+    "id": "233a5d33-38d1-41b8-9515-ec56999de2c6",
+    "eventType": "login_failed",
+    "category": "security",
+    "status": "warning",
+    "admin": {
+      "id": "system",
+      "username": "1",
+      "role": "admin"
+    },
+    "target": {
+      "title": "هەوڵی چوونەژوورەوەی شکستخواردوو"
+    },
+    "details": {
+      "attemptedUsername": "1",
+      "reason": "وشەی نهێنی هەڵەیە",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 Edg/151.0.0.0"
+    },
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 Edg/151.0.0.0",
+    "timestamp": "2026-08-19T21:42:50.971Z"
+  },
+  {
+    "id": "5738b85b-d2b2-4a46-9e4a-b17118013793",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "203ac76c-67a1-4889-9bed-24e8a28d5031",
+      "username": "barca",
+      "role": "user"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: barca"
+    },
+    "details": {
+      "username": "barca",
+      "role": "user",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 Edg/151.0.0.0"
+    },
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 Edg/151.0.0.0",
+    "timestamp": "2026-08-19T21:42:34.892Z"
+  },
+  {
+    "id": "10cf177a-4a9e-411a-94b1-eef8e1721f7b",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5d24f936-2474-4ddd-80eb-287799a77f25",
+      "username": "ما",
+      "role": "user"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: ما"
+    },
+    "details": {
+      "username": "ما",
+      "role": "user",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 Edg/151.0.0.0"
+    },
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 Edg/151.0.0.0",
+    "timestamp": "2026-08-19T21:42:24.899Z"
+  },
+  {
+    "id": "d472d43b-0d97-4c0d-b7d9-a54de08abfd1",
+    "eventType": "login_success",
+    "category": "security",
+    "status": "success",
+    "admin": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "target": {
+      "title": "چوونەژوورەوەی سەرکەوتوو: maher2"
+    },
+    "details": {
+      "username": "maher2",
+      "role": "super_admin",
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36"
+    },
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "timestamp": "2026-08-19T21:14:57.544Z"
+  }
+]

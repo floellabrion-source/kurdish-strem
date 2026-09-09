@@ -1,0 +1,40 @@
+{
+  "id": "/",
+  "short_name": "KST",
+  "name": "KST | Kurdish Stream & Translate",
+  "description": "باشترین ماڵپەڕی فیلم و زنجیرە ژێرنووسکراوەکان بە ژێرنووسی دوو زمانی و فێرکاری AI",
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "start_url": "/",
+  "scope": "/",
+  "background_color": "#08080e",
+  "theme_color": "#8b5cf6",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "prefer_related_applications": false,
+  "categories": ["entertainment", "education", "movies"]
+}

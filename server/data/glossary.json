@@ -1,0 +1,182 @@
+[
+  {
+    "id": "03df3efa-e9fd-4cb8-abf4-a40d634e0708",
+    "english": "barn",
+    "kurdish": "تەوێلە",
+    "alternatives": [],
+    "category": "گشتی",
+    "note": "",
+    "createdBy": {
+      "id": "5477cdcd-0f70-40e0-b12b-bd735c0e28f4",
+      "username": "maher2",
+      "role": "super_admin"
+    },
+    "createdAt": "2026-08-24T20:22:20.298Z",
+    "updatedAt": "2026-08-24T20:22:20.298Z"
+  },
+  {
+    "id": "gl_1",
+    "english": "agent",
+    "kurdish": "بریکار",
+    "alternatives": [
+      "مەئموور",
+      "نوێنەر"
+    ],
+    "category": "سیخوڕی و ئەمنی",
+    "note": "لە فیلمی سیخوڕیدا بریکار بەکاردێت نەک عامیل",
+    "createdBy": {
+      "username": "سیستەم",
+      "role": "super_admin"
+    },
+    "createdAt": "2026-08-15T20:23:28.662Z",
+    "updatedAt": "2026-08-15T20:23:28.663Z"
+  },
+  {
+    "id": "gl_2",
+    "english": "protocol",
+    "kurdish": "پرۆتۆکۆل",
+    "alternatives": [
+      "ڕێکار",
+      "یاسا"
+    ],
+    "category": "تەکنیکی و سەربازی",
+    "note": "ڕێکاری فەرمی یان پرۆتۆکۆڵی ئەمنی",
+    "createdBy": {
+      "username": "سیستەم",
+      "role": "super_admin"
+    },
+    "createdAt": "2026-08-15T20:23:28.663Z",
+    "updatedAt": "2026-08-15T20:23:28.663Z"
+  },
+  {
+    "id": "gl_3",
+    "english": "trailer",
+    "kurdish": "تڕەیلەر",
+    "alternatives": [
+      "پێشبینین",
+      "تەیرەلەر"
+    ],
+    "category": "سینەما",
+    "note": "ڤیدیۆی کورتی ناساندنی فیلم",
+    "createdBy": {
+      "username": "سیستەم",
+      "role": "super_admin"
+    },
+    "createdAt": "2026-08-15T20:23:28.663Z",
+    "updatedAt": "2026-08-15T20:23:28.663Z"
+  },
+  {
+    "id": "gl_4",
+    "english": "season",
+    "kurdish": "وەرز",
+    "alternatives": [
+      "بەش"
+    ],
+    "category": "سینەما",
+    "note": "وەرز بۆ زنجیرە بەکاردێت",
+    "createdBy": {
+      "username": "سیستەم",
+      "role": "super_admin"
+    },
+    "createdAt": "2026-08-15T20:23:28.663Z",
+    "updatedAt": "2026-08-15T20:23:28.663Z"
+  },
+  {
+    "id": "gl_5",
+    "english": "episode",
+    "kurdish": "ئەڵقە",
+    "alternatives": [
+      "بەش"
+    ],
+    "category": "سینەما",
+    "note": "ئەڵقەی زنجیرە",
+    "createdBy": {
+      "username": "سیستەم",
+      "role": "super_admin"
+    },
+    "createdAt": "2026-08-15T20:23:28.663Z",
+    "updatedAt": "2026-08-15T20:23:28.663Z"
+  },
+  {
+    "id": "gl_6",
+    "english": "sequel",
+    "kurdish": "بەشی دووەم",
+    "alternatives": [
+      "تەواوکەر",
+      "پاشکۆ"
+    ],
+    "category": "سینەما",
+    "note": "تەواوکەری بەشەکانی پێشوو",
+    "createdBy": {
+      "username": "سیستەم",
+      "role": "super_admin"
+    },
+    "createdAt": "2026-08-15T20:23:28.663Z",
+    "updatedAt": "2026-08-15T20:23:28.663Z"
+  },
+  {
+    "id": "gl_7",
+    "english": "undercover",
+    "kurdish": "نهێنی / بەنهێنی",
+    "alternatives": [
+      "سیخوڕی",
+      "شاردراوە"
+    ],
+    "category": "پۆلیسی و سیخوڕی",
+    "note": "پۆلیس یان بریکاری نهێنی",
+    "createdBy": {
+      "username": "سیستەم",
+      "role": "super_admin"
+    },
+    "createdAt": "2026-08-15T20:23:28.663Z",
+    "updatedAt": "2026-08-15T20:23:28.663Z"
+  },
+  {
+    "id": "gl_8",
+    "english": "flashback",
+    "kurdish": "گەڕانەوە بۆ ڕابردوو",
+    "alternatives": [
+      "فلاشباک"
+    ],
+    "category": "سینەما",
+    "note": "دیمەنی یادەوەری و ڕابردوو",
+    "createdBy": {
+      "username": "سیستەم",
+      "role": "super_admin"
+    },
+    "createdAt": "2026-08-15T20:23:28.663Z",
+    "updatedAt": "2026-08-15T20:23:28.663Z"
+  },
+  {
+    "id": "gl_9",
+    "english": "target",
+    "kurdish": "ئامانج",
+    "alternatives": [
+      "نیشانە"
+    ],
+    "category": "سەربازی و کردار",
+    "note": "ئامانجی پێکراو یان دیاریکراو",
+    "createdBy": {
+      "username": "سیستەم",
+      "role": "super_admin"
+    },
+    "createdAt": "2026-08-15T20:23:28.663Z",
+    "updatedAt": "2026-08-15T20:23:28.663Z"
+  },
+  {
+    "id": "gl_10",
+    "english": "suspect",
+    "kurdish": "گومانلێکراو",
+    "alternatives": [
+      "تۆمەتبار"
+    ],
+    "category": "پۆلیسی و یاسایی",
+    "note": "کەسی گومانلێکراو لە تاوانێکدا",
+    "createdBy": {
+      "username": "سیستەم",
+      "role": "super_admin"
+    },
+    "createdAt": "2026-08-15T20:23:28.663Z",
+    "updatedAt": "2026-08-15T20:23:28.663Z"
+  }
+]

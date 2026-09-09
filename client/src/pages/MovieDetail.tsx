@@ -1,21 +1,87 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Play, Heart, Clock, CheckCircle, Eye, Globe, Bookmark, Star, ArrowLeft } from 'lucide-react';
+import { Play, Heart, Clock, CheckCircle, Eye, Globe, Bookmark, Star, ArrowLeft, ArrowRight, MessageSquare, Send } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { Movie } from '../types';
+import { Movie, LanguageMetrics, getCefrDisplayLevel, getCefrColor } from '../types';
 import './MovieDetail.css';
+
+function normalizeLanguageMetrics(input: any): LanguageMetrics | null {
+    if (!input) return null;
+
+    const dist: any = input.distribution || {};
+    const distribution = {
+        A1: Number(dist.A1 ?? 0),
+        A2: Number(dist.A2 ?? 0),
+        B1: Number(dist.B1 ?? 0),
+        B2: Number(dist.B2 ?? 0),
+        C1: Number(dist.C1 ?? 0),
+        C2: Number(dist.C2 ?? 0),
+        Unknown: Number(dist.Unknown ?? 0)
+    };
+
+    const cefr = String(input.cefrLevel || '').toUpperCase();
+    const allowed = new Set(['A1', 'A2', 'B1', 'B2', 'C1', 'C2']);
+    if (!allowed.has(cefr)) return null;
+
+    const totalWords = Number(input.totalWords);
+    const lexicalDensity = Number(input.lexicalDensity);
+    const vocabDiversity = Number(input.vocabDiversity);
+    if (!Number.isFinite(totalWords) || !Number.isFinite(lexicalDensity) || !Number.isFinite(vocabDiversity)) return null;
+
+    return {
+        totalWords,
+        lexicalDensity,
+        vocabDiversity,
+        cefrLevel: cefr as any,
+        distribution,
+        difficultWords: input.difficultWords,
+        repeatedWords: input.repeatedWords
+    };
+}
+
+function buildLanguageMetrics(text: string, isSeries: boolean, level?: string): LanguageMetrics {
+    const words = (text.toLowerCase().match(/[\p{L}']+/gu) || []).filter(Boolean);
+    const totalWords = Math.max(1, words.length);
+    const uniqueWords = new Set(words).size;
+
+    const lexicalDensity = Math.min(85, Math.max(22, Math.round((uniqueWords / totalWords) * 100 + 10)));
+    const vocabDiversity = Math.min(80, Math.max(18, Math.round((uniqueWords / totalWords) * 100 - 4)));
+    const score = lexicalDensity * 0.5 + vocabDiversity * 0.35 + (isSeries ? 6 : 10);
+    const autoLevel = score < 40 ? 'A2' : score < 48 ? 'B1' : score < 60 ? 'B2' : 'C1';
+    const mapped = getCefrDisplayLevel(level);
+    const cefrLevel = (mapped && ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].includes(mapped)) ? mapped : autoLevel;
+
+    const presets: Record<string, LanguageMetrics['distribution']> = {
+        A2: { A1: 43, A2: 30, B1: 13, B2: 6, C1: 3, C2: 2, Unknown: 3 },
+        B1: { A1: 27, A2: 29, B1: 21, B2: 11, C1: 5, C2: 3, Unknown: 4 },
+        B2: { A1: 16, A2: 23, B1: 24, B2: 18, C1: 10, C2: 5, Unknown: 4 },
+        C1: { A1: 9, A2: 15, B1: 21, B2: 23, C1: 17, C2: 9, Unknown: 6 }
+    };
+
+    return { totalWords, lexicalDensity, vocabDiversity, cefrLevel: cefrLevel as any, distribution: presets[cefrLevel] };
+}
 
 export default function MovieDetail() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { user, toggleList } = useAuth();
-    const { lang } = useLanguage();
+    const { lang, t } = useLanguage();
     const [movie, setMovie] = useState<Movie | null>(null);
     const [loading, setLoading] = useState(true);
 
     const [activeSeason, setActiveSeason] = useState<number>(1);
+    
+    // Comments state
+    const [comments, setComments] = useState<any[]>([]);
+    const [newComment, setNewComment] = useState('');
+    const [commentRating, setCommentRating] = useState(5);
+    const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+
+    // Language Metrics word expansion toggles
+    const [showAllDifficult, setShowAllDifficult] = useState(false);
+    const [showAllRepeated, setShowAllRepeated] = useState(false);
 
     useEffect(() => {
         axios.get(`/api/movies`)
@@ -30,10 +96,38 @@ export default function MovieDetail() {
                 setLoading(false);
             })
             .catch(() => setLoading(false));
+
+        axios.get(`/api/movies/${id}/comments`)
+            .then(res => setComments(res.data || []))
+            .catch(() => {});
     }, [id]);
 
-    if (loading) return <div className="loading-state">چاوەڕوانبە...</div>;
-    if (!movie) return <div className="error-state">فیلمەکە نەدۆزرایەوە.</div>;
+    const submitComment = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!user) {
+            navigate('/auth');
+            return;
+        }
+        if (!newComment.trim()) return;
+        
+        setIsSubmittingComment(true);
+        try {
+            const res = await axios.post(`/api/movies/${id}/comments`, {
+                text: newComment,
+                rating: commentRating
+            });
+            setComments(res.data.comments);
+            setNewComment('');
+            setCommentRating(5);
+        } catch (err) {
+            console.error('Failed to submit comment', err);
+        } finally {
+            setIsSubmittingComment(false);
+        }
+    };
+
+    if (loading) return <div className="loading-state">{t('loading')}</div>;
+    if (!movie) return <div className="error-state">{t('movie_not_found')}</div>;
 
     const isFavorite = user?.favorites?.includes(movie.id) || false;
     const isWatchLater = user?.watchLater?.includes(movie.id) || false;
@@ -78,6 +172,120 @@ export default function MovieDetail() {
     const seasons = movie.seasons || [];
     const totalEpisodes = seasons.reduce((acc, s) => acc + s.episodes.length, 0);
     const activeSeasonData = seasons.find(s => s.number === activeSeason);
+    // Function to calculate aggregate language metrics for a series
+    const getAggregateMetrics = () => {
+        const manualMetrics = normalizeLanguageMetrics(movie.languageMetrics);
+        const fallbackMetrics = manualMetrics || buildLanguageMetrics(getDescription(), isSeries, movie.level);
+
+        if (!isSeries || seasons.length === 0) {
+            return fallbackMetrics;
+        }
+
+        const allEpisodes = seasons.flatMap(s => s.episodes || []);
+        const epsWithMetrics = allEpisodes.filter(ep => {
+            if (!ep.languageMetrics) return false;
+            const m = ep.languageMetrics;
+            // Be more lenient in checking if metrics exist
+            const words = typeof m.totalWords === 'string' 
+                ? parseInt((m.totalWords as string).replace(/[^\d]/g, '')) 
+                : Number(m.totalWords);
+            return words > 0 || (m.distribution && Object.values(m.distribution).some(v => Number(v) > 0));
+        });
+        
+        if (epsWithMetrics.length === 0) {
+            return fallbackMetrics;
+        }
+
+        let totalWords = 0;
+        let totalLexical = 0;
+        let totalDiversity = 0;
+        let dist = { A1: 0, A2: 0, B1: 0, B2: 0, C1: 0, C2: 0, Unknown: 0 };
+        
+        const wordFrequencies: Record<string, number> = {};
+        const wordMeanings: Record<string, string> = {};
+        const difficultWordsMap = new Map();
+
+        let count = 0;
+
+        epsWithMetrics.forEach(ep => {
+            const m = ep.languageMetrics;
+            if (!m) return;
+            count++;
+            
+            const epWords = typeof m.totalWords === 'string' 
+                ? parseInt((m.totalWords as string).replace(/[^\d]/g, '')) 
+                : Number(m.totalWords);
+            
+            totalWords += (epWords || 0);
+            totalLexical += (Number(m.lexicalDensity) || 0);
+            totalDiversity += (Number(m.vocabDiversity) || 0);
+            
+            dist.A1 += (Number(m.distribution?.A1) || 0);
+            dist.A2 += (Number(m.distribution?.A2) || 0);
+            dist.B1 += (Number(m.distribution?.B1) || 0);
+            dist.B2 += (Number(m.distribution?.B2) || 0);
+            dist.C1 += (Number(m.distribution?.C1) || 0);
+            dist.C2 += (Number(m.distribution?.C2) || 0);
+            dist.Unknown += (Number(m.distribution?.Unknown) || 0);
+
+            if (m.repeatedWords && Array.isArray(m.repeatedWords)) {
+                m.repeatedWords.forEach((rw: any) => {
+                    if (rw.word) {
+                        const rwCount = typeof rw.count === 'string' ? parseInt(rw.count.replace(/[^\d]/g, '')) : Number(rw.count);
+                        wordFrequencies[rw.word] = (wordFrequencies[rw.word] || 0) + (rwCount || 0);
+                        if (rw.meaning) wordMeanings[rw.word] = rw.meaning;
+                    }
+                });
+            }
+
+            if (m.difficultWords && Array.isArray(m.difficultWords)) {
+                m.difficultWords.forEach((dw: any) => {
+                    if (dw.word && !difficultWordsMap.has(dw.word)) {
+                        difficultWordsMap.set(dw.word, dw);
+                    }
+                });
+            }
+        });
+
+        if (count === 0) return fallbackMetrics;
+        
+        const aggregatedRepeatedWords = Object.keys(wordFrequencies).map(word => ({
+            word,
+            count: wordFrequencies[word],
+            meaning: wordMeanings[word] || ''
+        })).sort((a, b) => b.count - a.count).slice(0, 20); // Keep top 20 for series
+
+        const avgDist = {
+            A1: Number((dist.A1 / count).toFixed(1)),
+            A2: Number((dist.A2 / count).toFixed(1)),
+            B1: Number((dist.B1 / count).toFixed(1)),
+            B2: Number((dist.B2 / count).toFixed(1)),
+            C1: Number((dist.C1 / count).toFixed(1)),
+            C2: Number((dist.C2 / count).toFixed(1)),
+            Unknown: Number((dist.Unknown / count).toFixed(1))
+        };
+
+        // Re-normalize avgDist to sum to ~100% if possible, but simple average is usually fine
+        
+        let calculatedLevel = 'A1';
+        if (avgDist.C2 > 0.5) calculatedLevel = 'C2';
+        else if (avgDist.C1 > 1) calculatedLevel = 'C1';
+        else if (avgDist.B2 > 3) calculatedLevel = 'B2';
+        else if (avgDist.B1 > 7) calculatedLevel = 'B1';
+        else if (avgDist.A2 > 12) calculatedLevel = 'A2';
+
+        return {
+            totalWords,
+            lexicalDensity: Math.round(totalLexical / count),
+            vocabDiversity: Math.round(totalDiversity / count),
+            cefrLevel: calculatedLevel as any,
+            distribution: avgDist,
+            repeatedWords: aggregatedRepeatedWords,
+            difficultWords: Array.from(difficultWordsMap.values()).slice(0, 15) // Top 15 diff words
+        };
+    };
+
+    const metrics = getAggregateMetrics();
 
     const isEpisodeWatched = (seasonNum: number, epNum: number) => {
         if (!user || !user?.history) return false;
@@ -95,81 +303,194 @@ export default function MovieDetail() {
 
     return (
         <div className="movie-detail-container">
-            <div className="detail-hero" style={{ backgroundImage: `url(${movie.posterCloudUrl || movie.posterUrl})` }}>
+            {/* Cinematic Hero with Ambient Backdrop Blur and Sharp Portrait Poster Card */}
+            <div className="detail-hero">
+                {/* Floating Top Back Button */}
+                <button className="detail-back-btn" onClick={goBackSafely} title={t('back')} aria-label={t('back')}>
+                    <ArrowRight size={20} />
+                </button>
+
+                {(movie.posterCloudUrl || movie.posterUrl) && (
+                    <div 
+                        className="detail-hero-bg-blur"
+                        style={{ backgroundImage: `url(${movie.posterCloudUrl || movie.posterUrl})` }}
+                    />
+                )}
                 <div className="detail-hero-overlay"></div>
-                <div className="detail-hero-content">
-                    <button type="button" className="back-btn" onClick={goBackSafely}>
-                        <ArrowLeft size={16} />
-                        گەڕانەوە
-                    </button>
-                    <h1 className="detail-title">{movie.title}</h1>
-                    <div className="detail-meta">
-                        <span>{movie.genre || 'نەزانراو'}</span>
-                        {movie.year && <span>{movie.year}</span>}
-                        {movie.duration && <span>{movie.duration}</span>}
-                        {movie.imdbRating && <span className="rating"><Star size={13} fill="currentColor" /> {movie.imdbRating}</span>}
-                    </div>
-                    <p className="detail-tagline">{getSmartTagline()}</p>
-
-                    <div className="detail-actions">
-                        {isSeries && seasons[0]?.episodes[0] ? (
-                            <Link to={`/watch/${movie.id}?s=${seasons[0].number}&e=${seasons[0].episodes[0].number}`} className="action-btn watch-btn">
-                                <Play size={19} fill="currentColor" />
-                                سەیرکردن
-                            </Link>
-                        ) : (
-                            <Link to={`/watch/${movie.id}`} className="action-btn watch-btn">
-                                <Play size={19} fill="currentColor" />
-                                سەیرکردن
-                            </Link>
-                        )}
-                    </div>
-
-                    <div className="quick-actions">
-                        <button className={`quick-btn ${isFavorite ? 'active' : ''}`} onClick={() => handleAction('favorites', '/favorites')}>
-                            <Heart size={16} fill={isFavorite ? 'currentColor' : 'none'} /> لیستی دڵخواز
-                        </button>
-                        <button className={`quick-btn ${isWatchLater ? 'active' : ''}`} onClick={() => handleAction('watchLater', '/watch-later')}>
-                            <Bookmark size={16} fill={isWatchLater ? 'currentColor' : 'none'} /> بینینی دواتر
-                        </button>
-                        <button className={`quick-btn ${isWatched ? 'active' : ''}`} onClick={() => handleAction('watched')}>
-                            <CheckCircle size={16} fill={isWatched ? 'currentColor' : 'none'} /> بینراو
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div className="detail-content">
-                <div className="detail-poster">
-                    <img src={movie.posterCloudUrl || movie.posterUrl} alt={movie.title} />
-                </div>
-                <div className="detail-info">
-                    <div className="detail-pills">
-                        <span><Globe size={14} /> {movie.language?.split(',')[0] || 'N/A'}</span>
-                        {movie.imdbRating && <span><Star size={14} fill="currentColor" /> IMDb {movie.imdbRating}</span>}
-                        <span><Eye size={14} /> {user?.history && Object.keys(user.history).length ? Object.keys(user.history).length : 0}</span>
-                        <span><Clock size={14} /> {movie.duration || 'N/A'}</span>
-                    </div>
-                    {isSeries && (
-                        <div className="series-stats">
-                            <div className="stat-box">
-                                <span className="stat-value">{movie.endYear ? 'تەواو بووە' : 'بەردەوامە'}</span>
-                                <span className="stat-label">باری</span>
+                
+                <div className="detail-hero-container">
+                    <div className="detail-hero-layout">
+                        {/* Right: Info, Story & Actions */}
+                        <div className="detail-hero-main">
+                            <div className="detail-badge-row">
+                                {movie.genre && <span className="detail-badge">{movie.genre}</span>}
+                                {movie.imdbRating && (
+                                    <span className="detail-imdb-badge">
+                                        <Star size={13} fill="#fbbf24" color="#fbbf24" />
+                                        <strong>IMDb</strong> {movie.imdbRating}
+                                    </span>
+                                )}
+                                {(() => {
+                                    const lvl = getCefrDisplayLevel(movie.level, movie.languageMetrics?.cefrLevel);
+                                    if (!lvl) return null;
+                                    const colorInfo = getCefrColor(lvl);
+                                    return (
+                                        <span 
+                                            className="detail-level-badge" 
+                                            style={{ 
+                                                background: colorInfo.bg, 
+                                                color: colorInfo.text, 
+                                                fontWeight: 800,
+                                                letterSpacing: '0.5px' 
+                                            }}
+                                        >
+                                            {lvl}
+                                        </span>
+                                    );
+                                })()}
+                                {movie.language && (
+                                    <span className="detail-lang-badge">
+                                        <Globe size={12} /> {movie.language.split(',')[0]}
+                                    </span>
+                                )}
                             </div>
-                            <div className="stat-box">
-                                <span className="stat-value">{totalEpisodes}</span>
-                                <span className="stat-label">ئەڵقە</span>
+
+                            <h1 className="detail-title">{movie.title}</h1>
+
+                            <div className="detail-meta-pills">
+                                {movie.year && <span>{movie.year}</span>}
+                                {movie.duration && (
+                                    <>
+                                        <span className="meta-dot">•</span>
+                                        <span><Clock size={13} /> {movie.duration}</span>
+                                    </>
+                                )}
+                                {isSeries && (
+                                    <>
+                                        <span className="meta-dot">•</span>
+                                        <span>{seasons.length} {t('seasons')}</span>
+                                        <span className="meta-dot">•</span>
+                                        <span>{totalEpisodes} {t('episodes')}</span>
+                                    </>
+                                )}
                             </div>
-                            <div className="stat-box">
-                                <span className="stat-value">{seasons.length}</span>
-                                <span className="stat-label">وەرز</span>
+
+                            <div className="detail-story-box">
+                                <h3 className="story-heading">{t('story')}</h3>
+                                <p className="detail-desc">{getDescription()}</p>
+                            </div>
+
+                            <div className="detail-actions-row">
+                                {isSeries && seasons[0]?.episodes[0] ? (
+                                    <Link to={`/watch/${movie.id}?s=${seasons[0].number}&e=${seasons[0].episodes[0].number}`} className="action-btn watch-btn">
+                                        <Play size={18} fill="currentColor" />
+                                        {t('watch_series')}
+                                    </Link>
+                                ) : (
+                                    <Link to={`/watch/${movie.id}`} className="action-btn watch-btn">
+                                        <Play size={18} fill="currentColor" />
+                                        {t('watch_movie')}
+                                    </Link>
+                                )}
+
+                                <div className="quick-actions">
+                                    <button className={`quick-btn ${isFavorite ? 'active' : ''}`} onClick={() => handleAction('favorites', '/favorites')}>
+                                        <Heart size={15} fill={isFavorite ? 'currentColor' : 'none'} /> {t('favorites')}
+                                    </button>
+                                    <button className={`quick-btn ${isWatchLater ? 'active' : ''}`} onClick={() => handleAction('watchLater', '/watch-later')}>
+                                        <Bookmark size={15} fill={isWatchLater ? 'currentColor' : 'none'} /> {t('watch_later')}
+                                    </button>
+                                    <button className={`quick-btn ${isWatched ? 'active' : ''}`} onClick={() => handleAction('watched')}>
+                                        <CheckCircle size={15} fill={isWatched ? 'currentColor' : 'none'} /> {t('watched')}
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    )}
-                    <h3 className="section-heading">چیرۆک</h3>
-                    <p className="detail-desc">{getDescription()}</p>
+
+                        {/* Left: Sharp Portrait Poster Card */}
+                        {(movie.posterCloudUrl || movie.posterUrl) && (
+                            <div className="detail-poster-frame">
+                                <img src={movie.posterCloudUrl || movie.posterUrl} alt={movie.title} className="detail-poster-img" />
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
+
+            <section className="lm-section">
+                <h3 className="lm-title">{t('language_metrics')}</h3>
+                <div className="lm-cards">
+                    <div className="lm-card"><strong>{metrics.totalWords.toLocaleString()}</strong><span>{t('total_words')}</span></div>
+                    <div className="lm-card"><strong>{metrics.lexicalDensity}%</strong><span>{t('lexical_density')}</span></div>
+                    <div className="lm-card"><strong>{metrics.vocabDiversity}%</strong><span>{t('vocab_diversity')}</span></div>
+                    <div className="lm-card"><strong>{metrics.cefrLevel}</strong><span>{t('cefr_level')}</span></div>
+                </div>
+                <div className="lm-bars">
+                    {Object.entries(metrics.distribution).map(([level, value]) => (
+                        <div className="lm-row" key={level}>
+                            <span className="lm-label">{level}</span>
+                            <div className="lm-track"><div className="lm-fill" style={{ width: `${value}%` }} /></div>
+                            <span className="lm-value">{value}%</span>
+                        </div>
+                    ))}
+                </div>
+
+                {metrics.difficultWords && metrics.difficultWords.length > 0 && (
+                    <div className="lm-difficult-words">
+                        <h4 className="lm-sub-title">{t('advanced_words')}</h4>
+                        <div className="dw-grid">
+                            {(showAllDifficult ? metrics.difficultWords : metrics.difficultWords.slice(0, 4)).map((dw, i) => (
+                                <div key={i} className="dw-card">
+                                    <div className="dw-header">
+                                        <span className="dw-word">{dw.word}</span>
+                                        <span className="dw-type">{dw.type}</span>
+                                    </div>
+                                    <p className="dw-def">{dw.definition}</p>
+                                </div>
+                            ))}
+                        </div>
+                        {metrics.difficultWords.length > 4 && (
+                            <div className="lm-more-btn-wrap">
+                                <button
+                                    type="button"
+                                    className="btn-show-more-words"
+                                    onClick={() => setShowAllDifficult(!showAllDifficult)}
+                                >
+                                    {showAllDifficult ? t('show_less') : t('show_more')}
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {metrics.repeatedWords && metrics.repeatedWords.length > 0 && (
+                    <div className="lm-repeated-words">
+                        <h4 className="lm-sub-title">{t('repeated_words')}</h4>
+                        <div className="rw-flex">
+                            {(showAllRepeated ? metrics.repeatedWords : metrics.repeatedWords.slice(0, 8)).map((rw, i) => (
+                                <div key={i} className="rw-pill" title={rw.meaning}>
+                                    <div className="rw-main">
+                                        <span className="rw-word">{rw.word}</span>
+                                        <span className="rw-count">{rw.count}</span>
+                                    </div>
+                                    {rw.meaning && <span className="rw-meaning">{rw.meaning}</span>}
+                                </div>
+                            ))}
+                        </div>
+                        {metrics.repeatedWords.length > 8 && (
+                            <div className="lm-more-btn-wrap">
+                                <button
+                                    type="button"
+                                    className="btn-show-more-words"
+                                    onClick={() => setShowAllRepeated(!showAllRepeated)}
+                                >
+                                    {showAllRepeated ? t('show_less') : t('show_more')}
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </section>
 
             {isSeries && seasons.length > 0 && (
                 <div className="series-episodes-section">
@@ -180,7 +501,7 @@ export default function MovieDetail() {
                                 className={`season-tab ${activeSeason === season.number ? 'active' : ''}`}
                                 onClick={() => setActiveSeason(season.number)}
                             >
-                                وەرز {season.number}
+                                {t('season')} {season.number}
                             </button>
                         ))}
                     </div>
@@ -188,21 +509,25 @@ export default function MovieDetail() {
                     <div className="episodes-list">
                         {[...(activeSeasonData?.episodes || [])].sort((a, b) => a.number - b.number).map(ep => {
                             const watched = isEpisodeWatched(activeSeason, ep.number);
+                            const metrics = normalizeLanguageMetrics(ep.languageMetrics);
                             return (
-                                <Link to={`/watch/${movie.id}?s=${activeSeason}&e=${ep.number}`} key={ep.id} className={`episode-card ${watched ? 'watched' : ''}`}>
+                                <Link to={`/series/${movie.id}/season/${activeSeason}/episode/${ep.number}`} key={ep.id} className={`episode-card ${watched ? 'watched' : ''}`}>
                                     <div className="episode-thumb">
                                         <img src={movie.posterCloudUrl || movie.posterUrl} alt={ep.title} />
                                         <div className="episode-number">{ep.number}</div>
                                         {watched && (
                                             <div className="episode-watched-badge">
-                                                <CheckCircle size={14} fill="currentColor" /> بینراوە
+                                                <CheckCircle size={14} fill="currentColor" /> {t('watched_status')}
                                             </div>
+                                        )}
+                                        {metrics?.cefrLevel && (
+                                            <div className="ep-level-badge">{metrics.cefrLevel}</div>
                                         )}
                                         <div className="play-overlay"><Play size={24} fill="currentColor" /></div>
                                     </div>
                                     <div className="episode-info">
                                         <h4>{ep.title}</h4>
-                                        <p>{ep.duration} خولەک</p>
+                                        <p>{ep.duration} {t('minutes')}</p>
                                     </div>
                                 </Link>
                             );
@@ -210,6 +535,77 @@ export default function MovieDetail() {
                     </div>
                 </div>
             )}
+
+            <div className="comments-section">
+                <div className="comments-section-header">
+                    <h3 className="section-heading">
+                        <MessageSquare size={22} color="#8b5cf6" />
+                        <span>{t('comments_ratings')}</span>
+                        {comments.length > 0 && <span className="comments-count-pill">{comments.length}</span>}
+                    </h3>
+                </div>
+                
+                <form className="comment-form" onSubmit={submitComment}>
+                    <div className="rating-select">
+                        <span className="rating-label">{t('your_rating')}</span>
+                        <div className="stars-input">
+                            {[1, 2, 3, 4, 5].map(star => (
+                                <button 
+                                    type="button" 
+                                    key={star} 
+                                    className={`star-btn ${star <= commentRating ? 'active' : ''}`}
+                                    onClick={() => setCommentRating(star)}
+                                    title={`${star} ${t('stars') || 'ئەستێرە'}`}
+                                >
+                                    <Star size={20} fill={star <= commentRating ? "#fbbf24" : "none"} color={star <= commentRating ? "#fbbf24" : "#94a3b8"} />
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                    <textarea 
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        placeholder={t('comment_placeholder')}
+                        rows={3}
+                        required
+                    />
+                    <div className="comment-form-footer">
+                        <button type="submit" className="submit-comment-btn" disabled={isSubmittingComment || !newComment.trim()}>
+                            <Send size={15} />
+                            <span>{isSubmittingComment ? t('submitting') : t('send_comment')}</span>
+                        </button>
+                    </div>
+                </form>
+
+                <div className="comments-list">
+                    {comments.length === 0 ? (
+                        <div className="no-comments">
+                            <MessageSquare size={32} color="#8b5cf6" style={{ opacity: 0.7, marginBottom: '8px' }} />
+                            <p>{t('no_comments_yet')}</p>
+                        </div>
+                    ) : (
+                        [...comments].reverse().map(comment => (
+                            <div key={comment.id} className="comment-card">
+                                <div className="comment-header">
+                                    <div className="comment-user">
+                                        <div className="comment-avatar">{comment.username.charAt(0).toUpperCase()}</div>
+                                        <span className="comment-username">{comment.username}</span>
+                                    </div>
+                                    <div className="comment-meta">
+                                        <div className="comment-rating">
+                                            {[...Array(5)].map((_, i) => (
+                                                <Star key={i} size={13} fill={i < comment.rating ? "#fbbf24" : "none"} color={i < comment.rating ? "#fbbf24" : "#475569"} />
+                                            ))}
+                                        </div>
+                                        <span className="comment-date">{new Date(comment.createdAt).toLocaleDateString(lang === 'en' ? 'en-US' : 'ku-IQ')}</span>
+                                    </div>
+                                </div>
+                                <p className="comment-text">{comment.text}</p>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </div>
         </div>
     );
 }
