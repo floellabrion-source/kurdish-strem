@@ -96,12 +96,12 @@ self.addEventListener('push', function(event) {
         payload = event.data.json();
     } catch (e) {
         payload = {
-            title: 'Kurdish Stream 🎬',
+            title: 'kstfilm 🎬',
             body: event.data.text()
         };
     }
 
-    const title = payload.title || 'Kurdish Stream';
+    const title = payload.title || 'kstfilm';
     const options = {
         body: payload.body || '',
         icon: payload.icon || '/pwa-192x192.png',
