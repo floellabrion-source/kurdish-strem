@@ -132,22 +132,28 @@ const writeInternalNotes = (data) => {
 const ACTIVITY_LOG_FILE = path.join(__dirname, 'data', 'activity_log.json');
 if (!fs.existsSync(ACTIVITY_LOG_FILE)) fs.writeFileSync(ACTIVITY_LOG_FILE, '[]');
 
+const DEFAULT_SYSTEM_SETTINGS = {
+    dualSubTrialMinutes: 60,
+    dualSubResetHours: 24,
+    dualSubTrialActive: true,
+    dualSubExpiredAction: 'block_all',
+    initialRegistrationCredits: 75
+};
+
 const SYSTEM_SETTINGS_FILE = path.join(__dirname, 'data', 'system_settings.json');
 if (!fs.existsSync(SYSTEM_SETTINGS_FILE)) {
-    fs.writeFileSync(SYSTEM_SETTINGS_FILE, JSON.stringify({
-        dualSubTrialMinutes: 60,
-        dualSubTrialActive: true
-    }, null, 2));
+    fs.writeFileSync(SYSTEM_SETTINGS_FILE, JSON.stringify(DEFAULT_SYSTEM_SETTINGS, null, 2));
 }
 
 const readSystemSettings = () => {
     try {
         if (!fs.existsSync(SYSTEM_SETTINGS_FILE)) {
-            return { dualSubTrialMinutes: 60, dualSubTrialActive: true };
+            return { ...DEFAULT_SYSTEM_SETTINGS };
         }
-        return JSON.parse(fs.readFileSync(SYSTEM_SETTINGS_FILE, 'utf-8'));
+        const data = JSON.parse(fs.readFileSync(SYSTEM_SETTINGS_FILE, 'utf-8'));
+        return { ...DEFAULT_SYSTEM_SETTINGS, ...data };
     } catch (e) {
-        return { dualSubTrialMinutes: 60, dualSubTrialActive: true };
+        return { ...DEFAULT_SYSTEM_SETTINGS };
     }
 };
 
@@ -1158,6 +1164,8 @@ app.post('/api/auth/register', registerLimiter, async (req, res) => {
     if (users.find((u) => u.username === username)) return res.status(400).json({ error: 'ئەم ناوە گیراوە' });
 
     const firstUserIsAdmin = users.length === 0;
+    const sysSettings = readSystemSettings();
+    const initialCredits = Number(sysSettings.initialRegistrationCredits !== undefined ? sysSettings.initialRegistrationCredits : 75);
     const newUser = {
         id: uuidv4(),
         username,
@@ -1166,6 +1174,7 @@ app.post('/api/auth/register', registerLimiter, async (req, res) => {
         passwordHash: await bcrypt.hash(password, 10),
         role: firstUserIsAdmin ? 'admin' : 'user',
         points: 0,
+        credits: initialCredits,
         history: {},
         flashcards: []
     };
@@ -1173,7 +1182,7 @@ app.post('/api/auth/register', registerLimiter, async (req, res) => {
     users.push(newUser);
     writeUsers(users);
 
-    logAdminActivity('user_register', newUser, { title: `تۆماربوونی هەژماری نوێ: ${newUser.username}` }, { username: newUser.username, role: newUser.role }, req);
+    logAdminActivity('user_register', newUser, { title: `تۆماربوونی هەژماری نوێ: ${newUser.username} (+${initialCredits} کرێدیت)` }, { username: newUser.username, role: newUser.role, credits: initialCredits }, req);
 
     res.json({ token: newUser.token, user: sanitizeUser(newUser) });
 });
@@ -1302,6 +1311,8 @@ app.post('/api/auth/google', async (req, res) => {
         }
 
         const firstUserIsAdmin = users.length === 0;
+        const sysSettings = readSystemSettings();
+        const initialCredits = Number(sysSettings.initialRegistrationCredits !== undefined ? sysSettings.initialRegistrationCredits : 75);
         const newUser = {
             id: uuidv4(),
             username: finalUsername,
@@ -1310,6 +1321,7 @@ app.post('/api/auth/google', async (req, res) => {
             avatar: picture || '',
             role: firstUserIsAdmin ? 'admin' : 'user',
             points: 0,
+            credits: initialCredits,
             history: {},
             flashcards: []
         };
@@ -1318,7 +1330,7 @@ app.post('/api/auth/google', async (req, res) => {
         users.push(newUser);
         writeUsers(users);
 
-        logAdminActivity('user_register_google', newUser, { title: `تۆماربوونی هەژماری نوێ لەڕێگەی گووگڵ: ${newUser.username}` }, { email: normEmail, username: newUser.username }, req);
+        logAdminActivity('user_register_google', newUser, { title: `تۆماربوونی هەژماری نوێ لەڕێگەی گووگڵ: ${newUser.username} (+${initialCredits} کرێدیت)` }, { email: normEmail, username: newUser.username, credits: initialCredits }, req);
 
         res.json({ success: true, token: newUser.token, user: sanitizeUser(newUser) });
     } catch (err) {
@@ -1632,6 +1644,8 @@ app.post('/api/auth/verify-otp', async (req, res) => {
             const isEmail = normTarget.includes('@');
             const firstUserIsAdmin = users.length === 0;
             const tempPass = crypto.randomBytes(8).toString('hex');
+            const sysSettings = readSystemSettings();
+            const initialCredits = Number(sysSettings.initialRegistrationCredits !== undefined ? sysSettings.initialRegistrationCredits : 75);
             
             user = {
                 id: uuidv4(),
@@ -1642,6 +1656,7 @@ app.post('/api/auth/verify-otp', async (req, res) => {
                 passwordHash: await bcrypt.hash(tempPass, 10),
                 role: firstUserIsAdmin ? 'admin' : 'user',
                 points: 0,
+                credits: initialCredits,
                 history: {},
                 flashcards: []
             };
@@ -1814,6 +1829,8 @@ app.post('/api/auth/register-otp-verify', async (req, res) => {
         pendingRegistrations.delete(normEmail);
         const users = readUsers();
         const firstUserIsAdmin = users.length === 0;
+        const sysSettings = readSystemSettings();
+        const initialCredits = Number(sysSettings.initialRegistrationCredits !== undefined ? sysSettings.initialRegistrationCredits : 75);
 
         const newUser = {
             id: uuidv4(),
@@ -1824,6 +1841,7 @@ app.post('/api/auth/register-otp-verify', async (req, res) => {
             passwordHash: await bcrypt.hash(record.password, 10),
             role: firstUserIsAdmin ? 'admin' : 'user',
             points: 0,
+            credits: initialCredits,
             history: {},
             flashcards: []
         };
@@ -1832,7 +1850,7 @@ app.post('/api/auth/register-otp-verify', async (req, res) => {
         users.push(newUser);
         writeUsers(users);
 
-        logAdminActivity('user_register', newUser, { title: `تۆماربوونی هەژماری نوێ: ${newUser.username}` }, { username: newUser.username, role: newUser.role, email: newUser.email }, req);
+        logAdminActivity('user_register', newUser, { title: `تۆماربوونی هەژماری نوێ: ${newUser.username} (+${initialCredits} کرێدیت)` }, { username: newUser.username, role: newUser.role, email: newUser.email, credits: initialCredits }, req);
 
         res.json({ success: true, token: newUser.token, user: sanitizeUser(newUser) });
     } catch (err) {
@@ -2636,6 +2654,78 @@ app.post('/api/admin/settings/dual-sub-quota', requireAuth, requireSuperAdmin, (
         res.json({ success: true, settings });
     } catch (e) {
         res.status(500).json({ error: 'Failed to update quota settings' });
+    }
+});
+
+// 3. Super Admin & Admin: Get all System Settings
+app.get('/api/admin/system-settings', requireAuth, requireAdmin, (req, res) => {
+    try {
+        const settings = readSystemSettings();
+        res.json({ success: true, settings });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to read settings: ' + err.message });
+    }
+});
+
+// 4. Super Admin: Update Welcome/Registration Credits Setting
+app.post('/api/admin/settings/initial-credits', requireAuth, requireSuperAdmin, (req, res) => {
+    try {
+        const { credits } = req.body;
+        if (credits === undefined || isNaN(parseInt(credits, 10))) {
+            return res.status(400).json({ error: 'بڕی کرێدیت دەبێت ژمارە بێت.' });
+        }
+
+        const newCreditAmount = Math.max(0, parseInt(credits, 10));
+        const settings = readSystemSettings();
+        const oldCredits = settings.initialRegistrationCredits !== undefined ? settings.initialRegistrationCredits : 75;
+
+        settings.initialRegistrationCredits = newCreditAmount;
+        settings.updatedAt = Date.now();
+        settings.updatedBy = { id: req.user.id, username: req.user.username };
+
+        writeSystemSettings(settings);
+
+        logAdminActivity('update_initial_credits', req.user, { title: `دیاریکردنی بڕی ${newCreditAmount} کرێدیتی دیاری بۆ بەکارهێنەرانی نوێ` }, {
+            oldCredits,
+            newCredits: newCreditAmount,
+            updatedBy: req.user.username
+        }, req);
+
+        res.json({
+            success: true,
+            initialRegistrationCredits: newCreditAmount,
+            settings,
+            message: `بڕی کرێدیتی دیاری بە سەرکەوتوویی کرا بە ${newCreditAmount} کرێدیت بۆ هەموو بەکارهێنەرێکی نوێ.`
+        });
+    } catch (err) {
+        console.error('Update initial credits error:', err);
+        res.status(500).json({ error: 'هەڵەیەک ڕووی دا: ' + err.message });
+    }
+});
+
+// 5. Super Admin: Generic update of system settings
+app.post('/api/admin/system-settings', requireAuth, requireSuperAdmin, (req, res) => {
+    try {
+        const current = readSystemSettings();
+        const { initialRegistrationCredits, dualSubTrialMinutes, dualSubResetHours, dualSubTrialActive, dualSubExpiredAction } = req.body;
+
+        const updated = {
+            ...current,
+            initialRegistrationCredits: initialRegistrationCredits !== undefined ? Math.max(0, parseInt(initialRegistrationCredits, 10) || 0) : (current.initialRegistrationCredits ?? 75),
+            dualSubTrialMinutes: dualSubTrialMinutes !== undefined ? parseInt(dualSubTrialMinutes, 10) : current.dualSubTrialMinutes,
+            dualSubResetHours: dualSubResetHours !== undefined ? parseInt(dualSubResetHours, 10) : current.dualSubResetHours,
+            dualSubTrialActive: dualSubTrialActive !== undefined ? Boolean(dualSubTrialActive) : current.dualSubTrialActive,
+            dualSubExpiredAction: dualSubExpiredAction !== undefined ? dualSubExpiredAction : current.dualSubExpiredAction,
+            updatedAt: Date.now(),
+            updatedBy: { id: req.user.id, username: req.user.username }
+        };
+
+        writeSystemSettings(updated);
+        logAdminActivity('settings_update', req.user, { title: `نوێکردنەوەی ڕێکخستنەکانی سیستەم` }, { newSettings: updated }, req);
+
+        res.json({ success: true, settings: updated, message: 'ڕێکخستنەکان بە سەرکەوتوویی پاشەکەوت کران.' });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to update settings: ' + err.message });
     }
 });
 

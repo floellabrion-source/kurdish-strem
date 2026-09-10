@@ -104,6 +104,11 @@ export default function AdminCredits() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [toastMessage, setToastMessage] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
 
+    // Initial Welcome Credits Setting (Super Admin)
+    const [initialRegistrationCredits, setInitialRegistrationCredits] = useState<number>(75);
+    const [initialCreditsInput, setInitialCreditsInput] = useState<string>('75');
+    const [savingInitialCredits, setSavingInitialCredits] = useState<boolean>(false);
+
     const [viewedRequests, setViewedRequests] = useState<string[]>(() => {
         try {
             const saved = localStorage.getItem('kurdish_stream_viewed_requests');
@@ -140,18 +145,52 @@ export default function AdminCredits() {
         setTimeout(() => setToastMessage(null), 4500);
     };
 
+    const handleSaveInitialCredits = async (amountToSave?: number) => {
+        const val = amountToSave !== undefined ? amountToSave : parseInt(initialCreditsInput, 10);
+        if (isNaN(val) || val < 0) {
+            showToast(lang === 'en' ? 'Please enter a valid credit number' : 'تکایە ژمارەیەکی دروست بنووسە', 'error');
+            return;
+        }
+
+        setSavingInitialCredits(true);
+        try {
+            const res = await axios.post('/api/admin/settings/initial-credits', { credits: val });
+            const savedVal = res.data?.initialRegistrationCredits ?? val;
+            setInitialRegistrationCredits(savedVal);
+            setInitialCreditsInput(String(savedVal));
+            showToast(
+                lang === 'en'
+                    ? `Saved! New users will now receive ${savedVal} welcome credits upon registration ✓`
+                    : `پاشەکەوت کرا! لەم کاتەوە هەر کەسێک خۆی تۆمار بکات ${savedVal} کرێدیت بە دیاری وەردەگرێت ✓`,
+                'success'
+            );
+        } catch (err: any) {
+            showToast(err?.response?.data?.error || (lang === 'en' ? 'Failed to update settings' : 'هەڵەیەک ڕووی دا لە پاشەکەوتکردن'), 'error');
+        } finally {
+            setSavingInitialCredits(false);
+        }
+    };
+
     const loadData = async () => {
         setLoading(true);
         try {
-            const [usersRes, requestsRes] = await Promise.allSettled([
+            const [usersRes, requestsRes, settingsRes] = await Promise.allSettled([
                 axios.get('/api/admin/users'),
-                axios.get('/api/admin/credit-requests')
+                axios.get('/api/admin/credit-requests'),
+                axios.get('/api/admin/system-settings')
             ]);
             if (usersRes.status === 'fulfilled' && Array.isArray(usersRes.value.data)) {
                 setUsers(usersRes.value.data);
             }
             if (requestsRes.status === 'fulfilled' && Array.isArray(requestsRes.value.data)) {
                 setRequests(requestsRes.value.data.sort((a: any, b: any) => (b.createdAt || 0) - (a.createdAt || 0)));
+            }
+            if (settingsRes.status === 'fulfilled' && settingsRes.value?.data?.settings) {
+                const s = settingsRes.value.data.settings;
+                if (s.initialRegistrationCredits !== undefined) {
+                    setInitialRegistrationCredits(s.initialRegistrationCredits);
+                    setInitialCreditsInput(String(s.initialRegistrationCredits));
+                }
             }
         } catch (error) {
             console.error('Failed to load credits admin data:', error);
@@ -280,6 +319,67 @@ export default function AdminCredits() {
             )}
 
             <div className="credits-header">
+                {isSuperAdmin && (
+                    <div className="welcome-credits-card">
+                        <div className="welcome-credits-info">
+                            <div className="welcome-credits-icon">
+                                <Sparkles size={24} color="#38bdf8" />
+                            </div>
+                            <div className="welcome-credits-texts">
+                                <h4>
+                                    {lang === 'en' ? '🎁 Welcome Registration Credits Setting' : '🎁 دیاریکردنی بڕی کرێدیتی دیاری بۆ بەکارهێنەری نوێ'}
+                                    <span className="current-badge">{initialRegistrationCredits} {lang === 'en' ? 'Credits' : 'کرێدیت'}</span>
+                                </h4>
+                                <p>
+                                    {lang === 'en' 
+                                        ? 'New users registering via email, phone, or Google will automatically receive this amount of free credits.' 
+                                        : 'هەر بەکارهێنەرێکی نوێ کە لەم ساتەوە خۆی تۆمار دەکات یان بە گووگڵ دێتە ژوورەوە، دەستبەجێ ئەم بڕە کرێدیتە بە دیاری وەردەگرێت.'}
+                                </p>
+                            </div>
+                        </div>
+                        <div className="welcome-credits-controls">
+                            <div className="quick-credit-chips">
+                                {[0, 25, 50, 75, 100, 150, 200].map(val => (
+                                    <button
+                                        key={val}
+                                        type="button"
+                                        className={`chip-btn ${parseInt(initialCreditsInput, 10) === val ? 'active' : ''}`}
+                                        onClick={() => {
+                                            setInitialCreditsInput(String(val));
+                                            handleSaveInitialCredits(val);
+                                        }}
+                                    >
+                                        {val === 0 ? (lang === 'en' ? '0 (Off)' : '٠ (ناچالاک)') : `${val}`}
+                                    </button>
+                                ))}
+                            </div>
+                            <div className="custom-credit-input-group">
+                                <input
+                                    type="number"
+                                    min="0"
+                                    max="10000"
+                                    value={initialCreditsInput}
+                                    onChange={e => setInitialCreditsInput(e.target.value)}
+                                    placeholder="75"
+                                />
+                                <button
+                                    type="button"
+                                    disabled={savingInitialCredits}
+                                    onClick={() => handleSaveInitialCredits()}
+                                    className="save-credits-btn"
+                                >
+                                    {savingInitialCredits ? (
+                                        <RefreshCw size={16} className="spinning" />
+                                    ) : (
+                                        <Check size={16} />
+                                    )}
+                                    {lang === 'en' ? 'Save' : 'پاشەکەوتکردن'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 <div className="credits-stats-cards">
                     <div className="stat-card">
                         <div className="stat-icon-wrapper blue">
