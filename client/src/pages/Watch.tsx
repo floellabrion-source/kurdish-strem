@@ -357,10 +357,14 @@ export default function Watch() {
         }
 
         const v = videoRef.current;
-        const currentTimeSnapshot = v ? v.currentTime : 0;
+        const currentTimeSnapshot = currentTime || (v ? v.currentTime : 0);
         
         // Save seek position for seamless transition
-        setStreamStartTime(currentTimeSnapshot);
+        if (levelId > 0) {
+            setStreamStartTime(currentTimeSnapshot);
+        } else {
+            setStreamStartTime(0);
+        }
         pendingSeekRef.current = currentTimeSnapshot;
 
         showGlobalToast(
@@ -386,6 +390,7 @@ export default function Watch() {
     }, [movie, episodeNum, seasonNum]);
 
     const isTranscodedStream = mkvUnsupported;
+    const isAnyTranscoding = isTranscodedStream || currentQuality > 0;
 
     const subtitleDuration = useMemo(() => {
         return Math.max(
@@ -399,33 +404,53 @@ export default function Watch() {
         if (!d) return 0;
         if (typeof d === 'number') return d;
         
+        // Handle "1h 45m" or "1 hr 45 min"
+        const hourMinMatch = d.match(/(?:(\d+)\s*(?:h|hr|hours?))?\s*(?:(\d+)\s*(?:m|min|mins?))/i);
+        if (hourMinMatch) {
+            const h = hourMinMatch[1] ? parseInt(hourMinMatch[1], 10) : 0;
+            const m = hourMinMatch[2] ? parseInt(hourMinMatch[2], 10) : 0;
+            return h * 3600 + m * 60;
+        }
+
         // Handle "136 min"
         const minMatch = d.match(/(\d+)\s*min/i);
         if (minMatch) return parseInt(minMatch[1], 10) * 60;
         
-        // Handle "02:16:00"
+        // Handle "02:16:00" or "01:45:00"
         const parts = d.split(':').map(Number);
-        if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
-        if (parts.length === 2) return parts[0] * 60 + parts[1];
+        if (parts.length === 3 && parts.every(p => !isNaN(p))) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+        if (parts.length === 2 && parts.every(p => !isNaN(p))) return parts[0] * 60 + parts[1];
         
         const num = Number(d);
         return isFinite(num) ? num : 0;
     };
 
     const effectiveDuration = useMemo(() => {
-        // 1. If the video element has loaded the REAL duration from the actual video file, use it!
-        if (isFinite(duration) && duration > 0) return duration;
-
-        // 2. Fallback to database duration if video metadata is still loading
         const episodeDur = activeEpisode ? parseDurationToSeconds(activeEpisode.duration) : 0;
         const movieDur = parseDurationToSeconds(movie?.duration);
-        const finalDur = episodeDur || movieDur || 0;
-        if (finalDur > 0) return finalDur;
+        const metadataDur = episodeDur || movieDur || 0;
+        const subDur = (subtitleDuration > 0 && isFinite(subtitleDuration)) ? subtitleDuration : 0;
+        const knownFullDuration = Math.max(metadataDur, subDur);
 
-        // 3. Fallback to subtitle duration
-        if (subtitleDuration > 0 && isFinite(subtitleDuration)) return subtitleDuration;
+        // When streaming on-the-fly transcoding (480p, 720p, etc.), the HTML5 video element's duration is only the partial piped buffer (e.g. 10s).
+        // Therefore, always prefer knownFullDuration from metadata / subtitles!
+        if (isAnyTranscoding) {
+            if (knownFullDuration > 0) return knownFullDuration;
+            if (isFinite(duration) && duration > 0) return duration;
+            return 0;
+        }
+
+        // For native direct streams:
+        if (isFinite(duration) && duration > 0) {
+            if (knownFullDuration > 0 && duration < (knownFullDuration * 0.5)) {
+                return knownFullDuration;
+            }
+            return duration;
+        }
+
+        if (knownFullDuration > 0) return knownFullDuration;
         return 0;
-    }, [duration, subtitleDuration, movie, activeEpisode]);
+    }, [duration, subtitleDuration, movie, activeEpisode, isAnyTranscoding]);
 
     const scheduleTranscodedSeek = useCallback((nextTime: number, delayMs: number) => {
         ignoreVideoErrorUntilRef.current = Date.now() + 4000;
@@ -435,7 +460,6 @@ export default function Watch() {
         if (seekTimeoutRef.current) clearTimeout(seekTimeoutRef.current);
 
         seekTimeoutRef.current = setTimeout(() => {
-            // تەنها ئەگەر بەکارهێنەر بەردەوام seek دەکات، نوێترین کات بەکاردبێت
             if (pendingSeekRef.current === nextTime) {
                 setStreamStartTime(nextTime);
                 pendingSeekRef.current = null;
@@ -451,7 +475,7 @@ export default function Watch() {
         ignoreVideoErrorUntilRef.current = Date.now() + 3000;
         lastVideoTimeRef.current = nextTime;
         
-        if (isTranscodedStream) {
+        if (isAnyTranscoding) {
             scheduleTranscodedSeek(nextTime, options?.delayMs ?? 500);
         } else {
             // Add a small debounce even for native MP4 to prevent net::ERR_ABORTED flood
@@ -466,7 +490,7 @@ export default function Watch() {
                 pendingSeekRef.current = null;
             }, options?.delayMs ?? 300);
         }
-    }, [effectiveDuration, isTranscodedStream, scheduleTranscodedSeek]);
+    }, [effectiveDuration, isAnyTranscoding, scheduleTranscodedSeek]);
     // --- End Video Logic ---
 
     // localStorage key for this content
@@ -1364,8 +1388,8 @@ CRITICAL RULES:
     };
 
     const skip = (s: number) => {
-        const baseTime = isTranscodedStream ? (pendingSeekRef.current ?? currentTime) : currentTime;
-        commitSeek(baseTime + s, { delayMs: isTranscodedStream ? 400 : 0 });
+        const baseTime = isAnyTranscoding ? (pendingSeekRef.current ?? currentTime) : currentTime;
+        commitSeek(baseTime + s, { delayMs: isAnyTranscoding ? 400 : 0 });
         setSkipIndicator(s > 0 ? 'forward' : 'backward');
         setTimeout(() => setSkipIndicator(null), 600);
     };
@@ -1500,7 +1524,7 @@ CRITICAL RULES:
         if (!v || !isFinite(v.currentTime) || isScrubbingRef.current || pendingSeekRef.current !== null) return;
         
         // If we are using a stream offset, the actual movie time is offset + video time
-        const currentT = streamStartTime + v.currentTime;
+        const currentT = isAnyTranscoding ? ((streamStartTime || 0) + v.currentTime) : v.currentTime;
         if (!isFinite(currentT)) return;
         
         const diff = currentT - lastVideoTimeRef.current;
@@ -1777,22 +1801,36 @@ CRITICAL RULES:
                     setVideoLoadError('');
                     ignoreVideoErrorUntilRef.current = 0;
                     const v = e.currentTarget;
-                    setDuration(v.duration);
+                    if (!isAnyTranscoding) {
+                        setDuration(v.duration);
+                    }
                     
                     // Detect true video resolution
                     const realHeight = v.videoHeight || 720;
-                    setAutoDetectedHeight(realHeight);
+                    if (currentQuality <= 0) {
+                        setAutoDetectedHeight(realHeight);
+                    }
                     
                     const dynamicLevels = [
-                        { id: -1, label: lang === 'en' ? `Auto (${realHeight}p)` : `خۆکار (Auto - ${realHeight}p)` },
-                        ...(realHeight >= 1000 ? [{ id: 1080, label: '1080p (Full HD)' }] : []),
-                        ...(realHeight >= 650 ? [{ id: 720, label: '720p (HD)' }] : []),
+                        { id: -1, label: lang === 'en' ? `Auto (${autoDetectedHeight || realHeight}p)` : `خۆکار (Auto - ${autoDetectedHeight || realHeight}p)` },
+                        ...((autoDetectedHeight || realHeight) >= 1000 ? [{ id: 1080, label: '1080p (Full HD)' }] : []),
+                        ...((autoDetectedHeight || realHeight) >= 650 ? [{ id: 720, label: '720p (HD)' }] : []),
                         { id: 480, label: '480p (SD)' },
                         { id: 360, label: lang === 'en' ? '360p (Data Saver)' : '360p (کەم بەکارهێنانی ئینتەرنێت)' }
                     ];
                     setQualityLevels(dynamicLevels);
 
-                    // If quality was switched or stream sought, resume smoothly at exact position
+                    // If stream is transcoded (on-the-fly quality scaling or MKV), video element starts at 0 (representing streamStartTime offset)
+                    if (isAnyTranscoding) {
+                        if (pendingSeekRef.current !== null && pendingSeekRef.current > 0) {
+                            pendingSeekRef.current = null;
+                        }
+                        setCurrentTime(streamStartTime);
+                        v.play().then(() => setIsPlaying(true)).catch(() => { });
+                        return;
+                    }
+
+                    // If native direct stream and pending seek exists
                     if (pendingSeekRef.current !== null && pendingSeekRef.current > 0) {
                         const targetTime = pendingSeekRef.current;
                         pendingSeekRef.current = null;
@@ -1802,8 +1840,8 @@ CRITICAL RULES:
                         return;
                     }
 
-                    // If we just sought in a transcoded stream, don't reset currentTime to 0
                     if (streamStartTime > 0) {
+                        v.currentTime = streamStartTime;
                         setCurrentTime(streamStartTime);
                         v.play().then(() => setIsPlaying(true)).catch(() => { });
                         return;
