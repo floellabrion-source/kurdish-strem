@@ -341,11 +341,11 @@ export default function Watch() {
     const hlsRef = useRef<Hls | null>(null);
     const [autoDetectedHeight, setAutoDetectedHeight] = useState<number | null>(null);
     const [qualityLevels, setQualityLevels] = useState<{ id: number; label: string }[]>([
-        { id: -1, label: 'خۆکار (Auto)' },
-        { id: 1080, label: '1080p (Full HD)' },
-        { id: 720, label: '720p (HD)' },
-        { id: 480, label: '480p (SD)' },
-        { id: 360, label: '360p (Data Saver)' }
+        { id: -1, label: 'Auto' },
+        { id: 1080, label: '1080p' },
+        { id: 720, label: '720p' },
+        { id: 480, label: '480p' },
+        { id: 360, label: '360p' }
     ]);
     const [currentQuality, setCurrentQuality] = useState<number>(-1);
 
@@ -369,8 +369,8 @@ export default function Watch() {
 
         showGlobalToast(
             levelId === -1 
-                ? (lang === 'en' ? 'Quality set to Auto' : 'کواڵێتی گۆڕدرا بۆ خۆکار (Auto)') 
-                : (lang === 'en' ? `Quality set to ${levelId}p` : `کواڵێتی گۆڕدرا بۆ ${levelId}p`),
+                ? 'Auto' 
+                : `${levelId}p`,
             'success'
         );
     };
@@ -1812,11 +1812,11 @@ CRITICAL RULES:
                     }
                     
                     const dynamicLevels = [
-                        { id: -1, label: lang === 'en' ? `Auto (${autoDetectedHeight || realHeight}p)` : `خۆکار (Auto - ${autoDetectedHeight || realHeight}p)` },
-                        ...((autoDetectedHeight || realHeight) >= 1000 ? [{ id: 1080, label: '1080p (Full HD)' }] : []),
-                        ...((autoDetectedHeight || realHeight) >= 650 ? [{ id: 720, label: '720p (HD)' }] : []),
-                        { id: 480, label: '480p (SD)' },
-                        { id: 360, label: lang === 'en' ? '360p (Data Saver)' : '360p (کەم بەکارهێنانی ئینتەرنێت)' }
+                        { id: -1, label: 'Auto' },
+                        ...((autoDetectedHeight || realHeight) >= 1000 ? [{ id: 1080, label: '1080p' }] : []),
+                        ...((autoDetectedHeight || realHeight) >= 650 ? [{ id: 720, label: '720p' }] : []),
+                        { id: 480, label: '480p' },
+                        { id: 360, label: '360p' }
                     ];
                     setQualityLevels(dynamicLevels);
 
@@ -2780,8 +2780,8 @@ CRITICAL RULES:
                             title={lang === 'en' ? 'Change Quality' : 'کوالیتی ڤیدیۆ'}
                         >
                             {currentQuality === -1 
-                                ? (autoDetectedHeight ? `Auto (${autoDetectedHeight}p)` : 'Auto') 
-                                : (qualityLevels.find(q => q.id === currentQuality)?.label.replace('خۆکار ', '').replace('(', '').replace(')', '') || 'Auto')}
+                                ? 'Auto' 
+                                : (qualityLevels.find(q => q.id === currentQuality)?.label || `${currentQuality}p`)}
                         </button>
 
                         <button 
@@ -2838,8 +2838,8 @@ CRITICAL RULES:
                                         <div className="menu-item-right">
                                             <span className="menu-item-value">
                                                 {currentQuality === -1 
-                                                    ? (autoDetectedHeight ? `Auto (${autoDetectedHeight}p)` : (lang === 'en' ? 'Auto' : 'خۆکار'))
-                                                    : (qualityLevels.find(q => q.id === currentQuality)?.label || 'Auto')}
+                                                    ? 'Auto'
+                                                    : (qualityLevels.find(q => q.id === currentQuality)?.label || `${currentQuality}p`)}
                                             </span>
                                             <ChevronLeft size={16} className="menu-item-arrow" />
                                         </div>
