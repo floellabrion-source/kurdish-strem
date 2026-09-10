@@ -366,13 +366,6 @@ export default function Watch() {
             setStreamStartTime(0);
         }
         pendingSeekRef.current = currentTimeSnapshot;
-
-        showGlobalToast(
-            levelId === -1 
-                ? 'Auto' 
-                : `${levelId}p`,
-            'success'
-        );
     };
 
     // --- Video Logic & Transcoding ---
