@@ -1359,24 +1359,34 @@ setInterval(() => {
 }, 2 * 60 * 1000);
 
 const sendOtpEmail = async (email, code, purpose) => {
-    if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+    const user = process.env.SMTP_USER;
+    const pass = (process.env.SMTP_PASS || '').replace(/\s+/g, '');
+    const host = process.env.SMTP_HOST;
+
+    if (user && pass) {
         try {
-            const transporter = nodemailer.createTransport({
-                host: process.env.SMTP_HOST,
-                port: parseInt(process.env.SMTP_PORT || '587'),
-                secure: process.env.SMTP_SECURE === 'true' || process.env.SMTP_PORT === '465',
-                auth: {
-                    user: process.env.SMTP_USER,
-                    pass: process.env.SMTP_PASS
+            const transportOptions = (host === 'smtp.gmail.com' || (!host && user.includes('@gmail.com')))
+                ? {
+                    service: 'gmail',
+                    auth: { user, pass },
+                    tls: { rejectUnauthorized: false }
                 }
-            });
+                : {
+                    host: host || 'smtp.gmail.com',
+                    port: parseInt(process.env.SMTP_PORT || '587'),
+                    secure: process.env.SMTP_SECURE === 'true' || process.env.SMTP_PORT === '465',
+                    auth: { user, pass },
+                    tls: { rejectUnauthorized: false }
+                };
+
+            const transporter = nodemailer.createTransport(transportOptions);
 
             const subject = purpose === 'reset' 
                 ? 'کۆدی گۆڕینی وشەی نهێنی - کوردیش ستریم' 
                 : 'کۆدی پشتڕاستکردنەوە - کوردیش ستریم';
 
             await transporter.sendMail({
-                from: process.env.SMTP_FROM || `"Kurdish Stream" <${process.env.SMTP_USER}>`,
+                from: process.env.SMTP_FROM || `"Kurdish Stream" <${user}>`,
                 to: email,
                 subject,
                 html: `
