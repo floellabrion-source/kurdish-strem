@@ -342,9 +342,10 @@ export default function Watch() {
     const [autoDetectedHeight, setAutoDetectedHeight] = useState<number | null>(null);
     const [qualityLevels, setQualityLevels] = useState<{ id: number; label: string }[]>([
         { id: -1, label: 'خۆکار (Auto)' },
-        { id: 1080, label: '1080p' },
-        { id: 720, label: '720p' },
-        { id: 480, label: '480p' }
+        { id: 1080, label: '1080p (Full HD)' },
+        { id: 720, label: '720p (HD)' },
+        { id: 480, label: '480p (SD)' },
+        { id: 360, label: '360p (Data Saver)' }
     ]);
     const [currentQuality, setCurrentQuality] = useState<number>(-1);
 
@@ -352,7 +353,22 @@ export default function Watch() {
         setCurrentQuality(levelId);
         if (hlsRef.current) {
             hlsRef.current.currentLevel = levelId;
+            return;
         }
+
+        const v = videoRef.current;
+        const currentTimeSnapshot = v ? v.currentTime : 0;
+        
+        // Save seek position for seamless transition
+        setStreamStartTime(currentTimeSnapshot);
+        pendingSeekRef.current = currentTimeSnapshot;
+
+        showGlobalToast(
+            levelId === -1 
+                ? (lang === 'en' ? 'Quality set to Auto' : 'کواڵێتی گۆڕدرا بۆ خۆکار (Auto)') 
+                : (lang === 'en' ? `Quality set to ${levelId}p` : `کواڵێتی گۆڕدرا بۆ ${levelId}p`),
+            'success'
+        );
     };
 
     // --- Video Logic & Transcoding ---
@@ -1161,6 +1177,18 @@ CRITICAL RULES:
         let url = '';
         let version = 0;
 
+        // If user explicitly chose a specific quality (1080, 720, 480, 360) and not Auto (-1)
+        if (currentQuality > 0) {
+            url = `/api/stream/${id}?quality=${currentQuality}`;
+            if (seasonNum > 0 && episodeNum > 0) {
+                url += `&s=${seasonNum}&e=${episodeNum}`;
+            }
+            if (startTime > 0) {
+                url += `&start=${startTime}`;
+            }
+            return url;
+        }
+
         if (episodeNum > 0) {
             const season = movie.seasons?.find(s => s.number === seasonNum);
             const episode = season?.episodes.find(e => e.number === episodeNum);
@@ -1751,6 +1779,29 @@ CRITICAL RULES:
                     const v = e.currentTarget;
                     setDuration(v.duration);
                     
+                    // Detect true video resolution
+                    const realHeight = v.videoHeight || 720;
+                    setAutoDetectedHeight(realHeight);
+                    
+                    const dynamicLevels = [
+                        { id: -1, label: lang === 'en' ? `Auto (${realHeight}p)` : `خۆکار (Auto - ${realHeight}p)` },
+                        ...(realHeight >= 1000 ? [{ id: 1080, label: '1080p (Full HD)' }] : []),
+                        ...(realHeight >= 650 ? [{ id: 720, label: '720p (HD)' }] : []),
+                        { id: 480, label: '480p (SD)' },
+                        { id: 360, label: lang === 'en' ? '360p (Data Saver)' : '360p (کەم بەکارهێنانی ئینتەرنێت)' }
+                    ];
+                    setQualityLevels(dynamicLevels);
+
+                    // If quality was switched or stream sought, resume smoothly at exact position
+                    if (pendingSeekRef.current !== null && pendingSeekRef.current > 0) {
+                        const targetTime = pendingSeekRef.current;
+                        pendingSeekRef.current = null;
+                        v.currentTime = targetTime;
+                        setCurrentTime(targetTime);
+                        v.play().then(() => setIsPlaying(true)).catch(() => { });
+                        return;
+                    }
+
                     // If we just sought in a transcoded stream, don't reset currentTime to 0
                     if (streamStartTime > 0) {
                         setCurrentTime(streamStartTime);

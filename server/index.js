@@ -3061,11 +3061,64 @@ app.get('/api/stream/:id', (req, res) => {
     const movies = readMovies();
     const movie = movies.find((m) => m.id === req.params.id);
     if (!movie) return res.status(404).json({ error: 'Not found' });
-    const { s, e, start: seekStart } = req.query;
+    const { s, e, start: seekStart, quality: reqQuality, q } = req.query;
     const source = resolveVideoSource(movie, s, e);
-    if (!source || source.mode !== 'local') return res.status(404).json({ error: 'Video not found on local disk' });
-    const { videoPath } = source;
+    if (!source) return res.status(404).json({ error: 'Video source not found' });
 
+    const qualityNum = parseInt(reqQuality || q, 10);
+    const ss = parseFloat(seekStart) || 0;
+
+    // Handle remote source (e.g. Cloudflare R2 or direct MP4 link)
+    if (source.mode === 'remote') {
+        // If a specific downscaled quality is requested (e.g. 720, 480, 360) and valid, transcode on-the-fly
+        if (qualityNum && [1080, 720, 480, 360].includes(qualityNum)) {
+            res.writeHead(200, {
+                'Content-Type': 'video/mp4',
+                'Cache-Control': 'no-store',
+                'X-Content-Duration': movie.duration || 0
+            });
+
+            const ffmpegArgs = [];
+            if (ss > 0) {
+                ffmpegArgs.push('-ss', ss.toFixed(3));
+            }
+            ffmpegArgs.push(
+                '-analyzeduration', '5M',
+                '-probesize', '5M',
+                '-i', source.videoUrl,
+                '-fflags', '+nobuffer+discardcorrupt',
+                '-flags', 'low_delay',
+                '-vf', `scale=-2:${qualityNum}`,
+                '-c:v', 'libx264',
+                '-preset', 'ultrafast',
+                '-tune', 'zerolatency',
+                '-crf', '26',
+                '-c:a', 'aac',
+                '-b:a', '128k',
+                '-movflags', 'frag_keyframe+empty_moov+faststart+default_base_moof',
+                '-avoid_negative_ts', 'make_zero',
+                '-f', 'mp4',
+                'pipe:1'
+            );
+
+            const clientId = `${req.ip || 'unknown'}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            killExistingFfmpeg(clientId);
+            const ffmpeg = spawn('ffmpeg', ffmpegArgs, { windowsHide: true });
+            registerFfmpegProcess(clientId, ffmpeg);
+            ffmpeg.stdout.pipe(res);
+            ffmpeg.stderr.on('data', () => {});
+            ffmpeg.on('error', () => { cleanupFfmpegProcess(clientId); if (!res.headersSent) res.status(500).end(); });
+            ffmpeg.on('close', () => { cleanupFfmpegProcess(clientId); if (!res.writableEnded) res.end(); });
+            req.on('close', () => { cleanupFfmpegProcess(clientId); if (!ffmpeg.killed) ffmpeg.kill('SIGKILL'); });
+            return;
+        }
+
+        // Direct remote stream / redirect
+        return res.redirect(source.videoUrl);
+    }
+
+    // Local file handling
+    const { videoPath } = source;
     if (!fs.existsSync(videoPath)) return res.status(404).json({ error: 'Video file missing on disk' });
 
     const stat = fs.statSync(videoPath);
@@ -3073,70 +3126,68 @@ app.get('/api/stream/:id', (req, res) => {
     const range = req.headers.range;
     const ext = path.extname(videoPath).toLowerCase();
     const contentType = videoMimeByExt[ext] || 'application/octet-stream';
-    const shouldTranscodeToMp4 = req.query.transcode === 'mp4' || ext === '.mkv';
+    const shouldTranscodeToMp4 = req.query.transcode === 'mp4' || ext === '.mkv' || (qualityNum && [1080, 720, 480, 360].includes(qualityNum));
     
-    // Seek start for transcoding
-    const ss = parseFloat(seekStart) || 0;
-
-    // Browsers often fail to play raw MKV streams. Fallback to on-the-fly MP4 transcoding.
+    // Browsers often fail to play raw MKV streams or require quality scaling. Transcode on-the-fly.
     if (shouldTranscodeToMp4) {
         res.writeHead(200, {
             'Content-Type': 'video/mp4',
             'Cache-Control': 'no-store',
-            'X-Content-Duration': movie.duration || 0 // Optional hint for some players
+            'X-Content-Duration': movie.duration || 0
         });
 
         const ffmpegArgs = [];
-
-        // -ss BEFORE -i = fast seek (input seeking) — لانیکەم 10x خێراتر لە output seeking
         if (ss > 0) {
             ffmpegArgs.push('-ss', ss.toFixed(3));
         }
 
         ffmpegArgs.push(
-            '-analyzeduration', '5M',   // کەمکرایەوە لە 100M — خێراتر دەستپێدەکات
-            '-probesize', '5M',          // کەمکرایەوە لە 100M
-            '-i', videoPath
+            '-analyzeduration', '5M',
+            '-probesize', '5M',
+            '-i', videoPath,
+            '-fflags', '+nobuffer+discardcorrupt',
+            '-flags', 'low_delay'
         );
 
+        if (qualityNum && [1080, 720, 480, 360].includes(qualityNum)) {
+            ffmpegArgs.push(
+                '-vf', `scale=-2:${qualityNum}`,
+                '-c:v', 'libx264',
+                '-preset', 'ultrafast',
+                '-tune', 'zerolatency',
+                '-crf', '26',
+                '-c:a', 'aac',
+                '-b:a', '128k'
+            );
+        } else {
+            ffmpegArgs.push(
+                '-c:v', 'copy',
+                '-c:a', 'copy'
+            );
+        }
+
         ffmpegArgs.push(
-            '-fflags', '+nobuffer+discardcorrupt',
-            '-flags', 'low_delay',
             '-movflags', 'frag_keyframe+empty_moov+faststart+default_base_moof',
             '-map', '0:v:0',
             '-map', '0:a:0?',
-            '-c:v', 'copy',
-            '-c:a', 'copy',
             '-avoid_negative_ts', 'make_zero',
             '-f', 'mp4',
             'pipe:1'
         );
 
-        // Generate unique client ID for process management
         const clientId = `${req.ip || 'unknown'}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        
-        // Kill any existing FFmpeg process for this client
         killExistingFfmpeg(clientId);
-
         const ffmpeg = spawn('ffmpeg', ffmpegArgs, { windowsHide: true });
-        
-        // Register this process for management
         registerFfmpegProcess(clientId, ffmpeg);
         
         ffmpeg.stdout.pipe(res);
-        ffmpeg.stderr.on('data', (chunk) => {
-            // Only log errors, not info messages
-            const msg = chunk.toString();
-            if (msg.includes('Error') || msg.includes('error') || msg.includes('failed')) {
-                console.error('[FFmpeg Error]', msg);
-            }
-        });
+        ffmpeg.stderr.on('data', () => {});
         ffmpeg.on('error', (err) => {
             console.error('[FFmpeg] Stream transcode failed:', err.message);
             cleanupFfmpegProcess(clientId);
             if (!res.headersSent) res.status(500).json({ error: 'Failed to transcode video' });
         });
-        ffmpeg.on('close', (code, signal) => {
+        ffmpeg.on('close', () => {
             cleanupFfmpegProcess(clientId);
             if (!res.writableEnded) res.end();
         });
