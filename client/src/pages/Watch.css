@@ -104,14 +104,26 @@
     pointer-events: none;
     width: 92%;
     max-width: 960px;
-    bottom: calc(var(--sub-pos, 0px) + 8px);
-    transition: bottom 0.25s cubic-bezier(0.16, 1, 0.3, 1), gap 0.2s ease;
+    bottom: calc(var(--sub-pos, 0px) + 16px);
+    transition: bottom 0.3s cubic-bezier(0.16, 1, 0.3, 1), gap 0.2s ease;
     box-sizing: border-box;
 }
 
 .subtitle-area.with-controls,
 .subtitle-overlay.with-controls {
-    bottom: calc(var(--sub-pos, 0px) + 64px);
+    bottom: calc(var(--sub-pos, 0px) + 115px);
+}
+
+@media (max-width: 768px) {
+    .subtitle-area,
+    .subtitle-overlay {
+        width: 96%;
+        bottom: calc(var(--sub-pos, 0px) + 14px);
+    }
+    .subtitle-area.with-controls,
+    .subtitle-overlay.with-controls {
+        bottom: calc(var(--sub-pos, 0px) + 125px);
+    }
 }
 
 .subtitle-text {
