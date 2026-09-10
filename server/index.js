@@ -1379,6 +1379,67 @@ const sendOtpTelegram = async (target, code, purpose) => {
 };
 
 const sendOtpEmail = async (email, code, purpose) => {
+    const subject = purpose === 'reset' 
+        ? 'کۆدی گۆڕینی وشەی نهێنی - کوردیش ستریم' 
+        : 'کۆدی پشتڕاستکردنەوە - کوردیش ستریم';
+
+    const html = `
+    <div dir="rtl" style="font-family: Tahoma, Arial, sans-serif; background: #0b0b14; color: #ffffff; padding: 32px; border-radius: 16px; max-width: 480px; margin: auto; border: 1px solid #2e2e48; text-align: center;">
+        <h2 style="color: #a855f7; margin-bottom: 20px; font-size: 24px;">کوردیش ستریم 🎬</h2>
+        <p style="font-size: 16px; color: #cbd5e1; margin-bottom: 12px;">سڵاو،</p>
+        <p style="font-size: 15px; color: #94a3b8; margin-bottom: 24px;">کۆدی تایبەتی پشتڕاستکردنەوەی تۆ:</p>
+        <div style="margin: 25px 0;">
+            <span style="display: inline-block; font-size: 36px; font-weight: 800; letter-spacing: 10px; color: #38bdf8; background: rgba(56, 189, 248, 0.1); border: 2px dashed #38bdf8; padding: 14px 28px; border-radius: 14px;">${code}</span>
+        </div>
+        <p style="font-size: 13px; color: #64748b; margin-top: 24px;">ئەم کۆدە بۆ ماوەی ٥ خولەک کار دەکات. تکایە ئەم کۆدە بە کەسی تر مەدە.</p>
+    </div>
+    `;
+
+    // 1. Resend API (Pure HTTPS - Works 100% on all VPS without SMTP blocks)
+    if (process.env.RESEND_API_KEY) {
+        try {
+            await axios.post('https://api.resend.com/emails', {
+                from: process.env.RESEND_FROM || 'Kurdish Stream <onboarding@resend.dev>',
+                to: [email],
+                subject,
+                html
+            }, {
+                headers: {
+                    Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                timeout: 8000
+            });
+            console.log(`[Resend Email] Successfully sent OTP to ${email}`);
+            return true;
+        } catch (resendErr) {
+            console.error('[Resend Error]', resendErr.response?.data || resendErr.message);
+        }
+    }
+
+    // 2. Brevo API (Pure HTTPS)
+    if (process.env.BREVO_API_KEY) {
+        try {
+            await axios.post('https://api.brevo.com/v3/smtp/email', {
+                sender: { name: 'Kurdish Stream', email: process.env.SMTP_USER || 'floellabrion@gmail.com' },
+                to: [{ email }],
+                subject,
+                htmlContent: html
+            }, {
+                headers: {
+                    'api-key': process.env.BREVO_API_KEY,
+                    'Content-Type': 'application/json'
+                },
+                timeout: 8000
+            });
+            console.log(`[Brevo Email] Successfully sent OTP to ${email}`);
+            return true;
+        } catch (brevoErr) {
+            console.error('[Brevo Error]', brevoErr.response?.data || brevoErr.message);
+        }
+    }
+
+    // 3. SMTP (Nodemailer fallback)
     const user = process.env.SMTP_USER;
     const pass = (process.env.SMTP_PASS || '').replace(/\s+/g, '');
     const host = process.env.SMTP_HOST;
@@ -1407,26 +1468,13 @@ const sendOtpEmail = async (email, code, purpose) => {
 
             const transporter = nodemailer.createTransport(transportOptions);
 
-            const subject = purpose === 'reset' 
-                ? 'کۆدی گۆڕینی وشەی نهێنی - کوردیش ستریم' 
-                : 'کۆدی پشتڕاستکردنەوە - کوردیش ستریم';
-
             await transporter.sendMail({
                 from: process.env.SMTP_FROM || `"Kurdish Stream" <${user}>`,
                 to: email,
                 subject,
-                html: `
-                <div dir="rtl" style="font-family: Tahoma, Arial, sans-serif; background: #0b0b14; color: #ffffff; padding: 32px; border-radius: 16px; max-width: 480px; margin: auto; border: 1px solid #2e2e48; text-align: center;">
-                    <h2 style="color: #a855f7; margin-bottom: 20px; font-size: 24px;">کوردیش ستریم 🎬</h2>
-                    <p style="font-size: 16px; color: #cbd5e1; margin-bottom: 12px;">سڵاو،</p>
-                    <p style="font-size: 15px; color: #94a3b8; margin-bottom: 24px;">کۆدی تایبەتی پشتڕاستکردنەوەی تۆ:</p>
-                    <div style="margin: 25px 0;">
-                        <span style="display: inline-block; font-size: 36px; font-weight: 800; letter-spacing: 10px; color: #38bdf8; background: rgba(56, 189, 248, 0.1); border: 2px dashed #38bdf8; padding: 14px 28px; border-radius: 14px;">${code}</span>
-                    </div>
-                    <p style="font-size: 13px; color: #64748b; margin-top: 24px;">ئەم کۆدە بۆ ماوەی ٥ خولەک کار دەکات. تکایە ئەم کۆدە بە کەسی تر مەدە.</p>
-                </div>
-                `
+                html
             });
+            console.log(`[SMTP Email] Successfully sent OTP to ${email}`);
             return true;
         } catch (mailErr) {
             console.error('[SMTP Mail Error]', mailErr.message || mailErr);
