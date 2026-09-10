@@ -1365,7 +1365,7 @@ const sendOtpTelegram = async (target, code, purpose) => {
     if (!token || !chatId) return false;
 
     try {
-        const text = `🔐 *کۆدی پشتڕاستکردنەوەی کست فیلم*\n\n🎯 بۆ: \`${target}\`\n🔢 کۆد: \`${code}\`\n📌 مەبەست: ${purpose === 'reset' ? 'گۆڕینی وشەی نهێنی' : 'تۆماربوون'}\n⏳ ماوەی کارکردن: ٥ خولەک`;
+        const text = `🔐 *کۆدی پشتڕاستکردنەوەی kstfilm*\n\n🎯 بۆ: \`${target}\`\n🔢 کۆد: \`${code}\`\n📌 مەبەست: ${purpose === 'reset' ? 'گۆڕینی وشەی نهێنی' : 'تۆماربوون'}\n⏳ ماوەی کارکردن: ٥ خولەک`;
         await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
             chat_id: chatId,
             text,
@@ -1380,12 +1380,12 @@ const sendOtpTelegram = async (target, code, purpose) => {
 
 const sendOtpEmail = async (email, code, purpose) => {
     const subject = purpose === 'reset' 
-        ? 'کۆدی گۆڕینی وشەی نهێنی - کست فیلم' 
-        : 'کۆدی پشتڕاستکردنەوە - کست فیلم';
+        ? 'کۆدی گۆڕینی وشەی نهێنی - kstfilm' 
+        : 'کۆدی پشتڕاستکردنەوە - kstfilm';
 
     const html = `
     <div dir="rtl" style="font-family: Tahoma, Arial, sans-serif; background: #0b0b14; color: #ffffff; padding: 32px; border-radius: 16px; max-width: 480px; margin: auto; border: 1px solid #2e2e48; text-align: center;">
-        <h2 style="color: #a855f7; margin-bottom: 20px; font-size: 24px;">کست فیلم 🎬</h2>
+        <h2 style="color: #a855f7; margin-bottom: 20px; font-size: 26px; font-weight: bold; letter-spacing: 1px;">kstfilm 🎬</h2>
         <p style="font-size: 16px; color: #cbd5e1; margin-bottom: 12px;">سڵاو،</p>
         <p style="font-size: 15px; color: #94a3b8; margin-bottom: 24px;">کۆدی تایبەتی پشتڕاستکردنەوەی تۆ:</p>
         <div style="margin: 25px 0;">
