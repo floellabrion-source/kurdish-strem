@@ -3120,8 +3120,101 @@ html[dir="ltr"] [data-theme='light'] .dual-srt-video-panel,
     box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
 }
 
-/* Mobile responsive for sensitive features */
+/* Mobile responsive for subtitle editor & header toolbar */
 @media (max-width: 768px) {
+    .dual-srt-modal-backdrop {
+        padding: 0;
+    }
+
+    .dual-srt-modal {
+        width: 100vw;
+        height: 100vh;
+        max-width: 100vw;
+        border-radius: 0;
+        border: none;
+    }
+
+    .dual-srt-header {
+        padding: 8px 10px;
+        gap: 8px;
+    }
+
+    .dual-srt-title-wrap {
+        max-width: 130px;
+        min-width: 0;
+    }
+
+    .dual-srt-badge {
+        display: none;
+    }
+
+    .dual-srt-title-wrap h2 {
+        font-size: 13px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .dual-srt-header-actions {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        gap: 5px !important;
+        align-items: center !important;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .dual-srt-header-actions::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Make all header action buttons icon-only */
+    .dual-srt-header-actions .btn-label-text {
+        display: none !important;
+    }
+
+    .dual-srt-header-actions .btn-dual-toolbar-toggle,
+    .dual-srt-header-actions .btn-dual-ai-translate,
+    .dual-srt-header-actions .btn-dual-toolbar-file,
+    .dual-srt-header-actions .btn-dual-save {
+        position: relative !important;
+        width: 36px !important;
+        height: 36px !important;
+        min-width: 36px !important;
+        padding: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border-radius: 9px !important;
+        flex-shrink: 0 !important;
+        font-size: 0 !important;
+    }
+
+    .dual-srt-header-actions .btn-dual-close {
+        width: 36px !important;
+        height: 36px !important;
+        min-width: 36px !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* Badge count on top corner of icon */
+    .dual-srt-header-actions .badge-count {
+        position: absolute !important;
+        top: -4px !important;
+        right: -4px !important;
+        font-size: 9px !important;
+        padding: 1px 4px !important;
+        min-width: 16px !important;
+        height: 16px !important;
+        line-height: 14px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    }
+
     .sensitive-modal-content {
         max-height: 92vh;
     }

@@ -1002,8 +1002,8 @@ Option 3: [Translation 3]`;
                             onClick={() => setShowVideoPanel(!showVideoPanel)}
                             title={showVideoPanel ? (lang === 'en' ? 'Hide video player' : 'شاردنەوەی شاشەی ڤیدیۆ') : (lang === 'en' ? 'Show video player' : 'پیشاندانی شاشەی ڤیدیۆ')}
                         >
-                            {showVideoPanel ? <EyeOff size={15} /> : <Eye size={15} />}
-                            <span>{showVideoPanel ? (lang === 'en' ? 'Hide Video' : 'شاردنەوەی ڤیدیۆ') : (lang === 'en' ? 'Show Video' : 'پیشاندانی ڤیدیۆ')}</span>
+                            {showVideoPanel ? <EyeOff size={16} /> : <Eye size={16} />}
+                            <span className="btn-label-text">{showVideoPanel ? (lang === 'en' ? 'Hide Video' : 'شاردنەوەی ڤیدیۆ') : (lang === 'en' ? 'Show Video' : 'پیشاندانی ڤیدیۆ')}</span>
                         </button>
 
                         {(() => {
@@ -1019,18 +1019,18 @@ Option 3: [Translation 3]`;
                                 >
                                     {isAllRunning ? (
                                         <>
-                                            <Pause size={15} />
-                                            <span>{lang === 'en' ? 'Pause' : 'ڕاگرتن'} ({translateAllProgress?.percent}%)</span>
+                                            <Pause size={16} />
+                                            <span className="btn-label-text">{lang === 'en' ? 'Pause' : 'ڕاگرتن'} ({translateAllProgress?.percent}%)</span>
                                         </>
                                     ) : isAllPaused ? (
                                         <>
-                                            <Play size={15} fill="#fbbf24" color="#fbbf24" />
-                                            <span>{lang === 'en' ? 'Resume' : 'دەستپێکردنەوە'} ({translateAllProgress?.percent}%)</span>
+                                            <Play size={16} fill="#fbbf24" color="#fbbf24" />
+                                            <span className="btn-label-text">{lang === 'en' ? 'Resume' : 'دەستپێکردنەوە'} ({translateAllProgress?.percent}%)</span>
                                         </>
                                     ) : (
                                         <>
-                                            <Sparkles size={15} />
-                                            <span>{lang === 'en' ? 'AI Translate All' : 'وەرگێڕانی هەمووی بە AI'}</span>
+                                            <Sparkles size={16} />
+                                            <span className="btn-label-text">{lang === 'en' ? 'AI Translate All' : 'وەرگێڕانی هەمووی بە AI'}</span>
                                         </>
                                     )}
                                 </button>
@@ -1041,10 +1041,10 @@ Option 3: [Translation 3]`;
                             className="btn-dual-toolbar-file"
                             style={{ background: 'rgba(56, 189, 248, 0.15)', borderColor: 'rgba(56, 189, 248, 0.4)', color: '#7dd3fc' }}
                             onClick={() => setShowDiffViewer(true)}
-                            title={lang === 'en' ? "View translation diff and revision history" : "بینینی جیاوازی وەرگێڕانەکان و مێژووی دەستکارییەکان"}
+                            title={lang === 'en' ? "View translation diff and revision history" : "مێژووی دەستکاری و گۆڕانکارییەکان (Diff History)"}
                         >
-                            <History size={14} />
-                            <span>{lang === 'en' ? 'Diff History 📜' : 'مێژووی دەستکاری 📜'}</span>
+                            <History size={16} />
+                            <span className="btn-label-text">{lang === 'en' ? 'Diff History 📜' : 'مێژووی دەستکاری 📜'}</span>
                         </button>
 
                         <button
@@ -1057,17 +1057,16 @@ Option 3: [Translation 3]`;
                             onClick={() => setShowQcModal(true)}
                             title={lang === 'en' ? "Run Subtitle Quality Control (QC)" : "پشکنینی کوالێتی و هەڵەکانی سەبتایتڵ (Subtitle QC)"}
                         >
-                            <ShieldCheck size={14} />
-                            <span>{lang === 'en' ? 'Quality Check (QC)' : 'پشکنینی کوالێتی (QC)'}</span>
+                            <ShieldCheck size={16} />
+                            <span className="btn-label-text">{lang === 'en' ? 'Quality Check (QC)' : 'پشکنینی کوالێتی (QC)'}</span>
                             {qcReport.totalIssues > 0 && (
-                                <span style={{
+                                <span className="badge-count" style={{
                                     fontSize: '10px',
                                     background: qcReport.criticalCount > 0 ? '#ef4444' : '#f59e0b',
                                     color: '#fff',
-                                    padding: '1px 6px',
+                                    padding: '1px 5px',
                                     borderRadius: '999px',
-                                    fontWeight: '900',
-                                    marginRight: '2px'
+                                    fontWeight: '900'
                                 }}>
                                     {qcReport.totalIssues}
                                 </span>
@@ -1084,17 +1083,16 @@ Option 3: [Translation 3]`;
                             onClick={() => setShowSensitiveModal(true)}
                             title={lang === 'en' ? "Manage Inappropriate / Sensitive Scenes (Family Mode)" : "بەڕێوەبردنی دیمەنە نەشیاوەکان (مۆدی خێزانی)"}
                         >
-                            <Shield size={14} color="#f87171" />
-                            <span>{lang === 'en' ? 'Sensitive Scenes' : 'دیمەنی نەشیاو 🛡️'}</span>
+                            <Shield size={16} color="#f87171" />
+                            <span className="btn-label-text">{lang === 'en' ? 'Sensitive Scenes' : 'دیمەنی نەشیاو 🛡️'}</span>
                             {sensitiveScenes.length > 0 && (
-                                <span style={{
+                                <span className="badge-count" style={{
                                     fontSize: '10px',
                                     background: '#ef4444',
                                     color: '#fff',
-                                    padding: '1px 6px',
+                                    padding: '1px 5px',
                                     borderRadius: '999px',
-                                    fontWeight: '900',
-                                    marginRight: '2px'
+                                    fontWeight: '900'
                                 }}>
                                     {sensitiveScenes.length}
                                 </span>
@@ -1105,10 +1103,10 @@ Option 3: [Translation 3]`;
                             className="btn-dual-toolbar-file"
                             style={{ background: 'rgba(16, 185, 129, 0.15)', borderColor: 'rgba(16, 185, 129, 0.4)', color: '#6ee7b7' }}
                             onClick={() => setShowGlossaryDrawer(true)}
-                            title={lang === 'en' ? "Open Team Glossary and Terminology Drawer" : "کردنەوەی فەرهەنگۆکی زاراوە و وشەکانی تیم"}
+                            title={lang === 'en' ? "Open Team Glossary and Terminology Drawer" : "فەرهەنگۆکی وشە و زاراوەکان"}
                         >
-                            <BookOpen size={14} />
-                            <span>{lang === 'en' ? 'Glossary 📖' : 'فەرهەنگۆک 📖'}</span>
+                            <BookOpen size={16} />
+                            <span className="btn-label-text">{lang === 'en' ? 'Glossary 📖' : 'فەرهەنگۆک 📖'}</span>
                         </button>
 
                         <button
@@ -1117,20 +1115,21 @@ Option 3: [Translation 3]`;
                             onClick={() => setShowNotesModal(true)}
                             title={lang === 'en' ? "Team Internal Production Notes" : "تێبینییە ناوخۆییەکانی تیم"}
                         >
-                            <MessageSquare size={14} />
-                            <span>{lang === 'en' ? 'Team Notes 💬' : 'تێبینییەکان 💬'}</span>
+                            <MessageSquare size={16} />
+                            <span className="btn-label-text">{lang === 'en' ? 'Team Notes 💬' : 'تێبینییەکان 💬'}</span>
                         </button>
 
                         <button
                             className="btn-dual-save"
                             disabled={saving || loading || (lockState?.locked && !lockState?.isSelf)}
                             onClick={handleSave}
+                            title={lang === 'en' ? 'Save subtitles' : 'پاشەکەوتکردن'}
                         >
                             {saving ? <Loader2 size={16} className="spinning" /> : <Save size={16} />}
-                            {lang === 'en' ? 'Save' : 'پاشەکەوتکردن'}
+                            <span className="btn-label-text">{lang === 'en' ? 'Save' : 'پاشەکەوتکردن'}</span>
                         </button>
 
-                        <button className="btn-dual-close" onClick={onClose}>
+                        <button className="btn-dual-close" onClick={onClose} title="داخستن">
                             <X size={20} />
                         </button>
                     </div>
