@@ -637,14 +637,58 @@ setTimeout(processInactivityPenalty, 10000);
 // Apply global rate limiting to protect all API endpoints from DDoS / scraping
 app.use('/api/', apiGlobalLimiter);
 
+// --- Country and Geo helper mapping ---
+const COUNTRY_MAP = {
+    'IQ': { name: 'عێراق', en: 'Iraq', flag: '🇮🇶' },
+    'DE': { name: 'ئەڵمانیا', en: 'Germany', flag: '🇩🇪' },
+    'SE': { name: 'سوید', en: 'Sweden', flag: '🇸🇪' },
+    'TR': { name: 'تورکیا', en: 'Turkey', flag: '🇹🇷' },
+    'US': { name: 'ئەمریکا', en: 'United States', flag: '🇺🇸' },
+    'GB': { name: 'بەریتانیا', en: 'United Kingdom', flag: '🇬🇧' },
+    'NL': { name: 'هۆڵەندا', en: 'Netherlands', flag: '🇳🇱' },
+    'FR': { name: 'فەرەنسا', en: 'France', flag: '🇫🇷' },
+    'IR': { name: 'ئێران', en: 'Iran', flag: '🇮🇷' },
+    'SY': { name: 'سوریا', en: 'Syria', flag: '🇸🇾' },
+    'NO': { name: 'نەرویژ', en: 'Norway', flag: '🇳🇴' },
+    'DK': { name: 'دانیمارک', en: 'Denmark', flag: '🇩🇰' },
+    'FI': { name: 'فینلەندا', en: 'Finland', flag: '🇫🇮' },
+    'CH': { name: 'سویسرا', en: 'Switzerland', flag: '🇨🇭' },
+    'AT': { name: 'نەمسا', en: 'Austria', flag: '🇦🇹' },
+    'BE': { name: 'بەلجیکا', en: 'Belgium', flag: '🇧🇪' },
+    'CA': { name: 'کەنەدا', en: 'Canada', flag: '🇨🇦' },
+    'AU': { name: 'ئوستورالیا', en: 'Australia', flag: '🇦🇺' },
+    'IT': { name: 'ئیتاڵیا', en: 'Italy', flag: '🇮🇹' },
+    'GR': { name: 'یۆنان', en: 'Greece', flag: '🇬🇷' },
+    'JO': { name: 'ئوردن', en: 'Jordan', flag: '🇯🇴' },
+    'LB': { name: 'لوبنان', en: 'Lebanon', flag: '🇱🇧' },
+    'AE': { name: 'ئیمارات', en: 'UAE', flag: '🇦🇪' },
+    'QA': { name: 'قەتەر', en: 'Qatar', flag: '🇶🇦' },
+    'KW': { name: 'کووەیت', en: 'Kuwait', flag: '🇰🇼' },
+    'SA': { name: 'عەرەبستانی سعودی', en: 'Saudi Arabia', flag: '🇸🇦' }
+};
+
+function getCountryInfo(code) {
+    if (!code) return { code: 'IQ', name: 'عێراق', en: 'Iraq', flag: '🇮🇶' };
+    const upper = String(code).toUpperCase().trim();
+    if (COUNTRY_MAP[upper]) {
+        return { code: upper, ...COUNTRY_MAP[upper] };
+    }
+    return { code: upper, name: upper, en: upper, flag: '🌍' };
+}
+
 // Analytics middleware
 app.use((req, res, next) => {
     try {
-        let ip = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || req.ip || '';
+        let ip = req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.socket?.remoteAddress || req.ip || '';
         if (typeof ip === 'string' && ip.includes(',')) ip = ip.split(',')[0].trim();
         const ua = req.headers['user-agent'] || '';
         const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
         
+        const rawCountry = req.headers['cf-ipcountry'] || 'IQ';
+        const countryInfo = getCountryInfo(rawCountry);
+        const rawCity = req.headers['cf-ipcity'] || '';
+        const city = rawCity ? decodeURIComponent(rawCity) : '';
+
         let isMobile = false;
         let isTablet = false;
         let os = 'Windows';
@@ -678,6 +722,10 @@ app.use((req, res, next) => {
         if (!existingVisit) {
             analytics.visits.push({ 
                 ip, 
+                countryCode: countryInfo.code,
+                countryName: countryInfo.name,
+                countryFlag: countryInfo.flag,
+                city,
                 device: deviceType, 
                 os, 
                 browser, 
@@ -3158,8 +3206,9 @@ function getLiveViewerCount(movieId) {
     const watchers = liveWatchers.get(movieId);
     if (!watchers) return 0;
     const now = Date.now();
-    const threshold = 25000; // 25 seconds ping threshold
-    for (const [clientId, lastPing] of watchers.entries()) {
+    const threshold = 30000; // 30 seconds threshold
+    for (const [clientId, data] of watchers.entries()) {
+        const lastPing = typeof data === 'object' ? data.lastPing : data;
         if (now - lastPing > threshold) {
             watchers.delete(clientId);
         }
@@ -3170,13 +3219,71 @@ function getLiveViewerCount(movieId) {
 // Endpoint: Heartbeat ping from an active watcher
 app.post('/api/movies/:id/heartbeat', (req, res) => {
     const movieId = req.params.id;
-    const clientId = req.body.clientId || req.ip || req.headers['x-forwarded-for'] || 'client_' + Math.random().toString(36).slice(2);
+    const clientId = req.body.clientId || req.headers['cf-connecting-ip'] || req.ip || req.headers['x-forwarded-for'] || ('client_' + Math.random().toString(36).slice(2));
     
+    // Extract IP and Geo
+    const rawIp = req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.ip || '';
+    const ip = String(rawIp).split(',')[0].trim();
+    const rawCountry = req.headers['cf-ipcountry'] || req.body.country || 'IQ';
+    const countryInfo = getCountryInfo(rawCountry);
+    const rawCity = req.headers['cf-ipcity'] || req.body.city || '';
+    const city = rawCity ? decodeURIComponent(rawCity) : '';
+
+    const ua = req.headers['user-agent'] || '';
+    let isMobile = false;
+    let isTablet = false;
+    let os = 'Windows';
+    let browser = 'Chrome';
+
+    if (/ipad|tablet|(android(?!.*mobile))/i.test(ua)) {
+        isTablet = true;
+        os = /ipad/i.test(ua) ? 'iPadOS' : 'Android Tablet';
+    } else if (/iphone|mobile|ipod|android/i.test(ua)) {
+        isMobile = true;
+        if (/iphone/i.test(ua)) os = 'iPhone';
+        else if (/android/i.test(ua)) os = 'Android';
+    } else {
+        if (/windows/i.test(ua)) os = 'Windows PC';
+        else if (/macintosh|mac os x/i.test(ua)) os = 'Mac';
+        else if (/linux/i.test(ua)) os = 'Linux';
+    }
+
+    if (/edg\//i.test(ua)) browser = 'Edge';
+    else if (/chrome|crios/i.test(ua)) browser = 'Chrome';
+    else if (/firefox|fxios/i.test(ua)) browser = 'Firefox';
+    else if (/safari/i.test(ua)) browser = 'Safari';
+    else if (/opera|opr/i.test(ua)) browser = 'Opera';
+
+    const deviceType = req.body.device || (isTablet ? 'tablet' : (isMobile ? 'mobile' : 'desktop'));
+    const deviceLabel = req.body.deviceName || os;
+
     if (!liveWatchers.has(movieId)) {
         liveWatchers.set(movieId, new Map());
     }
     const watchers = liveWatchers.get(movieId);
-    watchers.set(clientId, Date.now());
+    const prev = watchers.get(clientId) || {};
+
+    const username = req.body.username || (req.user ? req.user.username : '👤 میوان (Guest)');
+    const isGuest = !req.user && (!req.body.username || req.body.username.includes('میوان') || req.body.username.includes('Guest'));
+
+    watchers.set(clientId, {
+        clientId,
+        movieId,
+        ip,
+        countryCode: countryInfo.code,
+        countryName: countryInfo.name,
+        countryFlag: countryInfo.flag,
+        city: city,
+        device: deviceType,
+        deviceLabel: deviceLabel,
+        os: os,
+        browser: browser,
+        username: username,
+        isGuest: isGuest,
+        videoTime: req.body.videoTime || prev.videoTime || '00:00',
+        startedAt: prev.startedAt || Date.now(),
+        lastPing: Date.now()
+    });
     
     const count = getLiveViewerCount(movieId);
     res.json({ success: true, liveViewers: count });
@@ -3185,7 +3292,7 @@ app.post('/api/movies/:id/heartbeat', (req, res) => {
 // Endpoint: Watcher left the movie
 app.post('/api/movies/:id/leave', (req, res) => {
     const movieId = req.params.id;
-    const clientId = req.body.clientId || req.ip || req.headers['x-forwarded-for'] || 'client';
+    const clientId = req.body.clientId || req.headers['cf-connecting-ip'] || req.ip || req.headers['x-forwarded-for'] || 'client';
     if (liveWatchers.has(movieId)) {
         liveWatchers.get(movieId).delete(clientId);
     }
@@ -3197,9 +3304,10 @@ app.post('/api/movies/:id/leave', (req, res) => {
 app.get('/api/movies-live-viewers', (req, res) => {
     const result = {};
     const now = Date.now();
-    const threshold = 25000;
+    const threshold = 30000;
     for (const [movieId, watchers] of liveWatchers.entries()) {
-        for (const [clientId, lastPing] of watchers.entries()) {
+        for (const [clientId, data] of watchers.entries()) {
+            const lastPing = typeof data === 'object' ? data.lastPing : data;
             if (now - lastPing > threshold) {
                 watchers.delete(clientId);
             }
@@ -5766,28 +5874,95 @@ app.get('/api/admin/analytics', requireAuth, requireAdmin, (req, res) => {
             allTime: getTopWatchedForPeriod(() => true, 1.0)
         };
 
-        // Live Viewers Active Summary
+        // Detailed Live Viewers & Location Breakdown
+        const detailedLiveViewers = [];
         const activeList = [];
         let totalLiveCount = 0;
+        const nowMs = Date.now();
+        const threshold = 30000;
+
         if (typeof liveWatchers !== 'undefined' && liveWatchers && liveWatchers.entries) {
             for (const [mId, watchers] of liveWatchers.entries()) {
-                const count = typeof getLiveViewerCount === 'function' ? getLiveViewerCount(mId) : 0;
-                if (count > 0) {
-                    totalLiveCount += count;
-                    const m = movies.find(x => x.id === mId);
-                    if (m) {
-                        activeList.push({
-                            id: m.id,
-                            title: m.title,
-                            type: m.type || 'movie',
-                            posterUrl: m.posterCloudUrl || m.posterUrl || '',
-                            activeCount: count
-                        });
+                const m = movies.find(x => x.id === mId);
+                let countForMovie = 0;
+                for (const [clientId, data] of watchers.entries()) {
+                    const lastPing = typeof data === 'object' ? data.lastPing : data;
+                    if (nowMs - lastPing > threshold) {
+                        watchers.delete(clientId);
+                        continue;
                     }
+                    countForMovie++;
+                    totalLiveCount++;
+                    
+                    const watcherObj = typeof data === 'object' ? data : { clientId, lastPing };
+                    const durationSec = Math.max(0, Math.floor((nowMs - (watcherObj.startedAt || lastPing)) / 1000));
+                    const durationStr = durationSec < 60 ? `${durationSec} چرکە` : `${Math.floor(durationSec / 60)} خولەک`;
+
+                    detailedLiveViewers.push({
+                        id: clientId,
+                        movieId: mId,
+                        movieTitle: m ? m.title : 'فیلم / زنجیرە',
+                        movieType: m ? (m.type || 'movie') : 'movie',
+                        posterUrl: m ? (m.posterCloudUrl || m.posterUrl || '') : '',
+                        username: watcherObj.username || '👤 میوان (Guest)',
+                        isGuest: watcherObj.isGuest !== false,
+                        countryCode: watcherObj.countryCode || 'IQ',
+                        countryName: watcherObj.countryName || 'عێراق',
+                        countryFlag: watcherObj.countryFlag || '🇮🇶',
+                        city: watcherObj.city || '',
+                        device: watcherObj.device || 'mobile',
+                        deviceLabel: watcherObj.deviceLabel || watcherObj.os || 'مۆبایل',
+                        browser: watcherObj.browser || 'Chrome',
+                        videoTime: watcherObj.videoTime || '00:00',
+                        duration: durationStr,
+                        lastPing: watcherObj.lastPing
+                    });
+                }
+
+                if (countForMovie > 0 && m) {
+                    activeList.push({
+                        id: m.id,
+                        title: m.title,
+                        type: m.type || 'movie',
+                        posterUrl: m.posterCloudUrl || m.posterUrl || '',
+                        activeCount: countForMovie
+                    });
                 }
             }
         }
         activeList.sort((a, b) => b.activeCount - a.activeCount);
+        detailedLiveViewers.sort((a, b) => b.lastPing - a.lastPing);
+
+        // Location & Geography Distribution
+        const countryMap = {};
+        visits.forEach(v => {
+            if (!v) return;
+            const cCode = (v.countryCode || 'IQ').toUpperCase();
+            if (!countryMap[cCode]) {
+                const cInfo = getCountryInfo(cCode);
+                countryMap[cCode] = {
+                    code: cCode,
+                    name: cInfo.name,
+                    en: cInfo.en,
+                    flag: cInfo.flag,
+                    count: 0,
+                    cities: {}
+                };
+            }
+            countryMap[cCode].count++;
+            if (v.city) {
+                countryMap[cCode].cities[v.city] = (countryMap[cCode].cities[v.city] || 0) + 1;
+            }
+        });
+
+        const totalVisitGeo = Object.values(countryMap).reduce((sum, x) => sum + x.count, 0) || 1;
+        const locationStats = Object.values(countryMap)
+            .sort((a, b) => b.count - a.count)
+            .map(c => ({
+                ...c,
+                percentage: Math.round((c.count / totalVisitGeo) * 1000) / 10,
+                topCities: Object.entries(c.cities).sort((a, b) => b[1] - a[1]).slice(0, 3).map(x => x[0])
+            }));
 
         // Genre Popularity Distribution
         const genreMap = {};
@@ -5809,8 +5984,10 @@ app.get('/api/admin/analytics', requireAuth, requireAdmin, (req, res) => {
             totalMovies: movies.length,
             liveNow: {
                 totalLive: totalLiveCount,
-                watchingList: activeList
+                watchingList: activeList,
+                detailedViewers: detailedLiveViewers
             },
+            locationStats: locationStats,
             visitors: {
                 daily: visits.filter(v => v && v.date === todayStr).length,
                 weekly: visits.filter(v => v && v.date && new Date(v.date) >= startOfWeek).length,

@@ -1261,13 +1261,40 @@ CRITICAL RULES:
         const clientId = sessionStorage.getItem('stream_client_id') || ('client_' + Math.random().toString(36).slice(2));
         sessionStorage.setItem('stream_client_id', clientId);
 
+        const sendHeartbeat = () => {
+            let username = '👤 میوان (Guest)';
+            try {
+                const u = JSON.parse(localStorage.getItem('kurdish_stream_user') || '{}');
+                if (u && u.username) username = u.username;
+            } catch {}
+
+            const isMobile = /iphone|ipad|ipod|android/i.test(navigator.userAgent);
+            const isTablet = /ipad|tablet/i.test(navigator.userAgent);
+            const device = isTablet ? 'tablet' : isMobile ? 'mobile' : 'desktop';
+            const deviceName = /iphone/i.test(navigator.userAgent) ? 'iPhone' : /ipad/i.test(navigator.userAgent) ? 'iPad' : /android/i.test(navigator.userAgent) ? 'Android' : /mac/i.test(navigator.userAgent) ? 'Mac' : 'Windows PC';
+
+            let videoTime = '00:00';
+            if (videoRef.current) {
+                const cur = Math.floor(videoRef.current.currentTime || 0);
+                const m = Math.floor(cur / 60);
+                const s = cur % 60;
+                videoTime = `${m}:${s < 10 ? '0' : ''}${s}`;
+            }
+
+            axios.post(`/api/movies/${id}/heartbeat`, {
+                clientId,
+                username,
+                device,
+                deviceName,
+                videoTime
+            }).catch(() => {});
+        };
+
         // Initial heartbeat ping
-        axios.post(`/api/movies/${id}/heartbeat`, { clientId }).catch(() => {});
+        sendHeartbeat();
 
         // Ping every 15s while active
-        const heartbeatTimer = setInterval(() => {
-            axios.post(`/api/movies/${id}/heartbeat`, { clientId }).catch(() => {});
-        }, 15000);
+        const heartbeatTimer = setInterval(sendHeartbeat, 15000);
 
         const handleLeave = () => {
             axios.post(`/api/movies/${id}/leave`, { clientId }).catch(() => {});
