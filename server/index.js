@@ -1411,7 +1411,7 @@ const sendOtpEmail = async (email, code, purpose) => {
     if (process.env.RESEND_API_KEY) {
         try {
             await axios.post('https://api.resend.com/emails', {
-                from: process.env.RESEND_FROM || 'kstfilm <onboarding@resend.dev>',
+                from: process.env.RESEND_FROM || 'kstfilm <noreply@kstfilm.com>',
                 to: [email],
                 subject,
                 html
