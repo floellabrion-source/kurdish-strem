@@ -839,10 +839,11 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 6px;
     color: #e2e8f0;
-    font-family: monospace;
+    font-family: monospace, sans-serif;
     font-size: 11px;
-    padding: 0 6px;
+    padding: 0 4px;
     text-align: center;
+    direction: ltr;
 }
 
 .time-input:focus {
@@ -1360,26 +1361,45 @@
     .time-col-wrap {
         display: grid !important;
         grid-template-columns: 1fr 1fr !important;
-        gap: 8px !important;
+        gap: 6px !important;
         width: 100% !important;
     }
 
     .time-input-group {
         display: flex !important;
         align-items: center !important;
-        gap: 6px !important;
-        background: rgba(0, 0, 0, 0.35) !important;
-        padding: 4px 8px !important;
+        gap: 4px !important;
+        background: rgba(0, 0, 0, 0.4) !important;
+        padding: 3px 6px !important;
         border-radius: 8px !important;
         border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        min-width: 0 !important;
+        overflow: hidden !important;
+    }
+
+    .time-marker-tag {
+        font-size: 9px !important;
+        font-weight: 800 !important;
+        padding: 2px 4px !important;
+        border-radius: 4px !important;
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
     }
 
     .time-input {
         flex: 1 !important;
-        height: 32px !important;
-        font-size: 12px !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        height: 28px !important;
+        font-size: 10.5px !important;
+        font-family: monospace, sans-serif !important;
         background: transparent !important;
         border: none !important;
+        direction: ltr !important;
+        text-align: center !important;
+        padding: 0 !important;
+        letter-spacing: -0.3px !important;
+        color: #f1f5f9 !important;
     }
 
     /* Search Toolbar */

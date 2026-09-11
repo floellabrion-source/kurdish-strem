@@ -1572,6 +1572,7 @@ Option 3: [Translation 3]`;
                                                         value={line.startTime}
                                                         onChange={e => handleLineChange(line.id, 'startTime', e.target.value)}
                                                         className="time-input"
+                                                        dir="ltr"
                                                         title={lang === 'en' ? "Start timestamp (HH:MM:SS,MS)" : "کاتی دەستپێک (HH:MM:SS,MS)"}
                                                     />
                                                     {showVideoPanel && (
@@ -1594,6 +1595,7 @@ Option 3: [Translation 3]`;
                                                         value={line.endTime}
                                                         onChange={e => handleLineChange(line.id, 'endTime', e.target.value)}
                                                         className="time-input"
+                                                        dir="ltr"
                                                         title={lang === 'en' ? "End timestamp (HH:MM:SS,MS)" : "کاتی کۆتایی (HH:MM:SS,MS)"}
                                                     />
                                                     {showVideoPanel && (
