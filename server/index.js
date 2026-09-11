@@ -2021,8 +2021,11 @@ app.post('/api/user/toggle-list', requireAuth, (req, res) => {
     res.json({ success: true, list: user[listName], user: sanitizeUser(user) });
 });
 
-const AVATARS_DIR = path.join(__dirname, 'uploads', 'avatars');
+const UPLOADS_DIR = path.join(__dirname, 'uploads');
+const AVATARS_DIR = path.join(UPLOADS_DIR, 'avatars');
+if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 if (!fs.existsSync(AVATARS_DIR)) fs.mkdirSync(AVATARS_DIR, { recursive: true });
+app.use('/uploads', express.static(UPLOADS_DIR));
 app.use('/uploads/avatars', express.static(AVATARS_DIR));
 
 const avatarStorage = multer.diskStorage({

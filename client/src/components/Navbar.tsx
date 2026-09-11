@@ -135,7 +135,17 @@ export default function Navbar() {
                     {user ? (
                         <Link to="/profile" className="m-avatar">
                             {(user.avatar || user.avatarUrl) ? (
-                                <img src={user.avatar || user.avatarUrl} alt="avatar" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                                <img 
+                                    src={user.avatar || user.avatarUrl} 
+                                    alt="avatar" 
+                                    style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} 
+                                    onError={(e) => {
+                                        (e.currentTarget as HTMLElement).style.display = 'none';
+                                        if (e.currentTarget.parentElement) {
+                                            e.currentTarget.parentElement.innerText = (user.username || 'U').charAt(0).toUpperCase();
+                                        }
+                                    }}
+                                />
                             ) : (
                                 <User size={16} />
                             )}
@@ -487,7 +497,17 @@ export default function Navbar() {
                             <Link to="/profile" className="user-profile-link" title={lang === 'en' ? 'View Profile' : 'بینینی پڕۆفایل'}>
                                 <div className="user-avatar">
                                     {(user.avatar || user.avatarUrl) ? (
-                                        <img src={user.avatar || user.avatarUrl} alt="avatar" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                                        <img 
+                                            src={user.avatar || user.avatarUrl} 
+                                            alt="avatar" 
+                                            style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} 
+                                            onError={(e) => {
+                                                (e.currentTarget as HTMLElement).style.display = 'none';
+                                                if (e.currentTarget.parentElement) {
+                                                    e.currentTarget.parentElement.innerText = (user.username || 'U').charAt(0).toUpperCase();
+                                                }
+                                            }}
+                                        />
                                     ) : (
                                         <User size={18} />
                                     )}
