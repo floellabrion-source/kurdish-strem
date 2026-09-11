@@ -201,7 +201,7 @@ export default function DualSrtVideoEditor({
 
     const { user } = useAuth();
     const { lang } = useLanguage();
-    const [mobileTab, setMobileTab] = useState<'editor' | 'video' | 'shift'>('editor');
+    const [mobileTab, setMobileTab] = useState<'editor' | 'video'>('editor');
     const [showDiffViewer, setShowDiffViewer] = useState<boolean>(false);
     const [showNotesModal, setShowNotesModal] = useState<boolean>(false);
     const [lockState, setLockState] = useState<{
@@ -1228,13 +1228,6 @@ Option 3: [Translation 3]`;
                         <Video size={15} />
                         <span>شاشەی ڤیدیۆ</span>
                     </button>
-                    <button
-                        className={`mobile-tab-btn ${mobileTab === 'shift' ? 'active' : ''}`}
-                        onClick={() => setMobileTab('shift')}
-                    >
-                        <Sliders size={15} />
-                        <span>ڕێکخستنی کات</span>
-                    </button>
                 </div>
 
                 {/* Body Content */}
@@ -1426,7 +1419,7 @@ Option 3: [Translation 3]`;
                         </div>
 
                         {/* Collapsible Time Shift Control Bar */}
-                        {(showShiftToolbar || mobileTab === 'shift') && (
+                        {showShiftToolbar && (
                             <div className="dual-srt-shift-toolbar">
                                 <div className="shift-target-badge">
                                     <span className="shift-target-label">{lang === 'en' ? 'Selected Line:' : 'دێڕی دیاریکراو:'}</span>

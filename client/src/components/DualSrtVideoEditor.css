@@ -3215,6 +3215,41 @@ html[dir="ltr"] [data-theme='light'] .dual-srt-video-panel,
         border: 1px solid rgba(255, 255, 255, 0.3) !important;
     }
 
+    /* Mobile 2-Tab Navigation (Subtitles vs Video) */
+    .dual-srt-mobile-nav-tabs {
+        display: flex !important;
+        align-items: center;
+        background: rgba(13, 14, 21, 0.98);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 6px 10px;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+
+    .mobile-tab-btn {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 8px 12px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #94a3b8;
+        border-radius: 9px;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .mobile-tab-btn.active {
+        background: rgba(139, 92, 246, 0.2);
+        border-color: rgba(139, 92, 246, 0.5);
+        color: #c4b5fd;
+        box-shadow: 0 0 12px rgba(139, 92, 246, 0.25);
+    }
+
     .sensitive-modal-content {
         max-height: 92vh;
     }
