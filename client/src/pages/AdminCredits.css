@@ -2041,3 +2041,64 @@
     opacity: 0.6;
     cursor: not-allowed;
 }
+
+/* ══════════ LIGHT THEME FOR WELCOME CREDITS CARD ══════════ */
+[data-theme='light'] .welcome-credits-card {
+    background: #ffffff !important;
+    border: 1.5px solid #e2e8f0 !important;
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 2px 6px -1px rgba(0, 0, 0, 0.02) !important;
+}
+
+[data-theme='light'] .welcome-credits-card:hover {
+    border-color: #8b5cf6 !important;
+    box-shadow: 0 8px 25px -4px rgba(139, 92, 246, 0.15) !important;
+}
+
+[data-theme='light'] .welcome-credits-icon {
+    background: rgba(14, 165, 233, 0.1) !important;
+    border-color: rgba(14, 165, 233, 0.25) !important;
+}
+
+[data-theme='light'] .welcome-credits-texts h4 {
+    color: #0f172a !important;
+}
+
+[data-theme='light'] .welcome-credits-texts p {
+    color: #64748b !important;
+}
+
+[data-theme='light'] .welcome-credits-controls {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+[data-theme='light'] .quick-credit-chips .chip-btn {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #334155 !important;
+}
+
+[data-theme='light'] .quick-credit-chips .chip-btn:hover {
+    background: rgba(139, 92, 246, 0.08) !important;
+    border-color: #8b5cf6 !important;
+    color: #7c3aed !important;
+}
+
+[data-theme='light'] .quick-credit-chips .chip-btn.active {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed) !important;
+    border-color: #7c3aed !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.25) !important;
+}
+
+[data-theme='light'] .custom-credit-input-group input {
+    background: #ffffff !important;
+    border: 1.5px solid #cbd5e1 !important;
+    color: #0f172a !important;
+}
+
+[data-theme='light'] .custom-credit-input-group input:focus {
+    border-color: #0ea5e9 !important;
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15) !important;
+}
+
