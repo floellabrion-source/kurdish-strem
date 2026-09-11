@@ -1044,27 +1044,106 @@
 @media (max-width: 1024px) {
     .primary-stats-grid {
         grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
     }
 
     .analytics-dual-row {
         grid-template-columns: 1fr;
+        gap: 16px;
     }
 }
 
-@media (max-width: 640px) {
-    .primary-stats-grid {
-        grid-template-columns: 1fr;
+@media (max-width: 768px) {
+    .analytics-container {
+        padding: 16px 12px 50px 12px;
     }
 
-    .live-viewers-cards-grid {
-        grid-template-columns: 1fr;
+    .analytics-top-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 14px;
+    }
+
+    .top-bar-actions {
+        width: 100%;
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+
+    .analytics-section-box {
+        padding: 16px;
+        border-radius: 16px;
+        margin-bottom: 20px;
+    }
+
+    .section-box-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .header-badge-live {
+        align-self: flex-start;
     }
 
     .period-tabs-wrap {
         width: 100%;
         overflow-x: auto;
+        padding: 4px;
+        scrollbar-width: none;
+    }
+
+    .period-tabs-wrap::-webkit-scrollbar {
+        display: none;
+    }
+
+    .period-tab-btn {
+        white-space: nowrap;
+        padding: 6px 12px;
+        font-size: 11.5px;
     }
 }
+
+@media (max-width: 580px) {
+    .primary-stats-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .live-viewers-cards-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .locations-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .top-watched-row {
+        padding: 10px 12px;
+        gap: 10px;
+    }
+
+    .tw-rank-box {
+        font-size: 15px;
+        min-width: 22px;
+    }
+
+    .tw-poster-img {
+        width: 34px;
+        height: 48px;
+    }
+
+    .tw-title {
+        font-size: 12.5px;
+    }
+
+    .tw-views-num {
+        font-size: 13px;
+    }
+}
+
 
 /* ══════════ LIGHT THEME FOR ADMIN ANALYTICS ══════════ */
 [data-theme='light'] .analytics-container {
