@@ -3250,6 +3250,72 @@ html[dir="ltr"] [data-theme='light'] .dual-srt-video-panel,
         box-shadow: 0 0 12px rgba(139, 92, 246, 0.25);
     }
 
+    /* Mobile Search Toolbar: Full Width Search + Clean Second Row of Tools */
+    .dual-srt-search-toolbar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        padding: 8px 10px !important;
+        gap: 8px !important;
+    }
+
+    .srt-search-input-wrap {
+        width: 100% !important;
+        max-width: 100% !important;
+        flex: none !important;
+    }
+
+    .srt-search-input {
+        width: 100% !important;
+        height: 38px !important;
+        font-size: 13px !important;
+        padding: 0 36px 0 34px !important;
+        border-radius: 9px !important;
+    }
+
+    .srt-search-right-tools {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        width: 100% !important;
+        gap: 6px !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .srt-search-right-tools::-webkit-scrollbar {
+        display: none;
+    }
+
+    .btn-toggle-shift-bar {
+        padding: 6px 10px !important;
+        font-size: 11px !important;
+        border-radius: 8px !important;
+        flex-shrink: 0 !important;
+        white-space: nowrap !important;
+    }
+
+    .srt-search-count-badge {
+        font-size: 11px !important;
+        padding: 6px 10px !important;
+        border-radius: 8px !important;
+        flex-shrink: 0 !important;
+        white-space: nowrap !important;
+    }
+
+    /* Mobile Alert Banner */
+    .empty-kurdish-alert-banner {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        padding: 8px 10px !important;
+        gap: 6px !important;
+    }
+
+    .empty-kurdish-alert-banner .alert-banner-left {
+        font-size: 11px !important;
+    }
+
     .sensitive-modal-content {
         max-height: 92vh;
     }
