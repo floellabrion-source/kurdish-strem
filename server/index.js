@@ -1,4 +1,5 @@
 const express = require('express');
+const helmet = require('helmet');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
@@ -520,11 +521,64 @@ setInterval(() => {
 const RECEIPTS_DIR = path.join(__dirname, '..', 'uploads', 'receipts');
 if (!fs.existsSync(RECEIPTS_DIR)) fs.mkdirSync(RECEIPTS_DIR, { recursive: true });
 
-app.use(cors());
+// Security Headers with Helmet
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdnjs.cloudflare.com", "https://accounts.google.com"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com"],
+            fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
+            imgSrc: ["'self'", "data:", "blob:", "https:", "http:"],
+            mediaSrc: ["'self'", "blob:", "https:", "http:"],
+            connectSrc: ["'self'", "ws:", "wss:", "http:", "https:"],
+            frameSrc: ["'self'", "https://accounts.google.com", "https://www.youtube.com"],
+            objectSrc: ["'none'"],
+            upgradeInsecureRequests: null
+        }
+    },
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
+
+const allowedOrigins = [
+    'https://kstfilm.com',
+    'https://www.kstfilm.com',
+    'http://77.42.22.139',
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:3001'
+];
+
+const corsOptions = {
+    origin: function (origin, callback) {
+        if (!origin) return callback(null, true);
+        const isAllowed = allowedOrigins.includes(origin) ||
+            /^http:\/\/localhost(:\d+)?$/.test(origin) ||
+            /^http:\/\/127\.0\.0\.1(:\d+)?$/.test(origin) ||
+            /^http:\/\/192\.168\.\d{1,3}\.\d{1,3}(:\d+)?$/.test(origin) ||
+            /^http:\/\/10\.\d{1,3}\.\d{1,3}\.\d{1,3}(:\d+)?$/.test(origin) ||
+            /^https?:\/\/.*\.kstfilm\.com$/.test(origin);
+            
+        if (isAllowed) {
+            callback(null, true);
+        } else {
+            callback(new Error('Blocked by CORS policy'));
+        }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Range']
+};
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '20mb' }));
 
 // ======= Rate Limiters & Security =======
-const { loginLimiter, registerLimiter, creditRequestLimiter, aiLimiter, apiGlobalLimiter } = require('./middleware/rateLimiter');
+const { loginLimiter, registerLimiter, creditRequestLimiter, aiLimiter, apiGlobalLimiter, otpSendLimiter, otpVerifyLimiter, passwordResetLimiter } = require('./middleware/rateLimiter');
+const { sanitizeFilename, isValidImageFile } = require('./utils/fileSecurity');
 const { createBackup, listBackups, restoreBackup, initAutoBackupSchedule, BACKUPS_DIR } = require('./services/backupService');
 const { optimizeImageToWebP, generateThumbnailWebP, convertAllExistingPosters } = require('./services/imageService');
 const {
@@ -1198,9 +1252,19 @@ const videoMimeByExt = {
 
 const receiptStorage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, RECEIPTS_DIR),
-    filename: (req, file, cb) => cb(null, Date.now() + '_' + file.originalname.replace(/\s/g, '_'))
+    filename: (req, file, cb) => cb(null, Date.now() + '_' + sanitizeFilename(file.originalname))
 });
-const uploadReceipt = multer({ storage: receiptStorage });
+const uploadReceipt = multer({
+    storage: receiptStorage,
+    limits: { fileSize: 10 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('تەنها فایلی وێنە ڕێگەپێدراوە'));
+        }
+    }
+});
 
 // ======= AUTH Endpoints =======
 app.post('/api/auth/register', registerLimiter, async (req, res) => {
@@ -1564,7 +1628,7 @@ const sendOtpSms = async (phone, code) => {
 };
 
 // 1. Send OTP Endpoint
-app.post('/api/auth/send-otp', async (req, res) => {
+app.post('/api/auth/send-otp', otpSendLimiter, async (req, res) => {
     try {
         const { target, purpose = 'otp_auth' } = req.body;
         if (!target || typeof target !== 'string' || !target.trim()) {
@@ -1630,7 +1694,7 @@ app.post('/api/auth/send-otp', async (req, res) => {
 });
 
 // 2. Verify OTP Endpoint
-app.post('/api/auth/verify-otp', async (req, res) => {
+app.post('/api/auth/verify-otp', otpVerifyLimiter, async (req, res) => {
     try {
         const { target, code, purpose = 'otp_auth' } = req.body;
         if (!target || !code) {
@@ -1724,7 +1788,7 @@ app.post('/api/auth/verify-otp', async (req, res) => {
 });
 
 // 3. Reset Password with Verified Token Endpoint
-app.post('/api/auth/reset-password', async (req, res) => {
+app.post('/api/auth/reset-password', passwordResetLimiter, async (req, res) => {
     try {
         const { resetToken, newPassword } = req.body;
         if (!resetToken || !newPassword) {
@@ -1844,7 +1908,7 @@ app.post('/api/auth/register-otp-request', registerLimiter, async (req, res) => 
 });
 
 // 5. Verify Register OTP & Create User
-app.post('/api/auth/register-otp-verify', async (req, res) => {
+app.post('/api/auth/register-otp-verify', otpVerifyLimiter, async (req, res) => {
     try {
         const { email, code } = req.body;
         if (!email || !code) {
@@ -1941,14 +2005,20 @@ app.post('/api/user/sync', requireAuth, (req, res) => {
         if (idx === -1) return res.status(404).json({ error: 'User not found' });
 
         const { points, history, flashcards, watchMinutes, sentencesSeen, dailyGoal, level, assessmentResult, dualSubWatchSeconds } = req.body;
-        if (points !== undefined) users[idx].points = (users[idx].points || 0) + Number(points || 0);
+        if (points !== undefined) {
+            const pts = Number(points || 0);
+            if (!isNaN(pts) && pts > 0) {
+                const safePts = Math.min(pts, 50); // Cap max 50 points per sync call
+                users[idx].points = (users[idx].points || 0) + safePts;
+            }
+        }
         if (history && typeof history === 'object') users[idx].history = { ...users[idx].history, ...history };
-        if (Array.isArray(flashcards)) users[idx].flashcards = flashcards;
-        if (dailyGoal !== undefined) users[idx].dailyGoal = Number(dailyGoal);
-        if (level !== undefined) users[idx].level = String(level);
+        if (Array.isArray(flashcards)) users[idx].flashcards = flashcards.slice(0, 1000);
+        if (dailyGoal !== undefined) users[idx].dailyGoal = Math.min(Math.max(1, Number(dailyGoal) || 5), 180);
+        if (level !== undefined) users[idx].level = String(level).slice(0, 50);
         if (assessmentResult !== undefined) users[idx].assessmentResult = assessmentResult;
         if (dualSubWatchSeconds !== undefined) {
-            users[idx].dualSubWatchSeconds = Number(dualSubWatchSeconds);
+            users[idx].dualSubWatchSeconds = Math.max(0, Number(dualSubWatchSeconds) || 0);
             if (!users[idx].dualSubCycleStartTime && Number(dualSubWatchSeconds) > 0) {
                 users[idx].dualSubCycleStartTime = Date.now();
             }
@@ -1964,10 +2034,12 @@ app.post('/api/user/sync', requireAuth, (req, res) => {
         }
         
         if (watchMinutes) {
-            users[idx].dailyStats[today].watchMinutes += Number(watchMinutes);
+            const safeMinutes = Math.min(Math.max(0, Number(watchMinutes) || 0), 120);
+            users[idx].dailyStats[today].watchMinutes += safeMinutes;
         }
         if (sentencesSeen) {
-            users[idx].dailyStats[today].sentencesSeen += Number(sentencesSeen);
+            const safeSentences = Math.min(Math.max(0, Number(sentencesSeen) || 0), 200);
+            users[idx].dailyStats[today].sentencesSeen += safeSentences;
         }
 
         writeUsers(users);
@@ -2030,24 +2102,38 @@ app.use('/uploads/avatars', express.static(AVATARS_DIR));
 
 const avatarStorage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, AVATARS_DIR),
-    filename: (req, file, cb) => cb(null, 'avatar_' + req.user.id + '_' + Date.now() + path.extname(file.originalname))
+    filename: (req, file, cb) => cb(null, 'avatar_' + req.user.id + '_' + Date.now() + '_' + sanitizeFilename(file.originalname))
 });
 const uploadAvatar = multer({
     storage: avatarStorage,
-    limits: { fileSize: 5 * 1024 * 1024 }
+    limits: { fileSize: 5 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('تەنها فایلی وێنە ڕێگەپێدراوە'));
+        }
+    }
 });
 
 app.post('/api/user/avatar', requireAuth, uploadAvatar.single('avatar'), (req, res) => {
     try {
         const users = readUsers();
         const idx = users.findIndex(u => u.id === req.user.id);
-        if (idx === -1) return res.status(404).json({ error: 'بەکارهێنەر نەدۆزرایەوە' });
+        if (idx === -1) {
+            if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+            return res.status(404).json({ error: 'بەکارهێنەر نەدۆزرایەوە' });
+        }
 
         let avatarUrl = '';
         if (req.file) {
+            if (!isValidImageFile(req.file.path)) {
+                if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+                return res.status(400).json({ error: 'جۆری فایلی وێنەکە دروست نییە یان خراپە' });
+            }
             avatarUrl = `/uploads/avatars/${req.file.filename}`;
         } else if (req.body.avatarUrl !== undefined) {
-            avatarUrl = req.body.avatarUrl;
+            avatarUrl = String(req.body.avatarUrl).slice(0, 500);
         }
 
         users[idx].avatar = avatarUrl;
@@ -2056,12 +2142,13 @@ app.post('/api/user/avatar', requireAuth, uploadAvatar.single('avatar'), (req, r
 
         res.json({ success: true, user: sanitizeUser(users[idx]), avatarUrl });
     } catch (err) {
+        if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
         console.error('Upload avatar error:', err);
         res.status(500).json({ error: 'هەڵەیەک ڕووی دا لە بارکردنی وێنە' });
     }
 });
 
-app.post('/api/user/buy-credits', requireAuth, (req, res) => {
+app.post('/api/user/buy-credits', requireAuth, requireSuperAdmin, (req, res) => {
     const { amount, planName } = req.body;
     if (!amount || isNaN(amount)) return res.status(400).json({ error: 'بڕی کرێدیت هەڵەیە' });
 
@@ -2229,6 +2316,11 @@ app.post('/api/user/request-credits', requireAuth, creditRequestLimiter, uploadR
     try {
         const { amount, planName, planId } = req.body;
         if (!req.file) return res.status(400).json({ error: 'تکایە وێنەی وەسڵەکە دابنێ' });
+        const receiptFilePath = req.file.path;
+        if (!isValidImageFile(receiptFilePath)) {
+            if (fs.existsSync(receiptFilePath)) fs.unlinkSync(receiptFilePath);
+            return res.status(400).json({ error: 'جۆری فایلی وێنەکە دروست نییە یان خراپە' });
+        }
 
         // 1. Fetch current dynamic plan details from plans.json
         const currentPlans = readPlans();
@@ -2261,7 +2353,6 @@ app.post('/api/user/request-credits', requireAuth, creditRequestLimiter, uploadR
         }
 
         const requests = readRequests();
-        const receiptFilePath = req.file.path;
         const mimeType = req.file.mimetype;
 
         // 2. Run AI Vision Analysis on receipt with exact plan context
@@ -3938,7 +4029,7 @@ app.get('/api/admin/pending-approvals', requireAuth, requireAdmin, (req, res) =>
     res.json(pending);
 });
 
-app.post('/api/admin/movies/:id/approve', requireAuth, (req, res) => {
+app.post('/api/admin/movies/:id/approve', requireAuth, requireAdmin, (req, res) => {
     const isSuper = isSuperAdmin(req.user);
     const canPublish = hasPermission(req.user, 'canPublishDirectly');
     if (!isSuper && !canPublish) {
@@ -3998,7 +4089,7 @@ app.post('/api/admin/movies/:id/approve', requireAuth, (req, res) => {
     res.json({ success: true, message: `(${movie.title}) بە سەرکەوتوویی پەسەندکرا و بڵاوکرایەوە ✓`, movie });
 });
 
-app.post('/api/admin/movies/:id/reject', requireAuth, (req, res) => {
+app.post('/api/admin/movies/:id/reject', requireAuth, requireAdmin, (req, res) => {
     const isSuper = isSuperAdmin(req.user);
     const canPublish = hasPermission(req.user, 'canPublishDirectly');
     if (!isSuper && !canPublish) {

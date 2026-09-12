@@ -45,10 +45,41 @@ const apiGlobalLimiter = rateLimit({
     message: { error: 'داواکاری بەربڵاو تێپەڕی. تکایە چاوەڕێ بکەرەوە.' }
 });
 
+// 6. Strict Limiter for Send OTP (Anti-SMS/Email Bombing)
+const otpSendLimiter = rateLimit({
+    windowMs: 10 * 60 * 1000, // 10 minutes
+    max: 8, // Limit each IP to 8 OTP requests per 10 minutes
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: '⚠️ داواکاری کۆدی زۆر نێردرا لەم ئامێرەوە. تکایە چەند خولەکێک چاوەڕێ بکە.' }
+});
+
+// 7. Strict Limiter for Verify OTP (Anti-Brute Force Code Guessing)
+const otpVerifyLimiter = rateLimit({
+    windowMs: 10 * 60 * 1000, // 10 minutes
+    max: 15, // Limit each IP to 15 verification attempts per 10 minutes
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: '⚠️ هەوڵی هەڵەی زۆر هەبوو بۆ پشکنینی کۆد. تکایە کەمێک چاوەڕێ بکە.' }
+});
+
+// 8. Strict Limiter for Password Reset
+const passwordResetLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 6, // Limit each IP to 6 password resets per 15 minutes
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: '⚠️ داواکاری زۆر هەبوو بۆ گۆڕینی وشەی نهێنی. تکایە کەمێک چاوەڕێ بکە.' }
+});
+
 module.exports = {
     loginLimiter,
     registerLimiter,
     creditRequestLimiter,
     aiLimiter,
-    apiGlobalLimiter
+    apiGlobalLimiter,
+    otpSendLimiter,
+    otpVerifyLimiter,
+    passwordResetLimiter
 };
+
