@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { ArrowRight, Play, Film, Lock, X, Languages, Star } from 'lucide-react';
+import { ArrowRight, Play, Film, Lock, X, Languages, Star, Share2, Check } from 'lucide-react';
 import { Movie, Season, Episode, LanguageMetrics, getCefrDisplayLevel, getCefrColor } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import './SeriesPage.css';
@@ -239,6 +239,27 @@ export default function SeriesPage() {
 
     const metrics = getAggregateMetrics();
 
+    const [copied, setCopied] = useState(false);
+
+    const handleShare = async () => {
+        if (!movie) return;
+        const canonicalUrl = `https://kstfilm.com/series/${movie.id}`;
+        const shareData = {
+            title: movie.title,
+            text: `بینەری زنجیرەی (${movie.title}) بە بە ژێرنووسی فێرکاری لە کورد ستریم (kstfilm)`,
+            url: canonicalUrl
+        };
+        if (navigator.share) {
+            try {
+                await navigator.share(shareData);
+                return;
+            } catch (e) {}
+        }
+        navigator.clipboard.writeText(canonicalUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2500);
+    };
+
     const goBackSafely = () => {
         if (window.history.length > 1) {
             navigate(-1);
@@ -329,6 +350,28 @@ export default function SeriesPage() {
                                         <Play size={18} fill="white" /> {lang === 'en' ? 'Watch First Episode' : 'سەیرکردنی ئەڵقەی یەکەم'}
                                     </Link>
                                 )}
+                                <button 
+                                    className={`series-share-btn ${copied ? 'active' : ''}`} 
+                                    onClick={handleShare}
+                                    style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        padding: '12px 20px',
+                                        borderRadius: '12px',
+                                        background: copied ? 'rgba(34, 211, 238, 0.2)' : 'rgba(255, 255, 255, 0.08)',
+                                        border: copied ? '1px solid #22d3ee' : '1px solid rgba(255, 255, 255, 0.15)',
+                                        color: copied ? '#22d3ee' : '#fff',
+                                        cursor: 'pointer',
+                                        fontWeight: 600,
+                                        fontSize: '14px',
+                                        transition: 'all 0.2s ease'
+                                    }}
+                                    title="هاوبەشکردن و کۆپیکردنی بەستەری زنجیرە"
+                                >
+                                    {copied ? <Check size={16} /> : <Share2 size={16} />}
+                                    {copied ? (lang === 'en' ? 'Copied ✓' : 'کۆپیکرا ✓') : (lang === 'en' ? 'Share' : 'هاوبەشکردن')}
+                                </button>
                             </div>
                         </div>
 

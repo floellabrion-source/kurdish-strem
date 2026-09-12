@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Play, Heart, Clock, CheckCircle, Eye, Globe, Bookmark, Star, ArrowLeft, ArrowRight, MessageSquare, Send } from 'lucide-react';
+import { Play, Heart, Clock, CheckCircle, Eye, Globe, Bookmark, Star, ArrowLeft, ArrowRight, MessageSquare, Send, Share2, Check } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { Movie, LanguageMetrics, getCefrDisplayLevel, getCefrColor } from '../types';
@@ -293,6 +293,26 @@ export default function MovieDetail() {
         return !!user.history[key];
     };
 
+    const [copied, setCopied] = useState(false);
+
+    const handleShare = async () => {
+        const canonicalUrl = `https://kstfilm.com/${isSeries ? 'series' : 'movie'}/${movie.id}`;
+        const shareData = {
+            title: movie.title,
+            text: `بینەری ${isSeries ? 'زنجیرەی' : 'فیلمی'} (${movie.title}) بە بە ژێرنووسی فێرکاری لە کورد ستریم (kstfilm)`,
+            url: canonicalUrl
+        };
+        if (navigator.share) {
+            try {
+                await navigator.share(shareData);
+                return;
+            } catch (e) {}
+        }
+        navigator.clipboard.writeText(canonicalUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2500);
+    };
+
     const goBackSafely = () => {
         if (window.history.length > 1) {
             navigate(-1);
@@ -402,6 +422,10 @@ export default function MovieDetail() {
                                     </button>
                                     <button className={`quick-btn ${isWatched ? 'active' : ''}`} onClick={() => handleAction('watched')}>
                                         <CheckCircle size={15} fill={isWatched ? 'currentColor' : 'none'} /> {t('watched')}
+                                    </button>
+                                    <button className={`quick-btn ${copied ? 'active' : ''}`} onClick={handleShare} title="هاوبەشکردن و کۆپیکردنی بەستەری فیلم">
+                                        {copied ? <Check size={15} color="#22d3ee" /> : <Share2 size={15} />}
+                                        {copied ? (lang === 'en' ? 'Copied ✓' : 'کۆپیکرا ✓') : (lang === 'en' ? 'Share' : 'هاوبەشکردن')}
                                     </button>
                                 </div>
                             </div>
