@@ -6583,8 +6583,8 @@ const BOT_USER_AGENTS = /telegrambot|whatsapp|facebookexternalhit|twitterbot|dis
 function renderOpenGraphHtml(item, reqUrl) {
     const isSeries = item.type === 'series';
     const typeLabel = isSeries ? 'زنجیرەی' : (item.type === 'animation' ? 'ئەنیمەیشنی' : 'فیلمی');
-    const title = `${typeLabel} ${item.title} بە ژێرنووسی کوردی و ئینگلیزی - Kurdish Stream`;
-    const rawDesc = item.story || item.description || `بینەری ${typeLabel} ${item.title} بە ژێرنووسی دووانەی فێرکاری و کواڵتی بەرز لە کورد ستریم (kstfilm).`;
+    const title = `${typeLabel} ${item.title} بە ژێرنووسی کوردی و ئینگلیزی - KST Film (کەی ئێس تی فیلم)`;
+    const rawDesc = item.story || item.description || `بینەری ${typeLabel} ${item.title} بە ژێرنووسی دووانەی فێرکاری و کواڵتی بەرز لە کەی ئێس تی فیلم (kstfilm).`;
     const cleanDesc = String(rawDesc).replace(/["<>]/g, '').slice(0, 180);
     const description = `${cleanDesc}... | ڕیتینگی IMDb: ⭐ ${item.imdbRating || '8.5'}/10 | ساڵ: ${item.year || '2024'}`;
     const poster = item.posterCloudUrl || item.posterUrl || 'https://kstfilm.com/kst-logo.png';
@@ -6599,7 +6599,7 @@ function renderOpenGraphHtml(item, reqUrl) {
     
     <!-- OpenGraph Metadata -->
     <meta property="og:type" content="video.movie" />
-    <meta property="og:site_name" content="Kurdish Stream (کورد ستریم)" />
+    <meta property="og:site_name" content="KST Film (کەی ئێس تی فیلم)" />
     <meta property="og:title" content="${title}" />
     <meta property="og:description" content="${description}" />
     <meta property="og:image" content="${poster}" />
@@ -6621,7 +6621,7 @@ function renderOpenGraphHtml(item, reqUrl) {
     <h1>${title}</h1>
     <p>${description}</p>
     <img src="${poster}" alt="${item.title}" style="max-width:320px;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,0.7);" />
-    <p style="margin-top:20px;"><a href="${canonicalUrl}" style="color:#22d3ee;font-size:18px;text-decoration:none;font-weight:bold;">🎬 کلیک لێرە بکە بۆ سەیرکردنی لە Kurdish Stream</a></p>
+    <p style="margin-top:20px;"><a href="${canonicalUrl}" style="color:#22d3ee;font-size:18px;text-decoration:none;font-weight:bold;">🎬 کلیک لێرە بکە بۆ سەیرکردنی لە KST Film (کەی ئێس تی فیلم)</a></p>
     <script>window.location.href = "${canonicalUrl}";</script>
 </body>
 </html>`;

@@ -250,7 +250,7 @@ export default function SeriesPage() {
         const canonicalUrl = `https://kstfilm.com/series/${movie.id}`;
         const shareData = {
             title: movie.title,
-            text: `بینەری زنجیرەی (${movie.title}) بە بە ژێرنووسی فێرکاری لە کورد ستریم (kstfilm)`,
+            text: `بینەری زنجیرەی (${movie.title}) بە ژێرنووسی فێرکاری لە کەی ئێس تی فیلم (KST Film)`,
             url: canonicalUrl
         };
         if (navigator.share) {

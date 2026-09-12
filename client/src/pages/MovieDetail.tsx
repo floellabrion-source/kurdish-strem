@@ -303,7 +303,7 @@ export default function MovieDetail() {
         const canonicalUrl = `https://kstfilm.com/${isSeries ? 'series' : 'movie'}/${movie.id}`;
         const shareData = {
             title: movie.title,
-            text: `بینەری ${isSeries ? 'زنجیرەی' : 'فیلمی'} (${movie.title}) بە بە ژێرنووسی فێرکاری لە کورد ستریم (kstfilm)`,
+            text: `بینەری ${isSeries ? 'زنجیرەی' : 'فیلمی'} (${movie.title}) بە ژێرنووسی فێرکاری لە کەی ئێس تی فیلم (KST Film)`,
             url: canonicalUrl
         };
         if (navigator.share) {
