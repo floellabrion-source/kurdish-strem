@@ -87,6 +87,7 @@ export default function MovieDetail() {
     // Language Metrics word expansion toggles
     const [showAllDifficult, setShowAllDifficult] = useState(false);
     const [showAllRepeated, setShowAllRepeated] = useState(false);
+    const [copied, setCopied] = useState(false);
 
     useEffect(() => {
         axios.get(`/api/movies`)
@@ -297,8 +298,6 @@ export default function MovieDetail() {
         const key = `${movie.id}_s${seasonNum}_e${epNum}`;
         return !!user.history[key];
     };
-
-    const [copied, setCopied] = useState(false);
 
     const handleShare = async () => {
         const canonicalUrl = `https://kstfilm.com/${isSeries ? 'series' : 'movie'}/${movie.id}`;

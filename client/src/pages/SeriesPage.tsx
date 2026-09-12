@@ -82,6 +82,7 @@ export default function SeriesPage() {
     // Language Metrics word expansion toggles
     const [showAllDifficult, setShowAllDifficult] = useState(false);
     const [showAllRepeated, setShowAllRepeated] = useState(false);
+    const [copied, setCopied] = useState(false);
 
     useEffect(() => {
         axios.get(`/api/movies/${id}`).then(res => {
@@ -243,8 +244,6 @@ export default function SeriesPage() {
     };
 
     const metrics = getAggregateMetrics();
-
-    const [copied, setCopied] = useState(false);
 
     const handleShare = async () => {
         if (!movie) return;
