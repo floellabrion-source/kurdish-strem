@@ -1921,18 +1921,6 @@ CRITICAL RULES:
                             ? 'Family mode is active. Sensitive scenes are automatically blurred.'
                             : 'فلتەری خێزانی چالاکە. دیمەنی نەشیاو بە شێوەی خۆکار لێڵ کراوە.'}
                     </p>
-                    <button
-                        type="button"
-                        className="sensitive-unblur-btn"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            setFamilyMode(false);
-                            showGlobalToast(lang === 'en' ? 'Family filter turned OFF' : 'فلتەری خێزانی کوژایەوە', 'success');
-                        }}
-                    >
-                        <EyeOff size={16} />
-                        <span>{lang === 'en' ? 'Turn Off Family Filter' : 'کوژاندنەوەی فلتەری خێزانی'}</span>
-                    </button>
                 </div>
             )}
             {/* CENTER PLAY/PAUSE FLASH RIPPLE ANIMATION */}
