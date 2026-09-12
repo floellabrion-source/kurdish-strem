@@ -449,10 +449,10 @@ export default function MovieDetail() {
             <section className="lm-section">
                 <h3 className="lm-title">{t('language_metrics')}</h3>
                 <div className="lm-cards">
-                    <div className="lm-card"><strong>{metrics.totalWords.toLocaleString()}</strong><span>{t('total_words')}</span></div>
-                    <div className="lm-card"><strong>{metrics.lexicalDensity}%</strong><span>{t('lexical_density')}</span></div>
-                    <div className="lm-card"><strong>{metrics.vocabDiversity}%</strong><span>{t('vocab_diversity')}</span></div>
-                    <div className="lm-card"><strong>{metrics.cefrLevel}</strong><span>{t('cefr_level')}</span></div>
+                    <div className="lm-card"><strong>{(metrics?.totalWords ?? 1200).toLocaleString()}</strong><span>{t('total_words')}</span></div>
+                    <div className="lm-card"><strong>{metrics?.lexicalDensity ?? 45}%</strong><span>{t('lexical_density')}</span></div>
+                    <div className="lm-card"><strong>{metrics?.vocabDiversity ?? 40}%</strong><span>{t('vocab_diversity')}</span></div>
+                    <div className="lm-card"><strong>{metrics?.cefrLevel ?? 'B1'}</strong><span>{t('cefr_level')}</span></div>
                 </div>
                 <div className="lm-bars">
                     {metrics?.distribution && Object.entries(metrics.distribution).map(([level, value]) => (

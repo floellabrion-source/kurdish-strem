@@ -29,6 +29,39 @@ const PageFallback = () => (
     </div>
 );
 
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: any }> {
+    constructor(props: any) {
+        super(props);
+        this.state = { hasError: false, error: null };
+    }
+    static getDerivedStateFromError(error: any) {
+        return { hasError: true, error };
+    }
+    componentDidCatch(error: any, errorInfo: any) {
+        console.error('[React ErrorBoundary caught error]:', error, errorInfo);
+    }
+    render() {
+        if (this.state.hasError) {
+            return (
+                <div style={{ minHeight: '70vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#f8fafc', padding: '24px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚠️</div>
+                    <h2 style={{ fontSize: '22px', fontWeight: 'bold', marginBottom: '8px' }}>کێشەیەک لە بارکردنی ئەم لاپەڕەیە ڕوویدا</h2>
+                    <p style={{ color: '#94a3b8', fontSize: '14px', maxWidth: '450px', marginBottom: '20px' }}>
+                        {this.state.error?.message || 'هەڵەیەکی نەزانراو ڕوویدا'}
+                    </p>
+                    <button 
+                        onClick={() => { this.setState({ hasError: false, error: null }); window.location.href = '/'; }}
+                        style={{ padding: '10px 24px', background: '#22d3ee', color: '#09090b', fontWeight: 'bold', borderRadius: '8px', border: 'none', cursor: 'pointer' }}
+                    >
+                        گەڕانەوە بۆ سەرەکی
+                    </button>
+                </div>
+            );
+        }
+        return this.props.children;
+    }
+}
+
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
     const { user, loading } = useAuth();
     const hasToken = Boolean(localStorage.getItem('kurdish_stream_token') || localStorage.getItem('ks_token'));
@@ -65,28 +98,30 @@ function AppRoutes() {
         <div className="app-container">
             <Navbar />
             <main className={`main-content ${isSidebarCollapsed ? 'collapsed' : ''} ${isShellHidden ? 'shell-hidden' : ''}`}>
-                <Suspense fallback={<PageFallback />}>
-                    <Routes>
-                        <Route path="/auth" element={<Auth />} />
-                        <Route path="/" element={<Home />} />
-                        <Route path="/movies" element={<Home filter="movie" />} />
-                        <Route path="/series" element={<Home filter="series" />} />
-                        <Route path="/animations" element={<Home filter="animation" />} />
-                        <Route path="/watch/:id" element={<Watch />} />
-                        <Route path="/series/:id" element={<SeriesPage />} />
-                        <Route path="/series/:id/season/:seasonNum/episode/:episodeNum" element={<EpisodeDetail />} />
-                        <Route path="/movie/:id" element={<MovieDetail />} />
-                        
-                        {/* User Profile & Private Lists */}
-                        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-                        <Route path="/buy-credits" element={<ProtectedRoute><BuyCredits /></ProtectedRoute>} />
-                        <Route path="/favorites" element={<ProtectedRoute><Favorites /></ProtectedRoute>} />
-                        <Route path="/watch-later" element={<ProtectedRoute><WatchLater /></ProtectedRoute>} />
-                        <Route path="/flashcards" element={<Flashcards />} />
-                        <Route path="/assessment" element={<ProtectedRoute><LevelAssessment /></ProtectedRoute>} />
-                        <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
-                    </Routes>
-                </Suspense>
+                <ErrorBoundary>
+                    <Suspense fallback={<PageFallback />}>
+                        <Routes>
+                            <Route path="/auth" element={<Auth />} />
+                            <Route path="/" element={<Home />} />
+                            <Route path="/movies" element={<Home filter="movie" />} />
+                            <Route path="/series" element={<Home filter="series" />} />
+                            <Route path="/animations" element={<Home filter="animation" />} />
+                            <Route path="/watch/:id" element={<Watch />} />
+                            <Route path="/series/:id" element={<SeriesPage />} />
+                            <Route path="/series/:id/season/:seasonNum/episode/:episodeNum" element={<EpisodeDetail />} />
+                            <Route path="/movie/:id" element={<MovieDetail />} />
+                            
+                            {/* User Profile & Private Lists */}
+                            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                            <Route path="/buy-credits" element={<ProtectedRoute><BuyCredits /></ProtectedRoute>} />
+                            <Route path="/favorites" element={<ProtectedRoute><Favorites /></ProtectedRoute>} />
+                            <Route path="/watch-later" element={<ProtectedRoute><WatchLater /></ProtectedRoute>} />
+                            <Route path="/flashcards" element={<Flashcards />} />
+                            <Route path="/assessment" element={<ProtectedRoute><LevelAssessment /></ProtectedRoute>} />
+                            <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
+                        </Routes>
+                    </Suspense>
+                </ErrorBoundary>
             </main>
             <PWAInstallPrompt />
             <LiveNotificationToast />
