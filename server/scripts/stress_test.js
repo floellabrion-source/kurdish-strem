@@ -36,11 +36,20 @@ let isRunning = true;
 const startTime = Date.now();
 const endTime = startTime + (DURATION_SEC * 1000);
 
-function sendRequest() {
+function sendRequest(workerId = 0) {
     if (!isRunning || Date.now() >= endTime) return;
 
     const reqStart = Date.now();
-    const req = client.get(TARGET_URL, { agent }, (res) => {
+    const simulatedIp = `185.100.${(workerId % 250) + 1}.${Math.floor(Math.random() * 250) + 1}`;
+    const options = {
+        agent,
+        headers: {
+            'X-Forwarded-For': simulatedIp,
+            'User-Agent': 'KurdishStream-StressTester/2.0'
+        }
+    };
+
+    const req = client.get(TARGET_URL, options, (res) => {
         let bytes = 0;
         res.on('data', (chunk) => {
             bytes += chunk.length;
@@ -58,7 +67,7 @@ function sendRequest() {
                 failedRequests++;
             }
 
-            if (isRunning) sendRequest();
+            if (isRunning) sendRequest(workerId);
         });
     });
 
@@ -66,7 +75,7 @@ function sendRequest() {
         totalRequests++;
         failedRequests++;
         statusCodes['ERR_' + err.code] = (statusCodes['ERR_' + err.code] || 0) + 1;
-        if (isRunning) sendRequest();
+        if (isRunning) sendRequest(workerId);
     });
 
     req.setTimeout(8000, () => {
@@ -75,7 +84,7 @@ function sendRequest() {
 }
 
 for (let i = 0; i < CONCURRENCY; i++) {
-    sendRequest();
+    sendRequest(i);
 }
 
 const timer = setInterval(() => {
