@@ -3449,6 +3449,19 @@ app.post('/api/media/watchlater', requireAuth, (req, res) => {
 });
 
 app.get('/api/stream/:id', (req, res) => {
+    // Hotlink / Anti-Leech Protection
+    const referer = req.headers.referer || '';
+    if (referer) {
+        const isAllowedReferer = referer.includes('kstfilm.com') ||
+            referer.includes('77.42.22.139') ||
+            referer.includes('localhost') ||
+            referer.includes('127.0.0.1') ||
+            referer.includes('192.168.');
+        if (!isAllowedReferer) {
+            return res.status(403).json({ error: 'Unauthorized stream hotlinking is blocked.' });
+        }
+    }
+
     const movies = readMovies();
     const movie = movies.find((m) => m.id === req.params.id);
     if (!movie) return res.status(404).json({ error: 'Not found' });
@@ -3592,22 +3605,25 @@ app.get('/api/stream/:id', (req, res) => {
     if (range) {
         const parts = range.replace(/bytes=/, '').split('-');
         const start = parseInt(parts[0], 10);
-        const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+        let end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
 
         if (start >= fileSize) {
             res.status(416).send('Requested range not satisfiable\n' + start + ' >= ' + fileSize);
             return;
         }
 
-        const chunkSize = end - start + 1;
-        const file = fs.createReadStream(videoPath, { start, end });
+        // Cap chunk to max 8MB for ultra-fast buffering and minimal RAM pressure
+        const maxChunk = 8 * 1024 * 1024;
+        const effectiveEnd = Math.min(end, start + maxChunk - 1);
+        const chunkSize = effectiveEnd - start + 1;
+        const file = fs.createReadStream(videoPath, { start, end: effectiveEnd });
         
         res.writeHead(206, {
-            'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+            'Content-Range': `bytes ${start}-${effectiveEnd}/${fileSize}`,
             'Accept-Ranges': 'bytes',
             'Content-Length': chunkSize,
             'Content-Type': contentType,
-            'Cache-Control': 'no-cache',
+            'Cache-Control': 'public, max-age=3600',
             'Connection': 'keep-alive',
             'Date': new Date().toUTCString()
         });
@@ -6559,6 +6575,76 @@ app.post('/api/admin/notifications/broadcast', requireAuth, requireSuperAdmin, a
     } catch (e) {
         res.status(500).json({ error: 'Failed to broadcast notification' });
     }
+});
+
+// ======= DYNAMIC OPENGRAPH SOCIAL MEDIA PREVIEWS (Telegram, WhatsApp, Facebook, Viber) =======
+const BOT_USER_AGENTS = /telegrambot|whatsapp|facebookexternalhit|twitterbot|discordbot|skypeuripreview|linkedinbot|viber|slackbot|applebot|curl|wget/i;
+
+function renderOpenGraphHtml(item, reqUrl) {
+    const isSeries = item.type === 'series';
+    const typeLabel = isSeries ? 'زنجیرەی' : (item.type === 'animation' ? 'ئەنیمەیشنی' : 'فیلمی');
+    const title = `${typeLabel} ${item.title} بە ژێرنووسی کوردی و ئینگلیزی - Kurdish Stream`;
+    const rawDesc = item.story || item.description || `بینەری ${typeLabel} ${item.title} بە ژێرنووسی دووانەی فێرکاری و کواڵتی بەرز لە کورد ستریم (kstfilm).`;
+    const cleanDesc = String(rawDesc).replace(/["<>]/g, '').slice(0, 180);
+    const description = `${cleanDesc}... | ڕیتینگی IMDb: ⭐ ${item.imdbRating || '8.5'}/10 | ساڵ: ${item.year || '2024'}`;
+    const poster = item.posterCloudUrl || item.posterUrl || 'https://kstfilm.com/kst-logo.png';
+    const canonicalUrl = `https://kstfilm.com${reqUrl}`;
+
+    return `<!DOCTYPE html>
+<html lang="ckb" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${title}</title>
+    
+    <!-- OpenGraph Metadata -->
+    <meta property="og:type" content="video.movie" />
+    <meta property="og:site_name" content="Kurdish Stream (کورد ستریم)" />
+    <meta property="og:title" content="${title}" />
+    <meta property="og:description" content="${description}" />
+    <meta property="og:image" content="${poster}" />
+    <meta property="og:image:secure_url" content="${poster}" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="600" />
+    <meta property="og:image:height" content="900" />
+    <meta property="og:url" content="${canonicalUrl}" />
+    
+    <!-- Twitter Cards -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="${title}" />
+    <meta name="twitter:description" content="${description}" />
+    <meta name="twitter:image" content="${poster}" />
+    
+    <meta name="theme-color" content="#22d3ee" />
+</head>
+<body style="background:#09090b;color:#fff;font-family:sans-serif;text-align:center;padding:40px;">
+    <h1>${title}</h1>
+    <p>${description}</p>
+    <img src="${poster}" alt="${item.title}" style="max-width:320px;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,0.7);" />
+    <p style="margin-top:20px;"><a href="${canonicalUrl}" style="color:#22d3ee;font-size:18px;text-decoration:none;font-weight:bold;">🎬 کلیک لێرە بکە بۆ سەیرکردنی لە Kurdish Stream</a></p>
+    <script>window.location.href = "${canonicalUrl}";</script>
+</body>
+</html>`;
+}
+
+app.get(['/movie/:id', '/series/:id', '/watch/:id', '/animations/:id'], (req, res, next) => {
+    const userAgent = req.headers['user-agent'] || '';
+    const isBot = BOT_USER_AGENTS.test(userAgent);
+    
+    const movies = readMovies();
+    const item = movies.find(m => m.id === req.params.id);
+
+    if (item && isBot) {
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        return res.send(renderOpenGraphHtml(item, req.originalUrl));
+    }
+    
+    const clientDistHtml = path.join(__dirname, '..', 'client', 'dist', 'index.html');
+    if (fs.existsSync(clientDistHtml)) {
+        return res.sendFile(clientDistHtml);
+    }
+    
+    next();
 });
 
 app.use((err, req, res, next) => {
