@@ -798,16 +798,27 @@ app.use((req, res, next) => {
 });
 
 const readMovies = () => {
-    const data = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
-    return data.map((m) => ({
-        ...m,
-        type: m.type || 'movie',
-        posterCloudUrl: m.posterCloudUrl || null,
-        videoUrl: m.videoUrl || null,
-        fakeViews: m.fakeViews || 0,
-        realViews: m.realViews || 0,
-        retention: m.retention || { full: 0, partial75: 0, partial50: 0, partial25: 0 }
-    }));
+    const cached = moviesCache.get('all_movies');
+    if (cached) return cached;
+
+    try {
+        if (!fs.existsSync(DATA_FILE)) return [];
+        const data = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
+        const movies = data.map((m) => ({
+            ...m,
+            type: m.type || 'movie',
+            posterCloudUrl: m.posterCloudUrl || null,
+            videoUrl: m.videoUrl || null,
+            fakeViews: m.fakeViews || 0,
+            realViews: m.realViews || 0,
+            retention: m.retention || { full: 0, partial75: 0, partial50: 0, partial25: 0 }
+        }));
+        moviesCache.set('all_movies', movies);
+        return movies;
+    } catch (err) {
+        console.error('Error reading movies:', err);
+        return [];
+    }
 };
 
 const execFileAsync = (command, args) => new Promise((resolve, reject) => {
