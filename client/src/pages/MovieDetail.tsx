@@ -139,16 +139,12 @@ export default function MovieDetail() {
     const isWatchLater = user?.watchLater?.includes(movie.id) || false;
     const isWatched = user?.watched?.includes(movie.id) || false;
 
-    const handleAction = async (listName: 'favorites' | 'watchLater' | 'watched', redirectPath?: string) => {
+    const handleAction = async (listName: 'favorites' | 'watchLater' | 'watched') => {
         if (!user) {
             navigate('/auth');
             return;
         }
         await toggleList(listName, movie.id);
-        if (redirectPath && !user[listName]?.includes(movie.id)) {
-            // Only redirect if we are ADDING to the list, not removing
-            navigate(redirectPath);
-        }
     };
 
     const getDescription = () => {
@@ -418,10 +414,10 @@ export default function MovieDetail() {
                                 )}
 
                                 <div className="quick-actions">
-                                    <button className={`quick-btn ${isFavorite ? 'active' : ''}`} onClick={() => handleAction('favorites', '/favorites')}>
+                                    <button className={`quick-btn ${isFavorite ? 'active' : ''}`} onClick={() => handleAction('favorites')}>
                                         <Heart size={15} fill={isFavorite ? 'currentColor' : 'none'} /> {t('favorites')}
                                     </button>
-                                    <button className={`quick-btn ${isWatchLater ? 'active' : ''}`} onClick={() => handleAction('watchLater', '/watch-later')}>
+                                    <button className={`quick-btn ${isWatchLater ? 'active' : ''}`} onClick={() => handleAction('watchLater')}>
                                         <Bookmark size={15} fill={isWatchLater ? 'currentColor' : 'none'} /> {t('watch_later')}
                                     </button>
                                     <button className={`quick-btn ${isWatched ? 'active' : ''}`} onClick={() => handleAction('watched')}>
