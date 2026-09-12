@@ -103,11 +103,11 @@ export default function Watch() {
         setTimeout(() => setGlobalToasts(t => t.filter(x => x.id !== id)), 4000);
     };
     
-    // Family Mode / Blur
+    // Family Mode / Blur (ON by default for all movies & series)
     const [sensitiveScenes, setSensitiveScenes] = useState<{start: number, end: number}[]>([]);
-    const [familyMode, setFamilyMode] = useState(() => {
+    const [familyMode, setFamilyMode] = useState<boolean>(() => {
         const saved = localStorage.getItem('familyMode');
-        return saved ? saved === 'true' : true; // Default ON
+        return saved !== null ? saved === 'true' : true; // Default ON
     });
 
     useEffect(() => {
@@ -1914,8 +1914,25 @@ CRITICAL RULES:
 
             {isSensitiveNow && (
                 <div className="sensitive-overlay">
-                    <Shield size={64} className="sensitive-icon" />
-                    <h2>{lang === 'en' ? 'Sensitive Scene Blurred' : 'دیمەنی نەشیاو شاردراوەتەوە'}</h2>
+                    <Shield size={56} className="sensitive-icon" />
+                    <h2 className="sensitive-title">{lang === 'en' ? 'Sensitive Scene Filtered' : 'دیمەنی نەشیاو شاردراوەتەوە'}</h2>
+                    <p className="sensitive-desc">
+                        {lang === 'en'
+                            ? 'Family mode is active. Sensitive scenes are automatically blurred.'
+                            : 'فلتەری خێزانی چالاکە. دیمەنی نەشیاو بە شێوەی خۆکار لێڵ کراوە.'}
+                    </p>
+                    <button
+                        type="button"
+                        className="sensitive-unblur-btn"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setFamilyMode(false);
+                            showGlobalToast(lang === 'en' ? 'Family filter turned OFF' : 'فلتەری خێزانی کوژایەوە', 'success');
+                        }}
+                    >
+                        <EyeOff size={16} />
+                        <span>{lang === 'en' ? 'Turn Off Family Filter' : 'کوژاندنەوەی فلتەری خێزانی'}</span>
+                    </button>
                 </div>
             )}
             {/* CENTER PLAY/PAUSE FLASH RIPPLE ANIMATION */}
@@ -2919,10 +2936,19 @@ CRITICAL RULES:
                                         </div>
                                     </div>
 
-                                    <div className="settings-menu-item" onClick={() => setFamilyMode(!familyMode)}>
+                                    <div className="settings-menu-item" onClick={() => {
+                                        const next = !familyMode;
+                                        setFamilyMode(next);
+                                        showGlobalToast(
+                                            next 
+                                                ? (lang === 'en' ? 'Family filter turned ON' : 'فلتەری خێزانی چالاک کرا') 
+                                                : (lang === 'en' ? 'Family filter turned OFF' : 'فلتەری خێزانی کوژایەوە'), 
+                                            'success'
+                                        );
+                                    }}>
                                         <div className="menu-item-left">
                                             <Shield size={18} className="menu-item-icon" />
-                                            <span>{lang === 'en' ? 'Filter' : 'فلتەر'}</span>
+                                            <span>{lang === 'en' ? 'Family Filter' : 'فلتەری خێزانی'}</span>
                                         </div>
                                         <div className="menu-item-right">
                                             <span className={`menu-status-pill ${familyMode ? 'active' : ''}`}>{familyMode ? (lang === 'en' ? 'ON' : 'چالاکە') : (lang === 'en' ? 'OFF' : 'ناچالاکە')}</span>
