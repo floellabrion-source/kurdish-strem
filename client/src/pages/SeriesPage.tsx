@@ -6,6 +6,15 @@ import { Movie, Season, Episode, LanguageMetrics, getCefrDisplayLevel, getCefrCo
 import { useLanguage } from '../context/LanguageContext';
 import './SeriesPage.css';
 
+const CEFR_PRESETS: Record<string, LanguageMetrics['distribution']> = {
+    A1: { A1: 55, A2: 25, B1: 10, B2: 5, C1: 3, C2: 1, Unknown: 1 },
+    A2: { A1: 43, A2: 30, B1: 13, B2: 6, C1: 3, C2: 2, Unknown: 3 },
+    B1: { A1: 27, A2: 29, B1: 21, B2: 11, C1: 5, C2: 3, Unknown: 4 },
+    B2: { A1: 16, A2: 23, B1: 24, B2: 18, C1: 10, C2: 5, Unknown: 4 },
+    C1: { A1: 9, A2: 15, B1: 21, B2: 23, C1: 17, C2: 9, Unknown: 6 },
+    C2: { A1: 5, A2: 10, B1: 15, B2: 25, C1: 25, C2: 15, Unknown: 5 }
+};
+
 function normalizeLanguageMetrics(input: any): LanguageMetrics | null {
     if (!input) return null;
 
@@ -20,23 +29,24 @@ function normalizeLanguageMetrics(input: any): LanguageMetrics | null {
         Unknown: Number(dist.Unknown ?? 0)
     };
 
-    const cefr = String(input.cefrLevel || '').toUpperCase();
-    const allowed = new Set(['A1', 'A2', 'B1', 'B2', 'C1', 'C2']);
-    if (!allowed.has(cefr)) return null;
+    const rawCefr = String(input.cefrLevel || '').toUpperCase().trim();
+    const allowed = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+    const cefr = allowed.includes(rawCefr) ? rawCefr : 'B1';
 
-    const totalWords = Number(input.totalWords);
-    const lexicalDensity = Number(input.lexicalDensity);
-    const vocabDiversity = Number(input.vocabDiversity);
-    if (!Number.isFinite(totalWords) || !Number.isFinite(lexicalDensity) || !Number.isFinite(vocabDiversity)) return null;
+    const totalWords = Number(input.totalWords ?? input.vocabularyCount ?? 0) || 1200;
+    const lexicalDensity = Number(input.lexicalDensity ?? input.readabilityScore ?? 0) || 45;
+    const vocabDiversity = Number(input.vocabDiversity ?? input.readabilityScore ?? 0) || 40;
 
     return {
         totalWords,
         lexicalDensity,
         vocabDiversity,
         cefrLevel: cefr as any,
-        distribution,
-        difficultWords: input.difficultWords,
-        repeatedWords: input.repeatedWords
+        distribution: (distribution.A1 || distribution.A2 || distribution.B1 || distribution.B2 || distribution.C1 || distribution.C2) 
+            ? distribution 
+            : (CEFR_PRESETS[cefr] || CEFR_PRESETS['B1']),
+        difficultWords: Array.isArray(input.difficultWords) ? input.difficultWords : [],
+        repeatedWords: Array.isArray(input.repeatedWords) ? input.repeatedWords : []
     };
 }
 
@@ -51,14 +61,9 @@ function buildLanguageMetrics(text: string, level?: string): LanguageMetrics {
     const mapped = getCefrDisplayLevel(level);
     const cefrLevel = (mapped && ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].includes(mapped)) ? mapped : autoLevel;
 
-    const presets: Record<string, LanguageMetrics['distribution']> = {
-        A2: { A1: 43, A2: 30, B1: 13, B2: 6, C1: 3, C2: 2, Unknown: 3 },
-        B1: { A1: 27, A2: 29, B1: 21, B2: 11, C1: 5, C2: 3, Unknown: 4 },
-        B2: { A1: 16, A2: 23, B1: 24, B2: 18, C1: 10, C2: 5, Unknown: 4 },
-        C1: { A1: 9, A2: 15, B1: 21, B2: 23, C1: 17, C2: 9, Unknown: 6 }
-    };
+    const distribution = CEFR_PRESETS[cefrLevel] || CEFR_PRESETS['B1'];
 
-    return { totalWords, lexicalDensity, vocabDiversity, cefrLevel: cefrLevel as any, distribution: presets[cefrLevel] };
+    return { totalWords, lexicalDensity, vocabDiversity, cefrLevel: cefrLevel as any, distribution };
 }
 
 export default function SeriesPage() {
