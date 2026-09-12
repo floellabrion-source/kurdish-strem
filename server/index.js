@@ -1,4 +1,5 @@
 const express = require('express');
+const compression = require('compression');
 const helmet = require('helmet');
 const cors = require('cors');
 const path = require('path');
@@ -574,6 +575,7 @@ const corsOptions = {
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Range']
 };
 app.use(cors(corsOptions));
+app.use(compression());
 app.use(express.json({ limit: '20mb' }));
 
 // ======= Rate Limiters & Security =======
