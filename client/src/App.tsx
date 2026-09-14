@@ -8,20 +8,42 @@ import { LanguageProvider } from './context/LanguageContext';
 import { WebSocketProvider } from './context/WebSocketContext';
 import { PwaProvider } from './context/PwaContext';
 
+// Automatic Chunk Reload on deployment updates
+const lazyWithRetry = (componentImport: () => Promise<any>) =>
+    lazy(async () => {
+        const pageHasAlreadyBeenForceRefreshed = JSON.parse(
+            sessionStorage.getItem('page-has-been-force-refreshed') || 'false'
+        );
+
+        try {
+            const component = await componentImport();
+            sessionStorage.setItem('page-has-been-force-refreshed', 'false');
+            return component;
+        } catch (error: any) {
+            if (!pageHasAlreadyBeenForceRefreshed) {
+                // If a new build was deployed and an old chunk is requested, force-reload to get the fresh bundle!
+                sessionStorage.setItem('page-has-been-force-refreshed', 'true');
+                window.location.reload();
+                return { default: () => null };
+            }
+            throw error;
+        }
+    });
+
 // Code Splitting / Lazy Loading for High Performance
-const Home = lazy(() => import('./pages/Home'));
-const Watch = lazy(() => import('./pages/Watch'));
-const MovieDetail = lazy(() => import('./pages/MovieDetail'));
-const Favorites = lazy(() => import('./pages/Favorites'));
-const WatchLater = lazy(() => import('./pages/WatchLater'));
-const Admin = lazy(() => import('./pages/Admin'));
-const SeriesPage = lazy(() => import('./pages/SeriesPage'));
-const EpisodeDetail = lazy(() => import('./pages/EpisodeDetail'));
-const Flashcards = lazy(() => import('./pages/Flashcards'));
-const Auth = lazy(() => import('./pages/Auth'));
-const Profile = lazy(() => import('./pages/Profile'));
-const LevelAssessment = lazy(() => import('./pages/LevelAssessment'));
-const BuyCredits = lazy(() => import('./pages/BuyCredits'));
+const Home = lazyWithRetry(() => import('./pages/Home'));
+const Watch = lazyWithRetry(() => import('./pages/Watch'));
+const MovieDetail = lazyWithRetry(() => import('./pages/MovieDetail'));
+const Favorites = lazyWithRetry(() => import('./pages/Favorites'));
+const WatchLater = lazyWithRetry(() => import('./pages/WatchLater'));
+const Admin = lazyWithRetry(() => import('./pages/Admin'));
+const SeriesPage = lazyWithRetry(() => import('./pages/SeriesPage'));
+const EpisodeDetail = lazyWithRetry(() => import('./pages/EpisodeDetail'));
+const Flashcards = lazyWithRetry(() => import('./pages/Flashcards'));
+const Auth = lazyWithRetry(() => import('./pages/Auth'));
+const Profile = lazyWithRetry(() => import('./pages/Profile'));
+const LevelAssessment = lazyWithRetry(() => import('./pages/LevelAssessment'));
+const BuyCredits = lazyWithRetry(() => import('./pages/BuyCredits'));
 
 const PageFallback = () => (
     <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
@@ -39,6 +61,10 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
     }
     componentDidCatch(error: any, errorInfo: any) {
         console.error('[React ErrorBoundary caught error]:', error, errorInfo);
+        // If it's a chunk loading failure from a recent deploy, automatically reload
+        if (error?.message && (error.message.includes('dynamically imported module') || error.message.includes('Loading chunk'))) {
+            window.location.reload();
+        }
     }
     render() {
         if (this.state.hasError) {
@@ -49,12 +75,20 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
                     <p style={{ color: '#94a3b8', fontSize: '14px', maxWidth: '450px', marginBottom: '20px' }}>
                         {this.state.error?.message || 'هەڵەیەکی نەزانراو ڕوویدا'}
                     </p>
-                    <button 
-                        onClick={() => { this.setState({ hasError: false, error: null }); window.location.href = '/'; }}
-                        style={{ padding: '10px 24px', background: '#22d3ee', color: '#09090b', fontWeight: 'bold', borderRadius: '8px', border: 'none', cursor: 'pointer' }}
-                    >
-                        گەڕانەوە بۆ سەرەکی
-                    </button>
+                    <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                        <button 
+                            onClick={() => { window.location.reload(); }}
+                            style={{ padding: '10px 24px', background: '#22d3ee', color: '#09090b', fontWeight: 'bold', borderRadius: '8px', border: 'none', cursor: 'pointer' }}
+                        >
+                            دووبارە بارکردنەوەی لاپەڕە 🔄
+                        </button>
+                        <button 
+                            onClick={() => { window.location.href = '/'; }}
+                            style={{ padding: '10px 20px', background: 'rgba(255, 255, 255, 0.1)', color: '#ffffff', fontWeight: 'bold', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.2)', cursor: 'pointer' }}
+                        >
+                            گەڕانەوە بۆ سەرەکی
+                        </button>
+                    </div>
                 </div>
             );
         }
