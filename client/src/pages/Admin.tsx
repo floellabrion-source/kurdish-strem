@@ -2259,52 +2259,51 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
             {deleteTargetMovie && (
                 <div className="form-overlay" onClick={() => !isDeletingMovie && setDeleteTargetMovie(null)}>
                     <div 
-                        className={`form-modal ${lang === 'en' ? 'ltr-mode' : 'rtl-mode'}`} 
+                        className={`form-modal delete-modal-card ${lang === 'en' ? 'ltr-mode' : 'rtl-mode'}`} 
                         dir={lang === 'en' ? 'ltr' : 'rtl'} 
                         onClick={e => e.stopPropagation()}
-                        style={{ maxWidth: '460px', width: '92%', textAlign: 'center', padding: '24px', borderRadius: '18px', background: '#0e131f', border: '1px solid rgba(239, 68, 68, 0.25)', boxShadow: '0 20px 50px rgba(0, 0, 0, 0.7)' }}
                     >
-                        <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', color: '#ef4444' }}>
-                            <Trash2 size={26} />
+                        <div className="delete-modal-icon-wrap">
+                            <Trash2 size={28} />
                         </div>
 
-                        <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#f87171', marginBottom: '8px' }}>
+                        <h3 className="delete-modal-title">
                             {lang === 'en' ? 'Delete Confirmation' : 'دڵنیابوونەوە لە سڕینەوە'}
                         </h3>
 
-                        <p style={{ fontSize: '13.5px', color: '#94a3b8', lineHeight: '1.6', marginBottom: '18px' }}>
+                        <p className="delete-modal-desc">
                             {lang === 'en' 
                                 ? `Are you sure you want to permanently delete "${deleteTargetMovie.title}" and all its uploaded files and subtitles?`
                                 : `ئایا دڵنیایت لە سڕینەوەی یەکجاریی "${deleteTargetMovie.title}" لەگەڵ تەواوی فایلەکان و سەبتایتڵەکانی لە سێرڤەر؟`}
                         </p>
 
                         {/* Movie Preview Card */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(255, 255, 255, 0.04)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '12px', padding: '10px 14px', marginBottom: '22px', textAlign: 'start' }}>
+                        <div className="delete-modal-preview">
                             <img 
                                 src={deleteTargetMovie.posterCloudUrl || deleteTargetMovie.posterUrl || ((deleteTargetMovie as any).posterFile ? `/uploads/movies/${deleteTargetMovie.id}/${(deleteTargetMovie as any).posterFile}` : '/placeholder.png')} 
                                 alt={deleteTargetMovie.title} 
-                                style={{ width: '42px', height: '58px', objectFit: 'cover', borderRadius: '6px', flexShrink: 0 }}
+                                className="delete-modal-poster"
                                 onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/placeholder.png'; }}
                             />
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ fontWeight: 800, color: '#f8fafc', fontSize: '14.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            <div className="delete-modal-info">
+                                <div className="delete-modal-movie-title">
                                     {deleteTargetMovie.title}
                                 </div>
-                                <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                <div className="delete-modal-movie-meta">
                                     <span>{deleteTargetMovie.type === 'series' ? 'زنجیرە' : deleteTargetMovie.type === 'animation' ? 'ئەنیمەیشن' : 'فیلم'}</span>
                                     {deleteTargetMovie.year && <span>• {deleteTargetMovie.year}</span>}
-                                    {deleteTargetMovie.level && <span style={{ background: 'rgba(255,255,255,0.1)', padding: '1px 6px', borderRadius: '4px', fontSize: '11px', color: '#fbbf24' }}>{deleteTargetMovie.level}</span>}
+                                    {deleteTargetMovie.level && <span className="delete-modal-level-badge">{deleteTargetMovie.level}</span>}
                                 </div>
                             </div>
                         </div>
 
                         {/* Actions */}
-                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                        <div className="delete-modal-actions">
                             <button 
                                 type="button" 
                                 disabled={isDeletingMovie}
                                 onClick={() => setDeleteTargetMovie(null)}
-                                style={{ flex: 1, padding: '11px 16px', borderRadius: '10px', background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.12)', color: '#cbd5e1', fontWeight: 700, fontSize: '13.5px', cursor: isDeletingMovie ? 'not-allowed' : 'pointer' }}
+                                className="delete-modal-cancel-btn"
                             >
                                 {lang === 'en' ? 'Cancel' : 'پاشگەزبوونەوە'}
                             </button>
@@ -2312,7 +2311,7 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                                 type="button" 
                                 disabled={isDeletingMovie}
                                 onClick={handleConfirmDeleteMovie}
-                                style={{ flex: 1.2, padding: '11px 16px', borderRadius: '10px', background: '#dc2626', border: '1px solid #ef4444', color: '#ffffff', fontWeight: 800, fontSize: '13.5px', cursor: isDeletingMovie ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 4px 14px rgba(220, 38, 38, 0.35)' }}
+                                className="delete-modal-confirm-btn"
                             >
                                 {isDeletingMovie ? (
                                     <>
