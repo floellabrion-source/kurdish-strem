@@ -1621,7 +1621,55 @@ const sendOtpEmail = async (email, code, purpose) => {
     return false;
 };
 
+const formatWhatsAppNumber = (phone) => {
+    if (!phone) return '';
+    let p = String(phone).replace(/[^\d+]/g, '');
+    if (p.startsWith('00')) p = '+' + p.slice(2);
+    if (p.startsWith('07')) p = '+964' + p.slice(1);
+    else if (p.startsWith('7') && p.length === 10) p = '+964' + p;
+    else if (!p.startsWith('+')) p = '+' + p;
+    return p;
+};
+
+const sendOtpWhatsApp = async (phone, code, purpose = 'register') => {
+    const instanceId = process.env.ULTRAMSG_INSTANCE_ID || 'instance191576';
+    const token = process.env.ULTRAMSG_TOKEN || '0ae83s16x3acycyo';
+    if (!instanceId || !token || !phone) return false;
+
+    const formattedPhone = formatWhatsAppNumber(phone);
+    if (!formattedPhone || formattedPhone.length < 9) return false;
+
+    const purposeText = purpose === 'reset' ? 'گۆڕینی وشەی نهێنی' : 'دروستکردنی هەژمار و چوونەژوورەوە';
+    const body = `🎬 *کەی ئێس تی فیلم | KST Film*\n\nکۆدی دڵنیابوونەوەت:\n*${code}*\n\n📌 مەبەست: ${purposeText}\n⏳ ئەم کۆدە بۆ ماوەی ٥ خولەک کار دەکات. تکایە بە کەسی مەدە.`;
+
+    try {
+        const response = await axios.post(`https://api.ultramsg.com/${instanceId}/messages/chat`, {
+            token,
+            to: formattedPhone,
+            body,
+            priority: 10
+        }, {
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            timeout: 10000
+        });
+
+        if (response.data?.sent === 'true' || response.data?.sent === true || response.data?.id) {
+            console.log(`\x1b[32m[UltraMsg WhatsApp]\x1b[0m Successfully sent OTP to ${formattedPhone}`);
+            return true;
+        } else {
+            console.warn('[UltraMsg WhatsApp Warning]', response.data);
+            return false;
+        }
+    } catch (err) {
+        console.error('[UltraMsg WhatsApp Error]', err.response?.data || err.message);
+        return false;
+    }
+};
+
 const sendOtpSms = async (phone, code) => {
+    // Send via UltraMsg WhatsApp first as primary channel
+    await sendOtpWhatsApp(phone, code);
+
     if (process.env.SMS_GATEWAY_URL) {
         try {
             await axios.post(process.env.SMS_GATEWAY_URL, {
@@ -1665,14 +1713,18 @@ app.post('/api/auth/send-otp', otpSendLimiter, async (req, res) => {
 
         // If purpose is password reset, check if user exists
         const users = readUsers();
+        let matchedUserPhone = null;
         if (purpose === 'reset') {
-            const userExists = users.some(u => 
+            const matchedUser = users.find(u => 
                 (u.email && normalizeTarget(u.email) === normTarget) || 
                 (u.phone && normalizeTarget(u.phone) === normTarget) ||
                 (u.username && normalizeTarget(u.username) === normTarget)
             );
-            if (!userExists) {
+            if (!matchedUser) {
                 return res.status(404).json({ error: 'هیچ هەژمارێک بەم ئیمەیل یان مۆبایلە نەدۆزرایەوە.' });
+            }
+            if (matchedUser.phone) {
+                matchedUserPhone = matchedUser.phone;
             }
         }
 
@@ -1691,13 +1743,17 @@ app.post('/api/auth/send-otp', otpSendLimiter, async (req, res) => {
         // Dispatch notifications concurrently without blocking UI
         const dispatches = [sendOtpTelegram(normTarget, code, purpose)];
         if (isEmail) dispatches.push(sendOtpEmail(normTarget, code, purpose));
+        if (isPhone) dispatches.push(sendOtpWhatsApp(normTarget, code, purpose));
+        if (matchedUserPhone && matchedUserPhone !== normTarget) {
+            dispatches.push(sendOtpWhatsApp(matchedUserPhone, code, purpose));
+        }
         if (isPhone) dispatches.push(sendOtpSms(normTarget, code));
         
         Promise.allSettled(dispatches).catch(() => {});
 
         res.json({
             success: true,
-            message: 'کۆدی پشتڕاستکردنەوە بە سەرکەوتوویی نێردرا.',
+            message: 'کۆدی پشتڕاستکردنەوە بە سەرکەوتوویی نێردرا (بە ئیمەیل و واتسئاپ).',
             target: normTarget
         });
     } catch (err) {
@@ -1903,15 +1959,22 @@ app.post('/api/auth/register-otp-request', registerLimiter, async (req, res) => 
 
         console.log(`\x1b[36m[REGISTER OTP]\x1b[0m Email: ${normEmail} | Code: \x1b[32m${code}\x1b[0m`);
 
-        // Send Email OTP
-        await sendOtpEmail(normEmail, code, 'register');
+        // Send OTP via Email, WhatsApp (if phone provided), and Telegram
+        const dispatches = [
+            sendOtpEmail(normEmail, code, 'register'),
+            sendOtpTelegram(normEmail + (normPhone ? ` (${normPhone})` : ''), code, 'register')
+        ];
         if (normPhone) {
-            await sendOtpSms(normPhone, code);
+            dispatches.push(sendOtpWhatsApp(normPhone, code, 'register'));
+            dispatches.push(sendOtpSms(normPhone, code));
         }
+        Promise.allSettled(dispatches).catch(() => {});
 
         res.json({
             success: true,
-            message: 'کۆدی پشتڕاستکردنەوە بۆ ئیمەیلەکەت نێردرا.',
+            message: normPhone 
+                ? 'کۆدی پشتڕاستکردنەوە بۆ ئیمەیل و واتسئاپەکەت نێردرا.'
+                : 'کۆدی پشتڕاستکردنەوە بۆ ئیمەیلەکەت نێردرا.',
             email: normEmail
         });
     } catch (err) {

@@ -679,7 +679,7 @@ export default function Auth() {
                                 </div>
 
                                 <div className="auth-field">
-                                    <label>{lang === 'en' ? 'Phone Number (Optional)' : 'ژمارەی مۆبایل (ئارەزوومەندانە)'}</label>
+                                    <label>{lang === 'en' ? 'Phone Number (Optional - for WhatsApp OTP)' : 'ژمارەی مۆبایل (بۆ وەرگرتنی کۆد لە WhatsApp - ئارەزوومەندانە)'}</label>
                                     <div className="auth-input-icon-wrap">
                                         <input
                                             type="tel"
@@ -759,7 +759,7 @@ export default function Auth() {
                         {regStep === 'otp' && (
                             <form onSubmit={handleRegisterVerifyOtp} className="auth-form">
                                 <div className="otp-target-hint">
-                                    <span>{lang === 'en' ? 'Code sent to:' : 'کۆد نێردرا بۆ:'} <strong>{regEmail}</strong></span>
+                                    <span>{lang === 'en' ? 'Code sent to:' : 'کۆد نێردرا بۆ:'} <strong>{regEmail}{regPhone ? ` | WhatsApp (${regPhone})` : ''}</strong></span>
                                     <button type="button" onClick={() => setRegStep('info')} className="otp-edit-target-btn">
                                         {lang === 'en' ? 'Edit Info' : 'دەستکاری'}
                                     </button>
