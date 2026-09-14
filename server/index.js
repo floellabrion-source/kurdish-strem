@@ -4201,14 +4201,50 @@ app.patch('/api/admin/movies/:id/toggle-featured', requireAuth, requireAdmin, (r
     res.json({ success: true, isFeatured: movies[idx].isFeatured });
 });
 
-app.delete('/api/admin/movies/:id', requireAuth, requireAdmin, (req, res) => {
-    let movies = readMovies();
-    const dir = path.join(MOVIES_DIR, req.params.id);
-    if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true });
-    movies = movies.filter((m) => m.id !== req.params.id);
-    writeMovies(movies);
-    res.json({ success: true });
-});
+const handleMovieDeletion = (req, res) => {
+    try {
+        const movieId = String(req.params.id || '').trim();
+        if (!movieId) return res.status(400).json({ error: 'Movie ID is required' });
+
+        let movies = readMovies();
+        const targetMovie = movies.find((m) => String(m.id).trim() === movieId);
+
+        // 1. Immediately remove movie from movies.json and memory cache
+        movies = movies.filter((m) => String(m.id).trim() !== movieId);
+        writeMovies(movies);
+        moviesCache.clear();
+
+        // 2. Safely remove physical files on disk if exists (non-blocking / error-safe)
+        const dir = path.join(MOVIES_DIR, movieId);
+        if (fs.existsSync(dir)) {
+            try {
+                fs.rmSync(dir, { recursive: true, force: true });
+            } catch (fsErr) {
+                console.warn(`[Delete Movie] Safe warning on removing disk dir for ${movieId}: ${fsErr.message}`);
+                setTimeout(() => {
+                    try {
+                        if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true });
+                    } catch {}
+                }, 4000);
+            }
+        }
+
+        // 3. Log activity and broadcast to all connected admin and client websockets
+        if (targetMovie) {
+            logAdminActivity('MOVIE_DELETE', req.user, { targetId: movieId, targetTitle: targetMovie.title }, { type: targetMovie.type, year: targetMovie.year }, req);
+        }
+        broadcastWs('MOVIE_DELETED', { movieId });
+
+        console.log(`[Delete Movie Success] Deleted movie ID: ${movieId} Title: ${targetMovie?.title || 'Unknown'}`);
+        return res.json({ success: true, deletedId: movieId });
+    } catch (err) {
+        console.error('[Delete Movie Server Error]:', err);
+        return res.status(500).json({ error: 'سڕینەوەی فیلمەکە سەرکەوتوو نەبوو: ' + (err.message || 'هەڵەیەکی نەزانراو') });
+    }
+};
+
+app.delete('/api/admin/movies/:id', requireAuth, requireAdmin, handleMovieDeletion);
+app.delete('/api/movies/:id', requireAuth, requireAdmin, handleMovieDeletion);
 
 const videoUpload = makeStorage(
     (req) => path.join(MOVIES_DIR, req.params.id),
