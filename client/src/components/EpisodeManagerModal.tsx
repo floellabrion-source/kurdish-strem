@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from '../api/client';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 import {
     X, Plus, Trash2, Edit3, BarChart2, Video, Upload, Link as LinkIcon,
     FileText, Languages, Shield, ChevronDown, ChevronUp, PlusCircle, Loader2, Play,
     Download, Sparkles, CheckCircle2, AlertCircle, Pause, RefreshCw, Zap, BookOpen, Brain, DollarSign, Clock, Layers, Film,
-    Minimize2, Maximize2, Wrench, Globe
+    Minimize2, Maximize2, Wrench, Globe, Lock, Unlock
 } from 'lucide-react';
 import { Movie, Season, Episode, LanguageMetrics } from '../types';
 import { 
@@ -67,11 +68,56 @@ export default function EpisodeManagerModal({
     uploadProgress
 }: EpisodeManagerModalProps) {
     const { lang } = useLanguage();
+    const { user } = useAuth();
     const [bulkCounts, setBulkCounts] = useState<Record<number, string>>({});
     const [epTransProgress, setEpTransProgress] = useState<Record<string, { status: 'running' | 'paused' | 'done', statusText: string, percent: number }>>({});
     const [bulkTranslatingSeason, setBulkTranslatingSeason] = useState<number | null>(null);
     const [bulkProgressText, setBulkProgressText] = useState<string>('');
     const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+    // ─── SUBTITLE RESERVATION STATE ───
+    const [reserveTarget, setReserveTarget] = useState<{ seasonNum: number; ep: Episode } | null>(null);
+    const [reserveDaysInput, setReserveDaysInput] = useState<number>(5);
+
+    const getReservationRemainingLabel = (expiresAt: number) => {
+        const diffMs = expiresAt - Date.now();
+        if (diffMs <= 0) return null;
+        const hours = Math.ceil(diffMs / (1000 * 60 * 60));
+        if (hours > 24) {
+            const days = Math.ceil(hours / 24);
+            return `${days} ڕۆژ`;
+        }
+        return `${hours} کاتژمێر`;
+    };
+
+    const handleReserveEpisode = async (seasonNum: number, ep: Episode, days: number = 5) => {
+        try {
+            await axios.post(`/api/admin/movies/${movie.id}/reserve`, {
+                seasonNum,
+                episodeNum: ep.number,
+                days
+            });
+            showToast(`ئەڵقەی ${ep.number} بۆ ماوەی ${days} ڕۆژ حجز کرا بۆت 🔒`);
+            setReserveTarget(null);
+            if (onReloadMovie) onReloadMovie();
+        } catch (err: any) {
+            showToast(err.response?.data?.error || 'کێشەیەک لە حجزکردن ڕووی دا');
+        }
+    };
+
+    const handleUnreserveEpisode = async (seasonNum: number, ep: Episode) => {
+        try {
+            await axios.post(`/api/admin/movies/${movie.id}/unreserve`, {
+                seasonNum,
+                episodeNum: ep.number
+            });
+            showToast(`حجزی ئەڵقەی ${ep.number} بە سەرکەوتوویی لادرا 🔓`);
+            setReserveTarget(null);
+            if (onReloadMovie) onReloadMovie();
+        } catch (err: any) {
+            showToast(err.response?.data?.error || 'کێشەیەک ڕووی دا');
+        }
+    };
 
     // ─── ACTIVE AI TASKS GLOBAL SUBSCRIPTION ───
     const [activeAiTasks, setActiveAiTasks] = useState<ActiveAiTask[]>([]);
@@ -800,6 +846,25 @@ export default function EpisodeManagerModal({
                                                             >
                                                                 {ep.status === 'published' ? <Globe size={13} color="#34d399" /> : <Wrench size={13} color="#fbbf24" />}
                                                             </button>
+                                                            {(() => {
+                                                                const isReserved = Boolean(ep.reservation && ep.reservation.expiresAt > Date.now());
+                                                                const isMyReserve = Boolean(isReserved && ep.reservation?.userId === user?.id);
+                                                                return (
+                                                                    <button
+                                                                        type="button"
+                                                                        className={`ep-action-btn reserve-btn ${isReserved ? (isMyReserve ? 'my-reserve' : 'other-reserve') : ''}`}
+                                                                        title={isReserved 
+                                                                            ? `🔒 حجزکراوە لەلایەن: ${ep.reservation?.username} (${getReservationRemainingLabel(ep.reservation!.expiresAt)}) - کلیک بکە بۆ بەڕێوەبردن`
+                                                                            : 'حیجزکردنی ئەم ئەڵقەیە بۆ خۆت (مۆڵەتی کاتی)'}
+                                                                        onClick={() => {
+                                                                            setReserveDaysInput(ep.reservation?.days || 5);
+                                                                            setReserveTarget({ seasonNum: season.number, ep });
+                                                                        }}
+                                                                    >
+                                                                        <Lock size={13} color={isReserved ? (isMyReserve ? '#c084fc' : '#fbbf24') : undefined} />
+                                                                    </button>
+                                                                );
+                                                            })()}
                                                         </div>
                                                         <div className="ep-item-info-right">
                                                             <div className="ep-title-row">
@@ -807,6 +872,25 @@ export default function EpisodeManagerModal({
                                                                 <span className="ep-number-badge">{ep.number}</span>
                                                             </div>
                                                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px', flexWrap: 'wrap' }}>
+                                                                {(() => {
+                                                                    const isReserved = Boolean(ep.reservation && ep.reservation.expiresAt > Date.now());
+                                                                    if (!isReserved) return null;
+                                                                    const isMyReserve = Boolean(ep.reservation?.userId === user?.id);
+                                                                    const remainingText = getReservationRemainingLabel(ep.reservation!.expiresAt);
+                                                                    return (
+                                                                        <span
+                                                                            className={`ep-status-tag reservation-tag ${isMyReserve ? 'my-reserve' : 'other-reserve'}`}
+                                                                            title={`حجزکراوە تا: ${new Date(ep.reservation!.expiresAt).toLocaleDateString('ckb')}`}
+                                                                            onClick={() => {
+                                                                                setReserveDaysInput(ep.reservation?.days || 5);
+                                                                                setReserveTarget({ seasonNum: season.number, ep });
+                                                                            }}
+                                                                            style={{ cursor: 'pointer' }}
+                                                                        >
+                                                                            <Lock size={10} /> 🔒 {ep.reservation?.username} ({remainingText})
+                                                                        </span>
+                                                                    );
+                                                                })()}
                                                                 {hasVideo && hasSub ? (
                                                                     <span className="ep-status-tag ready">✅ {lang === 'en' ? 'Ready' : 'بە تەواوی ئامادەیە'}</span>
                                                                 ) : hasSub ? (
@@ -1414,6 +1498,93 @@ export default function EpisodeManagerModal({
                                     </div>
                                 )}
                             </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* ─── SUBTITLE TASK RESERVATION MODAL ─── */}
+                {reserveTarget && (
+                    <div className="reservation-modal-backdrop" onClick={() => setReserveTarget(null)}>
+                        <div className="reservation-modal-box" onClick={e => e.stopPropagation()}>
+                            <div className="reservation-modal-header">
+                                <h3>
+                                    <Lock size={18} color="#c084fc" /> 
+                                    {lang === 'en' ? `Reserve Episode ${reserveTarget.ep.number}` : `حیجزکردنی وەرگێڕانی ئەڵقەی ${reserveTarget.ep.number}`}
+                                </h3>
+                                <button className="reservation-close-btn" onClick={() => setReserveTarget(null)}>
+                                    <X size={16} />
+                                </button>
+                            </div>
+
+                            {reserveTarget.ep.reservation && reserveTarget.ep.reservation.expiresAt > Date.now() ? (
+                                <div className="reservation-active-info">
+                                    <div className="reserve-user-badge">
+                                        <div>👤 وەرگێڕی حیجزکەر: <strong>{reserveTarget.ep.reservation.username}</strong></div>
+                                        <div>⏳ کاتی ماوە: <strong>{getReservationRemainingLabel(reserveTarget.ep.reservation.expiresAt)}</strong></div>
+                                        <div>📅 بەرواری بەسەرچوون: <strong>{new Date(reserveTarget.ep.reservation.expiresAt).toLocaleString('ckb')}</strong></div>
+                                    </div>
+
+                                    <div className="reservation-actions-row">
+                                        {(reserveTarget.ep.reservation.userId === user?.id || user?.role === 'super_admin' || user?.username === 'maher2') && (
+                                            <button
+                                                type="button"
+                                                className="btn-unreserve-danger"
+                                                onClick={() => handleUnreserveEpisode(reserveTarget.seasonNum, reserveTarget.ep)}
+                                            >
+                                                <Unlock size={15} /> {lang === 'en' ? 'Release Lock (Unreserve)' : 'لابردنی حجز (ئازادکردن)'}
+                                            </button>
+                                        )}
+                                        <button
+                                            type="button"
+                                            className="btn-reserve-primary"
+                                            onClick={() => handleReserveEpisode(reserveTarget.seasonNum, reserveTarget.ep, reserveDaysInput)}
+                                        >
+                                            <RefreshCw size={15} /> {lang === 'en' ? 'Extend 5 More Days' : 'درێژکردنەوەی مۆڵەت (+٥ ڕۆژ)'}
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="reservation-form">
+                                    <p className="reservation-desc">
+                                        {lang === 'en' 
+                                            ? 'Reserve this episode for translation. Other admins cannot edit or overwrite it during your reservation period. If not completed in time, it will auto-unlock.' 
+                                            : 'کاتێک ئەم ئەڵقەیە حجز دەکەیت، هیچ وەرگێڕ و ئەدمینێکی تر ناتوانێت دەستکاری بکات تا کارەکەت تەواو دەکەیت. ئەگەر لەم ماوەیەدا کارەکەت نەکرد، خۆی قوفڵەکەی دەکرێتەوە.'}
+                                    </p>
+
+                                    <label className="reservation-field-label">
+                                        {lang === 'en' ? 'Select duration:' : 'ماوەی مۆڵەتی پێویست دیاری بکە:'}
+                                    </label>
+                                    <div className="reservation-days-options">
+                                        {[1, 3, 5, 7, 10, 14].map(days => (
+                                            <button
+                                                key={days}
+                                                type="button"
+                                                className={`btn-day-choice ${reserveDaysInput === days ? 'active' : ''}`}
+                                                onClick={() => setReserveDaysInput(days)}
+                                            >
+                                                {days} ڕۆژ
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    <div className="reservation-actions-row" style={{ marginTop: '20px' }}>
+                                        <button
+                                            type="button"
+                                            className="btn-reserve-cancel"
+                                            onClick={() => setReserveTarget(null)}
+                                        >
+                                            پاشگەزبوونەوە
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="btn-reserve-primary"
+                                            onClick={() => handleReserveEpisode(reserveTarget.seasonNum, reserveTarget.ep, reserveDaysInput)}
+                                        >
+                                            <Lock size={15} /> {lang === 'en' ? `Reserve for ${reserveDaysInput} Days` : `حیجزکردن بۆ ${reserveDaysInput} ڕۆژ 🔒`}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}

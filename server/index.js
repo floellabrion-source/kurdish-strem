@@ -4525,6 +4525,21 @@ app.post('/api/admin/movies/:id/srt-content', requireAuth, requireAdmin, (req, r
     const idx = movies.findIndex((m) => m.id === movieId);
     if (idx === -1) return res.status(404).json({ error: 'Movie not found' });
 
+    // Check Subtitle Reservation: if reserved by someone else and not expired
+    let targetItemForReserve = movies[idx];
+    if (seasonNum && episodeNum) {
+        const s = (movies[idx].seasons || []).find(s => s.number === parseInt(seasonNum, 10));
+        const e = (s?.episodes || []).find(ep => ep.number === parseInt(episodeNum, 10));
+        if (e) targetItemForReserve = e;
+    }
+    if (targetItemForReserve.reservation && targetItemForReserve.reservation.expiresAt > Date.now()) {
+        if (targetItemForReserve.reservation.userId !== req.user.id && !isSuperAdmin(req.user)) {
+            return res.status(403).json({ 
+                error: `ئەم سەبتایتڵە حجز کراوە لەلایەن (${targetItemForReserve.reservation.username}) بۆ ماوەی ${targetItemForReserve.reservation.days} ڕۆژ. ناتوانیت دەستکاری بکەیت.` 
+            });
+        }
+    }
+
     let previousTranslatedSrtText = '';
     const transPath = path.join(targetDir, 'translated.srt');
     if (fs.existsSync(transPath)) {
@@ -5166,6 +5181,118 @@ app.get('/api/admin/movies/:id/lock-status', requireAuth, requireAdmin, (req, re
     }
 
     res.json({ locked: false, isSelf: false });
+});
+
+// ─── SUBTITLE TASK RESERVATION (5-DAY DEADLINE LOCK) ───
+
+// POST /api/admin/movies/:id/reserve
+app.post('/api/admin/movies/:id/reserve', requireAuth, requireAdmin, (req, res) => {
+    const movieId = req.params.id;
+    const { seasonNum, episodeNum, days = 5, note } = req.body;
+    const numDays = Math.min(30, Math.max(1, parseInt(days, 10) || 5));
+    const now = Date.now();
+    const expiresAt = now + (numDays * 24 * 60 * 60 * 1000);
+
+    const movies = readMovies();
+    const movie = movies.find(m => m.id === movieId);
+    if (!movie) return res.status(404).json({ error: 'Movie not found' });
+
+    let targetItem = movie;
+    let sNum = seasonNum !== undefined && seasonNum !== null ? parseInt(seasonNum, 10) : undefined;
+    let eNum = episodeNum !== undefined && episodeNum !== null ? parseInt(episodeNum, 10) : undefined;
+
+    if (sNum !== undefined && eNum !== undefined) {
+        const season = (movie.seasons || []).find(s => s.number === sNum);
+        if (!season) return res.status(404).json({ error: 'Season not found' });
+        const ep = (season.episodes || []).find(e => e.number === eNum);
+        if (!ep) return res.status(404).json({ error: 'Episode not found' });
+        targetItem = ep;
+    }
+
+    // Check existing active reservation
+    if (targetItem.reservation && targetItem.reservation.expiresAt > now) {
+        if (targetItem.reservation.userId !== req.user.id && !isSuperAdmin(req.user)) {
+            return res.status(403).json({ 
+                error: `ئەم وەرگێڕانە لەلایەن (${targetItem.reservation.username}) حجز کراوە تا ${new Date(targetItem.reservation.expiresAt).toLocaleDateString('ckb')}` 
+            });
+        }
+    }
+
+    const newReservation = {
+        userId: req.user.id,
+        username: req.user.username,
+        reservedAt: now,
+        expiresAt: expiresAt,
+        days: numDays,
+        note: note ? String(note).trim() : ''
+    };
+
+    targetItem.reservation = newReservation;
+    writeMovies(movies);
+
+    logAdminActivity('subtitle_reserve', req.user, {
+        id: movieId,
+        title: movie.title,
+        seasonNum: sNum,
+        episodeNum: eNum
+    }, {
+        days: numDays,
+        expiresAt: new Date(expiresAt).toISOString()
+    }, req);
+
+    broadcastWs('SUBTITLE_RESERVATION_UPDATE', {
+        movieId,
+        seasonNum: sNum,
+        episodeNum: eNum,
+        reservation: newReservation
+    });
+
+    res.json({ success: true, reservation: newReservation, movie });
+});
+
+// POST /api/admin/movies/:id/unreserve
+app.post('/api/admin/movies/:id/unreserve', requireAuth, requireAdmin, (req, res) => {
+    const movieId = req.params.id;
+    const { seasonNum, episodeNum } = req.body;
+    const movies = readMovies();
+    const movie = movies.find(m => m.id === movieId);
+    if (!movie) return res.status(404).json({ error: 'Movie not found' });
+
+    let targetItem = movie;
+    let sNum = seasonNum !== undefined && seasonNum !== null ? parseInt(seasonNum, 10) : undefined;
+    let eNum = episodeNum !== undefined && episodeNum !== null ? parseInt(episodeNum, 10) : undefined;
+
+    if (sNum !== undefined && eNum !== undefined) {
+        const season = (movie.seasons || []).find(s => s.number === sNum);
+        if (!season) return res.status(404).json({ error: 'Season not found' });
+        const ep = (season.episodes || []).find(e => e.number === eNum);
+        if (!ep) return res.status(404).json({ error: 'Episode not found' });
+        targetItem = ep;
+    }
+
+    if (targetItem.reservation) {
+        if (targetItem.reservation.userId !== req.user.id && !isSuperAdmin(req.user)) {
+            return res.status(403).json({ error: 'تەنها کەسی حجزکەر یان سەرۆک دەتوانێت حجزەکە لابدات' });
+        }
+        targetItem.reservation = null;
+        writeMovies(movies);
+
+        logAdminActivity('subtitle_unreserve', req.user, {
+            id: movieId,
+            title: movie.title,
+            seasonNum: sNum,
+            episodeNum: eNum
+        }, {}, req);
+
+        broadcastWs('SUBTITLE_RESERVATION_UPDATE', {
+            movieId,
+            seasonNum: sNum,
+            episodeNum: eNum,
+            reservation: null
+        });
+    }
+
+    res.json({ success: true, reservation: null, movie });
 });
 
 // ─── INTERNAL TEAM NOTES ENDPOINTS ───

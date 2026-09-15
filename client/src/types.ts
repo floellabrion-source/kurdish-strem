@@ -1,3 +1,12 @@
+export interface SubtitleReservation {
+    userId: string;
+    username: string;
+    reservedAt: number;
+    expiresAt: number;
+    days: number;
+    note?: string;
+}
+
 export interface Episode {
     id: string;
     number: number;
@@ -12,6 +21,7 @@ export interface Episode {
     sensitiveScenes?: { start: number, end: number }[];
     languageMetrics?: LanguageMetrics;
     status?: 'published' | 'draft';
+    reservation?: SubtitleReservation | null;
 }
 
 export interface Season {
@@ -111,6 +121,7 @@ export interface Movie {
     approvedAt?: string;
     rejectReason?: string;
     lastEditedBy?: { id: string; username: string; at: string; action?: string };
+    reservation?: SubtitleReservation | null;
 }
 
 export interface AdminPermissions {
