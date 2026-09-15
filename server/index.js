@@ -5532,7 +5532,8 @@ app.post('/api/admin/movies/:id/seasons/:seasonNum/episodes', requireAuth, requi
         videoFile: null,
         videoUrl: null,
         originalSrt: null,
-        translatedSrt: null
+        translatedSrt: null,
+        status: 'draft'
     };
     movies[idx].seasons[sIdx].episodes.push(newEp);
     writeMovies(movies);
@@ -5573,7 +5574,8 @@ app.post('/api/admin/movies/:id/seasons/:seasonNum/episodes/bulk', requireAuth, 
             videoFile: null,
             videoUrl: null,
             originalSrt: null,
-            translatedSrt: null
+            translatedSrt: null,
+            status: 'draft'
         };
         movies[idx].seasons[sIdx].episodes.push(newEp);
         created.push(newEp);
