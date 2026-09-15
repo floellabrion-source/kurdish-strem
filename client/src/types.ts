@@ -11,6 +11,7 @@ export interface Episode {
     duration: string;
     sensitiveScenes?: { start: number, end: number }[];
     languageMetrics?: LanguageMetrics;
+    status?: 'published' | 'draft';
 }
 
 export interface Season {

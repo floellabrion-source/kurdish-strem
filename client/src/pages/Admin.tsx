@@ -158,7 +158,7 @@ export default function Admin() {
     const [diffViewerTarget, setDiffViewerTarget] = useState<{ movieId: string; movieTitle: string; seasonNum?: number; episodeNum?: number; episodeTitle?: string; seasons?: any[] } | null>(null);
 
     const [editEpisodeTarget, setEditEpisodeTarget] = useState<{ movieId: string, seasonNum: number, epId: string } | null>(null);
-    const [editEpForm, setEditEpForm] = useState({ title: '', description: '', duration: '' });
+    const [editEpForm, setEditEpForm] = useState<{ title: string; description: string; duration: string; status: 'published' | 'draft' }>({ title: '', description: '', duration: '', status: 'published' });
 
     const [fetchingImdbRating, setFetchingImdbRating] = useState(false);
 
@@ -591,7 +591,12 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
 
     const openEditEpisodeModal = (movieId: string, seasonNum: number, ep: Episode) => {
         setEditEpisodeTarget({ movieId, seasonNum, epId: ep.id });
-        setEditEpForm({ title: ep.title || '', description: ep.description || '', duration: ep.duration || '' });
+        setEditEpForm({ 
+            title: ep.title || '', 
+            description: ep.description || '', 
+            duration: ep.duration || '',
+            status: (ep.status || 'published') as 'published' | 'draft'
+        });
     };
 
     const saveEpisodeEdit = async () => {
@@ -606,6 +611,7 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
             ep.title = editEpForm.title;
             ep.description = editEpForm.description;
             ep.duration = editEpForm.duration;
+            ep.status = editEpForm.status;
         }
         try {
             await axios.put(`/api/admin/movies/${movieId}`, updated);
@@ -2304,6 +2310,17 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                             <div className="form-group"><label>ناوی ئەڵقە</label><input type="text" value={editEpForm.title} onChange={e => setEditEpForm(f => ({ ...f, title: e.target.value }))} className="form-input" /></div>
                             <div className="form-group"><label>کورتە</label><textarea value={editEpForm.description} onChange={e => setEditEpForm(f => ({ ...f, description: e.target.value }))} className="form-input form-textarea" rows={3} /></div>
                             <div className="form-group"><label>کات (بۆ نموونە: 45 min)</label><input type="text" value={editEpForm.duration} onChange={e => setEditEpForm(f => ({ ...f, duration: e.target.value }))} className="form-input" /></div>
+                            <div className="form-group">
+                                <label>دۆخی بڵاوکردنەوە / وەرگێڕان</label>
+                                <select 
+                                    value={editEpForm.status || 'published'} 
+                                    onChange={e => setEditEpForm(f => ({ ...f, status: e.target.value as any }))}
+                                    className="form-input"
+                                >
+                                    <option value="published">🌐 بڵاوکراوەتەوە (دیارە بۆ بینەران)</option>
+                                    <option value="draft">🛠️ بۆ وەرگێڕان و تەکنیک (تەنها لەلای ئەدمینەکان دەبینرێت)</option>
+                                </select>
+                            </div>
                         </div>
                         <div className="form-footer">
                             <button onClick={() => setEditEpisodeTarget(null)} className="btn-cancel">پاشگەز</button>

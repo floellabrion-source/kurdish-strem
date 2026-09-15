@@ -3292,6 +3292,18 @@ app.post('/api/ai/generate', requireAuth, aiLimiter, async (req, res) => {
     }
 });
 
+const sanitizeMovieForPublic = (m) => {
+    if (!m) return null;
+    if (m.type === 'series' && Array.isArray(m.seasons)) {
+        const cleanSeasons = m.seasons.map(s => ({
+            ...s,
+            episodes: (s.episodes || []).filter(e => !e.status || e.status === 'published')
+        }));
+        return { ...m, seasons: cleanSeasons };
+    }
+    return m;
+};
+
 app.get('/api/movies', (req, res) => {
     const authHeader = req.headers.authorization;
     let isAdminUser = false;
@@ -3309,8 +3321,10 @@ app.get('/api/movies', (req, res) => {
         return res.json(movies);
     }
 
-    // For public users: return only published movies (or without status for backwards compatibility)
-    const publicMovies = movies.filter(m => !m.status || m.status === 'published');
+    // For public users: return only published movies and filter out draft episodes
+    const publicMovies = movies
+        .filter(m => !m.status || m.status === 'published')
+        .map(sanitizeMovieForPublic);
     res.json(publicMovies);
 });
 
@@ -3318,19 +3332,23 @@ app.get('/api/movies/:id', (req, res) => {
     const movie = readMovies().find((m) => m.id === req.params.id);
     if (!movie) return res.status(404).json({ error: 'Not found' });
 
-    if (!movie.status || movie.status === 'published') {
-        return res.json(movie);
-    }
-
-    // If draft/pending, check if user is admin
     const authHeader = req.headers.authorization;
+    let isAdminUser = false;
     if (authHeader && authHeader.startsWith('Bearer ')) {
         const token = authHeader.split(' ')[1];
         const users = readUsers();
         const found = users.find(u => u.token === token && u.tokenExpiresAt > Date.now());
         if (found && (found.role === 'admin' || found.role === 'super_admin' || isSuperAdmin(found))) {
-            return res.json(movie);
+            isAdminUser = true;
         }
+    }
+
+    if (isAdminUser) {
+        return res.json(movie);
+    }
+
+    if (!movie.status || movie.status === 'published') {
+        return res.json(sanitizeMovieForPublic(movie));
     }
 
     return res.status(403).json({ error: 'ئەم بەرهەمە هێشتا پەسەند نەکراوە و لە قۆناغی چاوەڕوانیدایە' });

@@ -5,7 +5,7 @@ import {
     X, Plus, Trash2, Edit3, BarChart2, Video, Upload, Link as LinkIcon,
     FileText, Languages, Shield, ChevronDown, ChevronUp, PlusCircle, Loader2, Play,
     Download, Sparkles, CheckCircle2, AlertCircle, Pause, RefreshCw, Zap, BookOpen, Brain, DollarSign, Clock, Layers, Film,
-    Minimize2, Maximize2
+    Minimize2, Maximize2, Wrench, Globe
 } from 'lucide-react';
 import { Movie, Season, Episode, LanguageMetrics } from '../types';
 import { 
@@ -607,6 +607,30 @@ export default function EpisodeManagerModal({
         }
     };
 
+    const handleToggleEpStatus = async (seasonNum: number, ep: Episode) => {
+        const isCurrentlyPublished = !ep.status || ep.status === 'published';
+        const targetStatus = isCurrentlyPublished ? 'draft' : 'published';
+        const confirmText = isCurrentlyPublished
+            ? `ئایا دڵنیایت دەتەوێت ئەڵقەی ${ep.number} (${ep.title || ''}) بگۆڕیت بۆ دۆخی "وەرگێڕان و تەکنیک"؟\n\n📌 ئەم ئەڵقەیە لە بینەرانی ئاسایی دەشاردرێتەوە و تەنها لەلای ئەدمینەکان دەمێنێتەوە بۆ وەرگێڕان.`
+            : `ئایا دڵنیایت دەتەوێت ئەڵقەی ${ep.number} (${ep.title || ''}) بڵاوبکەیتەوە بۆ بینەران؟\n\n✅ ڕاستەوخۆ دەچێتە ناو ماڵپەڕ و بەکارهێنەران دەتوانن سەیری بکەن.`;
+
+        if (!window.confirm(confirmText)) return;
+
+        try {
+            const updatedMovie = JSON.parse(JSON.stringify(movie));
+            const season = updatedMovie.seasons?.find((s: Season) => s.number === seasonNum);
+            const targetEp = season?.episodes?.find((e: Episode) => e.id === ep.id);
+            if (targetEp) {
+                targetEp.status = targetStatus;
+            }
+            await axios.put(`/api/admin/movies/${movie.id}`, updatedMovie);
+            showToast(targetStatus === 'published' ? `ئەڵقەی ${ep.number} بڵاوکرایەوە بۆ بینەران 🌐` : `ئەڵقەی ${ep.number} گۆڕدرا بۆ وەرگێڕان و تەکنیک 🛠️`);
+            if (onReloadMovie) onReloadMovie();
+        } catch (err: any) {
+            showToast(err.response?.data?.error || 'کێشەیەک ڕووی دا');
+        }
+    };
+
     // A task is running ONLY when locally running OR running in global background task registry
     const isTaskRunning = Boolean(aiRunning || (runningTaskForMovie && runningTaskForMovie.status === 'running'));
 
@@ -769,6 +793,15 @@ export default function EpisodeManagerModal({
                                                             >
                                                                 <BarChart2 size={13} />
                                                             </button>
+                                                            <button
+                                                                className="ep-action-btn"
+                                                                title={ep.status === 'draft' 
+                                                                    ? "بۆ وەرگێڕان و تەکنیک (تەنها ئەدمین) - کلیک بکە بۆ بڵاوکردنەوە" 
+                                                                    : "بڵاوکراوەتەوە بۆ بینەران - کلیک بکە بۆ گۆڕین بۆ وەرگێڕان و شاردنەوە"}
+                                                                onClick={() => handleToggleEpStatus(season.number, ep)}
+                                                            >
+                                                                {ep.status === 'draft' ? <Wrench size={13} color="#fbbf24" /> : <Globe size={13} color="#34d399" />}
+                                                            </button>
                                                         </div>
                                                         <div className="ep-item-info-right">
                                                             <div className="ep-title-row">
@@ -776,6 +809,25 @@ export default function EpisodeManagerModal({
                                                                 <span className="ep-number-badge">{ep.number}</span>
                                                             </div>
                                                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px', flexWrap: 'wrap' }}>
+                                                                {ep.status === 'draft' ? (
+                                                                    <button 
+                                                                        type="button" 
+                                                                        className="ep-status-tag draft-interactive" 
+                                                                        title="ئەم ئەڵقەیە لە دۆخی وەرگێڕان و تەکنیکدایە (لە بینەران شاردراوەتەوە) - کلیک بکە بۆ بڵاوکردنەوە بۆ بینەران"
+                                                                        onClick={() => handleToggleEpStatus(season.number, ep)}
+                                                                    >
+                                                                        <Wrench size={10} /> 🛠️ بۆ وەرگێڕان (تەنها ئەدمین)
+                                                                    </button>
+                                                                ) : (
+                                                                    <button 
+                                                                        type="button" 
+                                                                        className="ep-status-tag published-interactive" 
+                                                                        title="ئەم ئەڵقەیە بڵاوکراوەتەوە بۆ بینەران - کلیک بکە بۆ گۆڕین بۆ دۆخی وەرگێڕان (شاردنەوە)"
+                                                                        onClick={() => handleToggleEpStatus(season.number, ep)}
+                                                                    >
+                                                                        <Globe size={10} /> 🌐 بڵاوکراوەتەوە
+                                                                    </button>
+                                                                )}
                                                                 {hasVideo && hasSub ? (
                                                                     <span className="ep-status-tag ready">✅ {lang === 'en' ? 'Ready' : 'بە تەواوی ئامادەیە'}</span>
                                                                 ) : hasSub ? (
