@@ -1128,7 +1128,20 @@ const issueToken = (user) => {
     user.tokenExpiresAt = Date.now() + TOKEN_TTL_MS;
 };
 
-const getTokenFromReq = (req) => req.headers.authorization?.split(' ')[1];
+const getTokenFromReq = (req) => {
+    if (!req) return null;
+    const authHeader = req.headers?.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+        return authHeader.split(' ')[1];
+    }
+    if (authHeader && !authHeader.includes(' ')) {
+        return authHeader;
+    }
+    if (req.query && req.query.token) {
+        return String(req.query.token);
+    }
+    return null;
+};
 
 const getUser = (req) => {
     const token = getTokenFromReq(req);
@@ -1139,8 +1152,21 @@ const getUser = (req) => {
     return user;
 };
 
+const isSuperAdmin = (user) => {
+    if (!user) return false;
+    if (user.role === 'super_admin') return true;
+    if (user.username === 'maher2' || user.username?.toLowerCase() === 'admin') return true;
+    return false;
+};
+
+const isUserAdmin = (reqOrUser) => {
+    if (!reqOrUser) return false;
+    const user = reqOrUser.username || reqOrUser.role ? reqOrUser : getUser(reqOrUser);
+    if (!user) return false;
+    return Boolean(user.role === 'admin' || user.role === 'super_admin' || isSuperAdmin(user));
+};
+
 const requireAuth = (req, res, next) => {
-    const token = getTokenFromReq(req);
     const user = getUser(req);
     if (!user) {
         return res.status(401).json({ error: 'Unauthorized' });
@@ -1154,13 +1180,6 @@ const requireAuth = (req, res, next) => {
     next();
 };
 
-const isSuperAdmin = (user) => {
-    if (!user) return false;
-    if (user.role === 'super_admin') return true;
-    if (user.username === 'maher2' || user.username?.toLowerCase() === 'admin') return true;
-    return false;
-};
-
 const hasPermission = (user, permKey) => {
     if (!user) return false;
     if (isSuperAdmin(user)) return true;
@@ -1172,7 +1191,7 @@ const hasPermission = (user, permKey) => {
 };
 
 const requireAdmin = (req, res, next) => {
-    if (!req.user || (req.user.role !== 'admin' && req.user.role !== 'super_admin' && !isSuperAdmin(req.user))) {
+    if (!req.user || !isUserAdmin(req.user)) {
         return res.status(403).json({ error: 'Admin only' });
     }
     next();
@@ -3305,19 +3324,8 @@ const sanitizeMovieForPublic = (m) => {
 };
 
 app.get('/api/movies', (req, res) => {
-    const authHeader = req.headers.authorization;
-    let isAdminUser = false;
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-        const token = authHeader.split(' ')[1];
-        const users = readUsers();
-        const found = users.find(u => u.token === token && u.tokenExpiresAt > Date.now());
-        if (found && (found.role === 'admin' || found.role === 'super_admin' || isSuperAdmin(found))) {
-            isAdminUser = true;
-        }
-    }
-
     const movies = readMovies();
-    if (isAdminUser) {
+    if (isUserAdmin(req)) {
         return res.json(movies);
     }
 
@@ -3332,18 +3340,7 @@ app.get('/api/movies/:id', (req, res) => {
     const movie = readMovies().find((m) => m.id === req.params.id);
     if (!movie) return res.status(404).json({ error: 'Not found' });
 
-    const authHeader = req.headers.authorization;
-    let isAdminUser = false;
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-        const token = authHeader.split(' ')[1];
-        const users = readUsers();
-        const found = users.find(u => u.token === token && u.tokenExpiresAt > Date.now());
-        if (found && (found.role === 'admin' || found.role === 'super_admin' || isSuperAdmin(found))) {
-            isAdminUser = true;
-        }
-    }
-
-    if (isAdminUser) {
+    if (isUserAdmin(req)) {
         return res.json(movie);
     }
 
@@ -3351,7 +3348,7 @@ app.get('/api/movies/:id', (req, res) => {
         return res.json(sanitizeMovieForPublic(movie));
     }
 
-    return res.status(403).json({ error: 'ئەم بەرهەمە هێشتا پەسەند نەکراوە و لە قۆناغی چاوەڕوانیدایە' });
+    return res.status(403).json({ error: 'ئەم بەرهەمە لە دۆخی وەرگێڕان و ئامادەکردندایە (تەنها بەڕێوەبەران دەتوانن بیبینن)' });
 });
 
 // Comments Endpoints
@@ -3514,7 +3511,13 @@ app.post('/api/media/favorites', requireAuth, (req, res) => {
         return res.status(400).json({ error: 'Invalid IDs array provided' });
     }
     const allMedia = readMovies();
-    const favoriteMedia = allMedia.filter(media => ids.includes(media.id));
+    if (isUserAdmin(req)) {
+        const favoriteMedia = allMedia.filter(media => ids.includes(media.id));
+        return res.json(favoriteMedia);
+    }
+    const favoriteMedia = allMedia
+        .filter(media => ids.includes(media.id) && (!media.status || media.status === 'published'))
+        .map(sanitizeMovieForPublic);
     res.json(favoriteMedia);
 });
 
@@ -3525,7 +3528,13 @@ app.post('/api/media/watchlater', requireAuth, (req, res) => {
         return res.status(400).json({ error: 'Invalid IDs array provided' });
     }
     const allMedia = readMovies();
-    const watchLaterMedia = allMedia.filter(media => ids.includes(media.id));
+    if (isUserAdmin(req)) {
+        const watchLaterMedia = allMedia.filter(media => ids.includes(media.id));
+        return res.json(watchLaterMedia);
+    }
+    const watchLaterMedia = allMedia
+        .filter(media => ids.includes(media.id) && (!media.status || media.status === 'published'))
+        .map(sanitizeMovieForPublic);
     res.json(watchLaterMedia);
 });
 
@@ -3546,7 +3555,23 @@ app.get('/api/stream/:id', (req, res) => {
     const movies = readMovies();
     const movie = movies.find((m) => m.id === req.params.id);
     if (!movie) return res.status(404).json({ error: 'Not found' });
+
     const { s, e, start: seekStart, quality: reqQuality, q } = req.query;
+
+    // Security check: Only Admins can stream draft movies or draft episodes
+    if (!isUserAdmin(req)) {
+        if (movie.status && movie.status !== 'published') {
+            return res.status(403).json({ error: 'ئەم بەرهەمە لە دۆخی وەرگێڕان و ئامادەکردندایە (تەنها بەڕێوەبەران دەتوانن بیبینن)' });
+        }
+        if (s && e) {
+            const season = (movie.seasons || []).find(se => se.number === parseInt(s, 10));
+            const episode = (season?.episodes || []).find(ep => ep.number === parseInt(e, 10));
+            if (episode && episode.status && episode.status !== 'published') {
+                return res.status(403).json({ error: 'ئەم ئەڵقەیە لە دۆخی وەرگێڕان و ئامادەکردندایە و هێشتا بڵاونەکراوەتەوە' });
+            }
+        }
+    }
+
     const source = resolveVideoSource(movie, s, e);
     if (!source) return res.status(404).json({ error: 'Video source not found' });
 
@@ -3796,6 +3821,10 @@ app.get('/api/subtitle/:id/:type', (req, res) => {
     const movie = readMovies().find((m) => m.id === req.params.id);
     if (!movie) return res.status(404).json({ error: 'Not found' });
 
+    if (!isUserAdmin(req) && movie.status && movie.status !== 'published') {
+        return res.status(403).json({ error: 'ئەم بەرهەمە لە دۆخی وەرگێڕاندایە' });
+    }
+
     const srtFile = req.params.type === 'original' ? movie.originalSrt : movie.translatedSrt;
     if (!srtFile) return res.status(404).json({ error: 'No subtitle' });
 
@@ -3816,6 +3845,10 @@ app.get('/api/subtitle/:id', (req, res) => {
     const season = movie.seasons?.find((se) => se.number === parseInt(s, 10));
     const episode = season?.episodes.find((ep) => ep.number === parseInt(e, 10));
     if (!episode) return res.status(404).json({ error: 'Episode not found' });
+
+    if (!isUserAdmin(req) && ((movie.status && movie.status !== 'published') || (episode.status && episode.status !== 'published'))) {
+        return res.status(403).json({ error: 'ئەم ئەڵقەیە لە دۆخی وەرگێڕاندایە' });
+    }
 
     const srtFile = type === 'original' ? episode.originalSrt : episode.translatedSrt;
     if (!srtFile) return res.status(404).json({ error: 'No subtitle' });
