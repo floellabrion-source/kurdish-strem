@@ -6,7 +6,7 @@ import {
     Image, Video, Layers, ChevronDown, ChevronUp, ChevronLeft, ChevronRight,
     PlusCircle, ListVideo, Upload, Languages, Shield, ShieldCheck, Link as LinkIcon, Star, Play, Search,
     Users, BarChart2, CreditCard, Sparkles, Filter, Download, Pause, History, Trophy, BookOpen,
-    HardDrive, Bell
+    HardDrive, Bell, Wrench, Globe, Eye, EyeOff
 } from 'lucide-react';
 import { Movie, Season, Episode, LanguageMetrics, getCefrDisplayLevel, getCefrColor } from '../types';
 import { runAiTranslationAndAnalysis, triggerFileDownload, pauseTranslationTask } from '../utils/aiTranslator';
@@ -381,7 +381,7 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
     const [form, setForm] = useState({
         title: '', description: '', descriptionKu: '', descriptionEn: '', descriptionAr: '', language: '', genre: '', year: new Date().getFullYear().toString(), endYear: '',
         duration: '', type: 'movie' as 'movie' | 'series' | 'animation', imdbRating: '' as string | number,
-        posterUrl: '', seasons: [] as Season[]
+        posterUrl: '', seasons: [] as Season[], status: 'published' as 'published' | 'draft'
     });
 
     const refs = {
@@ -489,7 +489,7 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
             const res = await axios.post('/api/admin/movies', { ...formToSend, year: parseInt(formToSend.year), endYear: formToSend.endYear ? parseInt(formToSend.endYear) : null });
             toast('بە سەرکەوتوویی زیاد کرا ✓');
             setShowForm(false);
-            setForm({ title: '', description: '', descriptionKu: '', descriptionEn: '', descriptionAr: '', language: '', genre: '', year: new Date().getFullYear().toString(), endYear: '', duration: '', type: 'movie' as 'movie' | 'series' | 'animation', imdbRating: '', posterUrl: '', seasons: [] });
+            setForm({ title: '', description: '', descriptionKu: '', descriptionEn: '', descriptionAr: '', language: '', genre: '', year: new Date().getFullYear().toString(), endYear: '', duration: '', type: 'movie' as 'movie' | 'series' | 'animation', imdbRating: '', posterUrl: '', seasons: [], status: 'published' });
             if (res.data) {
                 setMovies(prev => [res.data, ...prev.filter(m => m.id !== res.data.id)]);
             }
@@ -623,6 +623,32 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
             toast(nextState ? `زیاد کرا بۆ هیرۆ (Hero Banner) 🌟` : `لە هیرۆ سڕایەوە ❌`);
         } catch {
             toast('کێشەیەک ڕووی دا', 'error');
+        }
+    };
+
+    const handleToggleMovieStatus = async (movie: Movie) => {
+        const isCurrentlyPublished = !movie.status || movie.status === 'published';
+        const targetStatus = isCurrentlyPublished ? 'draft' : 'published';
+        const confirmText = isCurrentlyPublished
+            ? `ئایا دڵنیایت دەتەوێت (${movie.title}) بگۆڕیت بۆ دۆخی "وەرگێڕان و تەکنیک (Draft)"؟\n\n📌 ئەم بەرهەمە لە بینەرانی ئاسایی دەشاردرێتەوە و تەنها لەلای ئەدمینەکان دەمێنێتەوە بۆ وەرگێڕان و چاککردنی سەبتایتڵ.`
+            : `ئایا دڵنیایت دەتەوێت (${movie.title}) بڵاوبکەیتەوە بۆ بینەران؟\n\n✅ ڕاستەوخۆ دەچێتە ناو ماڵپەڕ و بەکارهێنەران دەتوانن سەیری بکەن.`;
+
+        if (!confirm(confirmText)) return;
+
+        try {
+            await axios.put(`/api/admin/movies/${movie.id}`, { status: targetStatus });
+            setMovies(prev => prev.map(m => m.id === movie.id ? { ...m, status: targetStatus } : m));
+            try {
+                const cachedStr = localStorage.getItem('ks_cached_movies');
+                if (cachedStr) {
+                    const parsed = JSON.parse(cachedStr);
+                    const updated = parsed.map((m: any) => m.id === movie.id ? { ...m, status: targetStatus } : m);
+                    localStorage.setItem('ks_cached_movies', JSON.stringify(updated));
+                }
+            } catch {}
+            toast(targetStatus === 'published' ? `"${movie.title}" بڵاوکرایەوە بۆ بینەران 🌐` : `"${movie.title}" گۆڕدرا بۆ وەرگێڕان و تەکنیک (تەنها ئەدمین) 🛠️`);
+        } catch (err: any) {
+            toast(err.response?.data?.error || 'کێشەیەک ڕووی دا', 'error');
         }
     };
 
@@ -1218,9 +1244,23 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                                         {movie.status === 'pending_approval' ? (
                                             <span className="movie-status-pill pending">⏳ چاوەڕوانی پەسەندکردن</span>
                                         ) : movie.status === 'draft' ? (
-                                            <span className="movie-status-pill draft">📝 ڕەشنووس</span>
+                                            <button 
+                                                type="button"
+                                                className="movie-status-pill draft-interactive" 
+                                                title="ئەم بەرهەمە لە بینەرانی ئاسایی شاردراوەتەوە و تەنها بۆ ئەدمینەکان دیارە - کلیک بکە بۆ بڵاوکردنەوە"
+                                                onClick={() => handleToggleMovieStatus(movie)}
+                                            >
+                                                <Wrench size={12} /> 🛠️ بۆ وەرگێڕان و تەکنیک (تەنها ئەدمین)
+                                            </button>
                                         ) : (
-                                            <span className="movie-status-pill published">✅ بڵاوکراوەتەوە</span>
+                                            <button 
+                                                type="button"
+                                                className="movie-status-pill published-interactive" 
+                                                title="ئەم بەرهەمە بۆ بینەران دیارە - کلیک بکە بۆ گۆڕین بۆ دۆخی وەرگێڕان و تەکنیک (شاردنەوە)"
+                                                onClick={() => handleToggleMovieStatus(movie)}
+                                            >
+                                                <Globe size={12} /> 🌐 بڵاوکراوەتەوە (گشتی)
+                                            </button>
                                         )}
                                         {movie.isFeatured && (
                                             <span style={{ fontSize: '11px', background: 'rgba(245, 158, 11, 0.2)', color: '#fbbf24', border: '1px solid rgba(245, 158, 11, 0.45)', padding: '2px 8px', borderRadius: '999px', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
@@ -1245,6 +1285,17 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                                     <p className="ac-desc">{movie.description}</p>
                                 </div>
                                 <div className="ac-actions">
+                                    {(isSuperAdmin || canPublishDirectly) && (
+                                        <button 
+                                            className={`ac-btn ${movie.status === 'draft' ? 'ac-draft-btn' : 'ac-published-btn'}`} 
+                                            title={movie.status === 'draft' 
+                                                ? "ئەم بەرهەمە تەنها بۆ ئەدمینەکان دیارە بۆ وەرگێڕان - کلیک بکە بۆ بڵاوکردنەوە بۆ بینەران" 
+                                                : "ئەم بەرهەمە بۆ بینەران دیارە - کلیک بکە بۆ گۆڕین بۆ وەرگێڕان و تەکنیک (شاردنەوە لە بینەر)"} 
+                                            onClick={() => handleToggleMovieStatus(movie)}
+                                        >
+                                            {movie.status === 'draft' ? <Wrench size={16} /> : <Globe size={16} />}
+                                        </button>
+                                    )}
                                     <button 
                                         className={`ac-btn ${movie.isFeatured ? 'featured-active-btn' : ''}`} 
                                         title={movie.isFeatured ? "سڕینەوە لە هیرۆ (Hero Banner)" : "زیادکردن بۆ هیرۆ (Hero Banner)"} 
@@ -1792,7 +1843,7 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                                 </button>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
-                                <button onClick={() => setForm({ title: '', description: '', descriptionKu: '', descriptionEn: '', descriptionAr: '', language: '', genre: '', year: new Date().getFullYear().toString(), endYear: '', duration: '', type: 'movie', imdbRating: '', posterUrl: '', seasons: [] })} className="btn-cancel" style={{ padding: '4px 10px', fontSize: '12px' }}>{lang === 'en' ? 'Clear Form' : 'سڕینەوەی فۆڕم'}</button>
+                                <button onClick={() => setForm({ title: '', description: '', descriptionKu: '', descriptionEn: '', descriptionAr: '', language: '', genre: '', year: new Date().getFullYear().toString(), endYear: '', duration: '', type: 'movie', imdbRating: '', posterUrl: '', seasons: [], status: 'published' })} className="btn-cancel" style={{ padding: '4px 10px', fontSize: '12px' }}>{lang === 'en' ? 'Clear Form' : 'سڕینەوەی فۆڕم'}</button>
                             </div>
                             <div className="form-group">
                                 <label>{lang === 'en' ? 'Movie / Series Title, IMDb Code, or Full URL *' : 'ناوی فیلم / زنجیرە، کودی IMDb، یان لینکی تەواو *'}</label>
@@ -1863,6 +1914,17 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                                 <div className="form-group"><label>{lang === 'en' ? 'Release Year' : 'ساڵ (دەستپێک)'}</label><input type="number" value={form.year} onChange={e => setForm(f => ({ ...f, year: e.target.value }))} className="form-input" /></div>
                                 {form.type === 'series' && <div className="form-group"><label>{lang === 'en' ? 'End Year (Empty = Ongoing)' : 'ساڵی کۆتایی (بەتاڵ بێ ئەگەر بەردەوامە)'}</label><input type="number" value={form.endYear || ''} onChange={e => setForm(f => ({ ...f, endYear: e.target.value }))} className="form-input" placeholder={lang === 'en' ? "e.g. 2024" : "بۆ نمونە: 2013"} /></div>}
                                 {(form.type === 'movie' || form.type === 'animation') && <div className="form-group"><label>{lang === 'en' ? 'Duration' : 'کات'}</label><input type="text" value={form.duration} onChange={e => setForm(f => ({ ...f, duration: e.target.value }))} className="form-input" /></div>}
+                            </div>
+                            <div className="form-group">
+                                <label>{lang === 'en' ? 'Publishing / Translation Status' : 'دۆخی بڵاوکردنەوە / وەرگێڕان'}</label>
+                                <select 
+                                    value={form.status || 'published'} 
+                                    onChange={e => setForm(f => ({ ...f, status: e.target.value as any }))}
+                                    className="form-input"
+                                >
+                                    <option value="published">🌐 بڵاوکردنەوەی ڕاستەوخۆ (بۆ بینەران و بەکارهێنەران)</option>
+                                    <option value="draft">🛠️ بۆ وەرگێڕان و تەکنیک (تەنها لەلای ئەدمینەکان دەبینرێت)</option>
+                                </select>
                             </div>
                             <div className="form-group">
                                 <label>{lang === 'en' ? 'IMDb Rating' : 'ڕەیتینگی IMDb'}</label>
@@ -2029,6 +2091,20 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                                 <div className="form-group"><label>{lang === 'en' ? 'Release Year' : 'ساڵ (دەستپێک)'}</label><input type="number" value={editMovie.year} onChange={e => setEditMovie(m => m ? { ...m, year: +e.target.value } : null)} className="form-input" /></div>
                                 {editMovie.type === 'series' && <div className="form-group"><label>{lang === 'en' ? 'End Year' : 'ساڵی کۆتایی'}</label><input type="number" value={editMovie.endYear || ''} onChange={e => setEditMovie(m => m ? { ...m, endYear: e.target.value ? +e.target.value : null } : null)} className="form-input" placeholder={lang === 'en' ? "Empty = Ongoing" : "بەتاڵ = بەردەوامە"} /></div>}
                                 <div className="form-group"><label>{lang === 'en' ? 'Duration' : 'کات'}</label><input type="text" value={editMovie.duration} onChange={e => setEditMovie(m => m ? { ...m, duration: e.target.value } : null)} className="form-input" /></div>
+                            </div>
+                            <div className="form-group">
+                                <label>{lang === 'en' ? 'Publishing / Translation Status' : 'دۆخی بڵاوکردنەوە / وەرگێڕان'}</label>
+                                <select 
+                                    value={editMovie.status || 'published'} 
+                                    onChange={e => setEditMovie(m => m ? { ...m, status: e.target.value as any } : null)}
+                                    className="form-input"
+                                >
+                                    <option value="published">🌐 بڵاوکراوەتەوە (دیارە بۆ هەموو بینەران و بەکارهێنەران)</option>
+                                    <option value="draft">🛠️ بۆ وەرگێڕان و تەکنیک (تەنها لەلای ئەدمینەکان دەبینرێت)</option>
+                                    {editMovie.status === 'pending_approval' && (
+                                        <option value="pending_approval">⏳ چاوەڕوانی پەسەندکردنی سەرۆک</option>
+                                    )}
+                                </select>
                             </div>
                             <div className="form-group">
                                 <label>{lang === 'en' ? 'IMDb Rating' : 'ڕەیتینگی IMDb'}</label>
