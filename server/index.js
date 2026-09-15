@@ -5802,9 +5802,9 @@ app.post('/api/admin/create-admin', requireAuth, requireSuperAdmin, async (req, 
     }
 });
 
-app.post('/api/admin/users/:id/password', requireAuth, requireSuperAdmin, async (req, res) => {
+const handleAdminPasswordUpdate = async (req, res) => {
     try {
-        const { password } = req.body;
+        const password = req.body.password || req.body.newPassword;
         if (!password || String(password).length < 6) {
             return res.status(400).json({ error: 'وشەی نهێنی دەبێت لانیکەم ٦ پیت یان ژمارە بێت' });
         }
@@ -5823,9 +5823,11 @@ app.post('/api/admin/users/:id/password', requireAuth, requireSuperAdmin, async 
     } catch (err) {
         res.status(500).json({ error: 'هەڵەیەک ڕوویدا: ' + err.message });
     }
-});
+};
+app.post('/api/admin/users/:id/password', requireAuth, requireSuperAdmin, handleAdminPasswordUpdate);
+app.put('/api/admin/users/:id/password', requireAuth, requireSuperAdmin, handleAdminPasswordUpdate);
 
-app.post('/api/admin/users/:id/email', requireAuth, requireSuperAdmin, (req, res) => {
+const handleAdminEmailUpdate = (req, res) => {
     const { email } = req.body;
     const users = readUsers();
     const idx = users.findIndex(u => u.id === req.params.id);
@@ -5834,9 +5836,11 @@ app.post('/api/admin/users/:id/email', requireAuth, requireSuperAdmin, (req, res
     users[idx].email = email ? String(email).trim() : '';
     writeUsers(users);
     res.json({ success: true, message: `ئیمەیڵی (${users[idx].username}) نوێکرایەوە ✓`, email: users[idx].email });
-});
+};
+app.post('/api/admin/users/:id/email', requireAuth, requireSuperAdmin, handleAdminEmailUpdate);
+app.put('/api/admin/users/:id/email', requireAuth, requireSuperAdmin, handleAdminEmailUpdate);
 
-app.post('/api/admin/users/:id/role', requireAuth, requireSuperAdmin, (req, res) => {
+const handleAdminRoleUpdate = (req, res) => {
     const { role } = req.body;
     if (!['admin', 'user'].includes(role)) {
         return res.status(400).json({ error: 'Invalid role' });
@@ -5863,9 +5867,11 @@ app.post('/api/admin/users/:id/role', requireAuth, requireSuperAdmin, (req, res)
 
     writeUsers(users);
     res.json({ success: true, message: `ڕۆڵی بەکارهێنەر گۆڕدرا بۆ ${role === 'admin' ? 'ئەدمین' : 'بەکارهێنەر'}`, user: sanitizeUser(users[idx]) });
-});
+};
+app.post('/api/admin/users/:id/role', requireAuth, requireSuperAdmin, handleAdminRoleUpdate);
+app.put('/api/admin/users/:id/role', requireAuth, requireSuperAdmin, handleAdminRoleUpdate);
 
-app.post('/api/admin/users/:id/permissions', requireAuth, requireSuperAdmin, (req, res) => {
+const handleAdminPermissionsUpdate = (req, res) => {
     const { permissions } = req.body;
     if (!permissions || typeof permissions !== 'object') {
         return res.status(400).json({ error: 'Invalid permissions payload' });
@@ -5885,9 +5891,11 @@ app.post('/api/admin/users/:id/permissions', requireAuth, requireSuperAdmin, (re
 
     writeUsers(users);
     res.json({ success: true, message: 'دەسەڵاتەکان بە سەرکەوتوویی نوێکرانەوە ✓', user: sanitizeUser(users[idx]) });
-});
+};
+app.post('/api/admin/users/:id/permissions', requireAuth, requireSuperAdmin, handleAdminPermissionsUpdate);
+app.put('/api/admin/users/:id/permissions', requireAuth, requireSuperAdmin, handleAdminPermissionsUpdate);
 
-app.post('/api/admin/users/:id/revoke', requireAuth, requireSuperAdmin, (req, res) => {
+const handleAdminRevoke = (req, res) => {
     const users = readUsers();
     const idx = users.findIndex(u => u.id === req.params.id);
     if (idx === -1) return res.status(404).json({ error: 'User not found' });
@@ -5899,7 +5907,9 @@ app.post('/api/admin/users/:id/revoke', requireAuth, requireSuperAdmin, (req, re
 
     writeUsers(users);
     res.json({ success: true, message: `دەسەڵاتی ئەدمینی (${users[idx].username}) هەڵوەشێندرایەوە و کرا بە بەکارهێنەری ئاسایی`, user: sanitizeUser(users[idx]) });
-});
+};
+app.post('/api/admin/users/:id/revoke', requireAuth, requireSuperAdmin, handleAdminRevoke);
+app.put('/api/admin/users/:id/revoke', requireAuth, requireSuperAdmin, handleAdminRevoke);
 
 app.post('/api/admin/users/:id/suspend', requireAuth, requireAdmin, (req, res) => {
     const { duration, reason } = req.body;

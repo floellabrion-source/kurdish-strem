@@ -238,8 +238,8 @@ export default function AdminUsers() {
         if (!resetPassUser || !resetPassValue.trim()) return;
         try {
             setSavingPassword(true);
-            await axios.put(`/api/admin/users/${resetPassUser.id}/password`, {
-                newPassword: resetPassValue.trim()
+            await axios.post(`/api/admin/users/${resetPassUser.id}/password`, {
+                password: resetPassValue.trim()
             });
             showToast(lang === 'en' ? 'Password changed successfully ✓' : 'وشەی نهێنی بە سەرکەوتوویی گۆڕدرا ✓');
             setResetPassUser(null);
@@ -257,7 +257,7 @@ export default function AdminUsers() {
         if (!editEmailUser) return;
         try {
             setSavingEmail(true);
-            await axios.put(`/api/admin/users/${editEmailUser.id}/email`, {
+            await axios.post(`/api/admin/users/${editEmailUser.id}/email`, {
                 email: editEmailValue.trim()
             });
             showToast(lang === 'en' ? 'Email updated successfully ✓' : 'ئیمەیڵ بە سەرکەوتوویی نوێکرایەوە ✓');
@@ -278,7 +278,7 @@ export default function AdminUsers() {
         if (!confirm(confirmMsg)) return;
 
         try {
-            await axios.put(`/api/admin/users/${user.id}/role`, {
+            await axios.post(`/api/admin/users/${user.id}/role`, {
                 role: targetRole
             });
             showToast(lang === 'en' ? 'Role updated successfully ✓' : 'پلەی بەکارهێنەر گۆڕدرا ✓');
@@ -297,7 +297,7 @@ export default function AdminUsers() {
         if (!editPermsUser) return;
         try {
             setSavingPerms(true);
-            await axios.put(`/api/admin/users/${editPermsUser.id}/permissions`, {
+            await axios.post(`/api/admin/users/${editPermsUser.id}/permissions`, {
                 permissions: editPermsState
             });
             showToast(lang === 'en' ? 'Permissions updated successfully ✓' : 'دەسەڵاتەکان نوێکرانەوە ✓');
@@ -313,7 +313,7 @@ export default function AdminUsers() {
     const handleRevokeAdmin = async (user: UserItem) => {
         if (!confirm(lang === 'en' ? `Revoke admin privileges and demote ${user.username}?` : `ئایا دڵنیایت لە هەڵوەشاندنەوەی دەسەڵاتی ئەدمینی ${user.username}؟`)) return;
         try {
-            await axios.put(`/api/admin/users/${user.id}/role`, {
+            await axios.post(`/api/admin/users/${user.id}/role`, {
                 role: 'user',
                 permissions: {
                     canTranslate: false,
@@ -1052,7 +1052,7 @@ export default function AdminUsers() {
                                         type="checkbox" 
                                         className="perm-switch"
                                         checked={Boolean(editPermsState.canAddMovies)} 
-                                        onChange={e => setNewAdminPerms(p => ({ ...p, canAddMovies: e.target.checked }))}
+                                        onChange={e => setEditPermsState(p => ({ ...p, canAddMovies: e.target.checked }))}
                                     />
                                 </label>
 
