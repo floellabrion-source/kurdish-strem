@@ -680,8 +680,17 @@ export default function DualSrtVideoEditor({
             const currentKurdish = line.kurdish.trim();
             const isRegenerate = Boolean(currentKurdish);
 
-            const glossaryText = glossary.length > 0
-                ? `\nTEAM MANDATORY GLOSSARY (Strictly use these exact Kurdish translations):\n` + glossary.map((g: any) => `- "${g.english}" => "${g.kurdish}"`).join('\n')
+            const fullSceneText = `${line.english} ${beforeLines} ${afterLines}`.toLowerCase();
+            const relevantGlossary = glossary.filter((g: any) => {
+                if (!g.english || !g.english.trim()) return false;
+                const cleanWord = g.english.trim().toLowerCase();
+                if (cleanWord.includes(' ')) return fullSceneText.includes(cleanWord);
+                const regex = new RegExp(`\\b${cleanWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+                return regex.test(fullSceneText);
+            });
+
+            const glossaryText = relevantGlossary.length > 0
+                ? `\nTEAM MANDATORY GLOSSARY (Strictly use these exact Kurdish translations for matching terms):\n` + relevantGlossary.map((g: any) => `- "${g.english}" => "${g.kurdish}"`).join('\n')
                 : '';
 
             const prompt = `ACT AS AN EXPERT CINEMATIC SUBTITLE TRANSLATOR.

@@ -217,9 +217,18 @@ const translateBatch = async (
         return `${block.id}\n${block.time}\n${t}`;
     }).join('\n\n');
 
-    const glossarySection = glossaryTerms.length > 0
+    const batchFullText = texts.join(' ').toLowerCase();
+    const relevantGlossary = glossaryTerms.filter((g: any) => {
+        if (!g.english || !g.english.trim()) return false;
+        const cleanWord = g.english.trim().toLowerCase();
+        if (cleanWord.includes(' ')) return batchFullText.includes(cleanWord);
+        const regex = new RegExp(`\\b${cleanWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+        return regex.test(batchFullText);
+    });
+
+    const glossarySection = relevantGlossary.length > 0
         ? `\nTEAM MANDATORY GLOSSARY (Strictly use these exact Kurdish translations if these English words appear):\n` +
-          glossaryTerms.map(g => `- "${g.english}" => "${g.kurdish}"`).join('\n')
+          relevantGlossary.map(g => `- "${g.english}" => "${g.kurdish}"`).join('\n')
         : '';
 
     const prompt = `ACT AS A PROFESSIONAL SUBTITLE TRANSLATOR. Translate the following English SRT subtitle batch into high-quality, natural, and fluent Central Kurdish (Sorani) adhering strictly to these rules:

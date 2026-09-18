@@ -280,10 +280,19 @@ export const translateBatch = async (
         return `${block.id}\n${block.time}\n${t}`;
     }).join('\n\n');
 
-    const glossarySection = glossaryTerms.length > 0
+    const batchFullText = texts.join(' ').toLowerCase();
+    const relevantGlossary = glossaryTerms.filter((g: any) => {
+        if (!g.english || !g.english.trim()) return false;
+        const cleanWord = g.english.trim().toLowerCase();
+        if (cleanWord.includes(' ')) return batchFullText.includes(cleanWord);
+        const regex = new RegExp(`\\b${cleanWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+        return regex.test(batchFullText);
+    });
+
+    const glossarySection = relevantGlossary.length > 0
         ? `\n🚨 MANDATORY GLOSSARY RULES (STRICT HIGHEST PRIORITY):\n` +
           `You MUST strictly use these exact Kurdish translations whenever these English terms appear (including plurals and inflections):\n` +
-          glossaryTerms.map(g => `• "${g.english}" -> MUST BE TRANSLATED AS: "${g.kurdish}" (do NOT use any other translation/synonym for this term)`).join('\n') +
+          relevantGlossary.map(g => `• "${g.english}" -> MUST BE TRANSLATED AS: "${g.kurdish}" (do NOT use any other translation/synonym for this term)`).join('\n') +
           `\nMake sure to adhere 100% to this glossary list across all translated lines.\n`
         : '';
 
