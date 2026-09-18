@@ -3300,8 +3300,8 @@ app.post('/api/ai/generate', requireAuth, aiLimiter, async (req, res) => {
     }
 
     try {
-        const maxTokens = req.body?.max_tokens || ((aiTask === 'srt_translation') ? 4000 : ((aiTask === 'synopsis') ? 1000 : ((aiTask === 'quiz_generation' || aiTask === 'flashcard_generation') ? 400 : (aiTask === 'grammar_explain' ? 250 : 200))));
-        const customModel = req.body?.model || null;
+        const maxTokens = req.body?.max_tokens || ((aiTask === 'srt_translation') ? 2000 : ((aiTask === 'synopsis') ? 800 : ((aiTask === 'quiz_generation' || aiTask === 'flashcard_generation') ? 400 : (aiTask === 'grammar_explain' ? 250 : 200))));
+        const customModel = req.body?.model || undefined;
         const data = await callOpenRouter(hasContents ? req.body : prompt, { max_tokens: maxTokens, model: customModel });
         
         if (!isSuper && requiredCredits > 0) {
