@@ -712,7 +712,7 @@ Option 3: [Translation 3]`;
             const res = await axios.post('/api/ai/generate', {
                 contents: [{ parts: [{ text: prompt }] }],
                 aiTask: 'srt_line_translation',
-                model: selectedModel,
+                model: 'google/gemini-2.5-flash',
                 lineCount: 1,
                 movieTitle: movieTitle || 'Line Translation'
             }, {
@@ -796,6 +796,7 @@ Option 3: [Translation 3]`;
                 const res = await axios.post('/api/ai/generate', {
                     contents: [{ parts: [{ text: prompt }] }],
                     aiTask: 'srt_translation',
+                    model: 'google/gemini-2.5-flash',
                     lineCount: batch.length,
                     movieTitle: movieTitle || 'Batch Translation'
                 });

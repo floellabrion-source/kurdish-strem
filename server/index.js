@@ -3301,8 +3301,24 @@ app.post('/api/ai/generate', requireAuth, aiLimiter, async (req, res) => {
 
     try {
         const maxTokens = req.body?.max_tokens || ((aiTask === 'srt_translation') ? 2000 : ((aiTask === 'synopsis') ? 800 : ((aiTask === 'quiz_generation' || aiTask === 'flashcard_generation') ? 400 : (aiTask === 'grammar_explain' ? 250 : 200))));
-        const customModel = req.body?.model || undefined;
-        const data = await callOpenRouter(hasContents ? req.body : prompt, { max_tokens: maxTokens, model: customModel });
+        
+        // Strict model restriction:
+        // Only full SRT file translation ('srt_translation') is allowed to use selectable models (Claude 4.6, Claude 4.5, GPT-4o, Gemini 2.5 Flash).
+        // All other AI tasks (flashcards, voice coach, word lookup, quiz, synopsis, single-line translation) are strictly locked to Gemini 2.5 Flash.
+        const ALLOWED_SRT_MODELS = [
+            'anthropic/claude-sonnet-4.6',
+            'anthropic/claude-sonnet-4.5',
+            'anthropic/claude-sonnet-5',
+            'google/gemini-2.5-flash',
+            'openai/gpt-4o'
+        ];
+
+        let modelToUse = 'google/gemini-2.5-flash';
+        if (aiTask === 'srt_translation' && req.body?.model && ALLOWED_SRT_MODELS.includes(req.body.model)) {
+            modelToUse = req.body.model;
+        }
+
+        const data = await callOpenRouter(hasContents ? req.body : prompt, { max_tokens: maxTokens, model: modelToUse });
         
         if (!isSuper && requiredCredits > 0) {
             user.credits = Math.max(0, (user.credits || 0) - requiredCredits);
@@ -3313,7 +3329,7 @@ app.post('/api/ai/generate', requireAuth, aiLimiter, async (req, res) => {
                 task: aiTask,
                 amount: -requiredCredits,
                 date: Date.now(),
-                model: customModel || 'default',
+                model: modelToUse,
                 lineCount: lineCount,
                 movieTitle: req.body?.movieTitle || 'Subtitle Translation'
             });
