@@ -2407,8 +2407,8 @@ Output strictly valid JSON matching this schema:
             headers: {
                 'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
                 'Content-Type': 'application/json',
-                'HTTP-Referer': 'https://kurdishstream.com',
-                'X-Title': 'Kurdish Stream AI Receipt Verification'
+                'HTTP-Referer': 'https://kstfilm.com',
+                'X-Title': 'KST Film AI Receipt Verification'
             },
             timeout: 25000
         });
@@ -3218,8 +3218,8 @@ const callOpenRouter = async (input, options = {}) => {
             headers: {
                 'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
                 'Content-Type': 'application/json',
-                'HTTP-Referer': 'https://kurdishstream.com',
-                'X-Title': 'Kurdish Stream'
+                'HTTP-Referer': 'https://kstfilm.com',
+                'X-Title': 'KST Film'
             },
             timeout: 180000
         });
