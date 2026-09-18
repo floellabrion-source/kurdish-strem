@@ -404,7 +404,7 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
 
     const load = (silent = false) => {
         if (!silent && movies.length === 0) setLoading(true);
-        axios.get('/api/movies')
+        axios.get(`/api/movies?_t=${Date.now()}`)
             .then(r => {
                 if (Array.isArray(r.data)) {
                     setMovies(r.data);
@@ -417,7 +417,7 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                 console.error('[Admin load error]', err);
                 // Auto retry once after 600ms if initial load failed during page mount
                 setTimeout(() => {
-                    axios.get('/api/movies').then(retryRes => {
+                    axios.get(`/api/movies?_t=${Date.now()}`).then(retryRes => {
                         if (Array.isArray(retryRes.data)) {
                             setMovies(retryRes.data);
                             try {

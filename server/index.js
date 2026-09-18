@@ -797,12 +797,23 @@ app.use((req, res, next) => {
     next();
 });
 
-const readMovies = () => {
-    const cached = moviesCache.get('all_movies');
-    if (cached) return cached;
+let lastMoviesFileMtime = 0;
 
+const readMovies = (bypassCache = false) => {
     try {
         if (!fs.existsSync(DATA_FILE)) return [];
+        const stat = fs.statSync(DATA_FILE);
+        const currentMtime = stat.mtimeMs;
+
+        // Invalidate in-memory cache if file on disk changed
+        if (currentMtime !== lastMoviesFileMtime) {
+            moviesCache.clear();
+            lastMoviesFileMtime = currentMtime;
+        } else if (!bypassCache) {
+            const cached = moviesCache.get('all_movies');
+            if (cached) return cached;
+        }
+
         const data = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
         const movies = data.map((m) => ({
             ...m,
@@ -909,7 +920,13 @@ const extractSceneMedia = async (videoPath, timestampSeconds) => {
 
 const writeMovies = (data) => {
     moviesCache.clear();
-    return fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+    const result = fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+    try {
+        if (fs.existsSync(DATA_FILE)) {
+            lastMoviesFileMtime = fs.statSync(DATA_FILE).mtimeMs;
+        }
+    } catch {}
+    return result;
 };
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
@@ -3324,11 +3341,16 @@ const sanitizeMovieForPublic = (m) => {
 };
 
 app.get('/api/movies', (req, res) => {
-    const movies = readMovies();
-    if (isUserAdmin(req)) {
+    const isAdmin = isUserAdmin(req);
+    if (isAdmin) {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+        const movies = readMovies(true);
         return res.json(movies);
     }
 
+    const movies = readMovies();
     // For public users: return only published movies and filter out draft episodes
     const publicMovies = movies
         .filter(m => !m.status || m.status === 'published')
