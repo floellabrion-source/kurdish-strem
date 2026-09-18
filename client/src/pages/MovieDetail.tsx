@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axios from '../api/client';
 import { Play, Heart, Clock, CheckCircle, Eye, Globe, Bookmark, Star, ArrowLeft, ArrowRight, MessageSquare, Send, Share2, Check } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -90,18 +90,31 @@ export default function MovieDetail() {
     const [copied, setCopied] = useState(false);
 
     useEffect(() => {
-        axios.get(`/api/movies`)
+        setLoading(true);
+        axios.get(`/api/movies/${id}`)
             .then(res => {
-                const found = res.data.find((m: Movie) => m.id === id);
-                if (found) {
-                    setMovie(found);
-                    if (found.type === 'series' && found.seasons && found.seasons.length > 0) {
-                        setActiveSeason(found.seasons[0].number);
+                if (res.data) {
+                    setMovie(res.data);
+                    if (res.data.type === 'series' && res.data.seasons && res.data.seasons.length > 0) {
+                        setActiveSeason(res.data.seasons[0].number);
                     }
                 }
                 setLoading(false);
             })
-            .catch(() => setLoading(false));
+            .catch(() => {
+                axios.get(`/api/movies`)
+                    .then(res => {
+                        const found = Array.isArray(res.data) ? res.data.find((m: Movie) => m.id === id) : null;
+                        if (found) {
+                            setMovie(found);
+                            if (found.type === 'series' && found.seasons && found.seasons.length > 0) {
+                                setActiveSeason(found.seasons[0].number);
+                            }
+                        }
+                        setLoading(false);
+                    })
+                    .catch(() => setLoading(false));
+            });
 
         axios.get(`/api/movies/${id}/comments`)
             .then(res => setComments(res.data || []))

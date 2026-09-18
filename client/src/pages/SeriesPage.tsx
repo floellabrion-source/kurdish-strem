@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axios from '../api/client';
 import { ArrowRight, Play, Film, Lock, X, Languages, Star, Share2, Check } from 'lucide-react';
 import { Movie, Season, Episode, LanguageMetrics, getCefrDisplayLevel, getCefrColor } from '../types';
 import { useLanguage } from '../context/LanguageContext';

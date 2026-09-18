@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axios from '../api/client';
 import { Play, Film, Star, Clock, ArrowRight } from 'lucide-react';
 import { Movie } from '../types';
 import { useAuth } from '../context/AuthContext';

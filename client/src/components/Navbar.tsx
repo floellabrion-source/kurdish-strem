@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import axios from 'axios';
+import axios from '../api/client';
 import { 
     Play, Home as HomeIcon, Film, Tv, User, Search, Shield, 
     Moon, Sun, Monitor, Menu, BookOpen, Sparkles, Heart, Clock, Brain, CreditCard, Download, Smartphone,

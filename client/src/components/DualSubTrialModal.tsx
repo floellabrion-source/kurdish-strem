@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axios from '../api/client';
 import { 
     Clock, Sparkles, CheckCircle2, X, Crown, Zap, ChevronLeft
 } from 'lucide-react';
