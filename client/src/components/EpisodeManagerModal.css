@@ -2431,4 +2431,89 @@
     box-shadow: 0 4px 15px rgba(239, 68, 68, 0.35);
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   MOBILE & TABLET RESPONSIVENESS (AI STUDIO & MODALS)
+   ══════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+    .ep-ai-hub-modal {
+        width: 100vw !important;
+        max-width: 100vw !important;
+        height: 100dvh !important;
+        max-height: 100dvh !important;
+        border-radius: 0 !important;
+        border: none !important;
+    }
+
+    .ep-modal-backdrop {
+        padding: 0 !important;
+    }
+
+    .ep-ai-hub-header {
+        padding: 12px 14px;
+    }
+
+    .ep-ai-hub-body {
+        padding: 14px;
+        gap: 14px;
+    }
+
+    .ep-ai-tones-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px;
+    }
+
+    .ep-ai-models-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px;
+    }
+
+    .ep-ai-modes-grid {
+        grid-template-columns: 1fr !important;
+        gap: 10px;
+    }
+
+    .btn-ai-mode-action {
+        padding: 14px 16px;
+    }
+
+    .stats-meter-row {
+        gap: 6px;
+    }
+
+    .stat-pill {
+        font-size: 10.5px;
+        padding: 3px 8px;
+    }
+
+    .ep-ai-running-footer-row {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .btn-ai-minimize,
+    .btn-ai-stop {
+        width: 100%;
+        flex: unset;
+    }
+}
+
+@media (max-width: 480px) {
+    .ep-ai-tones-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .ep-ai-models-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .ai-hub-title-block h3 {
+        font-size: 13.5px;
+    }
+
+    .ai-hub-title-block p {
+        display: none;
+    }
+}
+
+
 
