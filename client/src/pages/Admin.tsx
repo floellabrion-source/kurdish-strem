@@ -6,10 +6,10 @@ import {
     Image, Video, Layers, ChevronDown, ChevronUp, ChevronLeft, ChevronRight,
     PlusCircle, ListVideo, Upload, Languages, Shield, ShieldCheck, Link as LinkIcon, Star, Play, Search,
     Users, BarChart2, CreditCard, Sparkles, Filter, Download, Pause, History, Trophy, BookOpen,
-    HardDrive, Bell, Wrench, Globe, Eye, EyeOff
+    HardDrive, Bell, Wrench, Globe, Eye, EyeOff, Zap, DollarSign, Brain, Clock, RefreshCw, Minimize2
 } from 'lucide-react';
 import { Movie, Season, Episode, LanguageMetrics, getCefrDisplayLevel, getCefrColor } from '../types';
-import { runAiTranslationAndAnalysis, triggerFileDownload, pauseTranslationTask } from '../utils/aiTranslator';
+import { runAiTranslationAndAnalysis, triggerFileDownload, pauseTranslationTask, AI_TRANSLATION_MODELS, TRANSLATION_TONES, MODEL_PRICING } from '../utils/aiTranslator';
 import SrtTranslator from './SrtTranslator';
 import AdminUsers from './AdminUsers';
 import AdminAnalytics from './AdminAnalytics';
@@ -27,6 +27,7 @@ import AiTranslationTracker from '../components/AiTranslationTracker';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useWebSocket } from '../context/WebSocketContext';
+import '../components/EpisodeManagerModal.css';
 import './Admin.css';
 
 interface Toast { id: number; msg: string; type: 'success' | 'error'; }
@@ -204,6 +205,15 @@ export default function Admin() {
 };
 
 const [movieTransProgress, setMovieTransProgress] = useState<Record<string, { status: 'running' | 'paused' | 'done', statusText: string, percent: number }>>({});
+const [aiMovieTarget, setAiMovieTarget] = useState<Movie | null>(null);
+const [aiSelectedModel, setAiSelectedModel] = useState<string>('google/gemini-2.5-flash');
+const [aiSelectedTone, setAiSelectedTone] = useState<string>('casual');
+const [aiStoryContext, setAiStoryContext] = useState<string>('');
+const [fetchingSynopsis, setFetchingSynopsis] = useState<boolean>(false);
+const [aiMovieRunning, setAiMovieRunning] = useState<boolean>(false);
+const [aiMoviePartialSrt, setAiMoviePartialSrt] = useState<{ totalLines: number; translatedLines: number; percent: number } | null>(null);
+const [aiMovieStats, setAiMovieStats] = useState<{ costUsd: number; totalInTok: number; totalOutTok: number; speedTokSec: number; elapsedSec: number }>({ costUsd: 0, totalInTok: 0, totalOutTok: 0, speedTokSec: 0, elapsedSec: 0 });
+const aiMovieAbortRef = useRef<AbortController | null>(null);
 
 const handleDownloadMovieOriginalSrt = async (movie: Movie) => {
     try {
@@ -249,28 +259,141 @@ const handleDownloadMovieMetricsTxt = (movie: Movie) => {
     toast('فایلی شیکاریی زمانەوانی (.txt) داگیرا ✓');
 };
 
-const handleAiTranslateMovie = async (movie: Movie) => {
-    const taskId = `${movie.id}-m-m`;
-    const curr = movieTransProgress[movie.id];
-
-    // If currently running, PAUSE it!
-    if (curr?.status === 'running') {
-        pauseTranslationTask(taskId);
+const handleOpenMovieAiModal = async (movie: Movie) => {
+    const p = movieTransProgress[movie.id];
+    if (p?.status === 'running') {
+        // If already running, pause it directly or open modal to monitor
+        pauseTranslationTask(`${movie.id}-m-m`);
+        aiMovieAbortRef.current?.abort();
         setMovieTransProgress(prev => ({
             ...prev,
-            [movie.id]: { ...prev[movie.id], status: 'paused', statusText: 'خەریکی ڕاگرتن...' }
+            [movie.id]: { ...prev[movie.id], status: 'paused', statusText: 'وەرگێڕان ڕاگیرا' }
         }));
+        setAiMovieRunning(false);
         toast('وەرگێڕان ڕاگیرا ⏸️');
         return;
     }
 
-    // Start or Resume
+    if (!movie.originalSrt) {
+        toast('تکایە سەرەتا فایلی سەبتایتڵی ئۆرجیناڵ (English SRT) دابنێ!', 'error');
+        return;
+    }
+
+    setAiMovieTarget(movie);
+    setAiStoryContext(movie.descriptionKu || movie.description || '');
+    setAiMovieRunning(false);
+    setAiMoviePartialSrt(null);
+
+    // Check if there is already partial SRT
+    try {
+        const res = await axios.get(`/api/admin/movies/${movie.id}/srt-content`);
+        const orig = (res.data.originalSrtText || '').trim();
+        const trans = (res.data.translatedSrtText || '').trim();
+        if (orig && trans) {
+            const origBlocks = orig.split(/\n\s*\n/).filter((b: string) => b.trim());
+            const transBlocks = trans.split(/\n\s*\n/).filter((b: string) => b.trim());
+            const transMap = new Map();
+            transBlocks.forEach((b: string) => {
+                const lines = b.trim().split('\n');
+                const idx = parseInt(lines[0]?.trim(), 10);
+                if (!isNaN(idx)) transMap.set(idx, true);
+            });
+            let done = 0;
+            origBlocks.forEach((b: string) => {
+                const lines = b.trim().split('\n');
+                const idx = parseInt(lines[0]?.trim(), 10);
+                if (!isNaN(idx) && transMap.has(idx)) done++;
+            });
+            if (done > 0 && done < origBlocks.length) {
+                setAiMoviePartialSrt({
+                    totalLines: origBlocks.length,
+                    translatedLines: done,
+                    percent: Math.round((done / origBlocks.length) * 100)
+                });
+            }
+        }
+    } catch {}
+};
+
+const handleAiTranslateMovie = (movie: Movie) => {
+    handleOpenMovieAiModal(movie);
+};
+
+const fetchAiSynopsisForMovie = async () => {
+    if (!aiMovieTarget) return;
+    setFetchingSynopsis(true);
+    try {
+        const prompt = `کورتەیەکی سەرنجڕاکێش و پوخت بە کوردی سۆرانی (٢ بۆ ٣ دێڕ) بۆ ئەم فیلمە بنووسە: "${aiMovieTarget.title}".\nتەنها دەقی کورتەکە بنووسە بەبێ هیچ پێشەکی، ناونیشان، یان کەوانەی زیادە.`;
+        const res = await axios.post('/api/ai/generate', {
+            contents: [{ parts: [{ text: prompt }] }],
+            aiTask: 'synopsis',
+            model: 'google/gemini-2.5-flash',
+            max_tokens: 1000
+        });
+        const raw = res.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        const clean = raw.replace(/```/g, '').replace(/^["']|["']$/g, '').trim();
+        if (clean) {
+            setAiStoryContext(clean);
+            toast('کورتەی چیرۆک بە سەرکەوتوویی لە AI وەرگیرا ✓');
+        } else {
+            toast('نەتوانرا کورتە بە AI بدۆزرێتەوە', 'error');
+        }
+    } catch (err: any) {
+        console.error('Synopsis fetch error:', err);
+        const msg = err.response?.data?.error?.message || 'کێشەیەک لە پەیوەندی بە AI ڕوویدا';
+        toast(msg, 'error');
+    } finally {
+        setFetchingSynopsis(false);
+    }
+};
+
+const handleStartMovieAi = async (mode: 'all' | 'translate_only' | 'analyze_only') => {
+    if (!aiMovieTarget) return;
+    const movie = aiMovieTarget;
+    const taskId = `${movie.id}-m-m`;
+
+    const abortController = new AbortController();
+    aiMovieAbortRef.current = abortController;
+    const signal = abortController.signal;
+
+    const startTimestamp = Date.now();
+    const initialStats = { totalInTok: 0, totalOutTok: 0, costUsd: 0, speedTokSec: 0, elapsedSec: 0 };
+    setAiMovieStats(initialStats);
+    setAiMovieRunning(true);
+
+    const timerInterval = setInterval(() => {
+        const now = Date.now();
+        const elapsed = Math.max(1, Math.round((now - startTimestamp) / 1000));
+        setAiMovieStats(prev => ({ ...prev, elapsedSec: elapsed }));
+    }, 1000);
+
+    const updateStats = (inT: number, outT: number) => {
+        setAiMovieStats(prev => {
+            const nextIn = prev.totalInTok + inT;
+            const nextOut = prev.totalOutTok + outT;
+            const pricing = MODEL_PRICING[aiSelectedModel] || { inPricePerM: 3.0, outPricePerM: 15.0 };
+            const cost = (nextIn / 1_000_000) * pricing.inPricePerM + (nextOut / 1_000_000) * pricing.outPricePerM;
+            const now = Date.now();
+            const elapsed = Math.max(1, Math.round((now - startTimestamp) / 1000));
+            const speed = Math.round(nextOut / elapsed);
+            return {
+                totalInTok: nextIn,
+                totalOutTok: nextOut,
+                costUsd: cost,
+                speedTokSec: speed,
+                elapsedSec: elapsed
+            };
+        });
+    };
+
     setMovieTransProgress(prev => ({
         ...prev,
-        [movie.id]: { status: 'running', statusText: 'دەستپێکردن...', percent: curr?.percent || 0 }
+        [movie.id]: { status: 'running', statusText: 'دەستپێکردنی وەرگێڕان...', percent: 5 }
     }));
 
     try {
+        const contextStr = `Movie Title: "${movie.title}" | Year: ${movie.year || ''} | Genre: ${movie.genre || 'Drama'} | Main Story Arc: ${aiStoryContext}`;
+
         const result = await runAiTranslationAndAnalysis(
             movie.id,
             undefined,
@@ -280,38 +403,69 @@ const handleAiTranslateMovie = async (movie: Movie) => {
                     ...prev,
                     [movie.id]: { status, statusText, percent }
                 }));
+            },
+            {
+                model: aiSelectedModel,
+                tone: aiSelectedTone,
+                mode,
+                contextStr,
+                signal,
+                onStatsUpdate: updateStats
             }
         );
 
+        clearInterval(timerInterval);
+        setAiMovieRunning(false);
+
         if (result.status === 'paused') {
             toast(`وەرگێڕان ڕاگیرا لە (${result.translatedCount}/${result.totalCount} دێڕ) ⏸️`);
-            load();
+            load(true);
             return;
         }
 
-        if (result.metrics) {
-            const levelCefr = result.metrics.cefrLevel || 'A2';
-            await axios.put(`/api/admin/movies/${movie.id}`, {
-                translatedSrt: 'translated.srt',
-                languageMetrics: result.metrics,
-                level: levelCefr
-            });
-        } else {
+        if (mode === 'analyze_only') {
+            if (result.metrics) {
+                const levelCefr = result.metrics.cefrLevel || 'A2';
+                await axios.put(`/api/admin/movies/${movie.id}`, {
+                    languageMetrics: result.metrics,
+                    level: levelCefr
+                });
+            }
+            toast(`شیکاریی زمانی فیلمی "${movie.title}" بە سەرکەوتوویی تەواو بوو! ✓`);
+        } else if (mode === 'translate_only') {
             await axios.put(`/api/admin/movies/${movie.id}`, {
                 translatedSrt: 'translated.srt'
             });
+            toast(`وەرگێڕانی فیلمی "${movie.title}" بە سەرکەوتوویی تەواو بوو! ✓`);
+        } else {
+            // mode === 'all'
+            if (result.metrics) {
+                const levelCefr = result.metrics.cefrLevel || 'A2';
+                await axios.put(`/api/admin/movies/${movie.id}`, {
+                    translatedSrt: 'translated.srt',
+                    languageMetrics: result.metrics,
+                    level: levelCefr
+                });
+            } else {
+                await axios.put(`/api/admin/movies/${movie.id}`, {
+                    translatedSrt: 'translated.srt'
+                });
+            }
+            toast(`فیلمی "${movie.title}" بە تەواوی وەرگێڕدرا و شیکاری کرا! ✓`);
         }
 
-        toast(`فیلمی ${movie.title} بە سەرکەوتوویی وەرگێڕدرا! ✓`);
         setMovieTransProgress(prev => {
             const next = { ...prev };
             delete next[movie.id];
             return next;
         });
-        load();
+        setAiMovieTarget(null);
+        load(true);
     } catch (err: any) {
+        clearInterval(timerInterval);
+        setAiMovieRunning(false);
         console.error(err);
-        const msg = err.response?.data?.error?.message || err.message || 'هەڵەیەک لە وەرگێڕاندا ڕوویدا';
+        const msg = err.response?.data?.error?.message || err.message || 'هەڵەیەک لە پرۆسەی AI ڕوویدا';
         toast(msg, 'error');
         setMovieTransProgress(prev => {
             const next = { ...prev };
@@ -319,6 +473,18 @@ const handleAiTranslateMovie = async (movie: Movie) => {
             return next;
         });
     }
+};
+
+const stopAiMovieProcessing = () => {
+    if (!aiMovieTarget) return;
+    pauseTranslationTask(`${aiMovieTarget.id}-m-m`);
+    aiMovieAbortRef.current?.abort();
+    setAiMovieRunning(false);
+    setMovieTransProgress(prev => ({
+        ...prev,
+        [aiMovieTarget.id]: { ...prev[aiMovieTarget.id], status: 'paused', statusText: 'وەرگێڕان ڕاگیرا' }
+    }));
+    toast('پرۆسەی AI ڕاگیرا ⏸️');
 };
 
 const handleDirectMovieSrtUpload = async (movie: Movie, file: File, srtType: 'original' | 'translated') => {
@@ -2499,6 +2665,260 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                     </div>
                 </div>
             )}
+
+            {/* MOVIE AI TRANSLATION & CEFR HUB MODAL */}
+            {aiMovieTarget && (() => {
+                const p = movieTransProgress[aiMovieTarget.id];
+                const isTaskRunning = p?.status === 'running' || aiMovieRunning;
+                const displayPercent = p?.percent || 0;
+                const displayProgressText = p?.statusText || '';
+
+                return (
+                    <div className="ep-modal-backdrop" onClick={() => !isTaskRunning && setAiMovieTarget(null)}>
+                        <div
+                            className="ep-ai-hub-modal"
+                            dir="rtl"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            {/* Header */}
+                            <div className="ep-ai-hub-header">
+                                <div className="ep-ai-hub-header-left">
+                                    <div className="ai-hub-icon-badge">
+                                        <Sparkles size={20} />
+                                    </div>
+                                    <div className="ai-hub-title-block">
+                                        <h3>ناوەندی ژیری دەستکرد (AI Studio) • {aiMovieTarget.title}</h3>
+                                        <p>وەرگێڕانی زیرەک، هەڵسەنگاندن و شیکاریی وشەسازی CEFR بە مۆدێلە پێشکەوتووەکان</p>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    className="ep-modal-close-btn"
+                                    onClick={() => !isTaskRunning && setAiMovieTarget(null)}
+                                    title="داخستن"
+                                    disabled={isTaskRunning}
+                                >
+                                    <X size={18} />
+                                </button>
+                            </div>
+
+                            {/* Body */}
+                            <div className="ep-ai-hub-body">
+                                {/* 1. Context Box */}
+                                <div className="ep-ai-hub-section context-section">
+                                    <div className="ep-ai-hub-meta-row">
+                                        <div className="ep-ai-hub-context-badges">
+                                            <span className="context-pill target">
+                                                🎬 {aiMovieTarget.title}
+                                            </span>
+                                            {aiMovieTarget.year && (
+                                                <span className="context-pill ep-info">
+                                                    📅 {aiMovieTarget.year}
+                                                </span>
+                                            )}
+                                            {aiMovieTarget.genre && (
+                                                <span className="context-pill genre">
+                                                    🎭 {aiMovieTarget.genre}
+                                                </span>
+                                            )}
+                                            {aiMovieTarget.level && (
+                                                <span className="context-pill genre" style={{ color: '#38bdf8' }}>
+                                                    📊 ئاستی ئێستا: {aiMovieTarget.level}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="ep-ai-hub-story-box">
+                                        <div className="story-box-header">
+                                            <label>کورتەی چیرۆک و جیهانی فیلمەکە (Story & Context):</label>
+                                            <button
+                                                type="button"
+                                                className="btn-fetch-synopsis"
+                                                disabled={fetchingSynopsis || isTaskRunning}
+                                                onClick={fetchAiSynopsisForMovie}
+                                                title="دۆزینەوەی خۆکاری کورتە و ژانەر بە ژیری دەستکرد"
+                                            >
+                                                {fetchingSynopsis ? <Loader2 size={12} className="spinning" /> : <RefreshCw size={12} />}
+                                                <span>دۆزینەوەی کورتە بە AI</span>
+                                            </button>
+                                        </div>
+                                        <textarea
+                                            value={aiStoryContext}
+                                            onChange={e => setAiStoryContext(e.target.value)}
+                                            placeholder="کورتەیەکی گشتی لەسەر چیرۆک و ڕووداوەکان بنووسە بۆ بەرزکردنەوەی کوالێتی وەرگێڕان..."
+                                            disabled={isTaskRunning}
+                                            rows={2}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* 2. Tone Selector */}
+                                <div className="ep-ai-hub-section">
+                                    <div className="ep-ai-hub-section-title">
+                                        <span>🎭 شێوازی دەربڕین و دەنگی کوردی (Tone):</span>
+                                    </div>
+                                    <div className="ep-ai-tones-grid">
+                                        {TRANSLATION_TONES.map(t => (
+                                            <div
+                                                key={t.id}
+                                                className={`ep-ai-tone-card ${aiSelectedTone === t.id ? 'active' : ''} ${isTaskRunning ? 'disabled' : ''}`}
+                                                onClick={() => !isTaskRunning && setAiSelectedTone(t.id)}
+                                            >
+                                                <div className="tone-card-top">
+                                                    <span className="tone-icon">{t.icon}</span>
+                                                    <span className="tone-name">{t.name}</span>
+                                                    {aiSelectedTone === t.id && <span className="tone-check">✓</span>}
+                                                </div>
+                                                <p className="tone-desc">{t.desc}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* 3. Model Selector */}
+                                <div className="ep-ai-hub-section">
+                                    <div className="ep-ai-hub-section-title">
+                                        <span>🧠 مۆدێلی ژیری دەستکرد بۆ وەرگێڕان (AI Model):</span>
+                                    </div>
+                                    <div className="ep-ai-models-grid">
+                                        {AI_TRANSLATION_MODELS.map(m => (
+                                            <div
+                                                key={m.id}
+                                                className={`ep-ai-model-card ${aiSelectedModel === m.id ? 'active' : ''} ${isTaskRunning ? 'disabled' : ''}`}
+                                                onClick={() => !isTaskRunning && setAiSelectedModel(m.id)}
+                                            >
+                                                <div className="model-card-top">
+                                                    <span className="model-badge">{m.badge}</span>
+                                                    <span className="model-name">{m.name}</span>
+                                                    <span className="model-icon">{m.icon}</span>
+                                                </div>
+                                                <p className="model-desc">{m.desc}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* 4. Live Progress & Stats Bar (when active or running) */}
+                                {(isTaskRunning || displayPercent > 0) && (
+                                    <div className="ep-ai-hub-stats-card">
+                                        <div className="stats-meter-row">
+                                            <div className="stat-pill cost">
+                                                <DollarSign size={13} />
+                                                <span>خەرجی: <strong>${aiMovieStats.costUsd.toFixed(5)}</strong></span>
+                                            </div>
+                                            <div className="stat-pill speed">
+                                                <Zap size={13} />
+                                                <span>خێرایی: <strong>{aiMovieStats.speedTokSec} tok/s</strong></span>
+                                            </div>
+                                            <div className="stat-pill tokens">
+                                                <Brain size={13} />
+                                                <span>تۆکنەکان: <strong>{aiMovieStats.totalInTok.toLocaleString()} In / {aiMovieStats.totalOutTok.toLocaleString()} Out</strong></span>
+                                            </div>
+                                            <div className="stat-pill elapsed">
+                                                <Clock size={13} />
+                                                <span>کات: <strong>{aiMovieStats.elapsedSec}s</strong></span>
+                                            </div>
+                                        </div>
+
+                                        <div className="ep-ai-progress-wrap">
+                                            <div className="ep-ai-progress-bar-bg">
+                                                <div className="ep-ai-progress-bar-fill" style={{ width: `${displayPercent}%` }} />
+                                            </div>
+                                            <div className="ep-ai-progress-info">
+                                                <div className="ep-progress-info-left">
+                                                    <Loader2 size={13} className="spinning" />
+                                                    <span>{displayProgressText || 'لە پرۆسەدایە...'}</span>
+                                                </div>
+                                                <div className="ep-progress-info-right">
+                                                    <span className="percent-text">{displayPercent}%</span>
+                                                    {isTaskRunning && (
+                                                        <button
+                                                            type="button"
+                                                            className="btn-meter-stop-inline"
+                                                            onClick={stopAiMovieProcessing}
+                                                            title="ڕاگرتن"
+                                                        >
+                                                            🛑 ڕاگرتن
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* 5. Footer Actions (3 Modes or Stop/Minimize) */}
+                            <div className="ep-ai-hub-footer">
+                                {isTaskRunning ? (
+                                    <div className="ep-ai-running-footer-row">
+                                        <button
+                                            type="button"
+                                            className="btn-ai-minimize"
+                                            onClick={() => setAiMovieTarget(null)}
+                                            title="پەنجەرەکە دابخە، وەرگێڕان بە شێوەی خۆکار لە پاشبنەما بەردەوام دەبێت"
+                                        >
+                                            <Minimize2 size={16} />
+                                            <span>داخستن و بەردەوامبوون لە پاشبنەما (Background)</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="btn-ai-stop"
+                                            onClick={stopAiMovieProcessing}
+                                        >
+                                            <X size={16} />
+                                            <span>🛑 ڕاگرتنی دەستبەجێ (Stop / Pause)</span>
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="ep-ai-modes-grid">
+                                        <button
+                                            type="button"
+                                            className="btn-ai-mode-action btn-translate-only"
+                                            onClick={() => handleStartMovieAi('translate_only')}
+                                        >
+                                            <Languages size={17} />
+                                            <div className="mode-btn-text">
+                                                <strong>
+                                                    {aiMoviePartialSrt ? `🔤 بەردەوامبوون (لە دێڕی ${aiMoviePartialSrt.translatedLines + 1})` : '🔤 تەنها وەرگێڕانی سەبتایتڵ'}
+                                                </strong>
+                                                <span>وەرگێڕانی خێرا و ئابووری بۆ ناو فیلمەکە</span>
+                                            </div>
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            className="btn-ai-mode-action btn-analyze-only"
+                                            onClick={() => handleStartMovieAi('analyze_only')}
+                                        >
+                                            <BarChart2 size={17} />
+                                            <div className="mode-btn-text">
+                                                <strong>📊 تەنها شیکاریی زمانی CEFR</strong>
+                                                <span>ئامادەکردنی ئاستەکانی زمان و وشە قورسەکان</span>
+                                            </div>
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            className="btn-ai-mode-action btn-all-modes"
+                                            onClick={() => handleStartMovieAi('all')}
+                                        >
+                                            <Sparkles size={17} />
+                                            <div className="mode-btn-text">
+                                                <strong>
+                                                    {aiMoviePartialSrt ? `✨ بەردەوامبوونی گشتی (Resume لە ${aiMoviePartialSrt.percent}%)` : '✨ وەرگێڕانی فایل لەگەڵ CEFR'}
+                                                </strong>
+                                                <span>ئامادەکردنی تەواوی ژێرنووس و ئامارەکان</span>
+                                            </div>
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                );
+            })()}
 
         </div>
     );
