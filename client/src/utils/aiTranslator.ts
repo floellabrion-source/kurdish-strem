@@ -362,16 +362,16 @@ export const parseLinguisticAnalysisText = (rawText: string): LanguageMetrics =>
 
     const normText = toAsciiDigits(rawText || '');
 
-    let totalWords = 1000;
+    let totalWords = 0;
     const dist: Record<'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2' | 'Unknown', number> = {
-        A1: 20, A2: 25, B1: 30, B2: 15, C1: 8, C2: 2, Unknown: 0
+        A1: 0, A2: 0, B1: 0, B2: 0, C1: 0, C2: 0, Unknown: 0
     };
     const difficultWords: DifficultWord[] = [];
     const repeatedWords: RepeatedWord[] = [];
 
     // 1. Parse Total Words
     const wordCountMatch = normText.match(/(?:کۆی\s*گشتیی?\s*وشەکان|Total\s*Word\s*Count)[^\d]*([\d,]+)/i) ||
-                           normText.match(/(\d+)\s*وشە/i);
+                           normText.match(/([\d,]+)\s*وشە/i);
     if (wordCountMatch) {
         const parsedCount = parseInt(wordCountMatch[1].replace(/,/g, ''), 10);
         if (!isNaN(parsedCount) && parsedCount > 0) {
@@ -382,9 +382,9 @@ export const parseLinguisticAnalysisText = (rawText: string): LanguageMetrics =>
     // 2. Parse CEFR Level Distribution
     const levels: Array<'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2'> = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
     levels.forEach(lvl => {
-        const match = normText.match(new RegExp('(?:\\|\\s*' + lvl + '\\s*\\|\\s*|' + lvl + '[^\\d%]{0,12})(\\d+(?:\\.\\d+)?)\\s*%', 'i'));
+        const match = normText.match(new RegExp('(?:\\|\\s*' + lvl + '\\s*\\|\\s*|(?:ئاستی\\s*)?\\*?\\*?' + lvl + '[^\\d%]{0,25})(\\d+(?:\\.\\d+)?)\\s*%', 'i'));
         if (match) {
-            dist[lvl] = Math.round(parseFloat(match[1]));
+            dist[lvl] = parseFloat(match[1]);
         }
     });
 
@@ -394,50 +394,107 @@ export const parseLinguisticAnalysisText = (rawText: string): LanguageMetrics =>
     else if (dist.B2 >= 20 || dist.C1 >= 8) cefrLevel = 'B2';
     else if (dist.B1 >= 20) cefrLevel = 'B1';
     else if (dist.A2 >= 30) cefrLevel = 'A2';
-    else cefrLevel = 'A1';
+    else if (dist.A1 >= 50) cefrLevel = 'A1';
+    else cefrLevel = 'B1';
 
-    // 3. Parse Top 10 Difficult Words (Handle both Markdown Tables and Lists)
-    const lines = normText.split('\n');
-    for (const line of lines) {
-        // A) Markdown Table row
-        if (line.includes('|')) {
-            const cells = line.split('|').map(c => c.trim()).filter(Boolean);
-            if (cells.length >= 3) {
-                // Find column containing English word
-                for (let cIdx = 0; cIdx < Math.min(cells.length - 1, 3); cIdx++) {
-                    const cleanWord = cells[cIdx].replace(/[*_#`]/g, '').trim();
-                    if (/^[a-zA-Z\s\-']{2,30}$/.test(cleanWord) && !/^(word|words|english|level|type|cefr|pos|noun|verb|adj|adv|وشە|ئاست|بەش)$/i.test(cleanWord)) {
-                        const type = cells.length >= 4 && cIdx + 1 < cells.length - 1
-                            ? cells[cIdx + 1].replace(/[*_`]/g, '').trim()
-                            : 'Noun';
-                        const def = cells[cells.length - 1].replace(/[*_`]/g, '').trim();
-                        if (def && def.length > 1 && !def.includes('---')) {
-                            difficultWords.push({ word: cleanWord, type: type || 'Noun', definition: def });
-                        }
-                        break;
+    // 3. Parse Top 10 Difficult Words
+    let section2Text = '';
+    const s2Match = normText.match(/(?:٢|2)[\.\s\-]+(?:١٠|10)?\s*(?:قورسترین|Difficult|Top)[^\n]*\n([\s\S]*?)(?=(?:(?:٣|3)[\.\s\-]+(?:کۆی|Total)|(?:٤|4)[\.\s\-]+(?:وشە|Repeated)|$))/i);
+    section2Text = s2Match ? s2Match[1] : normText;
+
+    // Pattern A: Multi-line Block format (Word \n POS: ... \n CEFR: ... \n Definition: ...)
+    const blockRegex = /([a-zA-Z\s\-']{2,35})\s*\n+(?:[^\n]*(?:جۆری\s*وشە|Part\s*of\s*Speech|POS)[^\n]*[:：]\s*([^\n]+)\s*\n+)?(?:[^\n]*(?:ئاستی\s*زمان|CEFR)[^\n]*[:：]\s*([^\n]+)\s*\n+)?(?:[^\n]*(?:پێناسە|شیکردنەوە|Definition|Meaning)[^\n]*[:：]\s*([^\n]+))/gi;
+    let bMatch;
+    while ((bMatch = blockRegex.exec(section2Text)) !== null) {
+        const w = bMatch[1].replace(/[*_#`\d\.\-]/g, '').trim();
+        const pos = bMatch[2]?.trim() || '';
+        const lvl = bMatch[3]?.trim() || '';
+        const def = bMatch[4]?.trim() || '';
+        if (w && !/^(word|words|english|cefr|pos|noun|verb|adj|adv|top|ئاست|بەش|جۆری)$/i.test(w)) {
+            const combinedType = lvl ? `${pos ? pos + ', ' : ''}CEFR: ${lvl}` : (pos || 'Noun');
+            difficultWords.push({ word: w, type: combinedType, definition: def });
+        }
+    }
+
+    // Pattern B & C: Line-by-line list or table
+    if (difficultWords.length === 0) {
+        const lines = section2Text.split('\n');
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) continue;
+
+            const listSubMatch = line.match(/^(?:\d+[\.\)]|\*|-)\s*\*?\*?([a-zA-Z\s\-']{2,30})\*?\*?\s*(?:\(([^)]+)\))?\s*(?:-\s*([A-Za-z0-9\/]+))?/i);
+            if (listSubMatch && !/^(word|total|repeated|cefr|ئاست|کۆی|وشە)/i.test(listSubMatch[1].trim())) {
+                const word = listSubMatch[1].trim();
+                const pos = listSubMatch[2]?.trim() || '';
+                const lvl = listSubMatch[3]?.trim() || '';
+                let definition = '';
+
+                if (i + 1 < lines.length) {
+                    const nextLine = lines[i + 1].trim();
+                    const defMatch = nextLine.match(/(?:پێناسە|واتا|مانا|definition|meaning)[^\:\：]*[\:\：]\s*(.+)/i);
+                    if (defMatch) {
+                        definition = defMatch[1].replace(/[*_`]/g, '').trim();
+                        i++;
                     }
                 }
-            }
-        } else {
-            // B) List item format: "1. **Word** (Noun): Definition"
-            const listMatch = line.match(/(?:^|\n)\s*(?:\d+[\.\)]|\*|-)\s*\*?\*?([a-zA-Z\s\-']{2,30})\*?\*?\s*(?:\(([^)]+)\)|-\s*([a-zA-Z\s]+))?[:\s\-]+([^\n]+)/i);
-            if (listMatch) {
-                const word = listMatch[1]?.trim();
-                const type = listMatch[2]?.trim() || listMatch[3]?.trim() || 'Noun';
-                const definition = listMatch[4]?.trim().replace(/^[:\s*-]+/, '').replace(/^(?:واتا|مانا|ڕوونکردنەوە)[:\s*]+/, '') || '';
-                if (word && definition && !/^(word|words|english|وشە)/i.test(word) && difficultWords.length < 20) {
-                    difficultWords.push({ word, type, definition });
+
+                if (!definition && line.includes(':')) {
+                    definition = line.split(/[:：]/).slice(1).join(':').replace(/[*_`]/g, '').trim();
+                }
+
+                const combinedType = lvl ? `${pos ? pos + ', ' : ''}CEFR: ${lvl}` : (pos || 'Noun');
+                if (word && (definition || difficultWords.length < 15)) {
+                    difficultWords.push({ word, type: combinedType, definition: definition || '—' });
+                }
+            } else if (line.includes('|')) {
+                const cells = line.split('|').map(c => c.trim()).filter(Boolean);
+                if (cells.length >= 3) {
+                    const cleanWord = cells[0].replace(/[*_#`\d\.\-]/g, '').trim();
+                    if (/^[a-zA-Z\s\-']{2,30}$/.test(cleanWord) && !/^(word|words|english|level|type|cefr|pos|noun|verb|adj|adv|وشە|ئاست|بەش)$/i.test(cleanWord)) {
+                        const type = cells.length >= 4 ? cells[1].replace(/[*_`]/g, '').trim() : 'Noun';
+                        const def = cells[cells.length - 1].replace(/[*_`]/g, '').trim();
+                        if (def && !def.includes('---')) {
+                            difficultWords.push({ word: cleanWord, type, definition: def });
+                        }
+                    }
                 }
             }
         }
     }
 
     // 4. Parse Repeated Content Words
-    for (const line of lines) {
-        if (line.includes('|')) {
+    let section4Text = '';
+    const s4Match = normText.match(/(?:٤|4)[\.\s\-]+(?:١٠|10)?\s*(?:وشە\s*ناوەڕۆکییە|Repeated|Top\s*10\s*Repeated)[^\n]*\n([\s\S]*)$/i);
+    section4Text = s4Match ? s4Match[1] : normText;
+
+    const repLines = section4Text.split('\n');
+    for (let i = 0; i < repLines.length; i++) {
+        const line = repLines[i].trim();
+        if (!line) continue;
+
+        const repMatch = line.match(/(?:^\d+[\.\)]\s*)?\*?\*?([a-zA-Z\s\-']{2,30})\*?\*?\s*(?:\(([^)]+)\))?\s*[:\-–]?\s*(\d+)\s*جار/i);
+        if (repMatch) {
+            const word = repMatch[1].trim();
+            const count = parseInt(repMatch[3], 10) || 0;
+            let meaning = '';
+
+            if (i + 1 < repLines.length) {
+                const nextLine = repLines[i + 1].trim();
+                const mMatch = nextLine.match(/(?:واتا|مانا|meaning)[^\:\：]*[\:\：]\s*(.+)/i);
+                if (mMatch) {
+                    meaning = mMatch[1].replace(/[*_`]/g, '').trim();
+                    i++;
+                }
+            }
+
+            if (word && count > 0 && !/^(word|وشە|ژمارە|کۆی)/i.test(word)) {
+                repeatedWords.push({ word, count, meaning });
+            }
+        } else if (line.includes('|')) {
             const cells = line.split('|').map(c => c.trim()).filter(Boolean);
             if (cells.length >= 3) {
-                const wCell = cells[0].replace(/[*_`#]/g, '').trim();
+                const wCell = cells[0].replace(/[*_`#\d\.\-]/g, '').trim();
                 const countCell = cells[1].replace(/[*_`#]/g, '').trim();
                 const meanCell = cells[2].replace(/[*_`#]/g, '').trim();
                 const countMatch = countCell.match(/(\d+)/);
@@ -449,16 +506,6 @@ export const parseLinguisticAnalysisText = (rawText: string): LanguageMetrics =>
                     });
                 }
             }
-        } else {
-            const rMatch = line.match(/[\*\-]\s*\*?\*?([a-zA-Z\s\/\-']{2,30})\*?\*?\s*[:=]\s*(\d+)\s*جار(?:\s*\(([^)]+)\))?/i);
-            if (rMatch) {
-                const word = rMatch[1]?.trim();
-                const count = parseInt(rMatch[2], 10) || 1;
-                const meaning = rMatch[3]?.trim() || '';
-                if (word && word.length > 0 && repeatedWords.length < 30) {
-                    repeatedWords.push({ word, count, meaning });
-                }
-            }
         }
     }
 
@@ -466,13 +513,13 @@ export const parseLinguisticAnalysisText = (rawText: string): LanguageMetrics =>
     const vocabDiversity = Math.min(80, Math.max(18, Math.round(25 + (dist.B1 + dist.B2) * 0.3)));
 
     return {
-        totalWords,
+        totalWords: totalWords || 1000,
         lexicalDensity,
         vocabDiversity,
         cefrLevel,
         distribution: dist,
-        difficultWords: difficultWords.length > 0 ? difficultWords.slice(0, 10) : undefined,
-        repeatedWords: repeatedWords.length > 0 ? repeatedWords.slice(0, 15) : undefined
+        difficultWords: difficultWords.slice(0, 15),
+        repeatedWords: repeatedWords.slice(0, 15)
     };
 };
 

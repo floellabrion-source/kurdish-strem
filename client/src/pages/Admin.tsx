@@ -1309,6 +1309,18 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                                     >
                                         <Star size={16} fill={movie.isFeatured ? "#fbbf24" : "none"} color={movie.isFeatured ? "#fbbf24" : "currentColor"} />
                                     </button>
+                                    <button 
+                                        className={`ac-btn ${movie.languageMetrics?.cefrLevel ? 'featured-active-btn' : ''}`} 
+                                        title={movie.languageMetrics?.cefrLevel ? `شیکاری زمانی (${movie.languageMetrics.cefrLevel})` : "شیکاری زمانی (CEFR)"} 
+                                        onClick={() => setMetricsTarget({
+                                            movieId: movie.id,
+                                            movieTitle: movie.title,
+                                            initialMetrics: movie.languageMetrics
+                                        })}
+                                        style={movie.languageMetrics?.cefrLevel ? { color: '#38bdf8', borderColor: 'rgba(56, 189, 248, 0.4)' } : undefined}
+                                    >
+                                        <BarChart2 size={16} />
+                                    </button>
                                     <button className="ac-btn" title="دەستکاریکردن" onClick={() => setEditMovie(movie)}><Edit3 size={16} /></button>
                                     <button className="ac-btn ac-delete" title="سڕینەوەی یەکجاریی فیلم" onClick={() => handleDelete(movie)}><Trash2 size={16} /></button>
                                     {movie.type === ('series' as any) ? (
@@ -1572,6 +1584,71 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                                                     })}
                                                     {movie.sensitiveScenes.length > 4 && (
                                                         <span style={{ fontSize: '11px', color: '#94a3b8' }}>+{movie.sensitiveScenes.length - 4} زیاتر</span>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Language Metrics & CEFR Analysis Row */}
+                                    <div className="ac-uploads-section">
+                                        <div className="ac-section-badge" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#7dd3fc' }}>
+                                                <BarChart2 size={14} color="#38bdf8" />
+                                                {lang === 'en' ? 'CEFR Linguistic Analysis & Vocabulary' : 'شیکاریی زمانەوانی و ئاستی CEFR'}
+                                            </span>
+                                            {movie.languageMetrics?.cefrLevel ? (
+                                                <span style={{ fontSize: '11px', color: '#7dd3fc', background: 'rgba(56, 189, 248, 0.15)', padding: '2px 8px', borderRadius: '12px', border: '1px solid rgba(56, 189, 248, 0.3)', fontWeight: 'bold' }}>
+                                                    ئاستی {movie.languageMetrics.cefrLevel} • {movie.languageMetrics.totalWords || 0} وشە
+                                                </span>
+                                            ) : (
+                                                <span style={{ fontSize: '11px', color: '#64748b' }}>
+                                                    {lang === 'en' ? 'Not analyzed' : 'دیارینەکراوە'}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '8px', flexWrap: 'wrap' }}>
+                                            <button
+                                                type="button"
+                                                className="ac-sensitive-card-btn"
+                                                onClick={() => setMetricsTarget({
+                                                    movieId: movie.id,
+                                                    movieTitle: movie.title,
+                                                    initialMetrics: movie.languageMetrics
+                                                })}
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '8px',
+                                                    padding: '9px 16px',
+                                                    background: movie.languageMetrics ? 'rgba(56, 189, 248, 0.18)' : 'rgba(255, 255, 255, 0.04)',
+                                                    border: movie.languageMetrics ? '1px solid rgba(56, 189, 248, 0.45)' : '1px solid rgba(255, 255, 255, 0.1)',
+                                                    color: movie.languageMetrics ? '#bae6fd' : '#cbd5e1',
+                                                    borderRadius: '10px',
+                                                    fontSize: '12.5px',
+                                                    fontWeight: 600,
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.2s ease'
+                                                }}
+                                            >
+                                                <BarChart2 size={16} color="#38bdf8" />
+                                                <span>{lang === 'en' ? 'Manage CEFR & Language Metrics' : '📊 شیکاری زمانی (CEFR) و فایلی .txt'}</span>
+                                                {movie.languageMetrics?.cefrLevel && (
+                                                    <span style={{ background: '#0284c7', color: '#fff', fontSize: '11px', padding: '1px 7px', borderRadius: '10px', fontWeight: 'bold' }}>
+                                                        {movie.languageMetrics.cefrLevel}
+                                                    </span>
+                                                )}
+                                            </button>
+
+                                            {movie.languageMetrics?.difficultWords && movie.languageMetrics.difficultWords.length > 0 && (
+                                                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+                                                    <span style={{ fontSize: '11.5px', color: '#7dd3fc', background: 'rgba(56, 189, 248, 0.1)', border: '1px solid rgba(56, 189, 248, 0.2)', padding: '4px 8px', borderRadius: '6px' }}>
+                                                        ✨ {movie.languageMetrics.difficultWords.length} وشەی ئەکادیمی
+                                                    </span>
+                                                    {movie.languageMetrics.repeatedWords && movie.languageMetrics.repeatedWords.length > 0 && (
+                                                        <span style={{ fontSize: '11.5px', color: '#a78bfa', background: 'rgba(167, 139, 250, 0.1)', border: '1px solid rgba(167, 139, 250, 0.2)', padding: '4px 8px', borderRadius: '6px' }}>
+                                                            🔁 {movie.languageMetrics.repeatedWords.length} وشەی دووبارە
+                                                        </span>
                                                     )}
                                                 </div>
                                             )}

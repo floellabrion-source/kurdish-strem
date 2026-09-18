@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X, Save, Sparkles, BarChart2, Check, AlertCircle, Plus, Trash2, HelpCircle, Download, FileText } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { X, Save, Sparkles, BarChart2, Check, AlertCircle, Plus, Trash2, HelpCircle, Download, FileText, Upload } from 'lucide-react';
 import { LanguageMetrics, DifficultWord, RepeatedWord } from '../types';
 import { parseLinguisticAnalysisText, triggerFileDownload } from '../utils/aiTranslator';
 import './LanguageMetricsModal.css';
@@ -19,6 +19,7 @@ export default function LanguageMetricsModal({
     onSave,
     onClose
 }: LanguageMetricsModalProps) {
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const [rawText, setRawText] = useState('');
     const [metrics, setMetrics] = useState<LanguageMetrics>(initialMetrics || {
         totalWords: 0,
@@ -37,6 +38,23 @@ export default function LanguageMetricsModal({
         const parsed = parseLinguisticAnalysisText(rawText);
         setMetrics(parsed);
         setActiveTab('preview');
+    };
+
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const content = event.target?.result as string;
+            if (content) {
+                setRawText(content);
+                const parsed = parseLinguisticAnalysisText(content);
+                setMetrics(parsed);
+                setActiveTab('preview');
+            }
+        };
+        reader.readAsText(file, 'utf-8');
+        e.target.value = '';
     };
 
     const handleSave = async () => {
@@ -101,7 +119,7 @@ export default function LanguageMetricsModal({
                             <div className="lm-paste-intro">
                                 <Sparkles size={18} className="text-purple-400" />
                                 <p>
-                                    تەواوی دەقی <strong>بەشی ١ (PART 1: LINGUISTIC ANALYSIS & STATISTICS)</strong> کە ژیریی دەستکردەکە بۆی دروستکردوویت لێرە پەیست بکە و کلیک لە دوگمەی شیکردنەوە بکە:
+                                    تەواوی دەقی شیکاریی <strong>CEFR و زمانی ئینگلیزی</strong> لێرە پەیست بکە، یان فایلی <strong>.txt</strong> ئەپڵۆد بکە تا خۆکارانە شیکار بکرێت:
                                 </p>
                             </div>
                             <textarea
@@ -111,7 +129,23 @@ export default function LanguageMetricsModal({
                                 placeholder="دەقی شیکاریی زمانەوانی لێرە پەیست بکە (کۆی گشتی وشەکان، ئاستەکانی CEFR، ١٠ وشە قورسەکان، وشە دووبارەبووەکان)..."
                                 rows={14}
                             />
-                            <div className="lm-paste-actions">
+                            <div className="lm-paste-actions" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    accept=".txt"
+                                    style={{ display: 'none' }}
+                                    onChange={handleFileUpload}
+                                />
+                                <button
+                                    type="button"
+                                    className="btn-lm-parse"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    style={{ background: 'linear-gradient(135deg, #0ea5e9, #0284c7)', borderColor: '#0284c7' }}
+                                >
+                                    <Upload size={16} />
+                                    داغڵکردنی فایلی .txt
+                                </button>
                                 <button
                                     className="btn-lm-parse"
                                     disabled={!rawText.trim()}
@@ -120,6 +154,17 @@ export default function LanguageMetricsModal({
                                     <Sparkles size={16} />
                                     شیکردنەوە و پڕکردنەوەی خۆکار (Auto Parse)
                                 </button>
+                                {rawText.trim() && (
+                                    <button
+                                        type="button"
+                                        className="btn-lm-parse"
+                                        onClick={handleDownloadTxt}
+                                        style={{ background: 'rgba(255, 255, 255, 0.08)', color: '#cbd5e1' }}
+                                    >
+                                        <Download size={16} />
+                                        داگرتنی .txt
+                                    </button>
+                                )}
                             </div>
                         </div>
                     ) : (
