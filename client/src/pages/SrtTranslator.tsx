@@ -341,7 +341,7 @@ export default function SrtTranslator() {
     const [selectedModel, setSelectedModel] = useState<string>(() => {
         const cached = localStorage.getItem('ks_srt_ai_model');
         if (cached && AI_TRANSLATION_MODELS.some(m => m.id === cached)) return cached;
-        return 'anthropic/claude-sonnet-5';
+        return 'google/gemini-2.5-flash';
     });
 
     // Fetch movies & glossary on mount
@@ -492,7 +492,7 @@ FORMAT YOUR RESPONSE EXACTLY AS JSON:
         setStats(prev => {
             const newIn = prev.totalInTok + inTokDelta;
             const newOut = prev.totalOutTok + outTokDelta;
-            const pricing = MODEL_PRICING[selectedModel] || MODEL_PRICING['anthropic/claude-sonnet-5'];
+            const pricing = MODEL_PRICING[selectedModel] || MODEL_PRICING['google/gemini-2.5-flash'];
             const cost = (newIn / 1000000) * pricing.inPricePerM + (newOut / 1000000) * pricing.outPricePerM;
             const now = Date.now();
             const elapsed = Math.max(1, Math.round((now - startTimestamp) / 1000));

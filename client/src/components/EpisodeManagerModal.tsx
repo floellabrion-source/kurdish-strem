@@ -145,7 +145,7 @@ export default function EpisodeManagerModal({
     } | null>(null);
 
     const [aiSelectedModel, setAiSelectedModel] = useState<string>(() => {
-        return localStorage.getItem('ks_srt_ai_model') || 'anthropic/claude-sonnet-5';
+        return localStorage.getItem('ks_srt_ai_model') || 'google/gemini-2.5-flash';
     });
     const [aiSelectedTone, setAiSelectedTone] = useState<string>(() => {
         return localStorage.getItem('ks_srt_tone') || 'casual';

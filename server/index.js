@@ -3204,7 +3204,7 @@ const toGeminiLikeResponse = (openRouterData, modelUsed) => {
 const callOpenRouter = async (input, options = {}) => {
     const prompt = extractPrompt(input);
     const maxTokens = options.max_tokens || 150;
-    let modelToUse = options.model || OPENROUTER_MODEL || 'anthropic/claude-sonnet-5';
+    let modelToUse = options.model || OPENROUTER_MODEL || 'google/gemini-2.5-flash';
 
     try {
         const payload = {

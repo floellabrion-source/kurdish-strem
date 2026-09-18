@@ -221,7 +221,7 @@ export const isTaskPaused = (taskId: string): boolean => {
 // ─── PART 1: LINGUISTIC ANALYSIS & STATISTICS ───
 export const generateLinguisticAnalysis = async (
     fullEnglishText: string,
-    model: string = 'anthropic/claude-sonnet-4.6',
+    model: string = 'google/gemini-2.5-flash',
     movieContext?: string,
     signal?: AbortSignal
 ): Promise<{ text: string; inTok: number; outTok: number }> => {
@@ -269,7 +269,7 @@ export const translateBatch = async (
     texts: string[], 
     fullBlocks: SubBlock[], 
     batchStartIndex: number,
-    model: string = 'anthropic/claude-sonnet-5',
+    model: string = 'google/gemini-2.5-flash',
     movieContextStr: string = '',
     toneRuleStr: string = '',
     glossaryTerms: any[] = [],
@@ -552,7 +552,7 @@ export async function runAiTranslationAndAnalysis(
     const taskId = `${movieId}-${seasonNum ?? 'm'}-${episodeNum ?? 'm'}`;
     resumeTranslationTask(taskId); // Reset any previous pause signal
 
-    const selectedModel = options?.model || 'anthropic/claude-sonnet-5';
+    const selectedModel = options?.model || 'google/gemini-2.5-flash';
     const selectedTone = options?.tone || 'casual';
     const mode = options?.mode || 'all';
     const contextStr = options?.contextStr || '';

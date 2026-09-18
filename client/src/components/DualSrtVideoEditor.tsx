@@ -707,7 +707,7 @@ Option 1: [Translation 1]
 Option 2: [Translation 2]
 Option 3: [Translation 3]`;
 
-            const selectedModel = localStorage.getItem('ks_srt_ai_model') || 'anthropic/claude-sonnet-5';
+            const selectedModel = localStorage.getItem('ks_srt_ai_model') || 'google/gemini-2.5-flash';
 
             const res = await axios.post('/api/ai/generate', {
                 contents: [{ parts: [{ text: prompt }] }],
@@ -849,7 +849,7 @@ Option 3: [Translation 3]`;
                 })
                 .join('\n\n');
 
-            const selectedModel = localStorage.getItem('ks_srt_ai_model') || 'anthropic/claude-sonnet-5';
+            const selectedModel = localStorage.getItem('ks_srt_ai_model') || 'google/gemini-2.5-flash';
             const payload: any = {
                 originalSrtText,
                 translatedSrtText,
