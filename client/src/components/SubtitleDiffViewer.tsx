@@ -432,9 +432,9 @@ export default function SubtitleDiffViewer({
                                         const idx = historyList.findIndex(h => h.id === selectedHistoryId);
                                         const vNum = idx !== -1 ? historyList.length - idx : null;
                                         if (lang === 'en') {
-                                            return vNum ? `Approve & Activate (#${vNum})` : 'Approve & Activate Version';
+                                            return vNum ? `Approve (#${vNum})` : 'Approve';
                                         }
-                                        return vNum ? `پەسەندکردن و چالاککردنی ئەم وەرگێڕانە (نوسخەی #${vNum})` : 'پەسەندکردن و چالاککردنی ئەم وەرگێڕانە';
+                                        return vNum ? `پەسەندکردن (#${vNum})` : 'پەسەندکردن';
                                     })()}
                                 </span>
                             </button>
@@ -451,9 +451,9 @@ export default function SubtitleDiffViewer({
                                         const idx = historyList.findIndex(h => h.id === selectedHistoryId);
                                         const vNum = idx !== -1 ? historyList.length - idx : null;
                                         if (lang === 'en') {
-                                            return vNum ? `Reject (#${vNum})` : 'Reject Version';
+                                            return vNum ? `Reject (#${vNum})` : 'Reject';
                                         }
-                                        return vNum ? `ڕەتکردنەوەی ئەم نوسخەیە (#${vNum})` : 'ڕەتکردنەوەی ئەم نوسخەیە';
+                                        return vNum ? `ڕەتکردنەوە (#${vNum})` : 'ڕەتکردنەوە';
                                     })()}
                                 </span>
                             </button>
@@ -483,47 +483,21 @@ export default function SubtitleDiffViewer({
                         </div>
 
                         {/* AI / All Filter Tabs */}
-                        <div style={{ display: 'flex', gap: '6px', padding: '8px 12px', background: 'rgba(0, 0, 0, 0.2)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                        <div className="diff-sidebar-filter-tabs">
                             <button
                                 type="button"
+                                className={`diff-sidebar-tab-btn ${!filterAiOnly ? 'active' : ''}`}
                                 onClick={() => setFilterAiOnly(false)}
-                                style={{
-                                    flex: 1,
-                                    padding: '5px 8px',
-                                    borderRadius: '6px',
-                                    fontSize: '11px',
-                                    fontWeight: 'bold',
-                                    background: !filterAiOnly ? 'rgba(56, 189, 248, 0.2)' : 'transparent',
-                                    color: !filterAiOnly ? '#38bdf8' : '#94a3b8',
-                                    border: !filterAiOnly ? '1px solid #38bdf8' : '1px solid rgba(255,255,255,0.1)',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s'
-                                }}
                             >
                                 {lang === 'en' ? 'All Versions' : 'هەموو نوسخەکان'}
                             </button>
                             <button
                                 type="button"
+                                className={`diff-sidebar-tab-btn ai ${filterAiOnly ? 'active' : ''}`}
                                 onClick={() => setFilterAiOnly(true)}
-                                style={{
-                                    flex: 1,
-                                    padding: '5px 8px',
-                                    borderRadius: '6px',
-                                    fontSize: '11px',
-                                    fontWeight: 'bold',
-                                    background: filterAiOnly ? 'rgba(168, 85, 247, 0.25)' : 'transparent',
-                                    color: filterAiOnly ? '#d8b4fe' : '#94a3b8',
-                                    border: filterAiOnly ? '1px solid #a855f7' : '1px solid rgba(255,255,255,0.1)',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '4px',
-                                    transition: 'all 0.2s'
-                                }}
                             >
-                                <Sparkles size={11} color={filterAiOnly ? '#c084fc' : '#94a3b8'} />
-                                {lang === 'en' ? 'AI Only' : 'تەنها AI'}
+                                <Sparkles size={12} className="ai-icon" />
+                                <span>{lang === 'en' ? 'AI Only' : 'تەنها AI'}</span>
                             </button>
                         </div>
 
