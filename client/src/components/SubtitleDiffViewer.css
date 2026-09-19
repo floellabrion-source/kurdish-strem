@@ -318,15 +318,38 @@
     color: #ffffff;
 }
 
+.diff-history-list,
 .history-items-list {
     flex: 1;
     min-height: 0;
-    overflow-y: auto;
+    max-height: 100%;
+    overflow-y: auto !important;
     -webkit-overflow-scrolling: touch;
     padding: 12px;
     display: flex;
     flex-direction: column;
     gap: 8px;
+}
+
+.diff-history-list::-webkit-scrollbar,
+.history-items-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.diff-history-list::-webkit-scrollbar-track,
+.history-items-list::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.diff-history-list::-webkit-scrollbar-thumb,
+.history-items-list::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+.diff-history-list::-webkit-scrollbar-thumb:hover,
+.history-items-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(56, 189, 248, 0.6);
 }
 
 .history-item-card {
