@@ -132,22 +132,26 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
                             }
 
                             case 'MOVIE_APPROVED': {
-                                addNotification({
-                                    type: 'approved',
-                                    title: 'پەسەندکرا و بڵاوکرایەوە ✓',
-                                    message: data.payload?.message || `بەرهەمی (${data.payload?.movieTitle}) پەسەندکرا!`,
-                                    data: data.payload
-                                });
+                                if (user && (user.role === 'super_admin' || user.role === 'admin' || data.payload?.submitterId === user.id)) {
+                                    addNotification({
+                                        type: 'approved',
+                                        title: 'پەسەندکرا و بڵاوکرایەوە ✓',
+                                        message: data.payload?.message || `بەرهەمی (${data.payload?.movieTitle}) پەسەندکرا!`,
+                                        data: data.payload
+                                    });
+                                }
                                 break;
                             }
 
                             case 'MOVIE_REJECTED': {
-                                addNotification({
-                                    type: 'rejected',
-                                    title: 'ڕەتکرایەوە بۆ پێداچوونەوە ⚠️',
-                                    message: data.payload?.message || `داواکاریی (${data.payload?.movieTitle}) پێویستی بە چاکسازییە`,
-                                    data: data.payload
-                                });
+                                if (user && (user.role === 'super_admin' || user.role === 'admin' || data.payload?.submitterId === user.id)) {
+                                    addNotification({
+                                        type: 'rejected',
+                                        title: 'ڕەتکرایەوە بۆ پێداچوونەوە ⚠️',
+                                        message: data.payload?.message || `داواکاریی (${data.payload?.movieTitle}) پێویستی بە چاکسازییە`,
+                                        data: data.payload
+                                    });
+                                }
                                 break;
                             }
 
