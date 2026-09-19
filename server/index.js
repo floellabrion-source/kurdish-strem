@@ -5103,6 +5103,25 @@ app.post('/api/admin/movies/:id/subtitle-restore', requireAuth, requireAdmin, (r
     res.json({ success: true, restoredText: textToRestore });
 });
 
+// DELETE /api/admin/movies/:id/subtitle-history/:historyId
+app.delete('/api/admin/movies/:id/subtitle-history/:historyId', requireAuth, requireAdmin, (req, res) => {
+    if (!isSuperAdmin(req.user)) {
+        return res.status(403).json({ error: 'تەنها سەرۆک (Super Admin) دەسەڵاتی سڕینەوە و ڕەتکردنەوەی نوسخەی هەیە.' });
+    }
+
+    const { id: movieId, historyId } = req.params;
+    const history = readSubtitleHistory();
+    const entryIdx = history.findIndex(h => h.id === historyId && h.movieId === movieId);
+    if (entryIdx === -1) {
+        return res.status(404).json({ error: 'نوسخەکە نەدۆزرایەوە' });
+    }
+
+    history.splice(entryIdx, 1);
+    writeSubtitleHistory(history);
+
+    res.json({ success: true, message: 'نوسخەی وەرگێڕانەکە بە سەرکەوتوویی ڕەتکرایەوە و سڕایەوە', removedId: historyId });
+});
+
 // Smart Merge Helper: merges newly translated lines into existing SRT without overwriting other translated lines
 function smartMergeKurdishSrt(existingSrtText, incomingSrtText) {
     if (!existingSrtText || !existingSrtText.trim()) return incomingSrtText || '';

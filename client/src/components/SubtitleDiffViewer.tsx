@@ -84,6 +84,7 @@ export default function SubtitleDiffViewer({
     const [loadingHistory, setLoadingHistory] = useState(true);
     const [loadingDiff, setLoadingDiff] = useState(true);
     const [restoring, setRestoring] = useState(false);
+    const [rejecting, setRejecting] = useState(false);
     const [historyList, setHistoryList] = useState<HistorySummary[]>([]);
     const [selectedHistoryId, setSelectedHistoryId] = useState<string>(initialHistoryId || '');
     const [diffData, setDiffData] = useState<{
@@ -225,6 +226,31 @@ export default function SubtitleDiffViewer({
             showToast('نەتوانرا وەرگێڕانەکە پەسەند بکرێت');
         } finally {
             setRestoring(false);
+        }
+    };
+
+    // Handle Reject / Delete Version
+    const handleRejectVersion = async (historyId: string) => {
+        if (!window.confirm('ئایا دڵنیایت لە ڕەتکردنەوە و سڕینەوەی ئەم نوسخەیەی وەرگێڕان لە مێژوودا؟')) return;
+
+        setRejecting(true);
+        try {
+            await axios.delete(`/api/admin/movies/${movieId}/subtitle-history/${historyId}`);
+            showToast('نوسخەی وەرگێڕانەکە بە سەرکەوتوویی ڕەتکرایەوە و سڕایەوە ✓');
+            const nextList = historyList.filter(h => h.id !== historyId);
+            setHistoryList(nextList);
+            if (nextList.length > 0) {
+                setSelectedHistoryId(nextList[0].id);
+            } else {
+                setSelectedHistoryId('');
+                setDiffData(null);
+            }
+            if (onRestored) onRestored();
+        } catch (err: any) {
+            console.error(err);
+            showToast(err.response?.data?.error || 'نەتوانرا نوسخەکە ڕەتبکرێتەوە');
+        } finally {
+            setRejecting(false);
         }
     };
 
@@ -391,12 +417,12 @@ export default function SubtitleDiffViewer({
                         )
                     )}
 
-                    {/* Approve & Activate Version Action (Super Admin) */}
-                    {selectedHistoryId && user?.role === 'super_admin' && (
+                    {/* Approve & Reject Version Actions (Super Admin) */}
+                    {selectedHistoryId && isSuperAdmin && (
                         <div className="diff-header-approve-row">
                             <button
                                 className="btn-diff-approve-version"
-                                disabled={restoring}
+                                disabled={restoring || rejecting}
                                 onClick={() => handleRestoreVersion(selectedHistoryId)}
                                 title={lang === 'en' ? "Approve and set this subtitle as the official version" : "پەسەندکردن و دانانی ئەم وەرگێڕانە وەک سەبتایتڵی سەرەکی بۆ بینەران"}
                             >
@@ -409,6 +435,25 @@ export default function SubtitleDiffViewer({
                                             return vNum ? `Approve & Activate (#${vNum})` : 'Approve & Activate Version';
                                         }
                                         return vNum ? `پەسەندکردن و چالاککردنی ئەم وەرگێڕانە (نوسخەی #${vNum})` : 'پەسەندکردن و چالاککردنی ئەم وەرگێڕانە';
+                                    })()}
+                                </span>
+                            </button>
+
+                            <button
+                                className="btn-diff-reject-version"
+                                disabled={restoring || rejecting}
+                                onClick={() => handleRejectVersion(selectedHistoryId)}
+                                title={lang === 'en' ? "Reject and delete this subtitle translation from history" : "ڕەتکردنەوە و سڕینەوەی ئەم وەرگێڕانە لە مێژوو"}
+                            >
+                                {rejecting ? <Loader2 size={15} className="spinning" /> : <Trash2 size={15} />}
+                                <span>
+                                    {(() => {
+                                        const idx = historyList.findIndex(h => h.id === selectedHistoryId);
+                                        const vNum = idx !== -1 ? historyList.length - idx : null;
+                                        if (lang === 'en') {
+                                            return vNum ? `Reject (#${vNum})` : 'Reject Version';
+                                        }
+                                        return vNum ? `ڕەتکردنەوەی ئەم نوسخەیە (#${vNum})` : 'ڕەتکردنەوەی ئەم نوسخەیە';
                                     })()}
                                 </span>
                             </button>
