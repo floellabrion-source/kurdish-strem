@@ -176,10 +176,10 @@
         border-radius: 10px;
     }
     .subtitle-translated {
-        font-size: clamp(14px, calc(var(--trans-fs, 26px) * 0.72), 22px) !important;
+        font-size: var(--trans-fs, 22px) !important;
     }
     .subtitle-original {
-        font-size: clamp(12px, calc(var(--orig-fs, 20px) * 0.75), 18px) !important;
+        font-size: var(--orig-fs, 16px) !important;
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
@@ -2437,11 +2437,11 @@
     }
 
     .subtitle-translated {
-        font-size: clamp(14px, calc(var(--trans-fs, 26px) * 0.72), 22px) !important;
+        font-size: var(--trans-fs, 22px) !important;
     }
 
     .subtitle-original {
-        font-size: clamp(12px, calc(var(--orig-fs, 20px) * 0.75), 18px) !important;
+        font-size: var(--orig-fs, 16px) !important;
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
