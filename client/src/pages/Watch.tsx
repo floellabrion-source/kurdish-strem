@@ -2021,43 +2021,6 @@ CRITICAL RULES:
                         className="subtitle-text subtitle-original subtitle-clickable"
                         title={lang === 'en' ? 'Click words to translate or save flashcard' : 'کلیک بکە بۆ فێربونی زمان 🎤 یان سەیڤی فلاشکارتی بکە'}
                     >
-                        <div className="sub-actions-row">
-                            <span className="sub-practice-btn sub-replay-btn" onClick={(e) => {
-                                e.stopPropagation();
-                                if (videoRef.current && currentOrigSub) {
-                                    const t = currentOrigSub.start;
-                                    setCurrentTime(t);
-
-                                    if (mkvUnsupported) {
-                                        setStreamStartTime(t);
-                                    } else {
-                                        if (videoRef.current) videoRef.current.currentTime = t;
-                                    }
-                                    videoRef.current.play().then(() => setIsPlaying(true));
-                                }
-                            }} title={lang === 'en' ? 'Replay sentence' : 'دووبارەکردنەوەی ڕستە 🔄'}>
-                                <RotateCcw size={14} /> {lang === 'en' ? 'Replay' : 'دووبارە'}
-                            </span>
-                            <span className="sub-ai-btn" onClick={(e) => { e.stopPropagation(); explainWithAi(currentOrigSub.text); }} title={lang === 'en' ? 'Grammar & Context with AI (3 Credits)' : 'شیکاری ڕێزمان بە AI (٣ کرێدیت) 🤖'}>
-                                <Brain size={14} /> {lang === 'en' ? 'AI Explain (3 Credits)' : 'AI شیکاری (٣ کرێدیت)'}
-                            </span>
-                            <span
-                                className="sub-save-btn"
-                                onClick={(e) => addToFlashcards(e, currentOrigSub.text, currentTransSub?.text || '', {
-                                    cardType: 'subtitle',
-                                    quote: currentOrigSub.text,
-                                    translatedQuote: currentTransSub?.text || '',
-                                    timestamp: currentOrigSub.start,
-                                    subtitleId: currentOrigSub.id
-                                })}
-                                title={lang === 'en' ? 'Add to flashcards' : 'زیادی بکە بۆ فلاش کارتەکان 🃏'}
-                            >
-                                <BookmarkPlus size={14} /> {lang === 'en' ? 'Card' : 'فلاش کارت'}
-                            </span>
-                            <span className="sub-practice-btn sub-voice-btn" onClick={() => startPractice(currentOrigSub.text)} title={lang === 'en' ? 'Pronunciation Practice' : 'ڕاهێنانی بێژەکردن 🎤'}>
-                                <Mic size={14} /> {lang === 'en' ? 'Practice' : 'فێربوون'}
-                            </span>
-                        </div>
                         <div className="orig-words-wrap" dir="ltr">
                             {currentOrigSub.text.split(/\s+/).map((word, i, arr) => {
                                 const highlightData = getHighlightedWordData(word);
@@ -2076,6 +2039,43 @@ CRITICAL RULES:
                                     </React.Fragment>
                                 );
                             })}
+                        </div>
+                        <div className="sub-actions-row">
+                            <span className="sub-practice-btn sub-replay-btn" onClick={(e) => {
+                                e.stopPropagation();
+                                if (videoRef.current && currentOrigSub) {
+                                    const t = currentOrigSub.start;
+                                    setCurrentTime(t);
+
+                                    if (mkvUnsupported) {
+                                        setStreamStartTime(t);
+                                    } else {
+                                        if (videoRef.current) videoRef.current.currentTime = t;
+                                    }
+                                    videoRef.current.play().then(() => setIsPlaying(true));
+                                }
+                            }} title={lang === 'en' ? 'Replay sentence' : 'دووبارەکردنەوەی ڕستە 🔄'}>
+                                <RotateCcw size={13} /> {lang === 'en' ? 'Replay' : 'دووبارە'}
+                            </span>
+                            <span className="sub-ai-btn" onClick={(e) => { e.stopPropagation(); explainWithAi(currentOrigSub.text); }} title={lang === 'en' ? 'Grammar & Context with AI (3 Credits)' : 'شیکاری ڕێزمان بە AI (٣ کرێدیت) 🤖'}>
+                                <Brain size={13} /> {lang === 'en' ? 'AI' : 'شیکاری AI'}
+                            </span>
+                            <span
+                                className="sub-save-btn"
+                                onClick={(e) => addToFlashcards(e, currentOrigSub.text, currentTransSub?.text || '', {
+                                    cardType: 'subtitle',
+                                    quote: currentOrigSub.text,
+                                    translatedQuote: currentTransSub?.text || '',
+                                    timestamp: currentOrigSub.start,
+                                    subtitleId: currentOrigSub.id
+                                })}
+                                title={lang === 'en' ? 'Add to flashcards' : 'زیادی بکە بۆ فلاش کارتەکان 🃏'}
+                            >
+                                <BookmarkPlus size={13} /> {lang === 'en' ? 'Card' : 'فلاش کارت'}
+                            </span>
+                            <span className="sub-practice-btn sub-voice-btn" onClick={() => startPractice(currentOrigSub.text)} title={lang === 'en' ? 'Pronunciation Practice' : 'ڕاهێنانی بێژەکردن 🎤'}>
+                                <Mic size={13} /> {lang === 'en' ? 'Practice' : 'فێربوون'}
+                            </span>
                         </div>
                     </div>
                 )}

@@ -2382,13 +2382,14 @@
     .subtitle-overlay {
         width: 96%;
         max-width: calc(100vw - 12px);
-        bottom: calc(var(--sub-pos, 0px) + 4px);
-        gap: 4px;
+        bottom: calc(var(--sub-pos, 0px) + 20px + env(safe-area-inset-bottom, 0px));
+        gap: 5px;
+        z-index: 35;
     }
 
     .subtitle-area.with-controls,
     .subtitle-overlay.with-controls {
-        bottom: calc(var(--sub-pos, 0px) + 48px);
+        bottom: calc(var(--sub-pos, 0px) + 112px + env(safe-area-inset-bottom, 0px)) !important;
     }
 
     .subtitle-text {
@@ -2416,8 +2417,9 @@
         flex-wrap: wrap !important;
         justify-content: center !important;
         align-items: center !important;
-        gap: 5px !important;
-        margin-bottom: 6px !important;
+        gap: 4px !important;
+        margin-top: 4px !important;
+        margin-bottom: 0 !important;
         pointer-events: auto !important;
         z-index: 15 !important;
     }
@@ -2430,13 +2432,13 @@
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
-        padding: 3px 8px !important;
-        font-size: 10.5px !important;
+        padding: 2px 7px !important;
+        font-size: 10px !important;
         font-weight: 700 !important;
-        gap: 4px !important;
+        gap: 3px !important;
         border-radius: 999px !important;
-        background: rgba(139, 92, 246, 0.25) !important;
-        border: 1px solid rgba(168, 85, 247, 0.45) !important;
+        background: rgba(139, 92, 246, 0.35) !important;
+        border: 1px solid rgba(168, 85, 247, 0.55) !important;
         color: #ffffff !important;
         backdrop-filter: blur(8px) !important;
         touch-action: manipulation !important;
