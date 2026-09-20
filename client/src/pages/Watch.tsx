@@ -58,6 +58,25 @@ const parseSRT = (data: string) => {
     return subs.sort((a, b) => a.start - b.start);
 };
 
+const findSubBinary = (subs: { id: number; start: number; end: number; text: string }[], t: number) => {
+    if (!subs || subs.length === 0) return undefined;
+    let low = 0;
+    let high = subs.length - 1;
+    while (low <= high) {
+        const mid = (low + high) >> 1;
+        const s = subs[mid];
+        if (t >= s.start && t <= s.end) {
+            return s;
+        }
+        if (t < s.start) {
+            high = mid - 1;
+        } else {
+            low = mid + 1;
+        }
+    }
+    return undefined;
+};
+
 const fmt = (s: number) => {
     if (!s || isNaN(s)) return '0:00';
     const h = Math.floor(s / 3600);
@@ -356,6 +375,8 @@ export default function Watch() {
     const accumulatedSecondsRef = useRef(0);
     const lastVideoTimeRef = useRef<number>(0);
     const lastSeenSubIdRef = useRef<number | null>(null);
+    const lastSavedTimeRef = useRef<number>(-1);
+    const lastSyncedTimeRef = useRef<number>(-1);
     const [sessionSentences, setSessionSentences] = useState(0);
 
     // HLS & Video Quality State
@@ -1411,16 +1432,21 @@ CRITICAL RULES:
     const lastTapRef = useRef<{ time: number; x: number }>({ time: 0, x: 0 });
     const singleTapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const lastTouchEventTimeRef = useRef(0);
+    const lastPauseTimeRef = useRef(0);
 
     const togglePlay = () => {
         const v = videoRef.current;
         if (!v) return;
+        const now = Date.now();
         if (v.paused) { 
+            // Guard: If paused less than 450ms ago, ignore synthetic or duplicate click/touch
+            if (now - lastPauseTimeRef.current < 450) return;
             v.play().catch(() => {}); 
             setIsPlaying(true); 
             setPlayPauseIndicator('play');
             setTimeout(() => setPlayPauseIndicator(null), 550);
         } else { 
+            lastPauseTimeRef.current = now;
             v.pause(); 
             setIsPlaying(false); 
             setPlayPauseIndicator('pause');
@@ -1600,19 +1626,17 @@ CRITICAL RULES:
         setCurrentTime(currentT);
         if (v.buffered.length > 0) setBuffered(v.buffered.end(v.buffered.length - 1));
         
-        // Save progress locally every 5 seconds
+        // Save progress locally every 5 seconds (using in-memory ref to eliminate laggy localStorage disk reads)
         if (currentT > 10) {
             const rounded = Math.floor(currentT);
-            // Only write to localStorage and sync if it actually changed to a new 5/15 second mark
-            if (rounded % 5 === 0 && localStorage.getItem(progressKey) !== String(rounded)) {
+            if (rounded % 5 === 0 && lastSavedTimeRef.current !== rounded) {
+                lastSavedTimeRef.current = rounded;
                 localStorage.setItem(progressKey, String(rounded));
             }
             
             // Sync with backend every 15 seconds
-            // To prevent spamming, we check if it exactly hit the multiple and we haven't synced this second yet
-            // The frontend sends history.
-            if (rounded % 15 === 0 && localStorage.getItem(progressKey + '_synced') !== String(rounded) && user) {
-                localStorage.setItem(progressKey + '_synced', String(rounded));
+            if (rounded % 15 === 0 && lastSyncedTimeRef.current !== rounded && user) {
+                lastSyncedTimeRef.current = rounded;
                 const hKey = `${id}_s${seasonNum}_e${episodeNum}`;
                 const title = episodeNum > 0 ? episodeTitle : movie?.title || 'Unknown';
                 syncProgress({ history: { [hKey]: { time: rounded, title, date: new Date().toISOString() } } });
@@ -1625,15 +1649,14 @@ CRITICAL RULES:
     const bufferedPercent = effectiveDuration > 0 ? (buffered / effectiveDuration) * 100 : 0;
     const adjTime = currentTime - subDelay;
 
-    const currentOrigIndex = useMemo(
-        () => originalSubs.findIndex(s => adjTime >= s.start && adjTime <= s.end),
+    // High performance O(log N) binary search for active subtitles (instant 60fps subtitle syncing)
+    const currentOrigSub = useMemo(
+        () => findSubBinary(originalSubs, adjTime),
         [originalSubs, adjTime]
     );
 
-    const currentOrigSub = currentOrigIndex !== -1 ? originalSubs[currentOrigIndex] : undefined;
-
     const currentTransSub = useMemo(() => {
-        const byTime = translatedSubs.find(s => adjTime >= s.start && adjTime <= s.end);
+        const byTime = findSubBinary(translatedSubs, adjTime);
         if (byTime) return byTime;
         if (currentOrigSub) {
             return translatedSubs.find(s => s.id === currentOrigSub.id);
@@ -1963,6 +1986,7 @@ CRITICAL RULES:
                     className="player-center-play-wrapper" 
                     onClick={(e) => {
                         e.stopPropagation();
+                        if (Date.now() - lastTouchEventTimeRef.current < 500 || Date.now() - lastPauseTimeRef.current < 500) return;
                         togglePlay();
                         setShowControls(true);
                         resetControlsTimer();
@@ -1970,6 +1994,7 @@ CRITICAL RULES:
                     onTouchEnd={(e) => {
                         e.stopPropagation();
                         e.preventDefault();
+                        if (Date.now() - lastTouchEventTimeRef.current < 500 || Date.now() - lastPauseTimeRef.current < 500) return;
                         lastTouchEventTimeRef.current = Date.now();
                         togglePlay();
                         setShowControls(true);
