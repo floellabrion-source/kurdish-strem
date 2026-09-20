@@ -577,7 +577,6 @@ export default function Watch() {
         }
     ) => {
         e.stopPropagation();
-        if (!checkAuthForFeature('flashcards')) return;
         try {
             const saved = localStorage.getItem('kurdish_stream_flashcards');
             const cards = saved ? JSON.parse(saved) : [];
@@ -831,7 +830,6 @@ export default function Watch() {
 
     const lookupWordWithAi = async (word: string) => {
         modalOpenedAtRef.current = Date.now();
-        if (!checkAuthForFeature('translation')) return;
         if (videoRef.current) videoRef.current.pause();
         setIsPlaying(false);
         setWordLookupModalOpen(true);
@@ -889,7 +887,6 @@ export default function Watch() {
     }, [completionXpAwarded, user, syncProgress]);
 
     const generateAndShowQuiz = async () => {
-        if (!checkAuthForFeature('quiz')) return;
         setCompletionModalOpen(false);
         setQuizModalOpen(true);
         setQuizLoading(true);
@@ -930,7 +927,6 @@ export default function Watch() {
 
     const explainWithAi = async (text: string) => {
         modalOpenedAtRef.current = Date.now();
-        if (!checkAuthForFeature('translation')) return;
         if (videoRef.current) videoRef.current.pause();
         setIsPlaying(false);
         setAiModalOpen(true);
@@ -1188,7 +1184,6 @@ CRITICAL RULES:
     const startPractice = (text: string) => {
         if (!text) return;
         modalOpenedAtRef.current = Date.now();
-        if (!checkAuthForFeature('pronunciation')) return;
         videoRef.current?.pause();
         setPracticeText(text);
         setPracticeActive(true);

@@ -1197,6 +1197,17 @@ const requireAuth = (req, res, next) => {
     next();
 };
 
+const optionalAuth = (req, res, next) => {
+    const user = getUser(req);
+    if (user) {
+        if (user.suspendedUntil && new Date(user.suspendedUntil).getTime() > Date.now()) {
+            return res.status(403).json({ error: `ئەکاونتەکەت ڕاگیراوە بەهۆی: ${user.suspensionReason || 'سەرپێچی'} تا کاتی: ${new Date(user.suspendedUntil).toLocaleString()}` });
+        }
+        req.user = user;
+    }
+    next();
+};
+
 const hasPermission = (user, permKey) => {
     if (!user) return false;
     if (isSuperAdmin(user)) return true;
@@ -3247,7 +3258,7 @@ const extractPrompt = (input) => {
     return lines.join('\n').trim();
 };
 
-app.post('/api/ai/generate', requireAuth, aiLimiter, async (req, res) => {
+app.post('/api/ai/generate', optionalAuth, aiLimiter, async (req, res) => {
     console.log('OpenRouter AI Route Hit!');
     const prompt = typeof req.body?.prompt === 'string' ? req.body.prompt.trim() : '';
     const hasContents = Array.isArray(req.body?.contents);
@@ -3260,16 +3271,29 @@ app.post('/api/ai/generate', requireAuth, aiLimiter, async (req, res) => {
         return res.status(503).json({ error: { message: 'OPENROUTER_API_KEY is missing in server .env' } });
     }
 
-    const users = readUsers();
-    const idx = users.findIndex(u => u.id === req.user.id);
-    if (idx === -1) return res.status(404).json({ error: 'User not found' });
-    const user = users[idx];
-    const isSuper = isSuperAdmin(user);
-
     const aiTask = req.body.aiTask || 'unknown';
     const lineCount = typeof req.body.lineCount === 'number' && req.body.lineCount > 0 ? req.body.lineCount : 1;
+
+    let user = null;
+    let isSuper = false;
+    let users = null;
+    if (req.user) {
+        users = readUsers();
+        const idx = users.findIndex(u => u.id === req.user.id);
+        if (idx !== -1) {
+            user = users[idx];
+            isSuper = isSuperAdmin(user);
+        }
+    }
+
+    // Heavy batch SRT operations require logged in account
+    if (aiTask === 'srt_translation' || aiTask === 'srt_batch' || aiTask === 'srt_line_translation') {
+        if (!user) {
+            return res.status(401).json({ error: { message: 'بۆ وەرگێڕانی فایلی ژێرنووس، پێویستە بە ئەکاونت بچیتە ژوورەوە.' } });
+        }
+    }
+
     let requiredCredits = 2; // Default for general AI tasks
-    
     if (aiTask === 'voice_correction') requiredCredits = 3;       // 🎙️ شیکاری دەنگ و گۆکردن
     else if (aiTask === 'word_translation') requiredCredits = 2;   // 📖 وەرگێڕانی وشە
     else if (aiTask === 'sentence_translation') requiredCredits = 2; // 📖 وەرگێڕانی ڕستە
@@ -3286,8 +3310,8 @@ app.post('/api/ai/generate', requireAuth, aiLimiter, async (req, res) => {
     }
     else requiredCredits = 2;
 
-    // Super Admin has unlimited master access; all other users & admins must have enough credits
-    if (!isSuper) {
+    // Super Admin has unlimited master access; logged in users must have enough credits
+    if (user && !isSuper) {
         if ((user.credits || 0) < requiredCredits) {
             return res.status(402).json({ 
                 error: { 
@@ -3318,7 +3342,7 @@ app.post('/api/ai/generate', requireAuth, aiLimiter, async (req, res) => {
 
         const data = await callOpenRouter(hasContents ? req.body : prompt, { max_tokens: maxTokens, model: modelToUse });
         
-        if (!isSuper && requiredCredits > 0) {
+        if (user && users && !isSuper && requiredCredits > 0) {
             user.credits = Math.max(0, (user.credits || 0) - requiredCredits);
             if (!user.creditUsage) user.creditUsage = [];
             user.creditUsage.push({
@@ -3334,8 +3358,8 @@ app.post('/api/ai/generate', requireAuth, aiLimiter, async (req, res) => {
             writeUsers(users);
         }
         
-        data.remainingCredits = user.credits || 0;
-        data.creditsUsed = isSuper ? 0 : requiredCredits;
+        data.remainingCredits = user ? (user.credits || 0) : 999;
+        data.creditsUsed = (user && !isSuper) ? requiredCredits : 0;
         res.json(data);
     } catch (error) {
         res.status(500).json({ error: { message: error.message || 'AI request failed' } });
