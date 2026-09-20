@@ -2145,8 +2145,9 @@ CRITICAL RULES:
                             })}
                         </div>
                         <div className="sub-actions-row">
-                            <span 
-                                className="sub-practice-btn sub-replay-btn" 
+                            <button 
+                                type="button"
+                                className="sub-action-icon-btn sub-replay-btn" 
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     if (videoRef.current && currentOrigSub) {
@@ -2161,19 +2162,23 @@ CRITICAL RULES:
                                         videoRef.current.play().then(() => setIsPlaying(true));
                                     }
                                 }}
-                                title={lang === 'en' ? 'Replay sentence' : 'دووبارەکردنەوەی ڕستە 🔄'}
+                                title={lang === 'en' ? 'Replay Sentence 🔄' : 'دووبارەکردنەوەی ڕستە 🔄'}
+                                aria-label="Replay"
                             >
-                                <RotateCcw size={13} /> {lang === 'en' ? 'Replay' : 'دووبارە'}
-                            </span>
-                            <span 
-                                className="sub-ai-btn" 
+                                <RotateCcw size={14} />
+                            </button>
+                            <button 
+                                type="button"
+                                className="sub-action-icon-btn sub-ai-btn" 
                                 onClick={(e) => { e.stopPropagation(); explainWithAi(currentOrigSub.text); }} 
-                                title={lang === 'en' ? 'Grammar & Context with AI (3 Credits)' : 'شیکاری ڕێزمان بە AI (٣ کرێدیت) 🤖'}
+                                title={lang === 'en' ? 'AI Grammar & Context (3 Credits) 🤖' : 'شیکاری ڕێزمان و ڕستە بە AI (٣ کرێدیت) 🤖'}
+                                aria-label="AI Explanation"
                             >
-                                <Brain size={13} /> {lang === 'en' ? 'AI' : 'شیکاری AI'}
-                            </span>
-                            <span
-                                className="sub-save-btn"
+                                <Brain size={14} />
+                            </button>
+                            <button
+                                type="button"
+                                className="sub-action-icon-btn sub-save-btn"
                                 onClick={(e) => addToFlashcards(e, currentOrigSub.text, currentTransSub?.text || '', {
                                     cardType: 'subtitle',
                                     quote: currentOrigSub.text,
@@ -2181,17 +2186,20 @@ CRITICAL RULES:
                                     timestamp: currentOrigSub.start,
                                     subtitleId: currentOrigSub.id
                                 })}
-                                title={lang === 'en' ? 'Add to flashcards' : 'زیادی بکە بۆ فلاش کارتەکان 🃏'}
+                                title={lang === 'en' ? 'Save to Flashcards 🃏' : 'پاشەکەوتکردن لە فلاش کارت 🃏'}
+                                aria-label="Flashcard"
                             >
-                                <BookmarkPlus size={13} /> {lang === 'en' ? 'Card' : 'فلاش کارت'}
-                            </span>
-                            <span 
-                                className="sub-practice-btn sub-voice-btn" 
+                                <BookmarkPlus size={14} />
+                            </button>
+                            <button 
+                                type="button"
+                                className="sub-action-icon-btn sub-voice-btn" 
                                 onClick={(e) => { e.stopPropagation(); startPractice(currentOrigSub.text); }} 
-                                title={lang === 'en' ? 'Pronunciation Practice' : 'ڕاهێنانی بێژەکردن 🎤'}
+                                title={lang === 'en' ? 'Pronunciation Practice 🎤' : 'ڕاهێنانی دەنگ و گۆکردن 🎤'}
+                                aria-label="Pronunciation Practice"
                             >
-                                <Mic size={13} /> {lang === 'en' ? 'Practice' : 'فێربوون'}
-                            </span>
+                                <Mic size={14} />
+                            </button>
                         </div>
                     </div>
                 )}
