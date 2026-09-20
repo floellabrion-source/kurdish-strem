@@ -1526,6 +1526,19 @@ CRITICAL RULES:
     const lastMouseClickRef = useRef<{ time: number; x: number }>({ time: 0, x: 0 });
     const singleClickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+    const handleContainerMouseMove = (e: React.MouseEvent) => {
+        if (showControls) {
+            resetControlsTimer();
+            return;
+        }
+        // If controls are hidden, only show if mouse approaches bottom controls bar or top header
+        const vHeight = containerRef.current?.clientHeight || window.innerHeight;
+        if (e.clientY > vHeight - 110 || e.clientY < 75) {
+            setShowControls(true);
+            resetControlsTimer();
+        }
+    };
+
     const handlePlayerClick = (e: React.MouseEvent) => {
         // Ignore synthetic mouse click fired right after a touch event
         if (Date.now() - lastTouchEventTimeRef.current < 450) {
@@ -1551,11 +1564,11 @@ CRITICAL RULES:
                 singleClickTimerRef.current = null;
             }
             lastMouseClickRef.current = { time: 0, x: 0 };
-            if (xRatio < 0.28) {
+            if (xRatio < 0.30) {
                 skip(-10);
                 setShowControls(false);
                 return;
-            } else if (xRatio > 0.72) {
+            } else if (xRatio > 0.70) {
                 skip(10);
                 setShowControls(false);
                 return;
@@ -1568,12 +1581,20 @@ CRITICAL RULES:
         lastMouseClickRef.current = { time: now, x: e.clientX };
 
         if (singleClickTimerRef.current) clearTimeout(singleClickTimerRef.current);
-        singleClickTimerRef.current = setTimeout(() => {
-            togglePlay();
-            setShowControls(true);
-            resetControlsTimer();
-            singleClickTimerRef.current = null;
-        }, 220);
+        if (xRatio >= 0.30 && xRatio <= 0.70) {
+            singleClickTimerRef.current = setTimeout(() => {
+                togglePlay();
+                setShowControls(true);
+                resetControlsTimer();
+                singleClickTimerRef.current = null;
+            }, 220);
+        } else {
+            singleClickTimerRef.current = setTimeout(() => {
+                setShowControls(prev => !prev);
+                resetControlsTimer();
+                singleClickTimerRef.current = null;
+            }, 260);
+        }
     };
 
     const handlePlayerTouchEnd = (e: React.TouchEvent) => {
@@ -1596,17 +1617,17 @@ CRITICAL RULES:
         const timeDiff = now - lastTapRef.current.time;
         const distDiff = Math.abs(touch.clientX - lastTapRef.current.x);
 
-        if (timeDiff < 320 && distDiff < 100) {
+        if (timeDiff < 340 && distDiff < 100) {
             if (singleTapTimerRef.current) {
                 clearTimeout(singleTapTimerRef.current);
                 singleTapTimerRef.current = null;
             }
-            if (xRatio < 0.28) {
+            if (xRatio < 0.30) {
                 skip(-10);
                 lastTapRef.current = { time: 0, x: 0 };
                 setShowControls(false);
                 return;
-            } else if (xRatio > 0.72) {
+            } else if (xRatio > 0.70) {
                 skip(10);
                 lastTapRef.current = { time: 0, x: 0 };
                 setShowControls(false);
@@ -1622,8 +1643,8 @@ CRITICAL RULES:
 
         lastTapRef.current = { time: now, x: touch.clientX };
 
-        // 2. Middle zone (28% to 72%): Instant 1-tap play/pause without any delay!
-        if (xRatio >= 0.28 && xRatio <= 0.72) {
+        // 2. Middle zone (30% to 70%): Instant 1-tap play/pause
+        if (xRatio >= 0.30 && xRatio <= 0.70) {
             if (singleTapTimerRef.current) {
                 clearTimeout(singleTapTimerRef.current);
                 singleTapTimerRef.current = null;
@@ -1632,13 +1653,13 @@ CRITICAL RULES:
             setShowControls(true);
             resetControlsTimer();
         } else {
-            // 3. Side zones: single tap toggles controls visibility
+            // 3. Side zones: single tap waits 260ms before toggling controls (allows double-tap without controls flashing)
             if (singleTapTimerRef.current) clearTimeout(singleTapTimerRef.current);
             singleTapTimerRef.current = setTimeout(() => {
                 setShowControls(prev => !prev);
                 resetControlsTimer();
                 singleTapTimerRef.current = null;
-            }, 250);
+            }, 260);
         }
     };
 
@@ -1941,10 +1962,8 @@ CRITICAL RULES:
         <div
             className="watch-container"
             ref={containerRef}
-            onMouseMove={resetControlsTimer}
+            onMouseMove={handleContainerMouseMove}
             onMouseLeave={() => isPlaying && setShowControls(false)}
-            onTouchStart={resetControlsTimer}
-            onTouchMove={resetControlsTimer}
         >
             {/* GLOBAL TOASTS */}
             <div className="global-toast-container">
