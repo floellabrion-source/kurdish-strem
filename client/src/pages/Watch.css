@@ -111,7 +111,20 @@
 
 .subtitle-area.with-controls,
 .subtitle-overlay.with-controls {
-    bottom: calc(var(--sub-pos, 0px) + 115px);
+    bottom: calc(var(--sub-pos, 0px) + 78px);
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+    .subtitle-area,
+    .subtitle-overlay {
+        bottom: calc(var(--sub-pos, 0px) + 12px + env(safe-area-inset-bottom, 0px));
+        gap: 4px;
+    }
+
+    .subtitle-area.with-controls,
+    .subtitle-overlay.with-controls {
+        bottom: calc(var(--sub-pos, 0px) + 63px + env(safe-area-inset-bottom, 0px)) !important;
+    }
 }
 
 
@@ -2391,14 +2404,14 @@
     .subtitle-overlay {
         width: auto;
         max-width: calc(100vw - 16px);
-        bottom: calc(var(--sub-pos, 0px) + 16px + env(safe-area-inset-bottom, 0px));
+        bottom: calc(var(--sub-pos, 0px) + 14px + env(safe-area-inset-bottom, 0px));
         gap: 4px;
         z-index: 35;
     }
 
     .subtitle-area.with-controls,
     .subtitle-overlay.with-controls {
-        bottom: calc(var(--sub-pos, 0px) + 90px + env(safe-area-inset-bottom, 0px)) !important;
+        bottom: calc(var(--sub-pos, 0px) + 76px + env(safe-area-inset-bottom, 0px)) !important;
     }
 
     .subtitle-text {
