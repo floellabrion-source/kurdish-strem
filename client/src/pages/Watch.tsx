@@ -1523,6 +1523,9 @@ CRITICAL RULES:
         };
     }, [showSettings]);
 
+    const lastMouseClickRef = useRef<{ time: number; x: number }>({ time: 0, x: 0 });
+    const singleClickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
     const handlePlayerClick = (e: React.MouseEvent) => {
         // Ignore synthetic mouse click fired right after a touch event
         if (Date.now() - lastTouchEventTimeRef.current < 450) {
@@ -1532,9 +1535,45 @@ CRITICAL RULES:
             setShowSettings(false);
             return;
         }
-        togglePlay();
-        setShowControls(true);
-        resetControlsTimer();
+
+        const rect = containerRef.current?.getBoundingClientRect();
+        const width = rect?.width || window.innerWidth;
+        const xOffset = e.clientX - (rect?.left || 0);
+        const xRatio = width > 0 ? xOffset / width : 0.5;
+        const now = Date.now();
+
+        const timeDiff = now - lastMouseClickRef.current.time;
+        const distDiff = Math.abs(e.clientX - lastMouseClickRef.current.x);
+
+        if (timeDiff < 320 && distDiff < 100) {
+            if (singleClickTimerRef.current) {
+                clearTimeout(singleClickTimerRef.current);
+                singleClickTimerRef.current = null;
+            }
+            lastMouseClickRef.current = { time: 0, x: 0 };
+            if (xRatio < 0.28) {
+                skip(-10);
+                setShowControls(false);
+                return;
+            } else if (xRatio > 0.72) {
+                skip(10);
+                setShowControls(false);
+                return;
+            } else {
+                toggleFullscreen();
+                return;
+            }
+        }
+
+        lastMouseClickRef.current = { time: now, x: e.clientX };
+
+        if (singleClickTimerRef.current) clearTimeout(singleClickTimerRef.current);
+        singleClickTimerRef.current = setTimeout(() => {
+            togglePlay();
+            setShowControls(true);
+            resetControlsTimer();
+            singleClickTimerRef.current = null;
+        }, 220);
     };
 
     const handlePlayerTouchEnd = (e: React.TouchEvent) => {
@@ -1564,14 +1603,20 @@ CRITICAL RULES:
             }
             if (xRatio < 0.28) {
                 skip(-10);
+                lastTapRef.current = { time: 0, x: 0 };
+                setShowControls(false);
+                return;
             } else if (xRatio > 0.72) {
                 skip(10);
+                lastTapRef.current = { time: 0, x: 0 };
+                setShowControls(false);
+                return;
             } else {
                 togglePlay();
+                setShowControls(true);
+                resetControlsTimer();
             }
             lastTapRef.current = { time: 0, x: 0 };
-            setShowControls(true);
-            resetControlsTimer();
             return;
         }
 
