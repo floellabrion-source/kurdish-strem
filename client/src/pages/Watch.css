@@ -204,9 +204,13 @@
     margin: 0 1px;
     border-radius: 4px;
     transition: all 0.15s ease;
-    display: inline;
+    display: inline-block;
     box-decoration-break: clone;
     -webkit-box-decoration-break: clone;
+    pointer-events: auto !important;
+    touch-action: manipulation !important;
+    -webkit-tap-highlight-color: rgba(250, 204, 21, 0.4);
+    user-select: none;
 }
 
 .clickable-word.highlighted {
@@ -2500,11 +2504,14 @@
         padding: 1px 3px !important;
         margin: 0 1px !important;
         min-height: auto !important;
-        display: inline !important;
-        touch-action: manipulation;
-        -webkit-tap-highlight-color: transparent;
+        display: inline-block !important;
+        touch-action: manipulation !important;
+        pointer-events: auto !important;
+        -webkit-tap-highlight-color: rgba(250, 204, 21, 0.4) !important;
         box-decoration-break: clone;
         -webkit-box-decoration-break: clone;
+        cursor: pointer !important;
+        user-select: none !important;
     }
 
     /* Controls on Mobile */

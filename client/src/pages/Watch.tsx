@@ -1741,15 +1741,11 @@ CRITICAL RULES:
 
     const handleWordClick = (e: React.MouseEvent | React.TouchEvent | React.SyntheticEvent, word: string) => {
         e.stopPropagation();
-        if ('preventDefault' in e && typeof (e as any).preventDefault === 'function') {
-            (e as any).preventDefault();
-        }
         modalOpenedAtRef.current = Date.now();
-        if (!checkAuthForFeature('translation')) return;
         const highlight = getHighlightedWordData(word);
         
         if (highlight && highlight.meaning) {
-            // If we have a saved meaning, show it directly in the lookup modal
+            // 1. If we have a saved meaning or built-in movie vocabulary, show directly with 0ms latency & 0 credits
             if (videoRef.current) videoRef.current.pause();
             setIsPlaying(false);
             setWordLookupModalOpen(true);
@@ -1761,10 +1757,23 @@ CRITICAL RULES:
                 cardMeta: (highlight as any).cardMeta,
                 clickedWord: word
             });
-        } else {
-            // Otherwise use AI lookup
-            lookupWordWithAi(word);
+            return;
         }
+
+        // 2. Check local client cache
+        const cleanWord = word.replace(/[^a-zA-Z']/g, '').trim();
+        const cachedTranslation = wordCache.get(cleanWord);
+        if (cachedTranslation) {
+            if (videoRef.current) videoRef.current.pause();
+            setIsPlaying(false);
+            setWordLookupModalOpen(true);
+            setWordLookupData({ word: cleanWord || word, translation: cachedTranslation });
+            setIsWordLookupLoading(false);
+            return;
+        }
+
+        // 3. Otherwise use AI lookup
+        lookupWordWithAi(word);
     };
 
     const isSensitiveNow = familyMode && sensitiveScenes.some(s => currentTime >= s.start && currentTime <= s.end);
@@ -2082,7 +2091,6 @@ CRITICAL RULES:
                                         <span 
                                             className={`clickable-word ${isFlashcard ? 'flashcard-saved' : highlightData ? 'highlighted' : ''}`}
                                             onClick={(e) => handleWordClick(e, word)}
-                                            onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); handleWordClick(e, word); }}
                                             title={isFlashcard ? (lang === 'en' ? `Saved in Flashcards (Box ${highlightData?.cardMeta?.box || 1}) 🃏` : `لە فلاشکارتەکانتدا پارێزراوە (سندوقی ${highlightData?.cardMeta?.box || 1}) 🃏`) : undefined}
                                         >
                                             {word}
@@ -2110,21 +2118,6 @@ CRITICAL RULES:
                                         videoRef.current.play().then(() => setIsPlaying(true));
                                     }
                                 }}
-                                onTouchEnd={(e) => {
-                                    e.stopPropagation();
-                                    e.preventDefault();
-                                    if (videoRef.current && currentOrigSub) {
-                                        const t = currentOrigSub.start;
-                                        setCurrentTime(t);
-
-                                        if (mkvUnsupported) {
-                                            setStreamStartTime(t);
-                                        } else {
-                                            if (videoRef.current) videoRef.current.currentTime = t;
-                                        }
-                                        videoRef.current.play().then(() => setIsPlaying(true));
-                                    }
-                                }}
                                 title={lang === 'en' ? 'Replay sentence' : 'دووبارەکردنەوەی ڕستە 🔄'}
                             >
                                 <RotateCcw size={13} /> {lang === 'en' ? 'Replay' : 'دووبارە'}
@@ -2132,7 +2125,6 @@ CRITICAL RULES:
                             <span 
                                 className="sub-ai-btn" 
                                 onClick={(e) => { e.stopPropagation(); explainWithAi(currentOrigSub.text); }} 
-                                onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); explainWithAi(currentOrigSub.text); }}
                                 title={lang === 'en' ? 'Grammar & Context with AI (3 Credits)' : 'شیکاری ڕێزمان بە AI (٣ کرێدیت) 🤖'}
                             >
                                 <Brain size={13} /> {lang === 'en' ? 'AI' : 'شیکاری AI'}
@@ -2146,16 +2138,6 @@ CRITICAL RULES:
                                     timestamp: currentOrigSub.start,
                                     subtitleId: currentOrigSub.id
                                 })}
-                                onTouchEnd={(e) => {
-                                    e.preventDefault();
-                                    addToFlashcards(e, currentOrigSub.text, currentTransSub?.text || '', {
-                                        cardType: 'subtitle',
-                                        quote: currentOrigSub.text,
-                                        translatedQuote: currentTransSub?.text || '',
-                                        timestamp: currentOrigSub.start,
-                                        subtitleId: currentOrigSub.id
-                                    });
-                                }}
                                 title={lang === 'en' ? 'Add to flashcards' : 'زیادی بکە بۆ فلاش کارتەکان 🃏'}
                             >
                                 <BookmarkPlus size={13} /> {lang === 'en' ? 'Card' : 'فلاش کارت'}
@@ -2163,7 +2145,6 @@ CRITICAL RULES:
                             <span 
                                 className="sub-practice-btn sub-voice-btn" 
                                 onClick={(e) => { e.stopPropagation(); startPractice(currentOrigSub.text); }} 
-                                onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); startPractice(currentOrigSub.text); }}
                                 title={lang === 'en' ? 'Pronunciation Practice' : 'ڕاهێنانی بێژەکردن 🎤'}
                             >
                                 <Mic size={13} /> {lang === 'en' ? 'Practice' : 'فێربوون'}
