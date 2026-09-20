@@ -536,6 +536,7 @@ export default function Watch() {
     const [flashcardToast, setFlashcardToast] = useState(false);
     const flashcardTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [authPrompt, setAuthPrompt] = useState<{ open: boolean; title: string; message: string } | null>(null);
+    const [creditsPrompt, setCreditsPrompt] = useState<{ open: boolean; title: string; message: string; requiredCredits?: number } | null>(null);
 
     const checkAuthForFeature = (featureType: 'translation' | 'pronunciation' | 'quiz' | 'flashcards'): boolean => {
         if (user) return true;
@@ -558,6 +559,28 @@ export default function Watch() {
         return false;
     };
 
+    const checkCreditsForFeature = (requiredCredits: number, taskLabel: string): boolean => {
+        if (!user) {
+            return checkAuthForFeature('translation');
+        }
+        if (user.role === 'super_admin') return true;
+        if ((user.credits || 0) < requiredCredits) {
+            modalOpenedAtRef.current = Date.now();
+            if (videoRef.current) {
+                videoRef.current.pause();
+                setIsPlaying(false);
+            }
+            setCreditsPrompt({
+                open: true,
+                title: 'کرێدیتی پێویستت نییە',
+                message: `بۆ ئەنجامدانی ${taskLabel} پێویستت بە ${requiredCredits} کرێدیتە، بەڵام باڵانسی ئێستات ${user.credits || 0} کرێدیتە. تکایە کرێدیت بکڕە یان پلانێک چالاک بکە.`,
+                requiredCredits
+            });
+            return false;
+        }
+        return true;
+    };
+
     const buildFlashcardSourceLabel = () => {
         if (!movie) return '';
         if (episodeNum > 0) return `${movie.title} S${seasonNum}E${episodeNum}`;
@@ -577,6 +600,7 @@ export default function Watch() {
         }
     ) => {
         e.stopPropagation();
+        if (!checkAuthForFeature('flashcards')) return;
         try {
             const saved = localStorage.getItem('kurdish_stream_flashcards');
             const cards = saved ? JSON.parse(saved) : [];
@@ -809,9 +833,23 @@ export default function Watch() {
                     return await axios.post('/api/ai/generate', payload);
                 } catch (err: any) {
                     const status = err?.response?.status;
+                    if (status === 401) {
+                        checkAuthForFeature('translation');
+                        throw err;
+                    }
                     if (status === 402) {
                         const msg = extractApiError(err, 'کرێدیتی پێویستت نییە بۆ ئەم کارە.');
-                        showGlobalToast(msg, 'error');
+                        modalOpenedAtRef.current = Date.now();
+                        if (videoRef.current) {
+                            videoRef.current.pause();
+                            setIsPlaying(false);
+                        }
+                        setCreditsPrompt({
+                            open: true,
+                            title: 'کرێدیتی پێویستت نییە',
+                            message: msg,
+                            requiredCredits: err?.response?.data?.requiredCredits
+                        });
                         throw err;
                     }
                     if (status !== 429 || attempt >= AI_MAX_RETRIES) {
@@ -829,6 +867,8 @@ export default function Watch() {
     };
 
     const lookupWordWithAi = async (word: string) => {
+        if (!checkAuthForFeature('translation')) return;
+        if (!checkCreditsForFeature(1, 'وەرگێڕانی وشە')) return;
         modalOpenedAtRef.current = Date.now();
         if (videoRef.current) videoRef.current.pause();
         setIsPlaying(false);
@@ -887,6 +927,8 @@ export default function Watch() {
     }, [completionXpAwarded, user, syncProgress]);
 
     const generateAndShowQuiz = async () => {
+        if (!checkAuthForFeature('quiz')) return;
+        if (!checkCreditsForFeature(5, 'دروستکردنی کویز بە AI')) return;
         setCompletionModalOpen(false);
         setQuizModalOpen(true);
         setQuizLoading(true);
@@ -926,6 +968,8 @@ export default function Watch() {
     };
 
     const explainWithAi = async (text: string) => {
+        if (!checkAuthForFeature('translation')) return;
+        if (!checkCreditsForFeature(3, 'شیکاری ڕێزمان بە AI')) return;
         modalOpenedAtRef.current = Date.now();
         if (videoRef.current) videoRef.current.pause();
         setIsPlaying(false);
@@ -1014,6 +1058,8 @@ Sentence: "${text}"` }] }],
     };
 
     const getAiPronunciationFeedback = async (targetWord?: string, spokenWord?: string) => {
+        if (!checkAuthForFeature('pronunciation')) return;
+        if (!checkCreditsForFeature(3, 'شیکاری دەنگ و گۆکردن بە AI')) return;
         setIsAiFeedbackLoading(true);
         setAiPronunciationFeedback('');
 
@@ -1183,6 +1229,7 @@ CRITICAL RULES:
 
     const startPractice = (text: string) => {
         if (!text) return;
+        if (!checkAuthForFeature('pronunciation')) return;
         modalOpenedAtRef.current = Date.now();
         videoRef.current?.pause();
         setPracticeText(text);
@@ -1736,6 +1783,7 @@ CRITICAL RULES:
 
     const handleWordClick = (e: React.MouseEvent | React.TouchEvent | React.SyntheticEvent, word: string) => {
         e.stopPropagation();
+        if (!checkAuthForFeature('translation')) return;
         modalOpenedAtRef.current = Date.now();
         const highlight = getHighlightedWordData(word);
         
@@ -2575,6 +2623,59 @@ CRITICAL RULES:
                             </button>
                             <button
                                 onClick={() => setAuthPrompt(null)}
+                                style={{
+                                    width: '100%',
+                                    padding: '12px',
+                                    borderRadius: '14px',
+                                    background: 'rgba(255, 255, 255, 0.08)',
+                                    color: '#ffffff',
+                                    fontWeight: '600',
+                                    fontSize: '14px',
+                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                {lang === 'en' ? 'Dismiss and keep watching' : 'داخستن و بەردەوامبوون لە سەیرکردن'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* INSUFFICIENT CREDITS MODAL PROMPT */}
+            {creditsPrompt?.open && (
+                <div className="modal-overlay" style={{ zIndex: 100000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => {
+                    if (Date.now() - modalOpenedAtRef.current < 450) return;
+                    setCreditsPrompt(null);
+                }}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '420px', textAlign: 'center', padding: '32px 24px', borderRadius: '24px', background: 'rgba(24, 18, 12, 0.97)', backdropFilter: 'blur(24px)', border: '1px solid rgba(245, 158, 11, 0.3)', boxShadow: '0 20px 60px rgba(0,0,0,0.95)' }}>
+                        <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(245, 158, 11, 0.15)', border: '1.5px solid #f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', color: '#f59e0b' }}>
+                            <Sparkles size={32} />
+                        </div>
+                        <h3 style={{ fontSize: '20px', fontWeight: '800', marginBottom: '10px', color: '#ffffff' }}>{creditsPrompt.title}</h3>
+                        <p style={{ fontSize: '14.5px', color: 'rgba(255, 255, 255, 0.85)', lineHeight: '1.6', marginBottom: '24px' }}>
+                            {creditsPrompt.message}
+                        </p>
+                        <div style={{ display: 'flex', gap: '10px', flexDirection: 'column' }}>
+                            <button
+                                onClick={() => navigate('/buy-credits')}
+                                style={{
+                                    width: '100%',
+                                    padding: '14px',
+                                    borderRadius: '14px',
+                                    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                                    color: '#09090b',
+                                    fontWeight: '800',
+                                    fontSize: '15px',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 0 20px rgba(245, 158, 11, 0.4)'
+                                }}
+                            >
+                                ⚡ {lang === 'en' ? 'Buy Credits / Activate Plan' : 'کڕینی کرێدیت / چالاککردنی پلان'}
+                            </button>
+                            <button
+                                onClick={() => setCreditsPrompt(null)}
                                 style={{
                                     width: '100%',
                                     padding: '12px',
