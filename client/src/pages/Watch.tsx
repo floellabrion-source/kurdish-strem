@@ -563,7 +563,7 @@ export default function Watch() {
     };
 
     const addToFlashcards = (
-        e: React.MouseEvent,
+        e: React.MouseEvent | React.TouchEvent | React.SyntheticEvent,
         front: string,
         back: string,
         options?: {
@@ -1737,7 +1737,7 @@ CRITICAL RULES:
         return null;
     };
 
-    const handleWordClick = (e: React.MouseEvent, word: string) => {
+    const handleWordClick = (e: React.MouseEvent | React.TouchEvent | React.SyntheticEvent, word: string) => {
         e.stopPropagation();
         if (!checkAuthForFeature('translation')) return;
         const highlight = getHighlightedWordData(word);
@@ -2076,6 +2076,7 @@ CRITICAL RULES:
                                         <span 
                                             className={`clickable-word ${isFlashcard ? 'flashcard-saved' : highlightData ? 'highlighted' : ''}`}
                                             onClick={(e) => handleWordClick(e, word)}
+                                            onTouchEnd={(e) => { e.stopPropagation(); handleWordClick(e, word); }}
                                             title={isFlashcard ? (lang === 'en' ? `Saved in Flashcards (Box ${highlightData?.cardMeta?.box || 1}) 🃏` : `لە فلاشکارتەکانتدا پارێزراوە (سندوقی ${highlightData?.cardMeta?.box || 1}) 🃏`) : undefined}
                                         >
                                             {word}
@@ -2087,23 +2088,46 @@ CRITICAL RULES:
                             })}
                         </div>
                         <div className="sub-actions-row">
-                            <span className="sub-practice-btn sub-replay-btn" onClick={(e) => {
-                                e.stopPropagation();
-                                if (videoRef.current && currentOrigSub) {
-                                    const t = currentOrigSub.start;
-                                    setCurrentTime(t);
+                            <span 
+                                className="sub-practice-btn sub-replay-btn" 
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (videoRef.current && currentOrigSub) {
+                                        const t = currentOrigSub.start;
+                                        setCurrentTime(t);
 
-                                    if (mkvUnsupported) {
-                                        setStreamStartTime(t);
-                                    } else {
-                                        if (videoRef.current) videoRef.current.currentTime = t;
+                                        if (mkvUnsupported) {
+                                            setStreamStartTime(t);
+                                        } else {
+                                            if (videoRef.current) videoRef.current.currentTime = t;
+                                        }
+                                        videoRef.current.play().then(() => setIsPlaying(true));
                                     }
-                                    videoRef.current.play().then(() => setIsPlaying(true));
-                                }
-                            }} title={lang === 'en' ? 'Replay sentence' : 'دووبارەکردنەوەی ڕستە 🔄'}>
+                                }}
+                                onTouchEnd={(e) => {
+                                    e.stopPropagation();
+                                    if (videoRef.current && currentOrigSub) {
+                                        const t = currentOrigSub.start;
+                                        setCurrentTime(t);
+
+                                        if (mkvUnsupported) {
+                                            setStreamStartTime(t);
+                                        } else {
+                                            if (videoRef.current) videoRef.current.currentTime = t;
+                                        }
+                                        videoRef.current.play().then(() => setIsPlaying(true));
+                                    }
+                                }}
+                                title={lang === 'en' ? 'Replay sentence' : 'دووبارەکردنەوەی ڕستە 🔄'}
+                            >
                                 <RotateCcw size={13} /> {lang === 'en' ? 'Replay' : 'دووبارە'}
                             </span>
-                            <span className="sub-ai-btn" onClick={(e) => { e.stopPropagation(); explainWithAi(currentOrigSub.text); }} title={lang === 'en' ? 'Grammar & Context with AI (3 Credits)' : 'شیکاری ڕێزمان بە AI (٣ کرێدیت) 🤖'}>
+                            <span 
+                                className="sub-ai-btn" 
+                                onClick={(e) => { e.stopPropagation(); explainWithAi(currentOrigSub.text); }} 
+                                onTouchEnd={(e) => { e.stopPropagation(); explainWithAi(currentOrigSub.text); }}
+                                title={lang === 'en' ? 'Grammar & Context with AI (3 Credits)' : 'شیکاری ڕێزمان بە AI (٣ کرێدیت) 🤖'}
+                            >
                                 <Brain size={13} /> {lang === 'en' ? 'AI' : 'شیکاری AI'}
                             </span>
                             <span
@@ -2115,11 +2139,23 @@ CRITICAL RULES:
                                     timestamp: currentOrigSub.start,
                                     subtitleId: currentOrigSub.id
                                 })}
+                                onTouchEnd={(e) => addToFlashcards(e, currentOrigSub.text, currentTransSub?.text || '', {
+                                    cardType: 'subtitle',
+                                    quote: currentOrigSub.text,
+                                    translatedQuote: currentTransSub?.text || '',
+                                    timestamp: currentOrigSub.start,
+                                    subtitleId: currentOrigSub.id
+                                })}
                                 title={lang === 'en' ? 'Add to flashcards' : 'زیادی بکە بۆ فلاش کارتەکان 🃏'}
                             >
                                 <BookmarkPlus size={13} /> {lang === 'en' ? 'Card' : 'فلاش کارت'}
                             </span>
-                            <span className="sub-practice-btn sub-voice-btn" onClick={() => startPractice(currentOrigSub.text)} title={lang === 'en' ? 'Pronunciation Practice' : 'ڕاهێنانی بێژەکردن 🎤'}>
+                            <span 
+                                className="sub-practice-btn sub-voice-btn" 
+                                onClick={(e) => { e.stopPropagation(); startPractice(currentOrigSub.text); }} 
+                                onTouchEnd={(e) => { e.stopPropagation(); startPractice(currentOrigSub.text); }}
+                                title={lang === 'en' ? 'Pronunciation Practice' : 'ڕاهێنانی بێژەکردن 🎤'}
+                            >
                                 <Mic size={13} /> {lang === 'en' ? 'Practice' : 'فێربوون'}
                             </span>
                         </div>

@@ -3188,7 +3188,7 @@ app.put('/api/admin/plans-reorder', requireAuth, requireSuperAdmin, (req, res) =
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 // ======= OpenRouter AI =======
-const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'google/gemini-2.5-flash';
+const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'google/gemini-2.0-flash-001';
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || '';
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
@@ -3204,7 +3204,7 @@ const toGeminiLikeResponse = (openRouterData, modelUsed) => {
 const callOpenRouter = async (input, options = {}) => {
     const prompt = extractPrompt(input);
     const maxTokens = options.max_tokens || 150;
-    let modelToUse = options.model || OPENROUTER_MODEL || 'google/gemini-2.5-flash';
+    let modelToUse = options.model || OPENROUTER_MODEL || 'google/gemini-2.0-flash-001';
 
     try {
         const payload = {
@@ -3302,18 +3302,16 @@ app.post('/api/ai/generate', requireAuth, aiLimiter, async (req, res) => {
     try {
         const maxTokens = req.body?.max_tokens || ((aiTask === 'srt_translation') ? 2000 : ((aiTask === 'synopsis') ? 800 : ((aiTask === 'quiz_generation' || aiTask === 'flashcard_generation') ? 400 : (aiTask === 'grammar_explain' ? 250 : 200))));
         
-        // Strict model restriction:
-        // Only full SRT file translation ('srt_translation') is allowed to use selectable models (Claude 4.6, Claude 4.5, GPT-4o, Gemini 2.5 Flash).
-        // All other AI tasks (flashcards, voice coach, word lookup, quiz, synopsis, single-line translation) are strictly locked to Gemini 2.5 Flash.
         const ALLOWED_SRT_MODELS = [
             'anthropic/claude-sonnet-4.6',
             'anthropic/claude-sonnet-4.5',
             'anthropic/claude-sonnet-5',
-            'google/gemini-2.5-flash',
+            'google/gemini-2.0-flash-001',
+            'google/gemini-flash-1.5',
             'openai/gpt-4o'
         ];
 
-        let modelToUse = 'google/gemini-2.5-flash';
+        let modelToUse = OPENROUTER_MODEL || 'google/gemini-2.0-flash-001';
         if (aiTask === 'srt_translation' && req.body?.model && ALLOWED_SRT_MODELS.includes(req.body.model)) {
             modelToUse = req.body.model;
         }
