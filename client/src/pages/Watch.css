@@ -166,20 +166,26 @@
 @media (orientation: portrait) {
     .subtitle-area,
     .subtitle-overlay {
-        width: auto;
+        width: 95%;
         max-width: calc(100vw - 16px);
-        gap: 4px;
+        gap: 6px;
     }
     .subtitle-text {
-        padding: 3px 10px;
-        line-height: 1.35;
-        border-radius: 8px;
+        padding: 5px 14px;
+        line-height: 1.4;
+        border-radius: 10px;
     }
     .subtitle-translated {
-        font-size: clamp(10.5px, calc(var(--trans-fs, 26px) * 0.48), 16px) !important;
+        font-size: clamp(14px, calc(var(--trans-fs, 26px) * 0.72), 22px) !important;
     }
     .subtitle-original {
-        font-size: clamp(9px, calc(var(--orig-fs, 20px) * 0.52), 14px) !important;
+        font-size: clamp(12px, calc(var(--orig-fs, 20px) * 0.75), 18px) !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        min-width: min(92vw, 290px);
+        width: fit-content;
+        max-width: 95vw;
     }
 }
 
@@ -2402,10 +2408,10 @@
     /* Subtitles on Mobile (Portrait & Small Screens) */
     .subtitle-area,
     .subtitle-overlay {
-        width: auto;
+        width: 95%;
         max-width: calc(100vw - 16px);
         bottom: calc(var(--sub-pos, 0px) + 14px + env(safe-area-inset-bottom, 0px));
-        gap: 4px;
+        gap: 5px;
         z-index: 35;
     }
 
@@ -2415,21 +2421,27 @@
     }
 
     .subtitle-text {
-        padding: 3px 10px;
-        line-height: 1.35;
+        padding: 5px 14px;
+        line-height: 1.4;
         max-width: 95vw;
         word-break: break-word;
         overflow-wrap: anywhere;
-        border-radius: 8px;
+        border-radius: 10px;
         box-sizing: border-box;
     }
 
     .subtitle-translated {
-        font-size: clamp(10.5px, calc(var(--trans-fs, 26px) * 0.48), 15px) !important;
+        font-size: clamp(14px, calc(var(--trans-fs, 26px) * 0.72), 22px) !important;
     }
 
     .subtitle-original {
-        font-size: clamp(9px, calc(var(--orig-fs, 20px) * 0.52), 13px) !important;
+        font-size: clamp(12px, calc(var(--orig-fs, 20px) * 0.75), 18px) !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        min-width: min(92vw, 290px);
+        width: fit-content;
+        max-width: 95vw;
     }
 
     .sub-actions-row {
@@ -2437,14 +2449,15 @@
         opacity: 1 !important;
         visibility: visible !important;
         transform: none !important;
-        flex-wrap: wrap !important;
+        flex-wrap: nowrap !important;
         justify-content: center !important;
         align-items: center !important;
-        gap: 3px !important;
-        margin-top: 3px !important;
+        gap: 4px !important;
+        margin-top: 5px !important;
         margin-bottom: 0 !important;
         pointer-events: auto !important;
         z-index: 15 !important;
+        width: 100%;
     }
 
     .sub-practice-btn,
@@ -2455,10 +2468,10 @@
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
-        padding: 2px 6px !important;
-        font-size: 9.5px !important;
+        padding: 2.5px 7px !important;
+        font-size: 10px !important;
         font-weight: 700 !important;
-        gap: 2.5px !important;
+        gap: 3px !important;
         border-radius: 999px !important;
         background: rgba(139, 92, 246, 0.35) !important;
         border: 1px solid rgba(168, 85, 247, 0.55) !important;
@@ -2467,6 +2480,7 @@
         touch-action: manipulation !important;
         -webkit-tap-highlight-color: transparent !important;
         white-space: nowrap !important;
+        flex-shrink: 0 !important;
     }
 
     .clickable-word {
