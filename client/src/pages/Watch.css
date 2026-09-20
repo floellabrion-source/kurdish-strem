@@ -111,7 +111,7 @@
 
 .subtitle-area.with-controls,
 .subtitle-overlay.with-controls {
-    bottom: calc(var(--sub-pos, 0px) + 78px);
+    bottom: calc(var(--sub-pos, 0px) + 98px);
 }
 
 @media (orientation: landscape) and (max-height: 600px) {
@@ -123,7 +123,32 @@
 
     .subtitle-area.with-controls,
     .subtitle-overlay.with-controls {
-        bottom: calc(var(--sub-pos, 0px) + 63px + env(safe-area-inset-bottom, 0px)) !important;
+        bottom: calc(var(--sub-pos, 0px) + 88px + env(safe-area-inset-bottom, 0px)) !important;
+    }
+
+    .subtitle-text {
+        padding: 3px 12px !important;
+    }
+
+    .subtitle-original {
+        padding: 3px 10px !important;
+    }
+
+    .sub-actions-row {
+        gap: 6px !important;
+        margin-top: 3px !important;
+    }
+
+    .sub-action-icon-btn {
+        width: 24px !important;
+        height: 24px !important;
+        min-width: 24px !important;
+        min-height: 24px !important;
+    }
+
+    .sub-action-icon-btn svg {
+        width: 12px !important;
+        height: 12px !important;
     }
 }
 
@@ -1156,6 +1181,14 @@
 
 .total-time-text {
     color: rgba(255, 255, 255, 0.55);
+}
+
+.remaining-time-badge {
+    color: #22d3ee;
+    font-size: 11px;
+    font-weight: 700;
+    opacity: 0.9;
+    margin-left: 2px;
 }
 
 /* ── Quick Pill Badges (Image 1 Style) ── */
@@ -2499,7 +2532,7 @@
 
     .subtitle-area.with-controls,
     .subtitle-overlay.with-controls {
-        bottom: calc(var(--sub-pos, 0px) + 76px + env(safe-area-inset-bottom, 0px)) !important;
+        bottom: calc(var(--sub-pos, 0px) + 105px + env(safe-area-inset-bottom, 0px)) !important;
     }
 
     .subtitle-text {

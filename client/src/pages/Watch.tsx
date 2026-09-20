@@ -2991,10 +2991,11 @@ CRITICAL RULES:
                             </button>
                         )}
 
-                        <div className="time-display">
+                        <div className="time-display" title={lang === 'en' ? `Time remaining: ${fmt(Math.max(0, (effectiveDuration || 0) - (currentTime || 0)))}` : `کاتی ماوە: ${fmt(Math.max(0, (effectiveDuration || 0) - (currentTime || 0)))}`}>
                             <span className="current-time-text">{fmt(currentTime)}</span>
                             <span className="time-sep">/</span>
                             <span className="total-time-text">{fmt(effectiveDuration)}</span>
+                            <span className="remaining-time-badge">(-{fmt(Math.max(0, (effectiveDuration || 0) - (currentTime || 0)))})</span>
                         </div>
                         <div className={`volume-popover-wrap ${showVolumePopup ? 'active' : ''}`}>
                             <button 
