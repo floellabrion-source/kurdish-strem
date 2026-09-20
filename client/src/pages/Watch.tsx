@@ -267,11 +267,32 @@ export default function Watch() {
         }
     };
 
-    const [origFontSize, setOrigFontSize] = useState(20);
-    const [transFontSize, setTransFontSize] = useState(26);
-    const [subtitlePos, setSubtitlePos] = useState(10);
+    const [origFontSize, setOrigFontSize] = useState<number>(() => {
+        const saved = localStorage.getItem('ks_orig_font_size');
+        return saved !== null ? parseInt(saved, 10) : 20;
+    });
+    const [transFontSize, setTransFontSize] = useState<number>(() => {
+        const saved = localStorage.getItem('ks_trans_font_size');
+        return saved !== null ? parseInt(saved, 10) : 26;
+    });
+    const [subtitlePos, setSubtitlePos] = useState<number>(() => {
+        const saved = localStorage.getItem('ks_sub_pos');
+        return saved !== null ? parseInt(saved, 10) : 10;
+    });
     const [subDelay, setSubDelay] = useState(0);
     const [playbackRate, setPlaybackRate] = useState(1);
+
+    useEffect(() => {
+        localStorage.setItem('ks_orig_font_size', origFontSize.toString());
+    }, [origFontSize]);
+
+    useEffect(() => {
+        localStorage.setItem('ks_trans_font_size', transFontSize.toString());
+    }, [transFontSize]);
+
+    useEffect(() => {
+        localStorage.setItem('ks_sub_pos', subtitlePos.toString());
+    }, [subtitlePos]);
 
     // Subtitle Background Opacity & Theme
     const [subBgOpacity, setSubBgOpacity] = useState<number>(() => {
