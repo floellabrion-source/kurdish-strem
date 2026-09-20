@@ -2599,11 +2599,48 @@ CRITICAL RULES:
 
             {/* AUTH REQUIRED MODAL PROMPT */}
             {authPrompt?.open && (
-                <div className="modal-overlay" style={{ zIndex: 100000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => {
-                    if (Date.now() - modalOpenedAtRef.current < 450) return;
-                    setAuthPrompt(null);
-                }}>
-                    <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '420px', textAlign: 'center', padding: '32px 24px', borderRadius: '24px', background: 'rgba(18, 18, 28, 0.96)', backdropFilter: 'blur(24px)', border: '1px solid rgba(255, 255, 255, 0.15)', boxShadow: '0 20px 60px rgba(0,0,0,0.95)' }}>
+                <div 
+                    className="modal-overlay practice-overlay" 
+                    style={{ 
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        width: '100vw',
+                        height: '100vh',
+                        background: 'rgba(0, 0, 0, 0.88)',
+                        backdropFilter: 'blur(16px)',
+                        WebkitBackdropFilter: 'blur(16px)',
+                        zIndex: 999999, 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        padding: '16px',
+                        boxSizing: 'border-box'
+                    }} 
+                    onClick={() => {
+                        if (Date.now() - modalOpenedAtRef.current < 450) return;
+                        setAuthPrompt(null);
+                    }}
+                >
+                    <div 
+                        className="modal-content" 
+                        onClick={e => e.stopPropagation()} 
+                        style={{ 
+                            maxWidth: '420px', 
+                            width: '100%',
+                            textAlign: 'center', 
+                            padding: '32px 24px', 
+                            borderRadius: '24px', 
+                            background: 'rgba(18, 18, 28, 0.98)', 
+                            backdropFilter: 'blur(24px)', 
+                            border: '1px solid rgba(255, 255, 255, 0.15)', 
+                            boxShadow: '0 20px 60px rgba(0,0,0,0.95)',
+                            position: 'relative',
+                            zIndex: 1000000
+                        }}
+                    >
                         <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(34, 211, 238, 0.15)', border: '1.5px solid #22d3ee', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', color: '#22d3ee' }}>
                             <Sparkles size={32} />
                         </div>
@@ -2652,11 +2689,48 @@ CRITICAL RULES:
 
             {/* INSUFFICIENT CREDITS MODAL PROMPT */}
             {creditsPrompt?.open && (
-                <div className="modal-overlay" style={{ zIndex: 100000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => {
-                    if (Date.now() - modalOpenedAtRef.current < 450) return;
-                    setCreditsPrompt(null);
-                }}>
-                    <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '420px', textAlign: 'center', padding: '32px 24px', borderRadius: '24px', background: 'rgba(24, 18, 12, 0.97)', backdropFilter: 'blur(24px)', border: '1px solid rgba(245, 158, 11, 0.3)', boxShadow: '0 20px 60px rgba(0,0,0,0.95)' }}>
+                <div 
+                    className="modal-overlay practice-overlay" 
+                    style={{ 
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        width: '100vw',
+                        height: '100vh',
+                        background: 'rgba(0, 0, 0, 0.88)',
+                        backdropFilter: 'blur(16px)',
+                        WebkitBackdropFilter: 'blur(16px)',
+                        zIndex: 999999, 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        padding: '16px',
+                        boxSizing: 'border-box'
+                    }} 
+                    onClick={() => {
+                        if (Date.now() - modalOpenedAtRef.current < 450) return;
+                        setCreditsPrompt(null);
+                    }}
+                >
+                    <div 
+                        className="modal-content" 
+                        onClick={e => e.stopPropagation()} 
+                        style={{ 
+                            maxWidth: '420px', 
+                            width: '100%',
+                            textAlign: 'center', 
+                            padding: '32px 24px', 
+                            borderRadius: '24px', 
+                            background: 'rgba(24, 18, 12, 0.98)', 
+                            backdropFilter: 'blur(24px)', 
+                            border: '1px solid rgba(245, 158, 11, 0.3)', 
+                            boxShadow: '0 20px 60px rgba(0,0,0,0.95)',
+                            position: 'relative',
+                            zIndex: 1000000
+                        }}
+                    >
                         <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(245, 158, 11, 0.15)', border: '1.5px solid #f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', color: '#f59e0b' }}>
                             <Sparkles size={32} />
                         </div>

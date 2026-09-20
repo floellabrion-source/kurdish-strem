@@ -1612,21 +1612,43 @@
     animation: fadeIn 0.3s ease;
 }
 
+.modal-overlay,
 .practice-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.84);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    z-index: 500;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(0, 0, 0, 0.88) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 999999 !important;
     direction: rtl;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch;
     padding: 20px 12px;
     overscroll-behavior: contain;
+    box-sizing: border-box;
+}
+
+.modal-content {
+    background: rgba(18, 18, 28, 0.98) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-radius: 24px !important;
+    padding: 32px 24px !important;
+    max-width: 440px !important;
+    width: 90% !important;
+    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.95) !important;
+    position: relative !important;
+    z-index: 1000000 !important;
+    box-sizing: border-box !important;
+    animation: scaleUp 0.25s ease forwards;
 }
 
 .practice-card {
