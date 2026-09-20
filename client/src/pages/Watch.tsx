@@ -106,6 +106,7 @@ export default function Watch() {
     const pendingSeekRef = useRef<number | null>(null);
     const isScrubbingRef = useRef(false);
     const ignoreVideoErrorUntilRef = useRef(0);
+    const modalOpenedAtRef = useRef(0);
 
     const [movie, setMovie] = useState<Movie | null>(null);
     const [loading, setLoading] = useState(true);
@@ -538,6 +539,7 @@ export default function Watch() {
 
     const checkAuthForFeature = (featureType: 'translation' | 'pronunciation' | 'quiz' | 'flashcards'): boolean => {
         if (user) return true;
+        modalOpenedAtRef.current = Date.now();
         if (videoRef.current) {
             videoRef.current.pause();
             setIsPlaying(false);
@@ -828,6 +830,7 @@ export default function Watch() {
     };
 
     const lookupWordWithAi = async (word: string) => {
+        modalOpenedAtRef.current = Date.now();
         if (!checkAuthForFeature('translation')) return;
         if (videoRef.current) videoRef.current.pause();
         setIsPlaying(false);
@@ -887,30 +890,26 @@ export default function Watch() {
 
     const generateAndShowQuiz = async () => {
         if (!checkAuthForFeature('quiz')) return;
-        if (videoRef.current) videoRef.current.pause();
-        setIsPlaying(false);
-        setCompletionModalOpen(false); // Close completion modal when starting quiz
+        setCompletionModalOpen(false);
         setQuizModalOpen(true);
         setQuizLoading(true);
         setQuizData([]);
-        setQuizScore(0);
         setQuizCurrentQ(0);
+        setQuizScore(0);
         setQuizXpWon(0);
         setQuizAnsweredIndex(null);
-        
+
+        const sampleSubs = originalSubs.length > 15 ? originalSubs.slice(-25) : originalSubs;
+        const recentSubs = sampleSubs.map(s => s.text).join(' ').slice(0, 1000) || "movie dialogues and English vocabulary";
+        const prompt = `Generate a 3-question multiple-choice comprehension quiz in Kurdish (Sorani) testing understanding of important English words from this movie content: "${recentSubs}". 
+        Format the response ONLY as a valid JSON array like this: [{"question": "مانای 'word' چییە لەم دیمەنەدا؟", "options": ["مانای ١", "مانای ٢", "مانای ٣", "مانای ٤"], "answerIndex": 0}]`;
+
         try {
-            // Get rich subtitle sample from across the movie for comprehensive quiz
-            const sampleSubs = originalSubs.length > 15 ? originalSubs.slice(-25) : originalSubs;
-            const recentSubs = sampleSubs.map(s => s.text).join(' ').slice(0, 1000) || "movie dialogues and English vocabulary";
-            const prompt = `Generate a 3-question multiple-choice comprehension quiz in Kurdish (Sorani) testing understanding of important English words from this movie content: "${recentSubs}". 
-            Format the response ONLY as a valid JSON array like this: [{"question": "مانای 'word' چییە لەم دیمەنەدا؟", "options": ["مانای ١", "مانای ٢", "مانای ٣", "مانای ٤"], "answerIndex": 0}]`;
-            
             const res = await postAiWithRetry({
                 contents: [{ parts: [{ text: prompt }] }],
                 aiTask: 'quiz_generation'
             });
-            
-            let text = res.data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            let text = res.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
             text = text.replace(/```json/g, '').replace(/```/g, '').trim();
             const parsed = JSON.parse(text);
             if (Array.isArray(parsed) && parsed.length > 0) {
@@ -930,6 +929,7 @@ export default function Watch() {
     };
 
     const explainWithAi = async (text: string) => {
+        modalOpenedAtRef.current = Date.now();
         if (!checkAuthForFeature('translation')) return;
         if (videoRef.current) videoRef.current.pause();
         setIsPlaying(false);
@@ -1187,6 +1187,7 @@ CRITICAL RULES:
 
     const startPractice = (text: string) => {
         if (!text) return;
+        modalOpenedAtRef.current = Date.now();
         if (!checkAuthForFeature('pronunciation')) return;
         videoRef.current?.pause();
         setPracticeText(text);
@@ -1200,6 +1201,7 @@ CRITICAL RULES:
     };
 
     const closePractice = () => {
+        if (Date.now() - modalOpenedAtRef.current < 450) return;
         window.speechSynthesis.cancel();
         recognitionRef.current?.abort?.();
         recognitionRef.current?.stop?.();
@@ -1739,6 +1741,10 @@ CRITICAL RULES:
 
     const handleWordClick = (e: React.MouseEvent | React.TouchEvent | React.SyntheticEvent, word: string) => {
         e.stopPropagation();
+        if ('preventDefault' in e && typeof (e as any).preventDefault === 'function') {
+            (e as any).preventDefault();
+        }
+        modalOpenedAtRef.current = Date.now();
         if (!checkAuthForFeature('translation')) return;
         const highlight = getHighlightedWordData(word);
         
@@ -2076,7 +2082,7 @@ CRITICAL RULES:
                                         <span 
                                             className={`clickable-word ${isFlashcard ? 'flashcard-saved' : highlightData ? 'highlighted' : ''}`}
                                             onClick={(e) => handleWordClick(e, word)}
-                                            onTouchEnd={(e) => { e.stopPropagation(); handleWordClick(e, word); }}
+                                            onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); handleWordClick(e, word); }}
                                             title={isFlashcard ? (lang === 'en' ? `Saved in Flashcards (Box ${highlightData?.cardMeta?.box || 1}) 🃏` : `لە فلاشکارتەکانتدا پارێزراوە (سندوقی ${highlightData?.cardMeta?.box || 1}) 🃏`) : undefined}
                                         >
                                             {word}
@@ -2106,6 +2112,7 @@ CRITICAL RULES:
                                 }}
                                 onTouchEnd={(e) => {
                                     e.stopPropagation();
+                                    e.preventDefault();
                                     if (videoRef.current && currentOrigSub) {
                                         const t = currentOrigSub.start;
                                         setCurrentTime(t);
@@ -2125,7 +2132,7 @@ CRITICAL RULES:
                             <span 
                                 className="sub-ai-btn" 
                                 onClick={(e) => { e.stopPropagation(); explainWithAi(currentOrigSub.text); }} 
-                                onTouchEnd={(e) => { e.stopPropagation(); explainWithAi(currentOrigSub.text); }}
+                                onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); explainWithAi(currentOrigSub.text); }}
                                 title={lang === 'en' ? 'Grammar & Context with AI (3 Credits)' : 'شیکاری ڕێزمان بە AI (٣ کرێدیت) 🤖'}
                             >
                                 <Brain size={13} /> {lang === 'en' ? 'AI' : 'شیکاری AI'}
@@ -2139,13 +2146,16 @@ CRITICAL RULES:
                                     timestamp: currentOrigSub.start,
                                     subtitleId: currentOrigSub.id
                                 })}
-                                onTouchEnd={(e) => addToFlashcards(e, currentOrigSub.text, currentTransSub?.text || '', {
-                                    cardType: 'subtitle',
-                                    quote: currentOrigSub.text,
-                                    translatedQuote: currentTransSub?.text || '',
-                                    timestamp: currentOrigSub.start,
-                                    subtitleId: currentOrigSub.id
-                                })}
+                                onTouchEnd={(e) => {
+                                    e.preventDefault();
+                                    addToFlashcards(e, currentOrigSub.text, currentTransSub?.text || '', {
+                                        cardType: 'subtitle',
+                                        quote: currentOrigSub.text,
+                                        translatedQuote: currentTransSub?.text || '',
+                                        timestamp: currentOrigSub.start,
+                                        subtitleId: currentOrigSub.id
+                                    });
+                                }}
                                 title={lang === 'en' ? 'Add to flashcards' : 'زیادی بکە بۆ فلاش کارتەکان 🃏'}
                             >
                                 <BookmarkPlus size={13} /> {lang === 'en' ? 'Card' : 'فلاش کارت'}
@@ -2153,7 +2163,7 @@ CRITICAL RULES:
                             <span 
                                 className="sub-practice-btn sub-voice-btn" 
                                 onClick={(e) => { e.stopPropagation(); startPractice(currentOrigSub.text); }} 
-                                onTouchEnd={(e) => { e.stopPropagation(); startPractice(currentOrigSub.text); }}
+                                onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); startPractice(currentOrigSub.text); }}
                                 title={lang === 'en' ? 'Pronunciation Practice' : 'ڕاهێنانی بێژەکردن 🎤'}
                             >
                                 <Mic size={13} /> {lang === 'en' ? 'Practice' : 'فێربوون'}
@@ -2181,6 +2191,7 @@ CRITICAL RULES:
             {/* AI EXPLANATION MODAL */}
             {aiModalOpen && (
                 <div className="practice-overlay" onClick={() => {
+                    if (Date.now() - modalOpenedAtRef.current < 450) return;
                     setAiModalOpen(false);
                     if (videoRef.current) videoRef.current.play().then(() => setIsPlaying(true));
                 }}>
@@ -2246,6 +2257,7 @@ CRITICAL RULES:
             {/* WORD LOOKUP MODAL */}
             {wordLookupModalOpen && (
                 <div className="practice-overlay" onClick={() => {
+                    if (Date.now() - modalOpenedAtRef.current < 450) return;
                     setWordLookupModalOpen(false);
                     if (videoRef.current) videoRef.current.play().then(() => setIsPlaying(true));
                 }}>
@@ -2555,7 +2567,10 @@ CRITICAL RULES:
 
             {/* AUTH REQUIRED MODAL PROMPT */}
             {authPrompt?.open && (
-                <div className="modal-overlay" style={{ zIndex: 100000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setAuthPrompt(null)}>
+                <div className="modal-overlay" style={{ zIndex: 100000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => {
+                    if (Date.now() - modalOpenedAtRef.current < 450) return;
+                    setAuthPrompt(null);
+                }}>
                     <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '420px', textAlign: 'center', padding: '32px 24px', borderRadius: '24px', background: 'rgba(18, 18, 28, 0.96)', backdropFilter: 'blur(24px)', border: '1px solid rgba(255, 255, 255, 0.15)', boxShadow: '0 20px 60px rgba(0,0,0,0.95)' }}>
                         <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(34, 211, 238, 0.15)', border: '1.5px solid #22d3ee', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', color: '#22d3ee' }}>
                             <Sparkles size={32} />
