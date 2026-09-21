@@ -147,6 +147,7 @@ export default function Admin() {
 
     const [uploading, setUploading] = useState<Record<string, boolean>>({});
     const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
+    const [uploadDetail, setUploadDetail] = useState<Record<string, { loadedMb: string; totalMb: string }>>({});
     const [expandedSeries, setExpandedSeries] = useState<Record<string, boolean>>({});
     const [expandedMovies, setExpandedMovies] = useState<Record<string, boolean>>({});
 
@@ -850,6 +851,7 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
         const key = `${movieId}-${type}-${extra?.season || 0}-${extra?.episode || 0}`;
         setUploading(u => ({ ...u, [key]: true }));
         setUploadProgress(p => ({ ...p, [key]: 0 }));
+        setUploadDetail(d => ({ ...d, [key]: { loadedMb: '0.0', totalMb: (file.size / (1024 * 1024)).toFixed(1) } }));
         
         const fd = new FormData();
         const token = localStorage.getItem('kurdish_stream_token') || localStorage.getItem('ks_token');
@@ -861,8 +863,11 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
             },
             onUploadProgress: (progressEvent: any) => {
                 if (progressEvent.total) {
-                    const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                    const loadedMb = (progressEvent.loaded / (1024 * 1024)).toFixed(1);
+                    const totalMb = (progressEvent.total / (1024 * 1024)).toFixed(1);
+                    const percentCompleted = Math.min(100, Math.round((progressEvent.loaded * 100) / progressEvent.total));
                     setUploadProgress(p => ({ ...p, [key]: percentCompleted }));
+                    setUploadDetail(d => ({ ...d, [key]: { loadedMb, totalMb } }));
                 }
             }
         };
@@ -882,6 +887,7 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
         finally { 
             setUploading(u => ({ ...u, [key]: false }));
             setUploadProgress(p => ({ ...p, [key]: 0 }));
+            setUploadDetail(d => ({ ...d, [key]: { loadedMb: '0.0', totalMb: '0.0' } }));
         }
     };
 
@@ -889,6 +895,7 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
         const key = `${movieId}-${target}-${extra?.episodeId || 'main'}`;
         setUploading(u => ({ ...u, [key]: true }));
         setUploadProgress(p => ({ ...p, [key]: 0 }));
+        setUploadDetail(d => ({ ...d, [key]: { loadedMb: '0.0', totalMb: (file.size / (1024 * 1024)).toFixed(1) } }));
 
         const token = localStorage.getItem('kurdish_stream_token') || localStorage.getItem('ks_token');
         const config = {
@@ -899,8 +906,11 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
             },
             onUploadProgress: (progressEvent: any) => {
                 if (progressEvent.total) {
-                    const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                    const loadedMb = (progressEvent.loaded / (1024 * 1024)).toFixed(1);
+                    const totalMb = (progressEvent.total / (1024 * 1024)).toFixed(1);
+                    const percentCompleted = Math.min(100, Math.round((progressEvent.loaded * 100) / progressEvent.total));
                     setUploadProgress(p => ({ ...p, [key]: percentCompleted }));
+                    setUploadDetail(d => ({ ...d, [key]: { loadedMb, totalMb } }));
                 }
             }
         };
@@ -923,6 +933,7 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
         } finally {
             setUploading(u => ({ ...u, [key]: false }));
             setUploadProgress(p => ({ ...p, [key]: 0 }));
+            setUploadDetail(d => ({ ...d, [key]: { loadedMb: '0.0', totalMb: '0.0' } }));
         }
     };
 
@@ -1532,9 +1543,14 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                                                 <input type="file" className="hidden-input" ref={el => { refs.video.current[movie.id] = el; }} onChange={e => e.target.files?.[0] && doUpload(movie.id, e.target.files[0], 'video')} />
                                                 <div className="ac-upload-icon-wrap">
                                                     {uploading[`${movie.id}-video-0-0`] ? 
-                                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px' }}>
-                                                            <Loader2 className="spinning" />
-                                                            <span style={{ fontSize: '12px' }}>{uploadProgress[`${movie.id}-video-0-0`] || 0}%</span>
+                                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', padding: '0 2px' }}>
+                                                            <Loader2 className="spinning" size={16} />
+                                                            <span style={{ fontSize: '12px', fontWeight: 'bold' }}>{uploadProgress[`${movie.id}-video-0-0`] || 0}%</span>
+                                                            {uploadDetail[`${movie.id}-video-0-0`] && (
+                                                                <span style={{ fontSize: '9.5px', color: '#64748b', direction: 'ltr', whiteSpace: 'nowrap' }}>
+                                                                    {uploadDetail[`${movie.id}-video-0-0`].loadedMb}/{uploadDetail[`${movie.id}-video-0-0`].totalMb} MB
+                                                                </span>
+                                                            )}
                                                         </div> 
                                                         : <Video size={20} />}
                                                 </div>
@@ -1545,9 +1561,14 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                                                 <input type="file" className="hidden-input" ref={el => { refs.r2Video.current[movie.id] = el; }} onChange={e => e.target.files?.[0] && doR2Upload(movie.id, e.target.files[0], 'video')} />
                                                 <div className="ac-upload-icon-wrap">
                                                     {uploading[`${movie.id}-video-main`] ? 
-                                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px' }}>
-                                                            <Loader2 className="spinning" />
-                                                            <span style={{ fontSize: '12px' }}>{uploadProgress[`${movie.id}-video-main`] || 0}%</span>
+                                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', padding: '0 2px' }}>
+                                                            <Loader2 className="spinning" size={16} />
+                                                            <span style={{ fontSize: '12px', fontWeight: 'bold' }}>{uploadProgress[`${movie.id}-video-main`] || 0}%</span>
+                                                            {uploadDetail[`${movie.id}-video-main`] && (
+                                                                <span style={{ fontSize: '9.5px', color: '#64748b', direction: 'ltr', whiteSpace: 'nowrap' }}>
+                                                                    {uploadDetail[`${movie.id}-video-main`].loadedMb}/{uploadDetail[`${movie.id}-video-main`].totalMb} MB
+                                                                </span>
+                                                            )}
                                                         </div>
                                                         : <Upload size={20} />}
                                                 </div>
