@@ -1007,6 +1007,7 @@
 .opt-txt {
     flex: 1;
     line-height: 1.4;
+    white-space: pre-line;
 }
 
 .col-act {

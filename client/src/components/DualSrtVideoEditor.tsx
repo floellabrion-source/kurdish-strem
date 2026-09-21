@@ -669,12 +669,12 @@ export default function DualSrtVideoEditor({
             // Gather 5 lines before and 5 lines after for deep scene context
             const beforeLines = lines.slice(Math.max(0, currentIndex - 5), currentIndex)
                 .filter(l => l.english.trim())
-                .map(l => `[Context Line ${l.id}] EN: "${l.english}" ${l.kurdish ? `| KU: "${l.kurdish}"` : ''}`)
+                .map(l => `[Context Line ${l.id}] EN: "${l.english.replace(/\n/g, ' | ')}" ${l.kurdish ? `| KU: "${l.kurdish.replace(/\n/g, ' | ')}"` : ''}`)
                 .join('\n');
             
             const afterLines = lines.slice(currentIndex + 1, currentIndex + 6)
                 .filter(l => l.english.trim())
-                .map(l => `[Context Line ${l.id}] EN: "${l.english}" ${l.kurdish ? `| KU: "${l.kurdish}"` : ''}`)
+                .map(l => `[Context Line ${l.id}] EN: "${l.english.replace(/\n/g, ' | ')}" ${l.kurdish ? `| KU: "${l.kurdish.replace(/\n/g, ' | ')}"` : ''}`)
                 .join('\n');
 
             const currentKurdish = line.kurdish.trim();
@@ -700,28 +700,34 @@ ${glossaryText}
 SURROUNDING SCENE CONTEXT (PRECEDING 5 LINES):
 ${beforeLines || '(Start of scene)'}
 
-TARGET LINE TO TRANSLATE (Line #${line.id}):
-English: "${line.english}"
-${isRegenerate ? `Current Kurdish text: "${currentKurdish}"\nNOTE: The user is requesting a BETTER, MORE NATURAL, and DIFFERENT translation variation! Do NOT repeat the exact same previous translation.` : ''}
+TARGET SUBTITLE BLOCK TO TRANSLATE (Line #${line.id}):
+${line.english}
+${isRegenerate ? `\nCurrent Kurdish text: "${currentKurdish}"\nNOTE: The user is requesting a BETTER, MORE NATURAL, and DIFFERENT translation variation! Do NOT repeat the exact same previous translation.` : ''}
 
 SURROUNDING SCENE CONTEXT (FOLLOWING 5 LINES):
 ${afterLines || '(End of scene)'}
 
 CRITICAL RULES:
-1. Translate specifically for natural, everyday spoken Central Kurdish (Sorani) cinematic dialogue.
-2. Deeply understand the scene context, character relationships, idioms, and genre-specific terms (e.g. 'barn' can be 'تەویلە' or 'گەوڕ', 'walkers' are zombies 'زۆمبی' / 'مردووی ڕۆیشتوو').
-3. Provide 3 DISTINCT and fluent translation alternatives in Central Kurdish (Sorani) without repeating the previous translation.
-Output EXACTLY 3 lines in this format with NO extra text:
-Option 1: [Translation 1]
-Option 2: [Translation 2]
-Option 3: [Translation 3]`;
+1. Translate specifically into natural, fluent Central Kurdish (Sorani) cinematic dialogue.
+2. CRITICAL MULTI-LINE RULE: If the target English subtitle contains MULTIPLE LINES (e.g. 2 lines separated by a line break) or formatting tags (such as <i>...</i>, ♪, etc.), YOU MUST TRANSLATE EVERY SINGLE LINE AND KEEP THE EXACT SAME NUMBER OF LINES AND TAGS! NEVER translate only the top line and omit the bottom line!
+3. Provide 3 DISTINCT and natural translation variations in Central Kurdish (Sorani).
+Format your output EXACTLY as follows using delimiter tags:
+
+<<<OPTION 1>>>
+[Complete Kurdish Translation for ALL lines]
+
+<<<OPTION 2>>>
+[Complete Kurdish Translation for ALL lines]
+
+<<<OPTION 3>>>
+[Complete Kurdish Translation for ALL lines]`;
 
             const selectedModel = localStorage.getItem('ks_srt_ai_model') || 'google/gemini-2.5-flash';
 
             const res = await axios.post('/api/ai/generate', {
                 contents: [{ parts: [{ text: prompt }] }],
                 aiTask: 'srt_line_translation',
-                model: 'google/gemini-2.5-flash',
+                model: selectedModel,
                 lineCount: 1,
                 movieTitle: movieTitle || 'Line Translation'
             }, {
@@ -730,25 +736,44 @@ Option 3: [Translation 3]`;
 
             const rawText = (res.data?.candidates?.[0]?.content?.parts?.[0]?.text || '').trim();
             
-            // Extract options
+            // Extract options supporting multiline content
             const extractedOptions: string[] = [];
-            const matches = rawText.match(/Option\s*\d+\s*:\s*(.+)/gi);
-            if (matches && matches.length > 0) {
-                matches.forEach((m: string) => {
-                    const clean = m.replace(/^Option\s*\d+\s*:\s*/i, '').trim().replace(/^"|"$/g, '');
+            
+            // 1. Try delimiter <<<OPTION X>>>
+            if (rawText.includes('<<<OPTION')) {
+                const parts = rawText.split(/<<<OPTION\s*\d+>>>/i);
+                for (const p of parts) {
+                    const clean = p.trim().replace(/^"|"$/g, '');
                     if (clean && !extractedOptions.includes(clean)) {
                         extractedOptions.push(clean);
                     }
-                });
+                }
+            }
+            
+            // 2. Fallback: Option 1: ... Option 2: ... Option 3: ...
+            if (extractedOptions.length === 0) {
+                const optionBlocks = rawText.split(/(?:^|\n)\s*(?:Option\s*\d+\s*[:\-]|###\s*Option\s*\d+)/i);
+                for (const b of optionBlocks) {
+                    const clean = b.trim().replace(/^"|"$/g, '');
+                    if (clean && !extractedOptions.includes(clean)) {
+                        extractedOptions.push(clean);
+                    }
+                }
+            }
+
+            // 3. Fallback: numbered 1. 2. 3.
+            if (extractedOptions.length === 0) {
+                const numBlocks = rawText.split(/(?:^|\n)\s*\d+[\.\)]\s+/);
+                for (const b of numBlocks) {
+                    const clean = b.trim().replace(/^"|"$/g, '');
+                    if (clean && !extractedOptions.includes(clean)) {
+                        extractedOptions.push(clean);
+                    }
+                }
             }
 
             if (extractedOptions.length === 0) {
-                const linesRaw = rawText.split('\n').map((l: string) => l.trim().replace(/^[-*•\d.]+\s*/, '').replace(/^"|"$/g, '')).filter(Boolean);
-                if (linesRaw.length > 0) {
-                    extractedOptions.push(...linesRaw.slice(0, 3));
-                } else {
-                    extractedOptions.push(rawText);
-                }
+                extractedOptions.push(rawText);
             }
 
             const chosenText = extractedOptions[0] || rawText;
@@ -756,7 +781,7 @@ Option 3: [Translation 3]`;
             setAiUsedInSession(true);
             setLineSuggestions({
                 lineId: line.id,
-                options: extractedOptions
+                options: extractedOptions.slice(0, 3)
             });
             showToast(`دێڕی #${line.id} بە ۳ پێشنیاری جیاواز داڕێژرایەوە ✓`);
         } catch (err) {
@@ -790,6 +815,8 @@ Option 3: [Translation 3]`;
         try {
             const BATCH_SIZE = 20;
             let done = 0;
+            const selectedModel = localStorage.getItem('ks_srt_ai_model') || 'google/gemini-2.5-flash';
+
             for (let i = 0; i < untranslated.length; i += BATCH_SIZE) {
                 if (editorPauseRef.current) {
                     const pausedPct = Math.round((done / untranslated.length) * 100);
@@ -799,13 +826,18 @@ Option 3: [Translation 3]`;
                 }
 
                 const batch = untranslated.slice(i, i + BATCH_SIZE);
-                const batchText = batch.map((b, idx) => `[${idx + 1}] ${b.english}`).join('\n');
+                // Encode internal newlines as [BR] so multi-line subtitle blocks are preserved
+                const batchText = batch.map((b, idx) => `[${idx + 1}] ${b.english.replace(/\r?\n/g, ' [BR] ')}`).join('\n');
 
-                const prompt = `Translate the following English subtitle lines into natural Central Kurdish (Sorani). Return ONLY lines in format [Index] Translation:\n\n${batchText}`;
+                const prompt = `Translate the following English subtitle lines into natural Central Kurdish (Sorani). 
+IMPORTANT: Preserve all formatting tags (<i>...</i>, ♪) and if a line contains [BR], replace it with [BR] in your translation to maintain the exact line breaks.
+Return ONLY lines in format [Index] Translation:
+
+${batchText}`;
                 const res = await axios.post('/api/ai/generate', {
                     contents: [{ parts: [{ text: prompt }] }],
                     aiTask: 'srt_translation',
-                    model: 'google/gemini-2.5-flash',
+                    model: selectedModel,
                     lineCount: batch.length,
                     movieTitle: movieTitle || 'Batch Translation'
                 });
@@ -820,7 +852,10 @@ Option 3: [Translation 3]`;
                         if (targetIdx !== -1) {
                             const matchedLine = resultLines.find((r: string) => r.startsWith(`[${bIdx + 1}]`));
                             if (matchedLine) {
-                                const cleanText = matchedLine.replace(/^\[\d+\]\s*/, '').trim();
+                                const cleanText = matchedLine
+                                    .replace(/^\[\d+\]\s*/, '')
+                                    .replace(/\s*\[BR\]\s*/gi, '\n')
+                                    .trim();
                                 next[targetIdx] = { ...next[targetIdx], kurdish: cleanText };
                             }
                         }
