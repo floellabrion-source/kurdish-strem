@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from '../api/client';
+import rawAxios from 'axios';
 import {
     Plus, Film, Trash2, Edit3, Save, X,
     CheckCircle, AlertCircle, Loader2, FileText,
@@ -895,36 +896,67 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
         const key = `${movieId}-${target}-${extra?.episodeId || 'main'}`;
         setUploading(u => ({ ...u, [key]: true }));
         setUploadProgress(p => ({ ...p, [key]: 0 }));
-        setUploadDetail(d => ({ ...d, [key]: { loadedMb: '0.0', totalMb: (file.size / (1024 * 1024)).toFixed(1) } }));
-
-        const token = localStorage.getItem('kurdish_stream_token') || localStorage.getItem('ks_token');
-        const config = {
-            timeout: 0,
-            headers: {
-                ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                'Content-Type': 'multipart/form-data'
-            },
-            onUploadProgress: (progressEvent: any) => {
-                if (progressEvent.total) {
-                    const loadedMb = (progressEvent.loaded / (1024 * 1024)).toFixed(1);
-                    const totalMb = (progressEvent.total / (1024 * 1024)).toFixed(1);
-                    const percentCompleted = Math.min(100, Math.round((progressEvent.loaded * 100) / progressEvent.total));
-                    setUploadProgress(p => ({ ...p, [key]: percentCompleted }));
-                    setUploadDetail(d => ({ ...d, [key]: { loadedMb, totalMb } }));
-                }
-            }
-        };
+        const totalMb = (file.size / (1024 * 1024)).toFixed(1);
+        setUploadDetail(d => ({ ...d, [key]: { loadedMb: '0.0', totalMb } }));
 
         try {
-            const fd = new FormData();
-            fd.append('file', file, file.name);
-            fd.append('movieId', movieId);
-            fd.append('target', target);
-            if (extra?.season !== undefined) fd.append('season', String(extra.season));
-            if (extra?.episodeId) fd.append('episodeId', extra.episodeId);
+            // Determine content type accurately
+            let mimeType = file.type;
+            if (!mimeType || mimeType === 'application/octet-stream') {
+                const lower = file.name.toLowerCase();
+                if (lower.endsWith('.mp4')) mimeType = 'video/mp4';
+                else if (lower.endsWith('.mkv')) mimeType = 'video/x-matroska';
+                else if (lower.endsWith('.webm')) mimeType = 'video/webm';
+                else if (lower.endsWith('.mov')) mimeType = 'video/quicktime';
+                else if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) mimeType = 'image/jpeg';
+                else if (lower.endsWith('.png')) mimeType = 'image/png';
+                else if (lower.endsWith('.webp')) mimeType = 'image/webp';
+                else mimeType = 'application/octet-stream';
+            }
 
-            await axios.post('/api/admin/r2/upload', fd, config);
-            toast(`فایلەکە بە سەرکەوتوویی بارکرا ☁️`);
+            // 1. Get presigned upload URL from backend
+            const presignRes = await axios.post('/api/admin/r2/presigned-url', {
+                movieId,
+                target,
+                filename: file.name,
+                contentType: mimeType,
+                season: extra?.season,
+                episodeId: extra?.episodeId
+            });
+
+            if (!presignRes.data?.uploadUrl) {
+                throw new Error(presignRes.data?.error || 'نەتوانرا لینکی ئەپلۆدی خێرا دروست بکرێت');
+            }
+
+            const { uploadUrl, publicUrl } = presignRes.data;
+
+            // 2. Upload file DIRECTLY to Cloudflare R2 via HTTP PUT (no VPS bottleneck, maximum ISP speed)
+            await rawAxios.put(uploadUrl, file, {
+                headers: {
+                    'Content-Type': mimeType
+                },
+                timeout: 0,
+                onUploadProgress: (progressEvent: any) => {
+                    if (progressEvent.total) {
+                        const loadedMb = (progressEvent.loaded / (1024 * 1024)).toFixed(1);
+                        const curTotalMb = (progressEvent.total / (1024 * 1024)).toFixed(1);
+                        const percentCompleted = Math.min(100, Math.round((progressEvent.loaded * 100) / progressEvent.total));
+                        setUploadProgress(p => ({ ...p, [key]: percentCompleted }));
+                        setUploadDetail(d => ({ ...d, [key]: { loadedMb, totalMb: curTotalMb } }));
+                    }
+                }
+            });
+
+            // 3. Save the public Cloudflare R2 URL to the movie / episode in DB
+            await axios.post('/api/admin/r2/save-url', {
+                movieId,
+                target,
+                publicUrl,
+                season: extra?.season,
+                episodeId: extra?.episodeId
+            });
+
+            toast(`فایلەکە بە سەرکەوتوویی و بە خێرایی ڕاستەوخۆ بارکرا ☁️⚡`);
             load(true);
         } catch (err: any) {
             console.error("R2 Error:", err);

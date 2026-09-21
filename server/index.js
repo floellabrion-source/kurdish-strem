@@ -60,6 +60,7 @@ const cleanupFfmpegProcess = (clientId) => {
     console.log(`[FFmpeg Manager] Cleaned up process for client: ${clientId}`);
 };
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const axios = require('axios');
 const dotenv = require('dotenv');
 
@@ -5879,6 +5880,88 @@ app.delete('/api/admin/movies/:id/seasons/:seasonNum/episodes/:episodeNum/srt/:t
 
     writeMovies(movies);
     res.json({ success: true, episode: ep });
+});
+
+app.post('/api/admin/r2/presigned-url', requireAuth, requireAdmin, async (req, res) => {
+    if (!hasR2Config()) {
+        return res.status(503).json({ error: 'R2 config missing on server (.env)' });
+    }
+
+    const { movieId, target, filename, contentType } = req.body;
+    if (!movieId || !target) {
+        return res.status(400).json({ error: 'movieId and target required' });
+    }
+    if (!['video', 'poster'].includes(target)) {
+        return res.status(400).json({ error: 'invalid target' });
+    }
+
+    const timestamp = Date.now();
+    const cleanName = safeCloudName(filename || 'file.mp4');
+    const r2Path = `${target}s/${movieId}_${timestamp}_${cleanName}`;
+    const mimeType = contentType || 'application/octet-stream';
+
+    try {
+        const client = getR2Client();
+        const command = new PutObjectCommand({
+            Bucket: R2_CONFIG.bucket,
+            Key: r2Path,
+            ContentType: mimeType
+        });
+
+        // 2 hours expiry for large movie/episode uploads
+        const uploadUrl = await getSignedUrl(client, command, { expiresIn: 7200 });
+        const publicUrl = `${R2_CONFIG.publicUrl.replace(/\/+$/, '')}/${r2Path}`;
+
+        res.json({
+            success: true,
+            uploadUrl,
+            publicUrl,
+            r2Path,
+            contentType: mimeType
+        });
+    } catch (err) {
+        console.error('[R2 Presigned URL Error]', err);
+        res.status(500).json({ error: 'Failed to generate presigned URL: ' + err.message });
+    }
+});
+
+app.post('/api/admin/r2/save-url', requireAuth, requireAdmin, async (req, res) => {
+    const { movieId, target, publicUrl, season, episodeId } = req.body;
+    if (!movieId || !target || !publicUrl) {
+        return res.status(400).json({ error: 'movieId, target, and publicUrl required' });
+    }
+
+    try {
+        const movies = readMovies();
+        const mIdx = movies.findIndex((m) => m.id === movieId);
+        if (mIdx === -1) return res.status(404).json({ error: 'Movie not found' });
+
+        if (episodeId && season !== undefined) {
+            const seasonNum = Number(season);
+            const seasonObj = movies[mIdx].seasons?.find((s) => s.number === seasonNum);
+            const episodeObj = seasonObj?.episodes.find((ep) => ep.id === episodeId);
+            if (!seasonObj || !episodeObj) return res.status(404).json({ error: 'Episode not found' });
+            if (target === 'video') {
+                episodeObj.videoUrl = publicUrl;
+                episodeObj.videoFile = null;
+                episodeObj.videoUpdatedAt = Date.now();
+            } else if (target === 'poster') {
+                episodeObj.thumbnailUrl = publicUrl;
+            }
+        } else if (target === 'video') {
+            movies[mIdx].videoUrl = publicUrl;
+            movies[mIdx].videoFile = null;
+            movies[mIdx].videoUpdatedAt = Date.now();
+        } else if (target === 'poster') {
+            movies[mIdx].posterCloudUrl = publicUrl;
+        }
+
+        writeMovies(movies);
+        res.json({ success: true, url: publicUrl, movie: movies[mIdx] });
+    } catch (err) {
+        console.error('[R2 Save URL Error]', err);
+        res.status(500).json({ error: 'Failed to save URL' });
+    }
 });
 
 app.post('/api/admin/r2/upload', requireAuth, requireAdmin, cloudUpload.single('file'), async (req, res) => {
