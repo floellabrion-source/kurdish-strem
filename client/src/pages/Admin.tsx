@@ -1571,24 +1571,6 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                                             )}
                                         </div>
                                         <div className="ac-video-grid">
-                                            <div className={`ac-upload-card ${movie.videoFile ? 'done' : ''}`} onClick={() => refs.video.current[movie.id]?.click()}>
-                                                <input type="file" className="hidden-input" ref={el => { refs.video.current[movie.id] = el; }} onChange={e => e.target.files?.[0] && doUpload(movie.id, e.target.files[0], 'video')} />
-                                                <div className="ac-upload-icon-wrap">
-                                                    {uploading[`${movie.id}-video-0-0`] ? 
-                                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', padding: '0 2px' }}>
-                                                            <Loader2 className="spinning" size={16} />
-                                                            <span style={{ fontSize: '12px', fontWeight: 'bold' }}>{uploadProgress[`${movie.id}-video-0-0`] || 0}%</span>
-                                                            {uploadDetail[`${movie.id}-video-0-0`] && (
-                                                                <span style={{ fontSize: '9.5px', color: '#64748b', direction: 'ltr', whiteSpace: 'nowrap' }}>
-                                                                    {uploadDetail[`${movie.id}-video-0-0`].loadedMb}/{uploadDetail[`${movie.id}-video-0-0`].totalMb} MB
-                                                                </span>
-                                                            )}
-                                                        </div> 
-                                                        : <Video size={20} />}
-                                                </div>
-                                                <div className="ac-upload-label">Server</div>
-                                            </div>
-
                                             <div className={`ac-upload-card cloud-upload ${movie.videoUrl && movie.videoUrl.includes('r2') ? 'done' : ''}`} onClick={() => refs.r2Video.current[movie.id]?.click()}>
                                                 <input type="file" className="hidden-input" ref={el => { refs.r2Video.current[movie.id] = el; }} onChange={e => e.target.files?.[0] && doR2Upload(movie.id, e.target.files[0], 'video')} />
                                                 <div className="ac-upload-icon-wrap">
@@ -3022,16 +3004,6 @@ function SeasonPanel({ season, movieId, onAddEpisode, onBulkAdd, onEpVideo, onEp
                             <div key={ep.id} className="ep-grid-card">
                                 <div className="ep-grid-title">{ep.number}. {ep.title}</div>
                                 <div className="ep-grid-btns">
-                                    <input type="file" className="hidden-input" ref={el => { epVideoRef.current[ep.id] = el; }} onChange={e => e.target.files?.[0] && onEpVideo(ep.number, e.target.files[0])} />
-                                    <button className={`ep-mini-btn ${ep.videoFile ? 'done' : ''}`} onClick={() => epVideoRef.current[ep.id]?.click()}>
-                                        {uploading[`${movieId}-ep-video-${season.number}-${ep.number}`] ? (
-                                            <div style={{display: 'flex', gap: '4px', alignItems: 'center'}}>
-                                                <Loader2 size={11} className="spinning" />
-                                                <span style={{fontSize: '9px'}}>{uploadProgress[`${movieId}-ep-video-${season.number}-${ep.number}`] || 0}%</span>
-                                            </div>
-                                        ) : <Video size={11} />}
-                                    </button>
-
                                     <input type="file" className="hidden-input" ref={el => { r2EpVideoRef.current[ep.id] = el; }} onChange={e => e.target.files?.[0] && onR2Upload(ep.number, e.target.files[0], ep.id)} />
                                     <button className={`ep-mini-btn cloud-upload-btn ${ep.videoUrl && ep.videoUrl.includes('r2') ? 'done' : ''}`} onClick={() => r2EpVideoRef.current[ep.id]?.click()}>
                                         {uploading[`${movieId}-video-${ep.id}`] ? (
