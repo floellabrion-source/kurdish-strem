@@ -514,10 +514,10 @@ const handleDirectMovieSrtUpload = async (movie: Movie, file: File, srtType: 'or
 };
 
 const handleDeleteMovieVideo = async (movie: Movie) => {
-    if (!window.confirm(`ئایا دڵنیایت لە سڕینەوەی فایلی ڤیدیۆی فیلمی "${movie.title}" لە سێرڤەر؟`)) return;
+    if (!window.confirm(`ئایا دڵنیایت لە سڕینەوەی فایلی ڤیدیۆی فیلمی "${movie.title}" لە Cloudflare R2 و وێبسایتەکەدا؟`)) return;
     try {
         await axios.delete(`/api/admin/movies/${movie.id}/video`);
-        toast('فایلی ڤیدیۆی فیلمەکە بە سەرکەوتوویی سڕایەوە ✓');
+        toast('فایلی ڤیدیۆی فیلمەکە لە Cloudflare R2 و وێبسایت بە سەرکەوتوویی سڕایەوە 🗑️✓');
         load(true);
     } catch {
         toast('کێشەیەک لە سڕینەوەی ڤیدیۆ ڕوویدا', 'error');

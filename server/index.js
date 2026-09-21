@@ -59,7 +59,7 @@ const cleanupFfmpegProcess = (clientId) => {
     activeFfmpegProcesses.delete(clientId);
     console.log(`[FFmpeg Manager] Cleaned up process for client: ${clientId}`);
 };
-const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const axios = require('axios');
 const dotenv = require('dotenv');
@@ -1301,6 +1301,32 @@ const getR2Client = () => new S3Client({
         secretAccessKey: R2_CONFIG.secretAccessKey
     }
 });
+
+const deleteR2FileFromUrl = async (url) => {
+    if (!url || typeof url !== 'string' || !hasR2Config()) return;
+    try {
+        let key = '';
+        const publicUrlBase = (R2_CONFIG.publicUrl || '').replace(/\/+$/, '');
+        if (publicUrlBase && url.startsWith(publicUrlBase)) {
+            key = url.slice(publicUrlBase.length).replace(/^\/+/, '');
+        } else {
+            const match = url.match(/(?:videos|posters)\/[^?#]+/i);
+            if (match) key = match[0];
+        }
+
+        if (key) {
+            const decodedKey = decodeURIComponent(key);
+            const client = getR2Client();
+            await client.send(new DeleteObjectCommand({
+                Bucket: R2_CONFIG.bucket,
+                Key: decodedKey
+            }));
+            console.log(`[R2 Auto-Delete] Successfully deleted object from R2: ${decodedKey}`);
+        }
+    } catch (err) {
+        console.error(`[R2 Auto-Delete Error]: ${err.message}`);
+    }
+};
 
 const safeCloudName = (name) => (name || 'file').replace(/[^a-zA-Z0-9._-]/g, '_');
 
@@ -4391,7 +4417,20 @@ const handleMovieDeletion = (req, res) => {
             }
         }
 
-        // 3. Log activity and broadcast to all connected admin and client websockets
+        // 3. Clean up any Cloudflare R2 assets associated with this movie/series
+        if (targetMovie) {
+            if (targetMovie.videoUrl) deleteR2FileFromUrl(targetMovie.videoUrl);
+            if (targetMovie.posterCloudUrl) deleteR2FileFromUrl(targetMovie.posterCloudUrl);
+            if (Array.isArray(targetMovie.seasons)) {
+                targetMovie.seasons.forEach(s => {
+                    s.episodes?.forEach(ep => {
+                        if (ep.videoUrl) deleteR2FileFromUrl(ep.videoUrl);
+                    });
+                });
+            }
+        }
+
+        // 4. Log activity and broadcast to all connected admin and client websockets
         if (targetMovie) {
             logAdminActivity('MOVIE_DELETE', req.user, { targetId: movieId, targetTitle: targetMovie.title }, { type: targetMovie.type, year: targetMovie.year }, req);
         }
@@ -4495,8 +4534,8 @@ app.post('/api/admin/movies/:id/srt/:type', requireAuth, requireAdmin, srtMovieU
     res.json({ success: true });
 });
 
-// Delete Movie Video (Local File & URL)
-app.delete('/api/admin/movies/:id/video', requireAuth, requireAdmin, (req, res) => {
+// Delete Movie Video (Local File & URL & Cloudflare R2)
+app.delete('/api/admin/movies/:id/video', requireAuth, requireAdmin, async (req, res) => {
     const movies = readMovies();
     const idx = movies.findIndex((m) => m.id === req.params.id);
     if (idx === -1) return res.status(404).json({ error: 'فیلمەکە نەدۆزرایەوە' });
@@ -4506,6 +4545,10 @@ app.delete('/api/admin/movies/:id/video', requireAuth, requireAdmin, (req, res) 
         if (fs.existsSync(filePath)) {
             try { fs.unlinkSync(filePath); } catch(e) { console.error('Error deleting video file:', e.message); }
         }
+    }
+
+    if (movies[idx].videoUrl) {
+        await deleteR2FileFromUrl(movies[idx].videoUrl);
     }
 
     movies[idx].videoFile = null;
@@ -5830,8 +5873,8 @@ app.post('/api/admin/movies/:id/seasons/:seasonNum/episodes/:episodeNum/srt/:typ
     res.json({ success: true });
 });
 
-// Delete Episode Video (Local file & URL)
-app.delete('/api/admin/movies/:id/seasons/:seasonNum/episodes/:episodeNum/video', requireAuth, requireAdmin, (req, res) => {
+// Delete Episode Video (Local file & URL & Cloudflare R2)
+app.delete('/api/admin/movies/:id/seasons/:seasonNum/episodes/:episodeNum/video', requireAuth, requireAdmin, async (req, res) => {
     const movies = readMovies();
     const idx = movies.findIndex((m) => m.id === req.params.id);
     if (idx === -1) return res.status(404).json({ error: 'فیلمەکە نەدۆزرایەوە' });
@@ -5848,6 +5891,10 @@ app.delete('/api/admin/movies/:id/seasons/:seasonNum/episodes/:episodeNum/video'
         if (fs.existsSync(filePath)) {
             try { fs.unlinkSync(filePath); } catch(e) { console.error('Error deleting ep video:', e.message); }
         }
+    }
+
+    if (ep.videoUrl) {
+        await deleteR2FileFromUrl(ep.videoUrl);
     }
 
     ep.videoFile = null;
