@@ -1678,16 +1678,16 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                                     {/* Sensitive / Inappropriate Scenes Row */}
                                     <div className="ac-uploads-section">
                                         <div className="ac-section-badge" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#fca5a5' }}>
-                                                <Shield size={14} color="#f87171" />
+                                            <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#dc2626', fontWeight: 700, fontSize: '13px' }}>
+                                                <Shield size={15} color="#dc2626" />
                                                 {lang === 'en' ? 'Inappropriate / Mature Scenes (Family Mode)' : 'دیمەنی نەشیاو (مۆدی خێزانی)'}
                                             </span>
                                             {movie.sensitiveScenes && movie.sensitiveScenes.length > 0 ? (
-                                                <span style={{ fontSize: '11px', color: '#fca5a5', background: 'rgba(239, 68, 68, 0.15)', padding: '2px 8px', borderRadius: '12px', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
+                                                <span style={{ fontSize: '11.5px', color: '#b91c1c', background: 'rgba(239, 68, 68, 0.12)', padding: '3px 10px', borderRadius: '12px', border: '1.5px solid rgba(239, 68, 68, 0.35)', fontWeight: 700 }}>
                                                     {movie.sensitiveScenes.length} {lang === 'en' ? 'scenes marked' : 'دیمەن دیاریکراوە'}
                                                 </span>
                                             ) : (
-                                                <span style={{ fontSize: '11px', color: '#64748b' }}>
+                                                <span style={{ fontSize: '11.5px', color: '#64748b', fontWeight: 500 }}>
                                                     {lang === 'en' ? 'None' : 'دیارینەکراوە'}
                                                 </span>
                                             )}
@@ -1702,20 +1702,21 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                                                     alignItems: 'center',
                                                     gap: '8px',
                                                     padding: '9px 16px',
-                                                    background: (movie.sensitiveScenes && movie.sensitiveScenes.length > 0) ? 'rgba(239, 68, 68, 0.18)' : 'rgba(255, 255, 255, 0.04)',
-                                                    border: (movie.sensitiveScenes && movie.sensitiveScenes.length > 0) ? '1px solid rgba(239, 68, 68, 0.45)' : '1px solid rgba(255, 255, 255, 0.1)',
-                                                    color: (movie.sensitiveScenes && movie.sensitiveScenes.length > 0) ? '#fecaca' : '#cbd5e1',
+                                                    background: (movie.sensitiveScenes && movie.sensitiveScenes.length > 0) ? 'rgba(239, 68, 68, 0.12)' : 'rgba(241, 245, 249, 0.9)',
+                                                    border: (movie.sensitiveScenes && movie.sensitiveScenes.length > 0) ? '1.5px solid #dc2626' : '1px solid #cbd5e1',
+                                                    color: (movie.sensitiveScenes && movie.sensitiveScenes.length > 0) ? '#b91c1c' : '#334155',
                                                     borderRadius: '10px',
-                                                    fontSize: '12.5px',
-                                                    fontWeight: 600,
+                                                    fontSize: '13px',
+                                                    fontWeight: 700,
                                                     cursor: 'pointer',
-                                                    transition: 'all 0.2s ease'
+                                                    transition: 'all 0.2s ease',
+                                                    boxShadow: (movie.sensitiveScenes && movie.sensitiveScenes.length > 0) ? '0 2px 6px rgba(220, 38, 38, 0.12)' : 'none'
                                                 }}
                                             >
-                                                <Shield size={16} color="#f87171" />
+                                                <Shield size={16} color="#dc2626" />
                                                 <span>{lang === 'en' ? 'Manage Sensitive Scenes' : 'ڕێکخستن و بڕینی دیمەنی نەشیاو'}</span>
                                                 {movie.sensitiveScenes && movie.sensitiveScenes.length > 0 && (
-                                                    <span style={{ background: '#ef4444', color: '#fff', fontSize: '11px', padding: '1px 6px', borderRadius: '10px', fontWeight: 'bold' }}>
+                                                    <span style={{ background: '#dc2626', color: '#fff', fontSize: '11px', padding: '2px 7px', borderRadius: '10px', fontWeight: 'bold' }}>
                                                         {movie.sensitiveScenes.length}
                                                     </span>
                                                 )}
@@ -1732,12 +1733,13 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                                                             <span 
                                                                 key={idx} 
                                                                 style={{ 
-                                                                    background: 'rgba(239, 68, 68, 0.08)', 
-                                                                    color: '#fca5a5', 
-                                                                    border: '1px solid rgba(239, 68, 68, 0.2)',
+                                                                    background: 'rgba(239, 68, 68, 0.1)', 
+                                                                    color: '#b91c1c', 
+                                                                    border: '1.5px solid rgba(239, 68, 68, 0.35)',
                                                                     padding: '4px 10px', 
                                                                     borderRadius: '8px', 
                                                                     fontSize: '11.5px',
+                                                                    fontWeight: 700,
                                                                     display: 'inline-flex',
                                                                     alignItems: 'center',
                                                                     gap: '4px',
@@ -1749,7 +1751,7 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                                                         );
                                                     })}
                                                     {movie.sensitiveScenes.length > 4 && (
-                                                        <span style={{ fontSize: '11px', color: '#94a3b8' }}>+{movie.sensitiveScenes.length - 4} زیاتر</span>
+                                                        <span style={{ fontSize: '11.5px', color: '#64748b', fontWeight: 600 }}>+{movie.sensitiveScenes.length - 4} زیاتر</span>
                                                     )}
                                                 </div>
                                             )}
@@ -1759,16 +1761,16 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                                     {/* Language Metrics & CEFR Analysis Row */}
                                     <div className="ac-uploads-section">
                                         <div className="ac-section-badge" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#7dd3fc' }}>
-                                                <BarChart2 size={14} color="#38bdf8" />
+                                            <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#0284c7', fontWeight: 700, fontSize: '13px' }}>
+                                                <BarChart2 size={15} color="#0284c7" />
                                                 {lang === 'en' ? 'CEFR Linguistic Analysis & Vocabulary' : 'شیکاریی زمانەوانی و ئاستی CEFR'}
                                             </span>
                                             {movie.languageMetrics?.cefrLevel ? (
-                                                <span style={{ fontSize: '11px', color: '#7dd3fc', background: 'rgba(56, 189, 248, 0.15)', padding: '2px 8px', borderRadius: '12px', border: '1px solid rgba(56, 189, 248, 0.3)', fontWeight: 'bold' }}>
+                                                <span style={{ fontSize: '12px', color: '#0369a1', background: 'rgba(2, 132, 199, 0.12)', padding: '3px 10px', borderRadius: '12px', border: '1.5px solid rgba(2, 132, 199, 0.4)', fontWeight: 700, boxShadow: '0 1px 3px rgba(2, 132, 199, 0.08)' }}>
                                                     ئاستی {movie.languageMetrics.cefrLevel} • {movie.languageMetrics.totalWords || 0} وشە
                                                 </span>
                                             ) : (
-                                                <span style={{ fontSize: '11px', color: '#64748b' }}>
+                                                <span style={{ fontSize: '11.5px', color: '#64748b', fontWeight: 500 }}>
                                                     {lang === 'en' ? 'Not analyzed' : 'دیارینەکراوە'}
                                                 </span>
                                             )}
@@ -1787,20 +1789,21 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                                                     alignItems: 'center',
                                                     gap: '8px',
                                                     padding: '9px 16px',
-                                                    background: movie.languageMetrics ? 'rgba(56, 189, 248, 0.18)' : 'rgba(255, 255, 255, 0.04)',
-                                                    border: movie.languageMetrics ? '1px solid rgba(56, 189, 248, 0.45)' : '1px solid rgba(255, 255, 255, 0.1)',
-                                                    color: movie.languageMetrics ? '#bae6fd' : '#cbd5e1',
+                                                    background: movie.languageMetrics ? 'rgba(2, 132, 199, 0.12)' : 'rgba(241, 245, 249, 0.9)',
+                                                    border: movie.languageMetrics ? '1.5px solid #0284c7' : '1px solid #cbd5e1',
+                                                    color: movie.languageMetrics ? '#0369a1' : '#334155',
                                                     borderRadius: '10px',
-                                                    fontSize: '12.5px',
-                                                    fontWeight: 600,
+                                                    fontSize: '13px',
+                                                    fontWeight: 700,
                                                     cursor: 'pointer',
-                                                    transition: 'all 0.2s ease'
+                                                    transition: 'all 0.2s ease',
+                                                    boxShadow: movie.languageMetrics ? '0 2px 6px rgba(2, 132, 199, 0.12)' : 'none'
                                                 }}
                                             >
-                                                <BarChart2 size={16} color="#38bdf8" />
+                                                <BarChart2 size={16} color="#0284c7" />
                                                 <span>{lang === 'en' ? 'Manage CEFR & Language Metrics' : '📊 شیکاری زمانی (CEFR) و فایلی .txt'}</span>
                                                 {movie.languageMetrics?.cefrLevel && (
-                                                    <span style={{ background: '#0284c7', color: '#fff', fontSize: '11px', padding: '1px 7px', borderRadius: '10px', fontWeight: 'bold' }}>
+                                                    <span style={{ background: '#0284c7', color: '#fff', fontSize: '11px', padding: '2px 8px', borderRadius: '10px', fontWeight: 800 }}>
                                                         {movie.languageMetrics.cefrLevel}
                                                     </span>
                                                 )}
@@ -1808,11 +1811,11 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
 
                                             {movie.languageMetrics?.difficultWords && movie.languageMetrics.difficultWords.length > 0 && (
                                                 <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
-                                                    <span style={{ fontSize: '11.5px', color: '#7dd3fc', background: 'rgba(56, 189, 248, 0.1)', border: '1px solid rgba(56, 189, 248, 0.2)', padding: '4px 8px', borderRadius: '6px' }}>
+                                                    <span style={{ fontSize: '12px', color: '#b45309', background: 'rgba(245, 158, 11, 0.12)', border: '1.5px solid rgba(245, 158, 11, 0.4)', padding: '5px 10px', borderRadius: '8px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px', boxShadow: '0 1px 3px rgba(245, 158, 11, 0.08)' }}>
                                                         ✨ {movie.languageMetrics.difficultWords.length} وشەی ئەکادیمی
                                                     </span>
                                                     {movie.languageMetrics.repeatedWords && movie.languageMetrics.repeatedWords.length > 0 && (
-                                                        <span style={{ fontSize: '11.5px', color: '#a78bfa', background: 'rgba(167, 139, 250, 0.1)', border: '1px solid rgba(167, 139, 250, 0.2)', padding: '4px 8px', borderRadius: '6px' }}>
+                                                        <span style={{ fontSize: '12px', color: '#6d28d9', background: 'rgba(124, 58, 237, 0.12)', border: '1.5px solid rgba(124, 58, 237, 0.4)', padding: '5px 10px', borderRadius: '8px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px', boxShadow: '0 1px 3px rgba(124, 58, 237, 0.08)' }}>
                                                             🔁 {movie.languageMetrics.repeatedWords.length} وشەی دووبارە
                                                         </span>
                                                     )}

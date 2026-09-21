@@ -1115,7 +1115,7 @@ export default function EpisodeManagerModal({
                                                             {onOpenMetricsModal && (
                                                                 <button
                                                                     className={`ep-source-btn ${ep.languageMetrics ? 'done' : ''}`}
-                                                                    style={{ borderColor: ep.languageMetrics ? '#10b981' : 'rgba(139, 92, 246, 0.4)', color: ep.languageMetrics ? '#34d399' : '#c4b5fd' }}
+                                                                    style={{ borderColor: ep.languageMetrics ? '#059669' : 'rgba(124, 58, 237, 0.4)', color: ep.languageMetrics ? '#047857' : '#6d28d9', fontWeight: 600 }}
                                                                     onClick={() => onOpenMetricsModal(movie, season.number, ep)}
                                                                     title={lang === 'en' ? 'Manage Language Metrics' : 'پەیستکردن و بەڕێوەبردنی ئامارەکانی زمانی ئەم ئەڵقەیە'}
                                                                 >
@@ -1128,7 +1128,7 @@ export default function EpisodeManagerModal({
                                                             {ep.languageMetrics && (
                                                                 <button
                                                                     className="ep-source-btn done"
-                                                                    style={{ borderColor: '#8b5cf6', color: '#c4b5fd', background: 'rgba(139, 92, 246, 0.12)' }}
+                                                                    style={{ borderColor: '#7c3aed', color: '#6d28d9', background: 'rgba(124, 58, 237, 0.12)', fontWeight: 600 }}
                                                                     onClick={() => handleDownloadMetricsTxt(season.number, ep)}
                                                                     title={lang === 'en' ? 'Download Linguistic Analysis (.txt)' : 'داگرتنی فایلی شیکاریی زمانەوانی (.txt)'}
                                                                 >
