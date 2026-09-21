@@ -530,9 +530,43 @@ export default function Watch() {
     // --- End Video Logic ---
 
     // localStorage key for this content
-    const progressKey = `progress_${user?.id || 'guest'}_${id}_s${seasonNum}_e${episodeNum}`;
+    const contentHistoryKey = `${id}_s${seasonNum}_e${episodeNum}`;
+    const progressKey = `progress_${user?.id || 'guest'}_${contentHistoryKey}`;
 
-    // Flashcard interaction
+    const saveProgress = useCallback((timeToSave: number, forceBackendSync = false) => {
+        if (!id || !isFinite(timeToSave) || timeToSave < 5) return;
+        const rounded = Math.floor(timeToSave);
+        const title = episodeNum > 0 ? (episodeTitle || `Episode ${episodeNum}`) : (movie?.title || 'Unknown');
+        
+        try {
+            localStorage.setItem(`ks_progress_${contentHistoryKey}`, String(rounded));
+            localStorage.setItem(`progress_${user?.id || 'guest'}_${contentHistoryKey}`, String(rounded));
+            localStorage.setItem(progressKey, String(rounded));
+        } catch (e) {}
+
+        if (user && (forceBackendSync || rounded % 15 === 0)) {
+            syncProgress({ history: { [contentHistoryKey]: { time: rounded, title, date: new Date().toISOString() } } }).catch(() => {});
+        }
+    }, [id, seasonNum, episodeNum, episodeTitle, movie, user, progressKey, contentHistoryKey, syncProgress]);
+
+    // Auto-save on page leave or tab close
+    useEffect(() => {
+        const handleBeforeUnload = () => {
+            const v = videoRef.current;
+            if (v) {
+                const currentT = isAnyTranscoding ? ((streamStartTime || 0) + v.currentTime) : v.currentTime;
+                if (isFinite(currentT) && currentT >= 5) {
+                    saveProgress(currentT, true);
+                }
+            }
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+            handleBeforeUnload();
+        };
+    }, [saveProgress, isAnyTranscoding, streamStartTime]);
     const [flashcardToast, setFlashcardToast] = useState(false);
     const flashcardTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [authPrompt, setAuthPrompt] = useState<{ open: boolean; title: string; message: string } | null>(null);
@@ -1736,20 +1770,12 @@ CRITICAL RULES:
         setCurrentTime(currentT);
         if (v.buffered.length > 0) setBuffered(v.buffered.end(v.buffered.length - 1));
         
-        // Save progress locally every 5 seconds (using in-memory ref to eliminate laggy localStorage disk reads)
-        if (currentT > 10) {
+        // Save progress locally every 3 seconds and sync with backend
+        if (currentT >= 5) {
             const rounded = Math.floor(currentT);
-            if (rounded % 5 === 0 && lastSavedTimeRef.current !== rounded) {
+            if (rounded !== lastSavedTimeRef.current && (rounded % 3 === 0 || Math.abs(rounded - lastSavedTimeRef.current) >= 3)) {
                 lastSavedTimeRef.current = rounded;
-                localStorage.setItem(progressKey, String(rounded));
-            }
-            
-            // Sync with backend every 15 seconds
-            if (rounded % 15 === 0 && lastSyncedTimeRef.current !== rounded && user) {
-                lastSyncedTimeRef.current = rounded;
-                const hKey = `${id}_s${seasonNum}_e${episodeNum}`;
-                const title = episodeNum > 0 ? episodeTitle : movie?.title || 'Unknown';
-                syncProgress({ history: { [hKey]: { time: rounded, title, date: new Date().toISOString() } } });
+                saveProgress(currentT, false);
             }
         }
     };
@@ -2035,22 +2061,40 @@ CRITICAL RULES:
 
                     setCurrentTime(0);
                     // Check for saved resume position (local or backend)
-                    const hKey = `${id}_s${seasonNum}_e${episodeNum}`;
-                    const localSaved = localStorage.getItem(progressKey);
-                    const backendSaved = user?.history?.[hKey]?.time;
-                    const t = parseInt(localSaved || '0') || backendSaved || 0;
+                    const localKs = localStorage.getItem(`ks_progress_${contentHistoryKey}`);
+                    const localGuest = localStorage.getItem(`progress_${user?.id || 'guest'}_${contentHistoryKey}`);
+                    const localKey = localStorage.getItem(progressKey);
+                    const backendSaved = user?.history?.[contentHistoryKey]?.time;
+                    const savedT = parseInt(localKs || '0', 10) || parseInt(localGuest || '0', 10) || parseInt(localKey || '0', 10) || backendSaved || 0;
                     
-                    if (t > 30 && t < (effectiveDuration || v.duration) - 30) {
-                        setResumePrompt(t);
+                    const totalDur = effectiveDuration || v.duration || 0;
+                    const isEndedAlready = totalDur > 0 && savedT >= (totalDur - 20);
+
+                    if (savedT >= 10 && !isEndedAlready) {
+                        setResumePrompt(savedT);
                         v.pause();
+                        setIsPlaying(false);
                         return;
                     }
                     v.play().then(() => setIsPlaying(true)).catch(() => { });
                 }}
                 onPlay={() => { setIsPlaying(true); resetControlsTimer(); }}
-                onPause={() => setIsPlaying(false)}
+                onPause={() => {
+                    setIsPlaying(false);
+                    const v = videoRef.current;
+                    if (v) {
+                        const currentT = isAnyTranscoding ? ((streamStartTime || 0) + v.currentTime) : v.currentTime;
+                        if (isFinite(currentT) && currentT >= 5) {
+                            saveProgress(currentT, true);
+                        }
+                    }
+                }}
                 onEnded={() => {
-                    localStorage.removeItem(progressKey); // clear progress when done
+                    try {
+                        localStorage.removeItem(`ks_progress_${contentHistoryKey}`);
+                        localStorage.removeItem(`progress_${user?.id || 'guest'}_${contentHistoryKey}`);
+                        localStorage.removeItem(progressKey);
+                    } catch (e) {}
                     triggerCompletionFlow();
                 }}
                 onError={() => {
@@ -2129,31 +2173,100 @@ CRITICAL RULES:
                 </div>
             )}
 
-            {/* RESUME PROMPT */}
+            {/* RESUME PLAYBACK PROMPT MODAL */}
             {resumePrompt !== null && (
-                <div className="resume-prompt">
-                    <div className="resume-card">
-                        <p className="resume-label">{lang === 'en' ? 'Paused at ' : 'لە '}<strong>{Math.floor(resumePrompt / 60)}:{String(Math.floor(resumePrompt % 60)).padStart(2, '0')}</strong>{lang === 'en' ? '' : ' وەستاندبوویت'}</p>
-                        <div className="resume-btns">
-                            <button className="resume-btn-yes" onClick={() => {
-                                if (videoRef.current) {
+                <div 
+                    className="resume-overlay animate-fade"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <div className="resume-card animate-scale" onClick={e => e.stopPropagation()} dir={lang === 'en' ? 'ltr' : 'rtl'}>
+                        <button 
+                            className="resume-close-btn" 
+                            onClick={() => {
+                                setResumePrompt(null);
+                                if (videoRef.current) videoRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
+                            }}
+                            title={lang === 'en' ? 'Close' : 'داخستن'}
+                        >
+                            <X size={18} />
+                        </button>
+                        
+                        <div className="resume-icon-badge">
+                            <RotateCcw size={26} className="resume-pulse-icon" />
+                        </div>
+
+                        <h3 className="resume-card-title">
+                            {lang === 'en' ? 'Resume Watching?' : 'بەردەوامبوون لە سەیرکردن؟'}
+                        </h3>
+                        
+                        <p className="resume-card-desc">
+                            {lang === 'en' ? (
+                                <>You left off at <span className="resume-time-pill">{fmt(resumePrompt)}</span>. Would you like to resume playback or start over?</>
+                            ) : (
+                                <>لە کاتی <span className="resume-time-pill">{fmt(resumePrompt)}</span> وەستابوویت. دەتەوێت لە هەمان شوێن بەردەوام بیت یان لە سەرەتاوە سەیر بکەیت؟</>
+                            )}
+                        </p>
+
+                        {effectiveDuration > 0 && (
+                            <div className="resume-progress-bar-wrap">
+                                <div 
+                                    className="resume-progress-bar-fill" 
+                                    style={{ width: `${Math.min(100, Math.max(5, (resumePrompt / effectiveDuration) * 100))}%` }} 
+                                />
+                            </div>
+                        )}
+
+                        <div className="resume-actions-grid">
+                            <button 
+                                type="button"
+                                className="resume-btn-primary" 
+                                onClick={() => {
                                     const t = resumePrompt || 0;
+                                    setResumePrompt(null);
                                     setCurrentTime(t);
                                     
-                                    if (mkvUnsupported) {
+                                    if (isAnyTranscoding) {
                                         setStreamStartTime(t);
-                                    } else {
-                                        if (videoRef.current) videoRef.current.currentTime = t;
+                                    } else if (videoRef.current) {
+                                        videoRef.current.currentTime = t;
                                     }
-                                    videoRef.current.play().then(() => setIsPlaying(true));
-                                }
-                                setResumePrompt(null);
-                            }}>{lang === 'en' ? 'Resume ▶' : 'بەردەوام بە ▶'}</button>
-                            <button className="resume-btn-no" onClick={() => {
-                                localStorage.removeItem(progressKey);
-                                if (videoRef.current) videoRef.current.play().then(() => setIsPlaying(true));
-                                setResumePrompt(null);
-                            }}>{lang === 'en' ? 'Start Over' : 'سەرەتاوە دەستپێبکە'}</button>
+                                    
+                                    setTimeout(() => {
+                                        videoRef.current?.play().then(() => setIsPlaying(true)).catch(() => {});
+                                    }, 50);
+                                }}
+                            >
+                                <Play size={18} fill="currentColor" />
+                                <span>{lang === 'en' ? `Resume (${fmt(resumePrompt)})` : `بەردەوام بە (${fmt(resumePrompt)}) ▶`}</span>
+                            </button>
+                            
+                            <button 
+                                type="button"
+                                className="resume-btn-secondary" 
+                                onClick={() => {
+                                    try {
+                                        localStorage.removeItem(`ks_progress_${contentHistoryKey}`);
+                                        localStorage.removeItem(`progress_${user?.id || 'guest'}_${contentHistoryKey}`);
+                                        localStorage.removeItem(progressKey);
+                                    } catch (e) {}
+                                    if (user) {
+                                        syncProgress({ history: { [contentHistoryKey]: { time: 0, title: episodeTitle || movie?.title || '', date: new Date().toISOString() } } }).catch(() => {});
+                                    }
+                                    setResumePrompt(null);
+                                    setCurrentTime(0);
+                                    if (isAnyTranscoding) {
+                                        setStreamStartTime(0);
+                                    } else if (videoRef.current) {
+                                        videoRef.current.currentTime = 0;
+                                    }
+                                    setTimeout(() => {
+                                        videoRef.current?.play().then(() => setIsPlaying(true)).catch(() => {});
+                                    }, 50);
+                                }}
+                            >
+                                <RotateCcw size={16} />
+                                <span>{lang === 'en' ? 'Start from Beginning' : 'لە سەرەتاوە دەست پێبکە 🔄'}</span>
+                            </button>
                         </div>
                     </div>
                 </div>
