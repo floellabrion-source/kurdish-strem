@@ -2572,8 +2572,7 @@ CRITICAL RULES:
                                     {wordLookupData.translation}
                                 </p>
                                 <button 
-                                    className="sub-save-btn" 
-                                    style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 20px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
+                                    className="word-lookup-save-btn" 
                                     onClick={(e) => {
                                         addToFlashcards(e, wordLookupData.word, wordLookupData.translation, {
                                             cardType: 'word',
@@ -2586,7 +2585,8 @@ CRITICAL RULES:
                                         if (videoRef.current) videoRef.current.play().then(() => setIsPlaying(true));
                                     }}
                                 >
-                                    <BookmarkPlus size={18} /> {t('add_to_flashcards')}
+                                    <BookmarkPlus size={18} />
+                                    <span>{t('add_to_flashcards')}</span>
                                 </button>
                             </div>
                         )}
