@@ -1227,6 +1227,53 @@ ${batchText}`;
                                 </span>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                {/* Dedicated AI Translate Missing / Empty Lines Button */}
+                                {(() => {
+                                    const isAllRunning = translateAllProgress?.status === 'running';
+                                    const isAllPaused = translateAllProgress?.status === 'paused';
+
+                                    return (
+                                        <button
+                                            type="button"
+                                            className={`btn-jump-empty-line btn-ai-translate-empty ${isAllRunning ? 'running' : ''}`}
+                                            disabled={loading}
+                                            onClick={translateAllLines}
+                                            style={{
+                                                background: isAllRunning 
+                                                    ? 'linear-gradient(135deg, #ef4444, #dc2626)' 
+                                                    : isAllPaused 
+                                                        ? 'linear-gradient(135deg, #f59e0b, #d97706)' 
+                                                        : 'linear-gradient(135deg, #8b5cf6, #6366f1)',
+                                                border: '1px solid rgba(255, 255, 255, 0.25)',
+                                                color: '#ffffff',
+                                                fontWeight: '800',
+                                                boxShadow: '0 2px 10px rgba(139, 92, 246, 0.4)'
+                                            }}
+                                            title={isAllRunning 
+                                                ? (lang === 'en' ? "Click to Pause" : "کلیک بکە بۆ ڕاگرتن (Pause)") 
+                                                : isAllPaused 
+                                                    ? (lang === 'en' ? "Click to Resume" : "کلیک بکە بۆ دەستپێکردنەوە (Resume)") 
+                                                    : (lang === 'en' ? `Translate all ${emptyKurdishLines.length} empty lines with AI` : `وەرگێڕانی سەرجەم (${emptyKurdishLines.length}) دێڕە بەتاڵەکە بە AI`)}
+                                        >
+                                            {isAllRunning ? (
+                                                <>
+                                                    <Pause size={13} />
+                                                    <span>{lang === 'en' ? 'Pause' : 'ڕاگرتن'} ({translateAllProgress?.percent}%)</span>
+                                                </>
+                                            ) : isAllPaused ? (
+                                                <>
+                                                    <Play size={13} fill="#ffffff" />
+                                                    <span>{lang === 'en' ? 'Resume' : 'دەستپێکردنەوە'} ({translateAllProgress?.percent}%)</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Sparkles size={13} />
+                                                    <span>{lang === 'en' ? `AI Translate Empty (${emptyKurdishLines.length})` : `وەرگێڕانی دێڕە بەتاڵەکان بە AI (${emptyKurdishLines.length})`}</span>
+                                                </>
+                                            )}
+                                        </button>
+                                    );
+                                })()}
                                 <button 
                                     className={`btn-jump-empty-line ${filterMode === 'empty' ? 'active' : ''}`}
                                     style={{ background: filterMode === 'empty' ? '#ef4444' : 'rgba(239, 68, 68, 0.2)', border: '1px solid rgba(239, 68, 68, 0.5)' }}
