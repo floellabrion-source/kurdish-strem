@@ -383,12 +383,8 @@ export default function Watch() {
     // HLS & Video Quality State
     const hlsRef = useRef<Hls | null>(null);
     const [autoDetectedHeight, setAutoDetectedHeight] = useState<number | null>(null);
-    const [qualityLevels, setQualityLevels] = useState<{ id: number; label: string }[]>([
-        { id: -1, label: 'Auto' },
-        { id: 1080, label: '1080p' },
-        { id: 720, label: '720p' },
-        { id: 480, label: '480p' },
-        { id: 360, label: '360p' }
+    const [qualityLevels, setQualityLevels] = useState<{ id: number; label: string; height?: number }[]>([
+        { id: -1, label: 'Auto' }
     ]);
     const [currentQuality, setCurrentQuality] = useState<number>(-1);
 
@@ -396,6 +392,12 @@ export default function Watch() {
         setCurrentQuality(levelId);
         if (hlsRef.current) {
             hlsRef.current.currentLevel = levelId;
+            if (levelId >= 0 && hlsRef.current.levels && hlsRef.current.levels[levelId]) {
+                const lvl = hlsRef.current.levels[levelId];
+                if (lvl.height) {
+                    setAutoDetectedHeight(lvl.height);
+                }
+            }
             return;
         }
 
@@ -2039,7 +2041,6 @@ CRITICAL RULES:
 
             {/* VIDEO */}
             <video
-                key={effectiveStreamUrl || 'no-stream'}
                 ref={videoRef}
                 src={isHls ? undefined : (effectiveStreamUrl || undefined)}
                 className={`watch-video ${isSensitiveNow ? 'blur-video' : ''} aspect-${aspectRatio} ${isFlipped ? 'video-flipped' : ''}`}
