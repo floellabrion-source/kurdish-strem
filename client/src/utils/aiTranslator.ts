@@ -322,18 +322,31 @@ export const translateBatch = async (
           `\nMake sure to adhere 100% to this glossary list across all translated lines.\n`
         : '';
 
-    const prompt = `ACT AS A PROFESSIONAL SUBTITLE TRANSLATOR. Translate the following English SRT subtitle batch into high-quality, natural, and fluent Central Kurdish (Sorani) adhering strictly to these rules:
+    const prompt = `ACT AS A MASTER CINEMATIC SUBTITLE TRANSLATOR FOR KURDISH (SORANI).
+Translate the following English SRT subtitle batch into natural, fluent, emotionally accurate Central Kurdish (Sorani).
 
 ${glossarySection}
 ${movieContextStr ? `CONTEXT & SETTING: ${movieContextStr}` : ''}
 ${toneRuleStr}
 
-PART 2: TRANSLATION QUALITY (CONTEXT OVER LITERAL)
-- CONTEXTUAL & IDIOMATIC TRANSLATION: Do NOT translate word-for-word. Read surrounding lines to understand context, tone, and story. Ensure meaning flows naturally.
-- NATURAL DIALOGUE: Ensure Kurdish translation sounds like natural, everyday spoken dialogue, not robotic or textbook.
-- SLANG & IDIOMS: Adapt English idioms, jokes, phrases, and slang into culturally appropriate Central Kurdish (Sorani) equivalents.
+PART 2: IDIOMS, SLANG & CINEMATIC DIALOGUE (CONTEXT OVER LITERAL)
+- ZERO LITERAL CALQUES: NEVER translate English idioms, metaphors, or conversational slang word-for-word. Always translate the true intended meaning into authentic colloquial Kurdish spoken dialogue.
+- STUDY THESE CRITICAL EXAMPLES:
+  • "You had me there!" -> "دەستت لێم بڕی! / خستتە داوەکەتەوە! / باوەڕم پێ کردیت!" (NEVER literally translate as "تۆ منی لێرە هێشتەوە!")
+  • "I think she took that well." -> "وا بزانم دیارە پێی تێکنەچوو / باش قبووڵی کرد." (NEVER "بە باشی وەری گرت.")
+  • "Maybe you're not a failure after all." -> "ڕەنگە لە کۆتاییدا ئەوەندەش شکستخواردوو نەبیت." (NEVER 3rd person "شکستی نەهێناوە")
+  • "Cut it out!" -> "بەسیکە! / وازی لێبێنە!"
+  • "Hit the road!" -> "بکەوە ڕێ! / دەی بڕۆ!"
+  • "Piece of cake!" -> "وەک ئاو خواردنەوەیە / زۆر ئاسانە!"
+  • "Under the weather" -> "کەمێک نەخۆش و بێتاقەتم."
+  • "Break a leg!" -> "سەرکەوتوو بیت! / بەختێکی باش!"
 
-PART 3: STRICT SRT FORMATTING & DATA INTEGRITY (CRITICAL)
+PART 3: STRICT GRAMMATICAL PRONOUN & COHESION RULES
+- PRONOUN CONJUGATION: When English says "You", Kurdish MUST conjugate for 2nd person ("تۆ ... دەکەیت / نەبوویت / بیت"), NEVER shift to 3rd person ("ئەو / دەکات").
+- NATURAL WORD ORDER: Place verbs naturally in Kurdish sentences. Avoid awkward, stiff machine-translated structures.
+- SURROUNDING CONTEXT: Always read the lines before and after to match emotional intensity, sarcasm, jokes, and character gender.
+
+PART 4: STRICT SRT FORMATTING & DATA INTEGRITY (CRITICAL)
 - ABSOLUTE PRESERVATION OF TIMESTAMPS & INDEX NUMBERS: Copy the EXACT Index Number and EXACT Timestamp from original. DO NOT alter timestamps. DO NOT merge or split blocks.
 - STRICT LINE-BY-LINE PROCESSING: Process sequentially, line by line. Do not skip any blocks.
 - NO UNTRANSLATED TEXT: Every English dialogue must be translated into Central Kurdish.
