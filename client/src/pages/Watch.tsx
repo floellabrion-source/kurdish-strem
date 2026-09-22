@@ -391,7 +391,9 @@ export default function Watch() {
     const handleQualityChange = (levelId: number) => {
         setCurrentQuality(levelId);
         if (hlsRef.current) {
-            hlsRef.current.currentLevel = levelId;
+            // nextLevel allows current buffer to play smoothly while next segment downloads in the new quality seamlessly (YouTube style)
+            hlsRef.current.nextLevel = levelId;
+            hlsRef.current.loadLevel = levelId;
             if (levelId >= 0 && hlsRef.current.levels && hlsRef.current.levels[levelId]) {
                 const lvl = hlsRef.current.levels[levelId];
                 if (lvl.height) {
@@ -1937,7 +1939,10 @@ CRITICAL RULES:
                 hlsInstance = new Hls({
                     enableWorker: true,
                     lowLatencyMode: true,
-                    backBufferLength: 90
+                    backBufferLength: 60,
+                    maxBufferLength: 20,
+                    maxMaxBufferLength: 40,
+                    maxBufferSize: 30 * 1000 * 1000
                 });
                 hlsRef.current = hlsInstance;
                 hlsInstance.loadSource(effectiveStreamUrl);
