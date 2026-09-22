@@ -341,8 +341,8 @@ ${glossarySection}
 ${movieContextStr ? `CONTEXT & SETTING: ${movieContextStr}` : ''}
 ${toneRuleStr}
 
-PART 1: COMPLETE & FAITHFUL TRANSLATION FOR LANGUAGE LEARNERS
-- COMPLETE & FAITHFUL MEANING: KurdishStream is an English learning platform. Translate the ENTIRE sentence accurately and fully without omitting, dropping, or over-shortening any clauses or details so students can learn and match the English speech directly with the Kurdish translation.
+PART 1: COMPLETE SEMANTIC MEANING (NO OMITTED CLAUSES)
+- FULL SENTENCE COVERAGE: Translate the COMPLETE meaning of all clauses and details naturally into Kurdish. Do NOT drop, omit, or over-summarize any part of what the speaker said, but ALWAYS express it in fluent, idiomatic Kurdish (NEVER word-for-word robotic translation).
 - ACTIVE VOICE OVER PASSIVE: Transform awkward English passives ("It was decided that...") into natural Kurdish active structures ("بڕیاریان دا کە...").
 - DUAL-SPEAKER HYPHENS: If a subtitle block has multiple speakers marked with hyphens (-), strictly keep both lines with their hyphens (-) and translate each speaker separately.
 
