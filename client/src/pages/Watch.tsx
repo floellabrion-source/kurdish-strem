@@ -428,7 +428,7 @@ export default function Watch() {
     }, [movie, episodeNum, seasonNum]);
 
     const isTranscodedStream = mkvUnsupported;
-    const isAnyTranscoding = isTranscodedStream || currentQuality > 0;
+    const isAnyTranscoding = isTranscodedStream;
 
     const subtitleDuration = useMemo(() => {
         return Math.max(
@@ -1316,18 +1316,6 @@ CRITICAL RULES:
         let url = '';
         let version = 0;
 
-        // If user explicitly chose a specific quality (1080, 720, 480, 360) and not Auto (-1)
-        if (currentQuality > 0) {
-            url = `/api/stream/${id}?quality=${currentQuality}`;
-            if (seasonNum > 0 && episodeNum > 0) {
-                url += `&s=${seasonNum}&e=${episodeNum}`;
-            }
-            if (startTime > 0) {
-                url += `&start=${startTime}`;
-            }
-            return url;
-        }
-
         if (episodeNum > 0) {
             const season = movie.seasons?.find(s => s.number === seasonNum);
             const episode = season?.episodes.find(e => e.number === episodeNum);
@@ -1336,7 +1324,9 @@ CRITICAL RULES:
                 url = episode.videoUrl;
                 version = episode.videoUpdatedAt || 0;
             } else if (episode.videoFile) {
-                url = `/api/stream/${id}?s=${seasonNum}&e=${episodeNum}`;
+                url = currentQuality > 0 
+                    ? `/api/stream/${id}?quality=${currentQuality}&s=${seasonNum}&e=${episodeNum}`
+                    : `/api/stream/${id}?s=${seasonNum}&e=${episodeNum}`;
                 version = episode.videoUpdatedAt || 0;
             }
         } else {
@@ -1344,7 +1334,9 @@ CRITICAL RULES:
                 url = movie.videoUrl;
                 version = movie.videoUpdatedAt || 0;
             } else if (movie.videoFile) {
-                url = `/api/stream/${id}`;
+                url = currentQuality > 0 
+                    ? `/api/stream/${id}?quality=${currentQuality}`
+                    : `/api/stream/${id}`;
                 version = movie.videoUpdatedAt || 0;
             }
         }
@@ -1355,7 +1347,7 @@ CRITICAL RULES:
             url += `${url.includes('?') ? '&' : '?'}v=${version}`;
         }
 
-        if (isTranscodedStream) {
+        if (!movie.videoUrl && isTranscodedStream) {
             url += `${url.includes('?') ? '&' : '?'}transcode=mp4`;
             if (startTime > 0) {
                 url += `&start=${startTime}`;
