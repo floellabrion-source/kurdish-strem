@@ -274,8 +274,8 @@ ${movieContextStr ? `CONTEXT & SETTING: ${movieContextStr}` : ''}
 ${toneRuleStr}
 ${glossarySection}
 
-PART 1: SUBTITLE BREVITY & TIMING (PUNCHY DIALOGUE)
-- CONCISE & NATURAL: Subtitle reading speed is fast. Use short, punchy, impactful Kurdish phrasing. Avoid long-winded or verbose sentences so the viewer can read comfortably within 2 seconds.
+PART 1: COMPLETE & FAITHFUL TRANSLATION FOR LANGUAGE LEARNERS
+- COMPLETE & FAITHFUL MEANING: KurdishStream is an English learning platform. Translate the ENTIRE sentence accurately and fully without omitting, dropping, or over-shortening any clauses or details so students can learn and match the English speech directly with the Kurdish translation.
 - ACTIVE VOICE OVER PASSIVE: Transform awkward English passives ("It was decided that...") into natural Kurdish active structures ("بڕیاریان دا کە...").
 - DUAL-SPEAKER HYPHENS: If a subtitle block has multiple speakers marked with hyphens (-), strictly keep both lines with their hyphens (-) and translate each speaker separately.
 
