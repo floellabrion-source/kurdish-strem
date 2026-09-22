@@ -1934,6 +1934,7 @@ CRITICAL RULES:
 
     // HLS.js Player Integration
     useEffect(() => {
+        if (loading) return;
         const video = videoRef.current;
         if (!effectiveStreamUrl || !video) return;
 
@@ -2010,7 +2011,7 @@ CRITICAL RULES:
                 hlsRef.current = null;
             }
         };
-    }, [effectiveStreamUrl, isHls, lang]);
+    }, [effectiveStreamUrl, isHls, lang, loading]);
 
     if (loading) return (<div className="watch-loading"><div className="loading-spinner" /></div>);
     if (!movie) return (
