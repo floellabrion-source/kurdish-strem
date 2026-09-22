@@ -1913,6 +1913,13 @@ CRITICAL RULES:
 
     const isSensitiveNow = familyMode && sensitiveScenes.some(s => currentTime >= s.start && currentTime <= s.end);
     const effectiveStreamUrl = getStreamUrl(streamStartTime);
+    const isHls = Boolean(
+        effectiveStreamUrl && (
+            effectiveStreamUrl.includes('.m3u8') ||
+            effectiveStreamUrl.includes('/hls/') ||
+            effectiveStreamUrl.endsWith('m3u8')
+        )
+    );
 
     useEffect(() => {
         ignoreVideoErrorUntilRef.current = Date.now() + 2000;
@@ -1928,28 +1935,36 @@ CRITICAL RULES:
         const video = videoRef.current;
         if (!effectiveStreamUrl || !video) return;
 
-        const isHls = effectiveStreamUrl.includes('.m3u8') || effectiveStreamUrl.includes('/hls/');
         let hlsInstance: Hls | null = null;
 
         if (isHls) {
             if (Hls.isSupported()) {
                 hlsInstance = new Hls({
                     enableWorker: true,
-                    lowLatencyMode: true
+                    lowLatencyMode: true,
+                    backBufferLength: 90
                 });
                 hlsRef.current = hlsInstance;
                 hlsInstance.loadSource(effectiveStreamUrl);
                 hlsInstance.attachMedia(video);
+                
                 hlsInstance.on(Hls.Events.MANIFEST_PARSED, (_, data) => {
                     if (Array.isArray(data.levels) && data.levels.length > 0) {
                         const parsedLevels = data.levels.map((lvl, index) => ({
                             id: index,
+                            height: lvl.height || 0,
                             label: lvl.height ? `${lvl.height}p` : `کواڵێتی ${index + 1}`
-                        }));
-                        setQualityLevels([{ id: -1, label: 'خۆکار (Auto)' }, ...parsedLevels]);
+                        })).sort((a, b) => b.height - a.height);
+
+                        setQualityLevels([{ id: -1, height: 0, label: lang === 'en' ? 'Auto' : 'خۆکار (Auto)' }, ...parsedLevels]);
+                        
+                        if (data.levels[0]?.height) {
+                            setAutoDetectedHeight(data.levels[0].height);
+                        }
                     }
                     video.play().catch(() => {});
                 });
+
                 hlsInstance.on(Hls.Events.LEVEL_SWITCHED, (_, data) => {
                     if (hlsInstance && hlsInstance.levels && hlsInstance.levels[data.level]) {
                         const lvl = hlsInstance.levels[data.level];
@@ -1958,8 +1973,29 @@ CRITICAL RULES:
                         }
                     }
                 });
+
+                hlsInstance.on(Hls.Events.ERROR, (_, data) => {
+                    if (data.fatal) {
+                        switch (data.type) {
+                            case Hls.ErrorTypes.NETWORK_ERROR:
+                                console.warn('HLS Network Error, attempting recovery...', data);
+                                hlsInstance?.startLoad();
+                                break;
+                            case Hls.ErrorTypes.MEDIA_ERROR:
+                                console.warn('HLS Media Error, attempting recovery...', data);
+                                hlsInstance?.recoverMediaError();
+                                break;
+                            default:
+                                console.error('HLS Fatal Error:', data);
+                                hlsInstance?.destroy();
+                                setVideoLoadError(lang === 'en' ? 'Video stream error. Please check file/URL.' : 'کێشە لە پەخشی ڤیدیۆکەدا هەیە. تکایە پشکنین بۆ لینکەکە بکە.');
+                                break;
+                        }
+                    }
+                });
             } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
                 video.src = effectiveStreamUrl;
+                video.play().catch(() => {});
             }
         } else {
             hlsRef.current = null;
@@ -1972,7 +2008,7 @@ CRITICAL RULES:
                 hlsRef.current = null;
             }
         };
-    }, [effectiveStreamUrl]);
+    }, [effectiveStreamUrl, isHls, lang]);
 
     if (loading) return (<div className="watch-loading"><div className="loading-spinner" /></div>);
     if (!movie) return (
@@ -2005,9 +2041,10 @@ CRITICAL RULES:
             <video
                 key={effectiveStreamUrl || 'no-stream'}
                 ref={videoRef}
-                src={effectiveStreamUrl || undefined}
+                src={isHls ? undefined : (effectiveStreamUrl || undefined)}
                 className={`watch-video ${isSensitiveNow ? 'blur-video' : ''} aspect-${aspectRatio} ${isFlipped ? 'video-flipped' : ''}`}
                 autoPlay
+                playsInline
                 onTimeUpdate={handleTimeUpdate}
                 onLoadedMetadata={e => {
                     setVideoLoadError('');
@@ -2017,20 +2054,22 @@ CRITICAL RULES:
                         setDuration(v.duration);
                     }
                     
-                    // Detect true video resolution
+                    // Detect true video resolution for non-HLS streams
                     const realHeight = v.videoHeight || 720;
-                    if (currentQuality <= 0) {
-                        setAutoDetectedHeight(realHeight);
+                    if (!isHls) {
+                        if (currentQuality <= 0) {
+                            setAutoDetectedHeight(realHeight);
+                        }
+                        
+                        const dynamicLevels = [
+                            { id: -1, label: lang === 'en' ? 'Auto' : 'خۆکار (Auto)' },
+                            ...((autoDetectedHeight || realHeight) >= 1000 ? [{ id: 1080, label: '1080p' }] : []),
+                            ...((autoDetectedHeight || realHeight) >= 650 ? [{ id: 720, label: '720p' }] : []),
+                            { id: 480, label: '480p' },
+                            { id: 360, label: '360p' }
+                        ];
+                        setQualityLevels(dynamicLevels);
                     }
-                    
-                    const dynamicLevels = [
-                        { id: -1, label: 'Auto' },
-                        ...((autoDetectedHeight || realHeight) >= 1000 ? [{ id: 1080, label: '1080p' }] : []),
-                        ...((autoDetectedHeight || realHeight) >= 650 ? [{ id: 720, label: '720p' }] : []),
-                        { id: 480, label: '480p' },
-                        { id: 360, label: '360p' }
-                    ];
-                    setQualityLevels(dynamicLevels);
 
                     // If stream is transcoded (on-the-fly quality scaling or MKV), video element starts at 0 (representing streamStartTime offset)
                     if (isAnyTranscoding) {
@@ -3296,7 +3335,7 @@ CRITICAL RULES:
                                         <div className="menu-item-right">
                                             <span className="menu-item-value">
                                                 {currentQuality === -1 
-                                                    ? 'Auto'
+                                                    ? (autoDetectedHeight ? (lang === 'en' ? `Auto (${autoDetectedHeight}p)` : `خۆکار (${autoDetectedHeight}p)`) : (lang === 'en' ? 'Auto' : 'خۆکار (Auto)'))
                                                     : (qualityLevels.find(q => q.id === currentQuality)?.label || `${currentQuality}p`)}
                                             </span>
                                             <ChevronLeft size={16} className="menu-item-arrow" />
