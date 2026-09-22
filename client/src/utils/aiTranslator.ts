@@ -306,6 +306,17 @@ export const translateBatch = async (
         return `${block.id}\n${block.time}\n${t}`;
     }).join('\n\n');
 
+    let previousContextSection = '';
+    if (batchStartIndex > 0) {
+        const prevStart = Math.max(0, batchStartIndex - 3);
+        const prevBlocks = fullBlocks.slice(prevStart, batchStartIndex);
+        if (prevBlocks.length > 0) {
+            previousContextSection = `\nPREVIOUS DIALOGUE CONTEXT (FOR REFERENCE & CONTINUITY ONLY - DO NOT RE-TRANSLATE THESE):\n` +
+                prevBlocks.map(b => `[ID ${b.id}]: "${b.text.replace(/\n/g, ' ')}"`).join('\n') +
+                `\n------------------------------------------------------------\n`;
+        }
+    }
+
     const batchFullText = texts.join(' ').toLowerCase();
     const relevantGlossary = glossaryTerms.filter((g: any) => {
         if (!g.english || !g.english.trim()) return false;
@@ -325,16 +336,27 @@ export const translateBatch = async (
     const prompt = `ACT AS A MASTER CINEMATIC SUBTITLE TRANSLATOR FOR KURDISH (SORANI).
 Translate the following English SRT subtitle batch into natural, fluent, emotionally accurate Central Kurdish (Sorani).
 
+${previousContextSection}
 ${glossarySection}
 ${movieContextStr ? `CONTEXT & SETTING: ${movieContextStr}` : ''}
 ${toneRuleStr}
 
+PART 1: SUBTITLE BREVITY & TIMING (PUNCHY DIALOGUE)
+- CONCISE & NATURAL: Subtitle reading speed is fast. Use short, punchy, impactful Kurdish phrasing. Avoid long-winded or verbose sentences so the viewer can read comfortably within 2 seconds.
+- ACTIVE VOICE OVER PASSIVE: Transform awkward English passives ("It was decided that...") into natural Kurdish active structures ("بڕیاریان دا کە...").
+- DUAL-SPEAKER HYPHENS: If a subtitle block has multiple speakers marked with hyphens (-), strictly keep both lines with their hyphens (-) and translate each speaker separately.
+
 PART 2: IDIOMS, SLANG & CINEMATIC DIALOGUE (CONTEXT OVER LITERAL)
 - ZERO LITERAL CALQUES: NEVER translate English idioms, metaphors, or conversational slang word-for-word. Always translate the true intended meaning into authentic colloquial Kurdish spoken dialogue.
 - STUDY THESE CRITICAL EXAMPLES:
-  • "You had me there!" -> "دەستت لێم بڕی! / خستتە داوەکەتەوە! / باوەڕم پێ کردیت!" (NEVER literally translate as "تۆ منی لێرە هێشتەوە!")
+  • "You had me there!" -> "دەستت لێم بڕی! / خستتە داوەکەتەوە! / باوەڕم پێ کردیت!" (NEVER "تۆ منی لێرە هێشتەوە!")
   • "I think she took that well." -> "وا بزانم دیارە پێی تێکنەچوو / باش قبووڵی کرد." (NEVER "بە باشی وەری گرت.")
   • "Maybe you're not a failure after all." -> "ڕەنگە لە کۆتاییدا ئەوەندەش شکستخواردوو نەبیت." (NEVER 3rd person "شکستی نەهێناوە")
+  • "Over my dead body!" -> "بەسەر لاشەی مندا! / مەگەر بمکوژیت!" (NEVER "بە سەر لاشەی مردوومدا")
+  • "Cut me some slack!" -> "ئەوەندە توند مەبە لەگەڵم! / کەمێک لێم گەڕێ!"
+  • "Speak of the devil!" -> "ناوی گورگ بێنە و دار هەڵگرە! / باسی کێمان دەکرد!"
+  • "Spill the beans!" -> "ڕاستییەکە بدرکێنە! / هەموو شتێک بڵێ!"
+  • "In your dreams!" -> "لە خەوتدا بیبینیت!"
   • "Cut it out!" -> "بەسیکە! / وازی لێبێنە!"
   • "Hit the road!" -> "بکەوە ڕێ! / دەی بڕۆ!"
   • "Piece of cake!" -> "وەک ئاو خواردنەوەیە / زۆر ئاسانە!"
@@ -344,9 +366,11 @@ PART 2: IDIOMS, SLANG & CINEMATIC DIALOGUE (CONTEXT OVER LITERAL)
 PART 3: STRICT GRAMMATICAL PRONOUN & COHESION RULES
 - PRONOUN CONJUGATION: When English says "You", Kurdish MUST conjugate for 2nd person ("تۆ ... دەکەیت / نەبوویت / بیت"), NEVER shift to 3rd person ("ئەو / دەکات").
 - NATURAL WORD ORDER: Place verbs naturally in Kurdish sentences. Avoid awkward, stiff machine-translated structures.
+- KURDISH PUNCTUATION: Use proper Kurdish punctuation (، for comma, ؟ for question mark) while preserving exclamation marks (!) and ellipses (...).
 - SURROUNDING CONTEXT: Always read the lines before and after to match emotional intensity, sarcasm, jokes, and character gender.
 
 PART 4: STRICT SRT FORMATTING & DATA INTEGRITY (CRITICAL)
+- TARGET BATCH ONLY: If "PREVIOUS DIALOGUE CONTEXT" was provided above, it is for context only. Translate ONLY the target subtitle batch below (starting from ID ${fullBlocks[batchStartIndex]?.id || 1}).
 - ABSOLUTE PRESERVATION OF TIMESTAMPS & INDEX NUMBERS: Copy the EXACT Index Number and EXACT Timestamp from original. DO NOT alter timestamps. DO NOT merge or split blocks.
 - STRICT LINE-BY-LINE PROCESSING: Process sequentially, line by line. Do not skip any blocks.
 - NO UNTRANSLATED TEXT: Every English dialogue must be translated into Central Kurdish.
