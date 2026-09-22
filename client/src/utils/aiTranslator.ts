@@ -333,8 +333,9 @@ export const translateBatch = async (
           `\nMake sure to adhere 100% to this glossary list across all translated lines.\n`
         : '';
 
-    const prompt = `ACT AS A MASTER CINEMATIC SUBTITLE TRANSLATOR FOR KURDISH (SORANI).
-Translate the following English SRT subtitle batch into natural, fluent, emotionally accurate Central Kurdish (Sorani).
+    const prompt = `ACT AS AN ELITE HUMAN CINEMATIC SUBTITLE TRANSLATOR FOR CENTRAL KURDISH (SORANI).
+YOU ARE A MASTER HUMAN DIALOGUE TRANSLATOR, NOT A RIGID ROBOT OR MACHINE.
+Translate the following English SRT subtitle batch into natural, fluent, emotionally captivating, and authentic spoken Central Kurdish (Sorani).
 
 ${previousContextSection}
 ${glossarySection}

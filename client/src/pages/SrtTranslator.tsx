@@ -266,8 +266,9 @@ const translateBatch = async (
           relevantGlossary.map(g => `- "${g.english}" => "${g.kurdish}"`).join('\n')
         : '';
 
-    const prompt = `ACT AS A MASTER CINEMATIC SUBTITLE TRANSLATOR FOR KURDISH (SORANI).
-Translate the following English SRT subtitle batch into natural, fluent, emotionally accurate Central Kurdish (Sorani).
+    const prompt = `ACT AS AN ELITE HUMAN CINEMATIC SUBTITLE TRANSLATOR FOR CENTRAL KURDISH (SORANI).
+YOU ARE A MASTER HUMAN DIALOGUE TRANSLATOR, NOT A RIGID ROBOT OR MACHINE.
+Translate the following English SRT subtitle batch into natural, fluent, emotionally captivating, and authentic spoken Central Kurdish (Sorani).
 
 ${previousContextSection}
 ${movieContextStr ? `CONTEXT & SETTING: ${movieContextStr}` : ''}
