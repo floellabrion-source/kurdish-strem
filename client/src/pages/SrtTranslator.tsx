@@ -78,17 +78,17 @@ export const AI_TRANSLATION_MODELS = [
         icon: '🧠'
     },
     {
-        id: 'anthropic/claude-sonnet-4.6',
+        id: 'anthropic/claude-sonnet-5',
         name: 'Claude Sonnet Latest',
-        desc: 'نوێترین و بەهێزترین وەرگێڕی ئەدەبی و سینەمایی (4.6)',
+        desc: 'نوێترین و بەهێزترین وەرگێڕی ئەدەبی و سینەمایی (Sonnet 5)',
         badge: 'سینەمایی باڵا ✨',
         icon: '✨'
     },
     {
-        id: 'anthropic/claude-sonnet-4.5',
-        name: 'Claude Sonnet 4.5',
-        desc: 'ڤێرژنی جێگیر و داهێنەری باڵا (پێشنیارکراو)',
-        badge: 'پێشنیارکراو ⭐',
+        id: 'anthropic/claude-sonnet-4.6',
+        name: 'Claude Sonnet 4.6',
+        desc: 'ڤێرژنی جێگیر و داهێنەری باڵا',
+        badge: 'جێگیر 💎',
         icon: '💎'
     },
     {
@@ -111,9 +111,9 @@ export const AI_TRANSLATION_MODELS = [
 export const MODEL_PRICING: Record<string, { inPricePerM: number; outPricePerM: number }> = {
     'google/gemini-3.8-flash': { inPricePerM: 0.75, outPricePerM: 3.75 },
     'google/gemini-3.7-flash': { inPricePerM: 0.75, outPricePerM: 3.75 },
+    'anthropic/claude-sonnet-5': { inPricePerM: 3.0, outPricePerM: 15.0 },
     'anthropic/claude-sonnet-4.6': { inPricePerM: 3.0, outPricePerM: 15.0 },
     'anthropic/claude-sonnet-4.5': { inPricePerM: 3.0, outPricePerM: 15.0 },
-    'anthropic/claude-sonnet-5': { inPricePerM: 3.0, outPricePerM: 15.0 },
     'google/gemini-2.5-flash': { inPricePerM: 0.15, outPricePerM: 0.60 },
     'openai/gpt-4o': { inPricePerM: 2.50, outPricePerM: 10.00 }
 };
