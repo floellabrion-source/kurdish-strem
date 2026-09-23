@@ -868,6 +868,7 @@ Format your output EXACTLY as follows using delimiter tags:
                 }
             } catch (e) {}
 
+
             for (let i = 0; i < untranslated.length; i += BATCH_SIZE) {
                 if (editorPauseRef.current) {
                     const pausedPct = Math.round((done / untranslated.length) * 100);
@@ -877,42 +878,77 @@ Format your output EXACTLY as follows using delimiter tags:
                 }
 
                 const batch = untranslated.slice(i, i + BATCH_SIZE);
-                const targetBlocks: SubBlock[] = batch.map(b => ({
+
+                // Skip promotional/advertisement lines (URLs, VIP offers etc.)
+                const isPromoLine = (eng: string) => /https?:\/\/|www\.|\.org|\.com|remove all ads|VIP member|support us/i.test(eng);
+                const realBatch = batch.filter(b => !isPromoLine(b.english));
+                const promoBatch = batch.filter(b => isPromoLine(b.english));
+
+                // Mark promo lines as done (leave them as-is, no Kurdish needed)
+                if (promoBatch.length > 0) {
+                    done += promoBatch.length;
+                }
+
+                if (realBatch.length === 0) {
+                    const currentPct = Math.min(99, Math.round((done / untranslated.length) * 100));
+                    setTranslateAllProgress({ status: 'running', percent: currentPct });
+                    continue;
+                }
+
+                const targetBlocks: SubBlock[] = realBatch.map(b => ({
                     id: String(b.id),
                     time: `${b.startTime} --> ${b.endTime}`,
                     text: b.english
                 }));
 
-                const firstLineIdx = lines.findIndex(l => l.id === batch[0].id);
+                const firstLineIdx = lines.findIndex(l => l.id === realBatch[0].id);
                 const prevBlocks = lines.slice(Math.max(0, firstLineIdx - 3), firstLineIdx);
                 const prevContextStr = prevBlocks.map(b => `[ID ${b.id}]: "${b.english.replace(/\n/g, ' ')}"`).join('\n');
 
-                const batchRes = await translateBatch(
-                    targetBlocks,
-                    prevContextStr,
-                    selectedModel,
-                    movieTitle,
-                    toneRuleStr,
-                    glossary,
-                    characterBible
-                );
-
-                setLines(prev => {
-                    const next = [...prev];
-                    batch.forEach((item, bIdx) => {
-                        const targetIdx = next.findIndex(x => x.id === item.id);
-                        if (targetIdx !== -1 && batchRes.translatedList[bIdx]) {
-                            next[targetIdx] = { ...next[targetIdx], kurdish: batchRes.translatedList[bIdx] };
+                // Retry up to 3 times if a batch fails
+                let batchRes: Awaited<ReturnType<typeof translateBatch>> | null = null;
+                for (let attempt = 1; attempt <= 3; attempt++) {
+                    try {
+                        batchRes = await translateBatch(
+                            targetBlocks,
+                            prevContextStr,
+                            selectedModel,
+                            movieTitle,
+                            toneRuleStr,
+                            glossary,
+                            characterBible
+                        );
+                        break; // success
+                    } catch (batchErr: any) {
+                        console.warn(`[Batch ${i}-${i + BATCH_SIZE}] هەلە attempt ${attempt}/3:`, batchErr?.message);
+                        if (attempt < 3) {
+                            await new Promise(r => setTimeout(r, 2000 * attempt));
+                        } else {
+                            // After 3 failures, skip this batch and continue
+                            showToast(`⚠️ دێڕی ${realBatch[0].id}-${realBatch[realBatch.length - 1].id} نەتوانرا وەرگێڕدرێت، گۆڕانکاری دێت...`, 'error');
                         }
+                    }
+                }
+
+                if (batchRes) {
+                    setLines(prev => {
+                        const next = [...prev];
+                        realBatch.forEach((item, bIdx) => {
+                            const targetIdx = next.findIndex(x => x.id === item.id);
+                            if (targetIdx !== -1 && batchRes!.translatedList[bIdx]) {
+                                next[targetIdx] = { ...next[targetIdx], kurdish: batchRes!.translatedList[bIdx] };
+                            }
+                        });
+                        return next;
                     });
-                    return next;
-                });
+                }
 
                 setAiUsedInSession(true);
-                done += batch.length;
+                done += realBatch.length;
                 const currentPct = Math.min(99, Math.round((done / untranslated.length) * 100));
                 setTranslateAllProgress({ status: 'running', percent: currentPct });
             }
+
 
             showToast('وەرگێڕانی هەموو دێڕەکان بە سەرکەوتوویی تەواو بوو! ✓');
             setTranslateAllProgress(null);
