@@ -420,6 +420,97 @@ ${sampleScript}`;
     return { bible: parsedBible, inTok, outTok };
 };
 
+export interface LineAlternativeOption {
+    toneId: 'casual' | 'formal' | 'punchy';
+    label: string;
+    icon: string;
+    text: string;
+}
+
+export const generateLineAlternatives = async (
+    englishLine: string,
+    currentKurdish: string = '',
+    surroundingContext: string = '',
+    model: string = 'google/gemini-3.8-flash',
+    movieTitle: string = '',
+    signal?: AbortSignal
+): Promise<LineAlternativeOption[]> => {
+    if (!englishLine || !englishLine.trim()) return [];
+
+    const prompt = `ACT AS AN ELITE CINEMATIC SUBTITLE TRANSLATOR FOR CENTRAL KURDISH (SORANI).
+Your task is to provide EXACTLY 3 DISTINCT AND CREATIVE translation alternatives in Central Kurdish (Sorani) for this English subtitle line:
+
+${movieTitle ? `TITLE / CONTEXT: ${movieTitle}` : ''}
+${surroundingContext ? `SURROUNDING SCENE CONTEXT:\n${surroundingContext}\n` : ''}
+TARGET ENGLISH LINE:
+"${englishLine}"
+
+${currentKurdish ? `CURRENT DRAFT: "${currentKurdish}"\n` : ''}
+
+TRANSLATION VARIATION STYLES:
+1. CASUAL (سینەمایی و ڕۆژانە): Natural, colloquial, authentic cinematic Kurdish dialogue.
+2. FORMAL (ئەدەبی و پاراو): High-standard, literary, elegant Kurdish grammar.
+3. PUNCHY (کورت و چڕ): Punchy, fast-reading, compact subtitle length without omitting core meaning.
+
+CRITICAL RULES:
+- If English has multiple dialogue lines or hyphens (-), preserve the exact multi-line structure in all 3 options.
+- No word-for-word translation calques.
+- Output MUST BE VALID JSON ONLY:
+
+\`\`\`json
+{
+  "casual": "وەرگێڕانی ڕۆژانە و سینەمایی",
+  "formal": "وەرگێڕانی ئەدەبی و پاراو",
+  "punchy": "وەرگێڕانی کورت و چڕ"
+}
+\`\`\``;
+
+    const resp = await axios.post('/api/ai/generate', {
+        contents: [{ parts: [{ text: prompt }] }],
+        aiTask: 'srt_line_alternatives',
+        model: model,
+        max_tokens: 800,
+        movieTitle: movieTitle || 'Line Alternatives'
+    }, {
+        timeout: 45000,
+        signal
+    });
+
+    let raw: string = resp.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    raw = raw.replace(/```(json)?/gi, '').replace(/```/g, '').trim();
+
+    try {
+        const parsed = JSON.parse(raw);
+        return [
+            {
+                toneId: 'casual',
+                label: 'سینەمایی و ڕۆژانە',
+                icon: '🎭',
+                text: (parsed.casual || '').trim() || currentKurdish || englishLine
+            },
+            {
+                toneId: 'formal',
+                label: 'ئەدەبی و پاراو',
+                icon: '📜',
+                text: (parsed.formal || '').trim() || currentKurdish || englishLine
+            },
+            {
+                toneId: 'punchy',
+                label: 'کورت و چڕ',
+                icon: '⚡',
+                text: (parsed.punchy || '').trim() || currentKurdish || englishLine
+            }
+        ];
+    } catch (e) {
+        console.warn('Failed to parse line alternatives JSON, fallback:', raw);
+        return [
+            { toneId: 'casual', label: 'سینەمایی و ڕۆژانە', icon: '🎭', text: raw || currentKurdish },
+            { toneId: 'formal', label: 'ئەدەبی و پاراو', icon: '📜', text: currentKurdish || raw },
+            { toneId: 'punchy', label: 'کورت و چڕ', icon: '⚡', text: currentKurdish || raw }
+        ];
+    }
+};
+
 // ─── PART 2 & 3: TRANSLATION QUALITY & STRICT SRT FORMATTING ───
 export const translateBatch = async (
     texts: string[], 
@@ -931,16 +1022,33 @@ export async function runAiTranslationAndAnalysis(
         };
     }
 
-    // 2.5 Pre-Extract Character Bible & Movie Lore (Pass 1)
+    // 2.5 Pre-Extract or Load Persistent Character Bible & Movie Lore (Pass 1)
     let characterBible: MovieLoreAndBible | undefined = undefined;
     if (mode === 'all' || mode === 'translate_only') {
-        onProgress?.('سکانکردنی کەسایەتییەکان و ئامادەکردنی فەرهەنگی زیرەک (Character Bible)...', 12, 'running');
+        onProgress?.('پشکنینی یادگەی کەسایەتییەکان (Character Bible)...', 11, 'running');
         try {
-            const bibleRes = await extractMovieLoreAndCharacterBible(origText, contextStr || 'Movie/Show', contextStr, selectedModel, signal);
-            characterBible = bibleRes.bible;
-            onStatsUpdate?.(bibleRes.inTok, bibleRes.outTok);
-        } catch (e: any) {
-            console.warn('Character Bible extraction skipped or failed:', e);
+            // First check persistent series memory
+            const existingBibleRes: any = await axios.get(`/api/admin/movies/${movieId}/character-bible`, { signal }).catch(() => null);
+            if (existingBibleRes && existingBibleRes.data && existingBibleRes.data.characterBible && Array.isArray(existingBibleRes.data.characterBible.characters) && existingBibleRes.data.characterBible.characters.length > 0) {
+                characterBible = existingBibleRes.data.characterBible;
+                onProgress?.('یادگەی پێشووی کەسایەتییەکان لە سەرڤەر بارکرا ✓', 12, 'running');
+            }
+        } catch (e) {}
+
+        if (!characterBible || !characterBible.characters || characterBible.characters.length === 0) {
+            onProgress?.('سکانکردنی کەسایەتییەکان و ئامادەکردنی فەرهەنگی زیرەک (Character Bible)...', 12, 'running');
+            try {
+                const bibleRes = await extractMovieLoreAndCharacterBible(origText, contextStr || 'Movie/Show', contextStr, selectedModel, signal);
+                characterBible = bibleRes.bible;
+                onStatsUpdate?.(bibleRes.inTok, bibleRes.outTok);
+
+                // Save to server for persistent series memory across all episodes
+                if (characterBible && (characterBible.characters.length > 0 || characterBible.specialEntities.length > 0)) {
+                    axios.post(`/api/admin/movies/${movieId}/character-bible`, { characterBible }).catch(() => {});
+                }
+            } catch (e: any) {
+                console.warn('Character Bible extraction skipped or failed:', e);
+            }
         }
     }
 

@@ -3338,9 +3338,13 @@ app.post('/api/ai/generate', requireAuth, aiLimiter, async (req, res) => {
     }
 
     try {
-        const maxTokens = req.body?.max_tokens || ((aiTask === 'srt_translation') ? 2000 : ((aiTask === 'synopsis') ? 800 : ((aiTask === 'quiz_generation' || aiTask === 'flashcard_generation') ? 400 : (aiTask === 'grammar_explain' ? 250 : 200))));
+        const maxTokens = req.body?.max_tokens || ((aiTask.startsWith('srt_')) ? 2500 : ((aiTask === 'synopsis') ? 800 : ((aiTask === 'quiz_generation' || aiTask === 'flashcard_generation') ? 400 : (aiTask === 'grammar_explain' ? 250 : 200))));
         
         const ALLOWED_SRT_MODELS = [
+            'google/gemini-3.8-flash',
+            'google/gemini-3.7-flash',
+            'google/gemini-2.5-flash',
+            'google/gemini-2.5-pro',
             'anthropic/claude-sonnet-4.6',
             'anthropic/claude-sonnet-4.5',
             'anthropic/claude-sonnet-5',
@@ -3349,8 +3353,8 @@ app.post('/api/ai/generate', requireAuth, aiLimiter, async (req, res) => {
             'openai/gpt-4o'
         ];
 
-        let modelToUse = OPENROUTER_MODEL || 'google/gemini-2.0-flash-001';
-        if (aiTask === 'srt_translation' && req.body?.model && ALLOWED_SRT_MODELS.includes(req.body.model)) {
+        let modelToUse = OPENROUTER_MODEL || 'google/gemini-2.5-flash';
+        if (req.body?.model && (ALLOWED_SRT_MODELS.includes(req.body.model) || req.body.model.startsWith('google/') || req.body.model.startsWith('anthropic/') || req.body.model.startsWith('openai/'))) {
             modelToUse = req.body.model;
         }
 
@@ -4574,6 +4578,42 @@ app.delete('/api/admin/movies/:id/srt/:type', requireAuth, requireAdmin, (req, r
     
     writeMovies(movies);
     res.json({ success: true, movie: movies[idx] });
+});
+
+// ─── SERIES / MOVIE PERSISTENT CHARACTER BIBLE & LORE ───
+app.get('/api/admin/movies/:id/character-bible', requireAuth, requireAdmin, (req, res) => {
+    const movieId = req.params.id;
+    const biblePath = path.join(MOVIES_DIR, movieId, 'character_bible.json');
+    if (fs.existsSync(biblePath)) {
+        try {
+            const raw = fs.readFileSync(biblePath, 'utf8');
+            const data = JSON.parse(raw);
+            return res.json({ characterBible: data });
+        } catch (e) {
+            console.error('Error reading character_bible.json:', e);
+        }
+    }
+    res.json({ characterBible: null });
+});
+
+app.post('/api/admin/movies/:id/character-bible', requireAuth, requireAdmin, (req, res) => {
+    const movieId = req.params.id;
+    const { characterBible } = req.body;
+    if (!characterBible) {
+        return res.status(400).json({ error: 'characterBible data is required' });
+    }
+    const movieDir = path.join(MOVIES_DIR, movieId);
+    if (!fs.existsSync(movieDir)) {
+        fs.mkdirSync(movieDir, { recursive: true });
+    }
+    const biblePath = path.join(movieDir, 'character_bible.json');
+    try {
+        fs.writeFileSync(biblePath, JSON.stringify(characterBible, null, 2), 'utf8');
+        res.json({ success: true, message: 'Character Bible saved successfully' });
+    } catch (e) {
+        console.error('Error writing character_bible.json:', e);
+        res.status(500).json({ error: 'Failed to save character bible' });
+    }
 });
 
 app.get('/api/admin/movies/:id/srt-content', requireAuth, requireAdmin, (req, res) => {

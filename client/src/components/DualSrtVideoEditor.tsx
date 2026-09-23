@@ -11,6 +11,7 @@ import SubtitleDiffViewer from './SubtitleDiffViewer';
 import InternalNotesModal from './InternalNotesModal';
 import SubtitleQcModal from './SubtitleQcModal';
 import { runSubtitleQc } from '../utils/subtitleQc';
+import { generateLineAlternatives, LineAlternativeOption } from '../utils/aiTranslator';
 import { useAuth } from '../context/AuthContext';
 import { useWebSocket } from '../context/WebSocketContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -220,11 +221,12 @@ export default function DualSrtVideoEditor({
     const [newTermScope, setNewTermScope] = useState<'show' | 'global'>('show');
     const [addingTerm, setAddingTerm] = useState<boolean>(false);
 
-    // AI Line Suggestions State (3 creative options)
+    // AI Line Suggestions State (3 creative classified options: Casual, Formal, Punchy)
     const [lineSuggestions, setLineSuggestions] = useState<{
         lineId: number;
-        options: string[];
+        options: LineAlternativeOption[];
     } | null>(null);
+    const [generatingAlternativesLine, setGeneratingAlternativesLine] = useState<number | null>(null);
 
     // Automated Subtitle QC State
     const [showQcModal, setShowQcModal] = useState<boolean>(false);
@@ -779,16 +781,48 @@ Format your output EXACTLY as follows using delimiter tags:
             const chosenText = extractedOptions[0] || rawText;
             handleLineChange(line.id, 'kurdish', chosenText);
             setAiUsedInSession(true);
-            setLineSuggestions({
-                lineId: line.id,
-                options: extractedOptions.slice(0, 3)
-            });
-            showToast(`دێڕی #${line.id} بە ۳ پێشنیاری جیاواز داڕێژرایەوە ✓`);
+            showToast(`دێڕی #${line.id} بە سەرکەوتوویی وەرگێڕدرا ✓`);
         } catch (err) {
             console.error(err);
             showToast('هەڵەیەک ڕوویدا لە وەرگێڕاندا', 'error');
         } finally {
             setTranslatingLine(null);
+        }
+    };
+
+    // 1-Click Alternative AI Suggestions (Casual, Formal, Punchy)
+    const handleGenerateAlternatives = async (line: SubtitleLine) => {
+        if (!line.english.trim()) {
+            showToast('تکایە سەرەتا دەقی ئینگلیزی بنووسە', 'error');
+            return;
+        }
+        setGeneratingAlternativesLine(line.id);
+        try {
+            const currentIndex = lines.findIndex(l => l.id === line.id);
+            const beforeLines = lines.slice(Math.max(0, currentIndex - 3), currentIndex)
+                .filter(l => l.english.trim())
+                .map(l => `EN: "${l.english.replace(/\n/g, ' ')}" -> KU: "${l.kurdish?.replace(/\n/g, ' ') || ''}"`)
+                .join('\n');
+
+            const selectedModel = localStorage.getItem('ks_srt_ai_model') || 'google/gemini-3.8-flash';
+            const alts = await generateLineAlternatives(
+                line.english,
+                line.kurdish,
+                beforeLines,
+                selectedModel,
+                movieTitle
+            );
+
+            setLineSuggestions({
+                lineId: line.id,
+                options: alts
+            });
+            showToast(`۳ شێوازی جیاواز (ڕۆژانە، ئەدەبی، کورت) ئامادەکران ✨`);
+        } catch (err) {
+            console.error(err);
+            showToast('نەتوانرا پێشنیارە بەدیلەکان دروست بکرێن', 'error');
+        } finally {
+            setGeneratingAlternativesLine(null);
         }
     };
 
@@ -1780,11 +1814,11 @@ ${batchText}`;
                                                     dir="rtl"
                                                 />
 
-                                                {/* AI 3-Alternative Suggestions Bar */}
+                                                {/* AI 3-Alternative Suggestions Bar (Casual, Formal, Punchy) */}
                                                 {lineSuggestions && lineSuggestions.lineId === line.id && lineSuggestions.options.length > 0 && (
                                                     <div className="line-ai-suggestions-box" onClick={e => e.stopPropagation()}>
                                                         <div className="line-ai-suggestions-header">
-                                                            <span className="suggestions-title">✨ {lang === 'en' ? '3 Cinematic Suggestions (click to apply):' : '۳ پێشنیاری سینەمایی (کلیک بکە بۆ هەڵبژاردن):'}</span>
+                                                            <span className="suggestions-title">✨ {lang === 'en' ? '3 Creative Variations (click to apply):' : '۳ شێوازی جیاوازی کوردی (کلیک بکە بۆ هەڵبژاردن):'}</span>
                                                             <button
                                                                 type="button"
                                                                 className="btn-close-suggestions"
@@ -1799,15 +1833,18 @@ ${batchText}`;
                                                                 <button
                                                                     key={optIdx}
                                                                     type="button"
-                                                                    className={`line-ai-suggestion-pill ${line.kurdish === opt ? 'active' : ''}`}
+                                                                    className={`line-ai-suggestion-pill ${line.kurdish === opt.text ? 'active' : ''}`}
                                                                     onClick={() => {
-                                                                        handleLineChange(line.id, 'kurdish', opt);
-                                                                        showToast(lang === 'en' ? `Applied variation #${optIdx + 1} ✓` : `شێوازی #${optIdx + 1} جێگیر کرا ✓`);
+                                                                        handleLineChange(line.id, 'kurdish', opt.text);
+                                                                        showToast(lang === 'en' ? `Applied "${opt.label}" style ✓` : `شێوازی "${opt.label}" جێگیر کرا ✓`);
                                                                     }}
-                                                                    title={lang === 'en' ? "Click to apply this suggestion" : "کلیک بکە بۆ جێگیرکردنی ئەم ڕستەیە"}
+                                                                    title={lang === 'en' ? `Click to apply ${opt.label}` : `کلیک بکە بۆ جێگیرکردنی شێوازی ${opt.label}`}
                                                                 >
-                                                                    <span className="opt-num">{optIdx + 1}</span>
-                                                                    <span className="opt-txt">{opt}</span>
+                                                                    <div className="opt-tone-badge">
+                                                                        <span className="opt-icon">{opt.icon}</span>
+                                                                        <span className="opt-label">{opt.label}</span>
+                                                                    </div>
+                                                                    <span className="opt-txt">{opt.text}</span>
                                                                 </button>
                                                             ))}
                                                         </div>
@@ -1827,6 +1864,18 @@ ${batchText}`;
                                                     }}
                                                 >
                                                     <Shield size={12} color={isLineSensitive(line) ? "#f87171" : "currentColor"} />
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className="btn-action-mini btn-ai-alternatives"
+                                                    disabled={generatingAlternativesLine === line.id || isTranslating}
+                                                    title={lang === 'en' ? "3-Alternative Suggestions (Casual, Formal, Punchy)" : "۳ پێشنیاری بەدیل (ڕۆژانە، ئەدەبی، کورت)"}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleGenerateAlternatives(line);
+                                                    }}
+                                                >
+                                                    {generatingAlternativesLine === line.id ? <Loader2 size={12} className="spinning" /> : <ListFilter size={12} color="#c084fc" />}
                                                 </button>
                                                 <button
                                                     className="btn-action-mini btn-ai-single"

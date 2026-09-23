@@ -985,6 +985,34 @@
     box-shadow: 0 0 8px rgba(168, 85, 247, 0.3);
 }
 
+.opt-tone-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(168, 85, 247, 0.2);
+    border: 1px solid rgba(168, 85, 247, 0.4);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 800;
+    color: #e9d5ff;
+    flex-shrink: 0;
+}
+
+.opt-tone-badge .opt-icon {
+    font-size: 12px;
+}
+
+.opt-tone-badge .opt-label {
+    white-space: nowrap;
+}
+
+.line-ai-suggestion-pill.active .opt-tone-badge {
+    background: #a855f7;
+    border-color: #c084fc;
+    color: #ffffff;
+}
+
 .opt-num {
     font-size: 10px;
     font-weight: 800;
@@ -1028,6 +1056,13 @@
     justify-content: center;
     cursor: pointer;
     transition: all 0.2s ease;
+}
+
+.btn-ai-alternatives:hover {
+    background: rgba(192, 132, 252, 0.25);
+    color: #e9d5ff;
+    border-color: #c084fc;
+    box-shadow: 0 0 10px rgba(192, 132, 252, 0.4);
 }
 
 .btn-ai-single:hover {
