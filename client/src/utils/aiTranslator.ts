@@ -658,6 +658,17 @@ ${srtBatch}`;
                     result[i] = translatedBlock.text.trim();
                 }
             });
+        } else {
+            // Strategy 2: Line by line / block split fallback
+            const rawLines = raw.split(/\n\s*\n/).map(s => s.trim()).filter(Boolean);
+            if (rawLines.length >= texts.length) {
+                texts.forEach((_, i) => {
+                    const blockLines = rawLines[i].split('\n').filter(l => !l.includes('-->') && !/^\d+$/.test(l.trim()));
+                    if (blockLines.length > 0) {
+                        result[i] = blockLines.join('\n').trim();
+                    }
+                });
+            }
         }
     } catch (err) {
         console.warn("SRT parsing failed, fallback...", raw, err);
