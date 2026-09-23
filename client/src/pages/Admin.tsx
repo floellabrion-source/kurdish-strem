@@ -208,7 +208,7 @@ export default function Admin() {
 
 const [movieTransProgress, setMovieTransProgress] = useState<Record<string, { status: 'running' | 'paused' | 'done', statusText: string, percent: number }>>({});
 const [aiMovieTarget, setAiMovieTarget] = useState<Movie | null>(null);
-const [aiSelectedModel, setAiSelectedModel] = useState<string>('google/gemini-2.5-flash');
+const [aiSelectedModel, setAiSelectedModel] = useState<string>('google/gemini-3.8-flash');
 const [aiSelectedTone, setAiSelectedTone] = useState<string>('casual');
 const [aiStoryContext, setAiStoryContext] = useState<string>('');
 const [fetchingSynopsis, setFetchingSynopsis] = useState<boolean>(false);
