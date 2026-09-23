@@ -11,7 +11,7 @@ import SubtitleDiffViewer from './SubtitleDiffViewer';
 import InternalNotesModal from './InternalNotesModal';
 import SubtitleQcModal from './SubtitleQcModal';
 import { runSubtitleQc } from '../utils/subtitleQc';
-import { generateLineAlternatives, LineAlternativeOption, translateBatch, SubBlock, MovieLoreAndBible, TRANSLATION_TONES } from '../utils/aiTranslator';
+import { generateLineAlternatives, LineAlternativeOption, translateBatch, SubBlock, MovieLoreAndBible, TRANSLATION_TONES, isLineUntranslated } from '../utils/aiTranslator';
 import { useAuth } from '../context/AuthContext';
 import { useWebSocket } from '../context/WebSocketContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -153,6 +153,10 @@ const matchKurdishToEnglish = (
     });
 
     return merged;
+};
+
+const isSubLineUntranslated = (l: SubtitleLine): boolean => {
+    return isLineUntranslated(l.kurdish, l.english);
 };
 
 export default function DualSrtVideoEditor({
@@ -836,8 +840,8 @@ Format your output EXACTLY as follows using delimiter tags:
         }
 
         editorPauseRef.current = false;
-        // Filter lines that have English text and either Kurdish is empty or identical to English
-        const untranslated = lines.filter(l => l.english.trim() && (!l.kurdish.trim() || l.kurdish.trim().toLowerCase() === l.english.trim().toLowerCase()));
+        // Filter lines that have English text and are truly untranslated (empty or raw untranslated English)
+        const untranslated = lines.filter(l => isSubLineUntranslated(l));
         if (untranslated.length === 0) {
             showToast('هەموو دێڕەکان پێشتر بە کوردی وەرگێڕدراون ✓', 'success');
             return;
@@ -864,12 +868,6 @@ Format your output EXACTLY as follows using delimiter tags:
                 }
             } catch (e) {}
 
-            const fullBlocks: SubBlock[] = lines.map(l => ({
-                id: String(l.id),
-                time: `${l.startTime} --> ${l.endTime}`,
-                text: l.english
-            }));
-
             for (let i = 0; i < untranslated.length; i += BATCH_SIZE) {
                 if (editorPauseRef.current) {
                     const pausedPct = Math.round((done / untranslated.length) * 100);
@@ -879,13 +877,19 @@ Format your output EXACTLY as follows using delimiter tags:
                 }
 
                 const batch = untranslated.slice(i, i + BATCH_SIZE);
-                const batchTexts = batch.map(b => b.english);
-                const batchFirstIndex = lines.findIndex(l => l.id === batch[0].id);
+                const targetBlocks: SubBlock[] = batch.map(b => ({
+                    id: String(b.id),
+                    time: `${b.startTime} --> ${b.endTime}`,
+                    text: b.english
+                }));
+
+                const firstLineIdx = lines.findIndex(l => l.id === batch[0].id);
+                const prevBlocks = lines.slice(Math.max(0, firstLineIdx - 3), firstLineIdx);
+                const prevContextStr = prevBlocks.map(b => `[ID ${b.id}]: "${b.english.replace(/\n/g, ' ')}"`).join('\n');
 
                 const batchRes = await translateBatch(
-                    batchTexts,
-                    fullBlocks,
-                    Math.max(0, batchFirstIndex),
+                    targetBlocks,
+                    prevContextStr,
                     selectedModel,
                     movieTitle,
                     toneRuleStr,
@@ -931,7 +935,7 @@ Format your output EXACTLY as follows using delimiter tags:
 
             const translatedSrtText = lines
                 .map((l, i) => {
-                    const k = isLineUntranslated(l) ? '' : l.kurdish.trim();
+                    const k = isSubLineUntranslated(l) ? '' : l.kurdish.trim();
                     return `${i + 1}\n${l.startTime} --> ${l.endTime}\n${k}`;
                 })
                 .join('\n\n');
@@ -982,20 +986,12 @@ Format your output EXACTLY as follows using delimiter tags:
     const effectiveVideoSrc = localVideoUrl || videoUrl || `/api/stream/movies/${movieId}${seasonNum !== undefined && episodeNum !== undefined ? `?s=${seasonNum}&e=${episodeNum}` : ''}`;
     const activeLine = lines.find(l => currentTime >= l.startSec && currentTime <= l.endSec);
 
-    const isLineUntranslated = (l: SubtitleLine) => {
-        const k = l.kurdish.trim();
-        const e = l.english.trim();
-        if (!k) return true;
-        if (e && k.toLowerCase() === e.toLowerCase() && /[a-zA-Z]{2,}/.test(k)) return true;
-        return false;
-    };
-
     const toggleEmptyFilter = () => {
         if (filterMode === 'empty') {
             setFilterMode('all');
             setEmptyFilterIds(null);
         } else {
-            const ids = lines.filter(l => isLineUntranslated(l)).map(l => l.id);
+            const ids = lines.filter(l => isSubLineUntranslated(l)).map(l => l.id);
             setEmptyFilterIds(ids);
             setFilterMode('empty');
         }
@@ -1009,10 +1005,10 @@ Format your output EXACTLY as follows using delimiter tags:
             if (emptyFilterIds) {
                 result = result.filter(l => emptyFilterIds.includes(l.id));
             } else {
-                result = result.filter(l => isLineUntranslated(l));
+                result = result.filter(l => isSubLineUntranslated(l));
             }
         } else if (filterMode === 'translated') {
-            result = result.filter(l => !isLineUntranslated(l));
+            result = result.filter(l => !isSubLineUntranslated(l));
         } else if (filterMode === 'flagged') {
             result = result.filter(l => flaggedLineIds.includes(l.id));
         } else if (filterMode === 'sensitive') {
@@ -1034,7 +1030,7 @@ Format your output EXACTLY as follows using delimiter tags:
 
     // Missing Kurdish Lines (both empty and untranslated english text)
     const emptyKurdishLines = useMemo(() => {
-        return lines.filter(l => l.english.trim() && isLineUntranslated(l));
+        return lines.filter(l => l.english.trim() && isSubLineUntranslated(l));
     }, [lines]);
 
     const navigateToNextEmpty = () => {
@@ -1673,7 +1669,7 @@ Format your output EXACTLY as follows using delimiter tags:
                                     const isActive = line.id === activeLineId;
                                     const isSelected = line.id === selectedLineId;
                                     const isTranslating = translatingLine === line.id;
-                                    const isKurdishEmpty = isLineUntranslated(line);
+                                    const isKurdishEmpty = isSubLineUntranslated(line);
                                     const isEnglishDuplicate = isKurdishEmpty && line.kurdish.trim() && line.english.trim() && line.kurdish.trim().toLowerCase() === line.english.trim().toLowerCase();
 
                                     return (

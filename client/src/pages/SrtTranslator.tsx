@@ -6,10 +6,10 @@ import {
     FileText, BarChart3, Sparkles, Copy, Clapperboard, BookOpen, 
     Zap, DollarSign, Gauge, Sliders, Check, Coins
 } from 'lucide-react';
-import { MovieLoreAndBible, extractMovieLoreAndCharacterBible } from '../utils/aiTranslator';
+import { MovieLoreAndBible, extractMovieLoreAndCharacterBible, translateBatch, isLineUntranslated } from '../utils/aiTranslator';
 import './SrtTranslator.css';
 
-const BATCH_SIZE = 35;
+const BATCH_SIZE = 25;
 
 interface SubBlock {
     id: string;
@@ -240,160 +240,6 @@ Here is the English subtitle text to analyze:
     const outTok = Math.round(cleanText.length / 3.2);
 
     return { text: cleanText, inTok, outTok };
-};
-
-// ─── PART 2 & 3: TRANSLATION QUALITY & STRICT SRT FORMATTING ───
-const translateBatch = async (
-    texts: string[], 
-    fullBlocks: SubBlock[], 
-    batchStartIndex: number, 
-    model: string,
-    movieContextStr: string,
-    toneRuleStr: string,
-    glossaryTerms: any[],
-    characterBible?: MovieLoreAndBible,
-    signal?: AbortSignal
-): Promise<{ translatedList: string[]; inTok: number; outTok: number }> => {
-    const srtBatch = texts.map((t, idx) => {
-        const block = fullBlocks[batchStartIndex + idx];
-        return `${block.id}\n${block.time}\n${t}`;
-    }).join('\n\n');
-
-    let previousContextSection = '';
-    if (batchStartIndex > 0) {
-        const prevStart = Math.max(0, batchStartIndex - 3);
-        const prevBlocks = fullBlocks.slice(prevStart, batchStartIndex);
-        if (prevBlocks.length > 0) {
-            previousContextSection = `\nPREVIOUS DIALOGUE CONTEXT (FOR REFERENCE & CONTINUITY ONLY - DO NOT RE-TRANSLATE THESE):\n` +
-                prevBlocks.map(b => `[ID ${b.id}]: "${b.text.replace(/\n/g, ' ')}"`).join('\n') +
-                `\n------------------------------------------------------------\n`;
-        }
-    }
-
-    // Format Character Bible section for prompt
-    let characterBibleSection = '';
-    if (characterBible && (characterBible.characters?.length > 0 || characterBible.specialEntities?.length > 0)) {
-        const charLines = characterBible.characters?.map(c => 
-            `• "${c.name}" -> [${c.gender === 'Female' ? 'مێ (Female)' : 'نێر (Male)'}] ${c.kurdishName} (${c.role})`
-        ).join('\n') || '';
-
-        const entityLines = characterBible.specialEntities?.map(e => 
-            `• "${e.english}" -> "${e.kurdish}"${e.description ? ` (${e.description})` : ''}`
-        ).join('\n') || '';
-
-        characterBibleSection = `\n🚨 CAST CHARACTER BIBLE & MOVIE LORE (HIGHEST PRIORITY - STRICT GENDER & KINSHIP):\n` +
-            (charLines ? `CHARACTERS & GENDERS:\n${charLines}\n` : '') +
-            (entityLines ? `MOVIE LORE & SPECIAL TERMS:\n${entityLines}\n` : '') +
-            (characterBible.genreAndToneNotes ? `ATMOSPHERE & TONE: ${characterBible.genreAndToneNotes}\n` : '') +
-            `------------------------------------------------------------\n`;
-    }
-
-    const batchFullText = texts.join(' ').toLowerCase();
-    const relevantGlossary = glossaryTerms.filter((g: any) => {
-        if (!g.english || !g.english.trim()) return false;
-        const cleanWord = g.english.trim().toLowerCase();
-        if (cleanWord.includes(' ')) return batchFullText.includes(cleanWord);
-        const regex = new RegExp(`\\b${cleanWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
-        return regex.test(batchFullText);
-    });
-
-    const glossarySection = relevantGlossary.length > 0
-        ? `\nTEAM MANDATORY GLOSSARY (Strictly use these exact Kurdish translations if these English words appear):\n` +
-          relevantGlossary.map(g => `- "${g.english}" => "${g.kurdish}"`).join('\n')
-        : '';
-
-    const prompt = `ACT AS AN ELITE HUMAN CINEMATIC SUBTITLE TRANSLATOR FOR CENTRAL KURDISH (SORANI).
-YOU ARE A MASTER HUMAN DIALOGUE TRANSLATOR, NOT A RIGID ROBOT OR MACHINE.
-Translate the following English SRT subtitle batch into natural, fluent, emotionally captivating, and authentic spoken Central Kurdish (Sorani).
-
-${characterBibleSection}
-${previousContextSection}
-${movieContextStr ? `CONTEXT & SETTING: ${movieContextStr}` : ''}
-${toneRuleStr}
-${glossarySection}
-
-PART 1: COMPLETE SEMANTIC MEANING (NO OMITTED CLAUSES)
-- FULL SENTENCE COVERAGE: Translate the COMPLETE meaning of all clauses and details naturally into Kurdish. Do NOT drop, omit, or over-summarize any part of what the speaker said, but ALWAYS express it in fluent, idiomatic Kurdish (NEVER word-for-word robotic translation).
-- ACTIVE VOICE OVER PASSIVE: Transform awkward English passives ("It was decided that...") into natural Kurdish active structures ("بڕیاریان دا کە...").
-- DUAL-SPEAKER HYPHENS: If a subtitle block has multiple speakers marked with hyphens (-), strictly keep both lines with their hyphens (-) and translate each speaker separately.
-
-PART 2: IDIOMS, SLANG & CINEMATIC DIALOGUE (CONTEXT OVER LITERAL)
-- ZERO LITERAL CALQUES: NEVER translate English idioms, metaphors, or conversational slang word-for-word. Always translate the true intended meaning into authentic colloquial Kurdish spoken dialogue.
-- KINSHIP & GENDER PRECISION:
-  • "Aunt" (Female) -> MUST ALWAYS be translated as "پوور / پوورە" (NEVER translate as male "خاڵە" or "مامە").
-  • "Uncle" (Male) -> MUST ALWAYS be translated as "مام / خاڵ / مامە / خاڵە".
-  • "Bracelet" -> "دەستبەند" (NEVER "دەستەوانە").
-  • "Take the fun out of..." -> "تام و چێژەکەی لێ تێکدان / بێزارکردن" (NEVER "چێژ بردن").
-- STUDY THESE CRITICAL EXAMPLES:
-  • "You had me there!" -> "دەستت لێم بڕی! / خستتە داوەکەتەوە! / باوەڕم پێ کردیت!" (NEVER "تۆ منی لێرە هێشتەوە!")
-  • "I think she took that well." -> "وا بزانم دیارە پێی تێکنەچوو / باش قبووڵی کرد." (NEVER "بە باشی وەری گرت.")
-  • "Maybe you're not a failure after all." -> "ڕەنگە لە کۆتاییدا ئەوەندەش شکستخواردوو نەبیت." (NEVER 3rd person "شکستی نەهێناوە")
-  • "Over my dead body!" -> "بەسەر لاشەی مندا! / مەگەر بمکوژیت!" (NEVER "بە سەر لاشەی مردوومدا")
-  • "Cut me some slack!" -> "ئەوەندە توند مەبە لەگەڵم! / کەمێک لێم گەڕێ!"
-  • "Speak of the devil!" -> "ناوی گورگ بێنە و دار هەڵگرە! / باسی کێمان دەکرد!"
-  • "Spill the beans!" -> "ڕاستییەکە بدرکێنە! / هەموو شتێک بڵێ!"
-  • "In your dreams!" -> "لە خەوتدا بیبینیت!"
-  • "Cut it out!" -> "بەسیکە! / وازی لێبێنە!"
-  • "Hit the road!" -> "بکەوە ڕێ! / دەی بڕۆ!"
-  • "Piece of cake!" -> "وەک ئاو خواردنەوەیە / زۆر ئاسانە!"
-  • "Under the weather" -> "کەمێک نەخۆش و بێتاقەتم."
-  • "Break a leg!" -> "سەرکەوتوو بیت! / بەختێکی باش!"
-
-PART 3: STRICT GRAMMATICAL PRONOUN & COHESION RULES
-- PRONOUN CONJUGATION: When English says "You", Kurdish MUST conjugate for 2nd person ("تۆ ... دەکەیت / نەبوویت / بیت"), NEVER shift to 3rd person ("ئەو / دەکات").
-- NATURAL WORD ORDER: Place verbs naturally in Kurdish sentences. Avoid awkward, stiff machine-translated structures.
-- KURDISH PUNCTUATION: Use proper Kurdish punctuation (، for comma, ؟ for question mark) while preserving exclamation marks (!) and ellipses (...).
-- SURROUNDING CONTEXT: Always read the lines before and after to match emotional intensity, sarcasm, jokes, and character gender.
-
-PART 4: STRICT SRT FORMATTING & DATA INTEGRITY (CRITICAL)
-- TARGET BATCH ONLY: If "PREVIOUS DIALOGUE CONTEXT" was provided above, it is for context only. Translate ONLY the target subtitle batch below (starting from ID ${fullBlocks[batchStartIndex]?.id || 1}).
-- ABSOLUTE PRESERVATION OF TIMESTAMPS & INDEX NUMBERS: Copy the EXACT Index Number and EXACT Timestamp from original. DO NOT alter timestamps. DO NOT merge or split blocks.
-- STRICT LINE-BY-LINE PROCESSING: Process sequentially, line by line. Do not skip any blocks.
-- NO UNTRANSLATED TEXT: Every English dialogue must be translated into Central Kurdish.
-- STRICT SRT SPACING: Do NOT insert blank lines between timestamp and translated text. The translated text must appear on the very next line. Exactly ONE blank line between subtitle blocks.
-- PRESERVE ALL PUNCTUATION & HTML TAGS: Keep dialogue hyphens (-), keep all HTML tags (<i>, </i>, <font>, etc.).
-- Output ONLY the translated SRT text with no extra commentary:
-
-${srtBatch}`;
-
-    const resp = await axios.post('/api/ai/generate', {
-        contents: [{ parts: [{ text: prompt }] }],
-        aiTask: 'srt_translation',
-        model: model,
-        lineCount: texts.length,
-        movieTitle: movieContextStr || 'SRT Subtitle Translation'
-    }, {
-        timeout: 180000,
-        signal
-    });
-
-    let raw: string = resp.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    raw = raw.replace(/```(srt|txt|text)?/gi, '').replace(/```/g, '').trim();
-
-    const inTok = Math.round(prompt.length / 3.8);
-    const outTok = Math.round(raw.length / 3.2);
-
-    const result: string[] = [...texts];
-
-    try {
-        const parsedReturned = parseSRT(raw);
-        if (parsedReturned.length > 0) {
-            texts.forEach((_, i) => {
-                const targetBlock = fullBlocks[batchStartIndex + i];
-                // 1. Match by exact original Block ID
-                const matchedById = parsedReturned.find(b => b.id === targetBlock?.id);
-                // 2. Or fallback to i-th block in returned batch
-                const translatedBlock = matchedById || parsedReturned[i];
-                if (translatedBlock && translatedBlock.text && translatedBlock.text.trim()) {
-                    result[i] = translatedBlock.text.trim();
-                }
-            });
-        }
-    } catch (err) {
-        console.warn("SRT parsing failed, fallback...", raw, err);
-    }
-
-    return { translatedList: result, inTok, outTok };
 };
 
 export default function SrtTranslator() {
@@ -713,7 +559,11 @@ FORMAT YOUR RESPONSE EXACTLY AS JSON:
                     break;
                 }
 
-                const texts = batch.map(b => b.text);
+                const firstIdx = done;
+                const prevStart = Math.max(0, firstIdx - 3);
+                const prevBlocks = blocks.slice(prevStart, firstIdx);
+                const prevContextStr = prevBlocks.map(b => `[ID ${b.id}]: "${b.text.replace(/\n/g, ' ')}"`).join('\n');
+
                 let translatedTexts: string[] = [];
                 let retries = 4;
                 let success = false;
@@ -721,9 +571,8 @@ FORMAT YOUR RESPONSE EXACTLY AS JSON:
                 while (retries > 0 && !success && !stopRef.current && !signal.aborted) {
                     try {
                         const batchRes = await translateBatch(
-                            texts, 
-                            blocks, 
-                            done, 
+                            batch, 
+                            prevContextStr, 
                             selectedModel,
                             movieContextStr,
                             toneRuleStr,

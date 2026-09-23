@@ -511,32 +511,39 @@ CRITICAL RULES:
     }
 };
 
+export const isLineUntranslated = (kurdishText: string, englishText: string): boolean => {
+    if (!kurdishText || !kurdishText.trim()) return true;
+    const cleanKu = kurdishText.trim().toLowerCase();
+    const cleanEn = englishText.trim().toLowerCase();
+    if (cleanKu === cleanEn) return true;
+    const hasEnglishWords = /[a-zA-Z]{3,}/.test(kurdishText);
+    const hasKurdishChars = /[\u0600-\u06FF]/.test(kurdishText);
+    if (hasEnglishWords && !hasKurdishChars) return true;
+    return false;
+};
+
 // ─── PART 2 & 3: TRANSLATION QUALITY & STRICT SRT FORMATTING ───
 export const translateBatch = async (
-    texts: string[], 
-    fullBlocks: SubBlock[], 
-    batchStartIndex: number,
-    model: string = 'google/gemini-2.5-flash',
+    targetBlocks: SubBlock[], 
+    precedingContextStr: string = '',
+    model: string = 'google/gemini-3.8-flash',
     movieContextStr: string = '',
     toneRuleStr: string = '',
     glossaryTerms: any[] = [],
     characterBible?: MovieLoreAndBible,
     signal?: AbortSignal
 ): Promise<{ translatedList: string[]; inTok: number; outTok: number }> => {
-    const srtBatch = texts.map((t, idx) => {
-        const block = fullBlocks[batchStartIndex + idx];
-        return `${block.id}\n${block.time}\n${t}`;
-    }).join('\n\n');
+    if (!targetBlocks || targetBlocks.length === 0) {
+        return { translatedList: [], inTok: 0, outTok: 0 };
+    }
+
+    const srtBatch = targetBlocks.map(b => `${b.id}\n${b.time}\n${b.text}`).join('\n\n');
 
     let previousContextSection = '';
-    if (batchStartIndex > 0) {
-        const prevStart = Math.max(0, batchStartIndex - 3);
-        const prevBlocks = fullBlocks.slice(prevStart, batchStartIndex);
-        if (prevBlocks.length > 0) {
-            previousContextSection = `\nPREVIOUS DIALOGUE CONTEXT (FOR REFERENCE & CONTINUITY ONLY - DO NOT RE-TRANSLATE THESE):\n` +
-                prevBlocks.map(b => `[ID ${b.id}]: "${b.text.replace(/\n/g, ' ')}"`).join('\n') +
-                `\n------------------------------------------------------------\n`;
-        }
+    if (precedingContextStr && precedingContextStr.trim()) {
+        previousContextSection = `\nPREVIOUS DIALOGUE CONTEXT (FOR REFERENCE & CONTINUITY ONLY - DO NOT RE-TRANSLATE THESE):\n` +
+            `${precedingContextStr.trim()}\n` +
+            `------------------------------------------------------------\n`;
     }
 
     // Format Character Bible section for prompt
@@ -557,7 +564,7 @@ export const translateBatch = async (
             `------------------------------------------------------------\n`;
     }
 
-    const batchFullText = texts.join(' ').toLowerCase();
+    const batchFullText = targetBlocks.map(b => b.text).join(' ').toLowerCase();
     const relevantGlossary = glossaryTerms.filter((g: any) => {
         if (!g.english || !g.english.trim()) return false;
         const cleanWord = g.english.trim().toLowerCase();
@@ -617,7 +624,7 @@ PART 3: STRICT GRAMMATICAL PRONOUN & COHESION RULES
 - SURROUNDING CONTEXT: Always read the lines before and after to match emotional intensity, sarcasm, jokes, and character gender.
 
 PART 4: STRICT SRT FORMATTING & DATA INTEGRITY (CRITICAL)
-- TARGET BATCH ONLY: If "PREVIOUS DIALOGUE CONTEXT" was provided above, it is for context only. Translate ONLY the target subtitle batch below (starting from ID ${fullBlocks[batchStartIndex]?.id || 1}).
+- TARGET BATCH ONLY: If "PREVIOUS DIALOGUE CONTEXT" was provided above, it is for context only. Translate ONLY the target subtitle batch below (starting from ID ${targetBlocks[0]?.id || 1}).
 - ABSOLUTE PRESERVATION OF TIMESTAMPS & INDEX NUMBERS: Copy the EXACT Index Number and EXACT Timestamp from original. DO NOT alter timestamps. DO NOT merge or split blocks.
 - STRICT LINE-BY-LINE PROCESSING: Process sequentially, line by line. Do not skip any blocks.
 - NO UNTRANSLATED TEXT: Every English dialogue must be translated into Central Kurdish.
@@ -631,8 +638,8 @@ ${srtBatch}`;
         contents: [{ parts: [{ text: prompt }] }],
         aiTask: 'srt_translation',
         model: model,
-        max_tokens: Math.min(2500, Math.max(700, texts.length * 90)),
-        lineCount: texts.length,
+        max_tokens: Math.min(3500, Math.max(900, targetBlocks.length * 100)),
+        lineCount: targetBlocks.length,
         movieTitle: movieContextStr || 'SRT Batch Translation'
     }, {
         timeout: 180000,
@@ -645,14 +652,13 @@ ${srtBatch}`;
     const inTok = Math.round(prompt.length / 3.8);
     const outTok = Math.round(raw.length / 3.2);
 
-    const result: string[] = [...texts];
+    const result: string[] = targetBlocks.map(b => b.text);
 
     try {
         const parsedReturned = parseSRT(raw);
         if (parsedReturned.length > 0) {
-            texts.forEach((_, i) => {
-                const targetBlock = fullBlocks[batchStartIndex + i];
-                const matchedById = parsedReturned.find(b => b.id === targetBlock?.id);
+            targetBlocks.forEach((tb, i) => {
+                const matchedById = parsedReturned.find(b => String(b.id).trim() === String(tb.id).trim());
                 const translatedBlock = matchedById || parsedReturned[i];
                 if (translatedBlock && translatedBlock.text && translatedBlock.text.trim()) {
                     result[i] = translatedBlock.text.trim();
@@ -661,8 +667,8 @@ ${srtBatch}`;
         } else {
             // Strategy 2: Line by line / block split fallback
             const rawLines = raw.split(/\n\s*\n/).map(s => s.trim()).filter(Boolean);
-            if (rawLines.length >= texts.length) {
-                texts.forEach((_, i) => {
+            if (rawLines.length >= targetBlocks.length) {
+                targetBlocks.forEach((_, i) => {
                     const blockLines = rawLines[i].split('\n').filter(l => !l.includes('-->') && !/^\d+$/.test(l.trim()));
                     if (blockLines.length > 0) {
                         result[i] = blockLines.join('\n').trim();
@@ -960,11 +966,13 @@ export async function runAiTranslationAndAnalysis(
         text: existingTransMap.get(b.id) || ''
     }));
 
-    // Find indices that still need translation
+    // Find indices that still need translation (empty or untranslated raw English)
     const pendingIndices: number[] = [];
     translatedBlocks.forEach((b, idx) => {
-        if (!b.text.trim()) {
+        const origText = parsedOrigBlocks[idx]?.text || '';
+        if (isLineUntranslated(b.text, origText)) {
             pendingIndices.push(idx);
+            translatedBlocks[idx].text = '';
         }
     });
 
@@ -1081,13 +1089,16 @@ export async function runAiTranslationAndAnalysis(
         }
 
         const batchTargetIndices = pendingIndices.slice(pIdx, pIdx + BATCH_SIZE);
-        const batchEnglishTexts = batchTargetIndices.map(idx => parsedOrigBlocks[idx].text);
-        const batchFirstIndex = batchTargetIndices[0];
+        const batchBlocks = batchTargetIndices.map(idx => parsedOrigBlocks[idx]);
+
+        const firstIdx = batchTargetIndices[0];
+        const prevStart = Math.max(0, firstIdx - 3);
+        const prevBlocks = parsedOrigBlocks.slice(prevStart, firstIdx);
+        const prevContextStr = prevBlocks.map(b => `[ID ${b.id}]: "${b.text.replace(/\n/g, ' ')}"`).join('\n');
 
         const batchRes = await translateBatch(
-            batchEnglishTexts, 
-            parsedOrigBlocks, 
-            batchFirstIndex, 
+            batchBlocks, 
+            prevContextStr, 
             selectedModel,
             contextStr,
             toneRuleStr,
