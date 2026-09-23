@@ -11,7 +11,7 @@ import SubtitleDiffViewer from './SubtitleDiffViewer';
 import InternalNotesModal from './InternalNotesModal';
 import SubtitleQcModal from './SubtitleQcModal';
 import { runSubtitleQc } from '../utils/subtitleQc';
-import { generateLineAlternatives, LineAlternativeOption } from '../utils/aiTranslator';
+import { generateLineAlternatives, LineAlternativeOption, translateBatch, SubBlock, MovieLoreAndBible, TRANSLATION_TONES } from '../utils/aiTranslator';
 import { useAuth } from '../context/AuthContext';
 import { useWebSocket } from '../context/WebSocketContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -836,20 +836,39 @@ Format your output EXACTLY as follows using delimiter tags:
         }
 
         editorPauseRef.current = false;
-        const untranslated = lines.filter(l => l.english.trim() && !l.kurdish.trim());
+        // Filter lines that have English text and either Kurdish is empty or identical to English
+        const untranslated = lines.filter(l => l.english.trim() && (!l.kurdish.trim() || l.kurdish.trim().toLowerCase() === l.english.trim().toLowerCase()));
         if (untranslated.length === 0) {
-            showToast('هەموو دێڕەکان وەرگێڕدراون یان دەقی ئینگلیزییان نییە', 'error');
+            showToast('هەموو دێڕەکان پێشتر بە کوردی وەرگێڕدراون ✓', 'success');
             return;
         }
 
         setTranslatingAll(true);
         setTranslateAllProgress({ status: 'running', percent: 0 });
-        showToast(`خەریکی وەرگێڕانی ${untranslated.length} دێڕ بە AI...`);
+        showToast(`دەستپێکردنی وەرگێڕانی ${untranslated.length} دێڕ بە مۆدێلی باڵای AI...`);
 
         try {
-            const BATCH_SIZE = 20;
+            const BATCH_SIZE = 30;
             let done = 0;
-            const selectedModel = localStorage.getItem('ks_srt_ai_model') || 'google/gemini-2.5-flash';
+            const selectedModel = localStorage.getItem('ks_srt_ai_model') || 'google/gemini-3.8-flash';
+            const selectedTone = localStorage.getItem('ks_srt_ai_tone') || 'casual';
+            const toneObj = TRANSLATION_TONES.find(t => t.id === selectedTone) || TRANSLATION_TONES[0];
+            const toneRuleStr = toneObj.promptRule;
+
+            // Load persistent character bible for this show/movie
+            let characterBible: MovieLoreAndBible | undefined = undefined;
+            try {
+                const bibleRes = await axios.get(`/api/admin/movies/${movieId}/character-bible`).catch(() => null);
+                if (bibleRes?.data?.characterBible) {
+                    characterBible = bibleRes.data.characterBible;
+                }
+            } catch (e) {}
+
+            const fullBlocks: SubBlock[] = lines.map(l => ({
+                id: String(l.id),
+                time: `${l.startTime} --> ${l.endTime}`,
+                text: l.english
+            }));
 
             for (let i = 0; i < untranslated.length; i += BATCH_SIZE) {
                 if (editorPauseRef.current) {
@@ -860,38 +879,26 @@ Format your output EXACTLY as follows using delimiter tags:
                 }
 
                 const batch = untranslated.slice(i, i + BATCH_SIZE);
-                // Encode internal newlines as [BR] so multi-line subtitle blocks are preserved
-                const batchText = batch.map((b, idx) => `[${idx + 1}] ${b.english.replace(/\r?\n/g, ' [BR] ')}`).join('\n');
+                const batchTexts = batch.map(b => b.english);
+                const batchFirstIndex = lines.findIndex(l => l.id === batch[0].id);
 
-                const prompt = `Translate the following English subtitle lines into natural Central Kurdish (Sorani). 
-IMPORTANT: Preserve all formatting tags (<i>...</i>, ♪) and if a line contains [BR], replace it with [BR] in your translation to maintain the exact line breaks.
-Return ONLY lines in format [Index] Translation:
-
-${batchText}`;
-                const res = await axios.post('/api/ai/generate', {
-                    contents: [{ parts: [{ text: prompt }] }],
-                    aiTask: 'srt_translation',
-                    model: selectedModel,
-                    lineCount: batch.length,
-                    movieTitle: movieTitle || 'Batch Translation'
-                });
-
-                const raw = res.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-                const resultLines = raw.split('\n');
+                const batchRes = await translateBatch(
+                    batchTexts,
+                    fullBlocks,
+                    Math.max(0, batchFirstIndex),
+                    selectedModel,
+                    movieTitle,
+                    toneRuleStr,
+                    glossary,
+                    characterBible
+                );
 
                 setLines(prev => {
                     const next = [...prev];
                     batch.forEach((item, bIdx) => {
                         const targetIdx = next.findIndex(x => x.id === item.id);
-                        if (targetIdx !== -1) {
-                            const matchedLine = resultLines.find((r: string) => r.startsWith(`[${bIdx + 1}]`));
-                            if (matchedLine) {
-                                const cleanText = matchedLine
-                                    .replace(/^\[\d+\]\s*/, '')
-                                    .replace(/\s*\[BR\]\s*/gi, '\n')
-                                    .trim();
-                                next[targetIdx] = { ...next[targetIdx], kurdish: cleanText };
-                            }
+                        if (targetIdx !== -1 && batchRes.translatedList[bIdx]) {
+                            next[targetIdx] = { ...next[targetIdx], kurdish: batchRes.translatedList[bIdx] };
                         }
                     });
                     return next;
@@ -899,14 +906,15 @@ ${batchText}`;
 
                 setAiUsedInSession(true);
                 done += batch.length;
-                const currentPct = Math.round((done / untranslated.length) * 100);
+                const currentPct = Math.min(99, Math.round((done / untranslated.length) * 100));
                 setTranslateAllProgress({ status: 'running', percent: currentPct });
             }
-            showToast('وەرگێڕانی هەموو دێڕەکان تەواو بوو! ✓');
+
+            showToast('وەرگێڕانی هەموو دێڕەکان بە سەرکەوتوویی تەواو بوو! ✓');
             setTranslateAllProgress(null);
-        } catch (err) {
-            console.error(err);
-            showToast('هەڵەیەک لە وەرگێڕانی تەواودا ڕوویدا', 'error');
+        } catch (err: any) {
+            console.error('Batch translation error:', err);
+            showToast(err?.message || 'هەڵەیەک لە وەرگێڕانی دەستەییدا ڕوویدا', 'error');
             setTranslateAllProgress(null);
         } finally {
             setTranslatingAll(false);
