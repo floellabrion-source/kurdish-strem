@@ -64,10 +64,24 @@ const toSrtString = (blocks: SubBlock[]): string =>
 // ─── AI MODELS ───
 export const AI_TRANSLATION_MODELS = [
     {
+        id: 'google/gemini-3.8-flash',
+        name: 'Gemini 3.8 Flash',
+        desc: 'زیرەکترین و نوێترین وەرگێڕی گووگڵ بە تەکنەلۆژیای 2026',
+        badge: 'نوێترین 2026 🚀',
+        icon: '🚀'
+    },
+    {
+        id: 'google/gemini-3.7-flash',
+        name: 'Gemini 3.7 Flash',
+        desc: 'زیرەکی باڵا و تێگەیشتنی قووڵ لە سیناریۆ',
+        badge: 'زیرەکی باڵا 🧠',
+        icon: '🧠'
+    },
+    {
         id: 'anthropic/claude-sonnet-4.6',
         name: 'Claude Sonnet Latest',
         desc: 'نوێترین و بەهێزترین وەرگێڕی ئەدەبی و سینەمایی (4.6)',
-        badge: 'نوێترین ✨',
+        badge: 'سینەمایی باڵا ✨',
         icon: '✨'
     },
     {
@@ -95,6 +109,8 @@ export const AI_TRANSLATION_MODELS = [
 
 // ─── PRICING PER 1M TOKENS ───
 export const MODEL_PRICING: Record<string, { inPricePerM: number; outPricePerM: number }> = {
+    'google/gemini-3.8-flash': { inPricePerM: 0.75, outPricePerM: 3.75 },
+    'google/gemini-3.7-flash': { inPricePerM: 0.75, outPricePerM: 3.75 },
     'anthropic/claude-sonnet-4.6': { inPricePerM: 3.0, outPricePerM: 15.0 },
     'anthropic/claude-sonnet-4.5': { inPricePerM: 3.0, outPricePerM: 15.0 },
     'anthropic/claude-sonnet-5': { inPricePerM: 3.0, outPricePerM: 15.0 },
