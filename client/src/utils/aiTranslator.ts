@@ -349,6 +349,11 @@ PART 1: COMPLETE SEMANTIC MEANING (NO OMITTED CLAUSES)
 
 PART 2: IDIOMS, SLANG & CINEMATIC DIALOGUE (CONTEXT OVER LITERAL)
 - ZERO LITERAL CALQUES: NEVER translate English idioms, metaphors, or conversational slang word-for-word. Always translate the true intended meaning into authentic colloquial Kurdish spoken dialogue.
+- KINSHIP & GENDER PRECISION:
+  • "Aunt" (Female) -> MUST ALWAYS be translated as "پوور / پوورە" (NEVER translate as male "خاڵە" or "مامە").
+  • "Uncle" (Male) -> MUST ALWAYS be translated as "مام / خاڵ / مامە / خاڵە".
+  • "Bracelet" -> "دەستبەند" (NEVER "دەستەوانە").
+  • "Take the fun out of..." -> "تام و چێژەکەی لێ تێکدان / بێزارکردن" (NEVER "چێژ بردن").
 - STUDY THESE CRITICAL EXAMPLES:
   • "You had me there!" -> "دەستت لێم بڕی! / خستتە داوەکەتەوە! / باوەڕم پێ کردیت!" (NEVER "تۆ منی لێرە هێشتەوە!")
   • "I think she took that well." -> "وا بزانم دیارە پێی تێکنەچوو / باش قبووڵی کرد." (NEVER "بە باشی وەری گرت.")
