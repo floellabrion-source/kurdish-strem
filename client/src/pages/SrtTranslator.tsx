@@ -9,7 +9,7 @@ import {
 import { MovieLoreAndBible, extractMovieLoreAndCharacterBible, translateBatch, isLineUntranslated } from '../utils/aiTranslator';
 import './SrtTranslator.css';
 
-const BATCH_SIZE = 25;
+const BATCH_SIZE = 12;
 
 interface SubBlock {
     id: string;

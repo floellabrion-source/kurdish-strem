@@ -852,7 +852,7 @@ Format your output EXACTLY as follows using delimiter tags:
         showToast(`دەستپێکردنی وەرگێڕانی ${untranslated.length} دێڕ بە مۆدێلی باڵای AI...`);
 
         try {
-            const BATCH_SIZE = 30;
+            const BATCH_SIZE = 12;
             let done = 0;
             const selectedModel = localStorage.getItem('ks_srt_ai_model') || 'google/gemini-3.8-flash';
             const selectedTone = localStorage.getItem('ks_srt_ai_tone') || 'casual';

@@ -638,7 +638,7 @@ ${srtBatch}`;
         contents: [{ parts: [{ text: prompt }] }],
         aiTask: 'srt_translation',
         model: model,
-        max_tokens: Math.min(3500, Math.max(900, targetBlocks.length * 100)),
+        max_tokens: 16000,
         lineCount: targetBlocks.length,
         movieTitle: movieContextStr || 'SRT Batch Translation'
     }, {

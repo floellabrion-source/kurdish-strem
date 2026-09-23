@@ -3338,7 +3338,7 @@ app.post('/api/ai/generate', requireAuth, aiLimiter, async (req, res) => {
     }
 
     try {
-        const maxTokens = req.body?.max_tokens || ((aiTask.startsWith('srt_')) ? 2500 : ((aiTask === 'synopsis') ? 800 : ((aiTask === 'quiz_generation' || aiTask === 'flashcard_generation') ? 400 : (aiTask === 'grammar_explain' ? 250 : 200))));
+        const maxTokens = req.body?.max_tokens || ((aiTask.startsWith('srt_')) ? 16000 : ((aiTask === 'synopsis') ? 800 : ((aiTask === 'quiz_generation' || aiTask === 'flashcard_generation') ? 400 : (aiTask === 'grammar_explain' ? 250 : 200))));
         
         const ALLOWED_SRT_MODELS = [
             'google/gemini-3.8-flash',
