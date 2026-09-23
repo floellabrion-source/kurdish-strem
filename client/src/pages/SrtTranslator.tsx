@@ -6,6 +6,7 @@ import {
     FileText, BarChart3, Sparkles, Copy, Clapperboard, BookOpen, 
     Zap, DollarSign, Gauge, Sliders, Check, Coins
 } from 'lucide-react';
+import { MovieLoreAndBible, extractMovieLoreAndCharacterBible } from '../utils/aiTranslator';
 import './SrtTranslator.css';
 
 const BATCH_SIZE = 35;
@@ -234,6 +235,7 @@ const translateBatch = async (
     movieContextStr: string,
     toneRuleStr: string,
     glossaryTerms: any[],
+    characterBible?: MovieLoreAndBible,
     signal?: AbortSignal
 ): Promise<{ translatedList: string[]; inTok: number; outTok: number }> => {
     const srtBatch = texts.map((t, idx) => {
@@ -250,6 +252,24 @@ const translateBatch = async (
                 prevBlocks.map(b => `[ID ${b.id}]: "${b.text.replace(/\n/g, ' ')}"`).join('\n') +
                 `\n------------------------------------------------------------\n`;
         }
+    }
+
+    // Format Character Bible section for prompt
+    let characterBibleSection = '';
+    if (characterBible && (characterBible.characters?.length > 0 || characterBible.specialEntities?.length > 0)) {
+        const charLines = characterBible.characters?.map(c => 
+            `• "${c.name}" -> [${c.gender === 'Female' ? 'مێ (Female)' : 'نێر (Male)'}] ${c.kurdishName} (${c.role})`
+        ).join('\n') || '';
+
+        const entityLines = characterBible.specialEntities?.map(e => 
+            `• "${e.english}" -> "${e.kurdish}"${e.description ? ` (${e.description})` : ''}`
+        ).join('\n') || '';
+
+        characterBibleSection = `\n🚨 CAST CHARACTER BIBLE & MOVIE LORE (HIGHEST PRIORITY - STRICT GENDER & KINSHIP):\n` +
+            (charLines ? `CHARACTERS & GENDERS:\n${charLines}\n` : '') +
+            (entityLines ? `MOVIE LORE & SPECIAL TERMS:\n${entityLines}\n` : '') +
+            (characterBible.genreAndToneNotes ? `ATMOSPHERE & TONE: ${characterBible.genreAndToneNotes}\n` : '') +
+            `------------------------------------------------------------\n`;
     }
 
     const batchFullText = texts.join(' ').toLowerCase();
@@ -270,6 +290,7 @@ const translateBatch = async (
 YOU ARE A MASTER HUMAN DIALOGUE TRANSLATOR, NOT A RIGID ROBOT OR MACHINE.
 Translate the following English SRT subtitle batch into natural, fluent, emotionally captivating, and authentic spoken Central Kurdish (Sorani).
 
+${characterBibleSection}
 ${previousContextSection}
 ${movieContextStr ? `CONTEXT & SETTING: ${movieContextStr}` : ''}
 ${toneRuleStr}
@@ -642,7 +663,23 @@ FORMAT YOUR RESPONSE EXACTLY AS JSON:
                 return;
             }
 
-            // STEP 2: Translate SRT Blocks Batch by Batch if mode is 'all' or 'translate_only'
+            const movieContextStr = getMovieContextPromptStr();
+            const toneRuleStr = getTonePromptRule();
+
+            // STEP 2: Character Bible Pre-Extraction (Pass 1)
+            let characterBible: MovieLoreAndBible | undefined = undefined;
+            if (blocks.length > 0 && !stopRef.current && !signal.aborted) {
+                try {
+                    const fullTextSample = blocks.map(b => b.text).join('\n');
+                    const bibleRes = await extractMovieLoreAndCharacterBible(fullTextSample, movieContextStr || 'Movie', movieContextStr, selectedModel, signal);
+                    characterBible = bibleRes.bible;
+                    updateStats(bibleRes.inTok, bibleRes.outTok, startTimestamp);
+                } catch (e) {
+                    console.warn('Character Bible extraction skipped:', e);
+                }
+            }
+
+            // STEP 3: Translate SRT Blocks Batch by Batch
             setStatus('translating');
             setProgress(0);
             setTotal(blocks.length);
@@ -653,8 +690,6 @@ FORMAT YOUR RESPONSE EXACTLY AS JSON:
             }
 
             let done = 0;
-            const movieContextStr = getMovieContextPromptStr();
-            const toneRuleStr = getTonePromptRule();
 
             for (const batch of batches) {
                 if (stopRef.current || signal.aborted) {
@@ -677,6 +712,7 @@ FORMAT YOUR RESPONSE EXACTLY AS JSON:
                             movieContextStr,
                             toneRuleStr,
                             activeGlossary,
+                            characterBible,
                             signal
                         );
                         translatedTexts = batchRes.translatedList;

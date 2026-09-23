@@ -290,6 +290,120 @@ Here is the English subtitle text to analyze:
     return { text: cleanText, inTok, outTok };
 };
 
+// ─── PART 0: SCRIPT SCAN, CHARACTER BIBLE & AUTO-GLOSSARY EXTRACTION ───
+export interface MovieCharacter {
+    name: string;
+    kurdishName: string;
+    gender: 'Female' | 'Male' | 'Other';
+    role: string;
+}
+
+export interface MovieLoreAndBible {
+    characters: MovieCharacter[];
+    specialEntities: Array<{ english: string; kurdish: string; description?: string }>;
+    genreAndToneNotes: string;
+    rawText?: string;
+}
+
+export const extractMovieLoreAndCharacterBible = async (
+    fullEnglishText: string,
+    movieTitle: string = '',
+    userContext: string = '',
+    model: string = 'google/gemini-2.5-flash',
+    signal?: AbortSignal
+): Promise<{ bible: MovieLoreAndBible; inTok: number; outTok: number }> => {
+    const totalLen = fullEnglishText.length;
+    let sampleScript = fullEnglishText;
+    if (totalLen > 35000) {
+        const head = fullEnglishText.slice(0, 16000);
+        const mid = fullEnglishText.slice(Math.floor(totalLen / 2) - 6000, Math.floor(totalLen / 2) + 6000);
+        const tail = fullEnglishText.slice(totalLen - 12000);
+        sampleScript = `${head}\n\n[...SCRIPT CONTINUED...]\n\n${mid}\n\n[...SCRIPT CONTINUED...]\n\n${tail}`;
+    }
+
+    const prompt = `ACT AS AN EXPERT CINEMATIC SCRIPT ANALYZER AND KURDISH LOCALIZATION LEAD.
+Analyze the following English movie/show subtitle script to build the "CHARACTER BIBLE & LOCALIZATION DOSSIER" for translating into Central Kurdish (Sorani).
+${movieTitle ? `TITLE: ${movieTitle}` : ''}
+${userContext ? `EXISTING CONTEXT: ${userContext}` : ''}
+
+YOUR MISSION:
+Extract with 100% precision all character identities, exact biological/character genders, interpersonal relationships, and unique movie lore terms.
+
+CRITICAL GENDER & KINSHIP RULES:
+- "Aunt" (Lucy, May, etc.) MUST ALWAYS be Female (مێ - پوورە). NEVER designate as male or call "خاڵە".
+- "Uncle" MUST ALWAYS be Male (نێر - مام / خاڵ / مامە / خاڵە).
+- Identify who is speaking to whom (e.g. husband/wife, parent/child, friends).
+
+OUTPUT FORMAT STRICTLY AS JSON:
+\`\`\`json
+{
+  "characters": [
+    {
+      "name": "Aunt Lucy",
+      "kurdishName": "پوورە لوسی",
+      "gender": "Female",
+      "role": "پووری پادینگتۆن (FEMALE Aunt - strictly پوورە)"
+    },
+    {
+      "name": "Henry Brown",
+      "kurdishName": "هێنری براون",
+      "gender": "Male",
+      "role": "باوک، هاوسەری مێری"
+    }
+  ],
+  "specialEntities": [
+    { "english": "El Dorado", "kurdish": "ئێل دۆرادۆ", "description": "شاری زێڕینی ونبووی ئەفسانەیی" },
+    { "english": "Inca", "kurdish": "ئینکا", "description": "شارستانییەتی ئینکا" },
+    { "english": "bracelet", "kurdish": "دەستبەند", "description": "دەستبەند (نەک دەستەوانە)" }
+  ],
+  "genreAndToneNotes": "کۆمیدی و سەرکێشی خێزانی، دیالۆگی وتووێژی ڕۆژانەی گەرموگوڕ"
+}
+\`\`\`
+
+Here is the subtitle script sample:
+${sampleScript}`;
+
+    const resp = await axios.post('/api/ai/generate', {
+        contents: [{ parts: [{ text: prompt }] }],
+        aiTask: 'srt_translation',
+        model: model,
+        max_tokens: 2000,
+        movieTitle: movieTitle || 'Character Bible'
+    }, {
+        timeout: 90000,
+        signal
+    });
+
+    let raw: string = resp.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const inTok = Math.round(prompt.length / 3.8);
+    const outTok = Math.round(raw.length / 3.2);
+
+    let parsedBible: MovieLoreAndBible = {
+        characters: [],
+        specialEntities: [],
+        genreAndToneNotes: '',
+        rawText: raw
+    };
+
+    try {
+        const jsonMatch = raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/) || [null, raw];
+        const jsonStr = jsonMatch[1] || raw;
+        const obj = JSON.parse(jsonStr.trim());
+        if (obj.characters || obj.specialEntities) {
+            parsedBible = {
+                characters: Array.isArray(obj.characters) ? obj.characters : [],
+                specialEntities: Array.isArray(obj.specialEntities) ? obj.specialEntities : [],
+                genreAndToneNotes: obj.genreAndToneNotes || '',
+                rawText: raw
+            };
+        }
+    } catch (e) {
+        console.warn("Character Bible JSON parse error:", e);
+    }
+
+    return { bible: parsedBible, inTok, outTok };
+};
+
 // ─── PART 2 & 3: TRANSLATION QUALITY & STRICT SRT FORMATTING ───
 export const translateBatch = async (
     texts: string[], 
@@ -299,6 +413,7 @@ export const translateBatch = async (
     movieContextStr: string = '',
     toneRuleStr: string = '',
     glossaryTerms: any[] = [],
+    characterBible?: MovieLoreAndBible,
     signal?: AbortSignal
 ): Promise<{ translatedList: string[]; inTok: number; outTok: number }> => {
     const srtBatch = texts.map((t, idx) => {
@@ -317,6 +432,24 @@ export const translateBatch = async (
         }
     }
 
+    // Format Character Bible section for prompt
+    let characterBibleSection = '';
+    if (characterBible && (characterBible.characters?.length > 0 || characterBible.specialEntities?.length > 0)) {
+        const charLines = characterBible.characters?.map(c => 
+            `• "${c.name}" -> [${c.gender === 'Female' ? 'مێ (Female)' : 'نێر (Male)'}] ${c.kurdishName} (${c.role})`
+        ).join('\n') || '';
+
+        const entityLines = characterBible.specialEntities?.map(e => 
+            `• "${e.english}" -> "${e.kurdish}"${e.description ? ` (${e.description})` : ''}`
+        ).join('\n') || '';
+
+        characterBibleSection = `\n🚨 CAST CHARACTER BIBLE & MOVIE LORE (HIGHEST PRIORITY - STRICT GENDER & KINSHIP):\n` +
+            (charLines ? `CHARACTERS & GENDERS:\n${charLines}\n` : '') +
+            (entityLines ? `MOVIE LORE & SPECIAL TERMS:\n${entityLines}\n` : '') +
+            (characterBible.genreAndToneNotes ? `ATMOSPHERE & TONE: ${characterBible.genreAndToneNotes}\n` : '') +
+            `------------------------------------------------------------\n`;
+    }
+
     const batchFullText = texts.join(' ').toLowerCase();
     const relevantGlossary = glossaryTerms.filter((g: any) => {
         if (!g.english || !g.english.trim()) return false;
@@ -327,9 +460,9 @@ export const translateBatch = async (
     });
 
     const glossarySection = relevantGlossary.length > 0
-        ? `\n🚨 MANDATORY GLOSSARY RULES (STRICT HIGHEST PRIORITY):\n` +
-          `You MUST strictly use these exact Kurdish translations whenever these English terms appear (including plurals and inflections):\n` +
-          relevantGlossary.map(g => `• "${g.english}" -> MUST BE TRANSLATED AS: "${g.kurdish}" (do NOT use any other translation/synonym for this term)`).join('\n') +
+        ? `\n🚨 MANDATORY USER GLOSSARY (STRICT HIGHEST PRIORITY):\n` +
+          `You MUST strictly use these exact Kurdish translations whenever these English terms appear:\n` +
+          relevantGlossary.map(g => `• "${g.english}" -> MUST BE TRANSLATED AS: "${g.kurdish}" (do NOT use any other synonym)`).join('\n') +
           `\nMake sure to adhere 100% to this glossary list across all translated lines.\n`
         : '';
 
@@ -337,6 +470,7 @@ export const translateBatch = async (
 YOU ARE A MASTER HUMAN DIALOGUE TRANSLATOR, NOT A RIGID ROBOT OR MACHINE.
 Translate the following English SRT subtitle batch into natural, fluent, emotionally captivating, and authentic spoken Central Kurdish (Sorani).
 
+${characterBibleSection}
 ${previousContextSection}
 ${glossarySection}
 ${movieContextStr ? `CONTEXT & SETTING: ${movieContextStr}` : ''}
@@ -781,6 +915,19 @@ export async function runAiTranslationAndAnalysis(
         };
     }
 
+    // 2.5 Pre-Extract Character Bible & Movie Lore (Pass 1)
+    let characterBible: MovieLoreAndBible | undefined = undefined;
+    if (mode === 'all' || mode === 'translate_only') {
+        onProgress?.('سکانکردنی کەسایەتییەکان و ئامادەکردنی فەرهەنگی زیرەک (Character Bible)...', 12, 'running');
+        try {
+            const bibleRes = await extractMovieLoreAndCharacterBible(origText, contextStr || 'Movie/Show', contextStr, selectedModel, signal);
+            characterBible = bibleRes.bible;
+            onStatsUpdate?.(bibleRes.inTok, bibleRes.outTok);
+        } catch (e: any) {
+            console.warn('Character Bible extraction skipped or failed:', e);
+        }
+    }
+
     // 3. Translate remaining batches with PAUSE/RESUME check
     const BATCH_SIZE = 35;
 
@@ -810,6 +957,7 @@ export async function runAiTranslationAndAnalysis(
             contextStr,
             toneRuleStr,
             glossaryTerms,
+            characterBible,
             signal
         );
 
