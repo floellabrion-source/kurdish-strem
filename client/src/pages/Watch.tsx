@@ -368,6 +368,9 @@ export default function Watch() {
     const [syncBadgeVisible, setSyncBadgeVisible] = useState(false);
     const [skipIndicator, setSkipIndicator] = useState<'forward' | 'backward' | null>(null);
     const [playPauseIndicator, setPlayPauseIndicator] = useState<'play' | 'pause' | null>(null);
+    const [playPauseKey, setPlayPauseKey] = useState(0);
+    const playPauseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const skipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [episodeTitle, setEpisodeTitle] = useState('');
     const [activeEpisode, setActiveEpisode] = useState<Episode | null>(null);
     const [resumePrompt, setResumePrompt] = useState<number | null>(null); // saved time to resume from
@@ -1512,27 +1515,47 @@ CRITICAL RULES:
         const v = videoRef.current;
         if (!v) return;
         const now = Date.now();
+        if (playPauseTimerRef.current) {
+            clearTimeout(playPauseTimerRef.current);
+            playPauseTimerRef.current = null;
+        }
+
         if (v.paused) { 
-            // Guard: If paused less than 450ms ago, ignore synthetic or duplicate click/touch
-            if (now - lastPauseTimeRef.current < 450) return;
+            // Guard: If paused less than 350ms ago, ignore synthetic or duplicate click/touch
+            if (now - lastPauseTimeRef.current < 350) return;
             v.play().catch(() => {}); 
             setIsPlaying(true); 
             setPlayPauseIndicator('play');
-            setTimeout(() => setPlayPauseIndicator(null), 550);
+            setPlayPauseKey(k => k + 1);
+            playPauseTimerRef.current = setTimeout(() => {
+                setPlayPauseIndicator(null);
+                playPauseTimerRef.current = null;
+            }, 500);
         } else { 
             lastPauseTimeRef.current = now;
             v.pause(); 
             setIsPlaying(false); 
             setPlayPauseIndicator('pause');
-            setTimeout(() => setPlayPauseIndicator(null), 550);
+            setPlayPauseKey(k => k + 1);
+            playPauseTimerRef.current = setTimeout(() => {
+                setPlayPauseIndicator(null);
+                playPauseTimerRef.current = null;
+            }, 500);
         }
     };
 
     const skip = (s: number) => {
         const baseTime = isAnyTranscoding ? (pendingSeekRef.current ?? currentTime) : currentTime;
         commitSeek(baseTime + s, { delayMs: isAnyTranscoding ? 400 : 0 });
+        if (skipTimerRef.current) {
+            clearTimeout(skipTimerRef.current);
+            skipTimerRef.current = null;
+        }
         setSkipIndicator(s > 0 ? 'forward' : 'backward');
-        setTimeout(() => setSkipIndicator(null), 600);
+        skipTimerRef.current = setTimeout(() => {
+            setSkipIndicator(null);
+            skipTimerRef.current = null;
+        }, 550);
     };
 
     // Close settings menu when clicking outside
@@ -2173,7 +2196,7 @@ CRITICAL RULES:
             )}
             {/* CENTER PLAY/PAUSE FLASH RIPPLE ANIMATION */}
             {playPauseIndicator && (
-                <div key={Date.now()} className="center-play-pause-ripple">
+                <div key={playPauseKey} className="center-play-pause-ripple">
                     <div className="ripple-icon-circle">
                         {playPauseIndicator === 'play' ? (
                             <Play size={44} fill="#ffffff" color="#ffffff" style={{ marginLeft: '4px' }} />
@@ -2190,7 +2213,7 @@ CRITICAL RULES:
                     className="player-center-play-wrapper" 
                     onClick={(e) => {
                         e.stopPropagation();
-                        if (Date.now() - lastTouchEventTimeRef.current < 500 || Date.now() - lastPauseTimeRef.current < 500) return;
+                        if (Date.now() - lastTouchEventTimeRef.current < 400) return;
                         togglePlay();
                         setShowControls(true);
                         resetControlsTimer();
@@ -2198,7 +2221,6 @@ CRITICAL RULES:
                     onTouchEnd={(e) => {
                         e.stopPropagation();
                         e.preventDefault();
-                        if (Date.now() - lastTouchEventTimeRef.current < 500 || Date.now() - lastPauseTimeRef.current < 500) return;
                         lastTouchEventTimeRef.current = Date.now();
                         togglePlay();
                         setShowControls(true);
