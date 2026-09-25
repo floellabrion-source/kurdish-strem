@@ -434,7 +434,35 @@
     font-size: 14px;
 }
 
-.video-quick-controls {
+.video-editor-quality-badge-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.editor-quality-dropdown {
+    background: rgba(139, 92, 246, 0.18);
+    border: 1px solid rgba(168, 85, 247, 0.4);
+    color: #e9d5ff;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.editor-quality-dropdown:hover {
+    background: rgba(139, 92, 246, 0.3);
+    border-color: #a855f7;
+    color: #ffffff;
+}
+
+.editor-quality-dropdown option {
+    background: #0f172a;
+    color: #ffffff;
+}
     display: flex;
     gap: 6px;
 }
@@ -2358,6 +2386,22 @@ html[dir="ltr"] [data-theme='light'] .dual-srt-video-panel,
 
 [data-theme='light'] .video-time-display strong {
     color: #0284c7 !important;
+}
+
+[data-theme='light'] .editor-quality-dropdown {
+    background: #f1f5f9 !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #475569 !important;
+}
+
+[data-theme='light'] .editor-quality-dropdown:hover {
+    background: #e2e8f0 !important;
+    color: #0f172a !important;
+}
+
+[data-theme='light'] .editor-quality-dropdown option {
+    background: #ffffff !important;
+    color: #0f172a !important;
 }
 
 [data-theme='light'] .video-quick-controls button {

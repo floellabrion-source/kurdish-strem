@@ -15,6 +15,7 @@ import { generateLineAlternatives, LineAlternativeOption, translateBatch, SubBlo
 import { useAuth } from '../context/AuthContext';
 import { useWebSocket } from '../context/WebSocketContext';
 import { useLanguage } from '../context/LanguageContext';
+import Hls from 'hls.js';
 import './DualSrtVideoEditor.css';
 
 interface SubtitleLine {
@@ -1184,7 +1185,109 @@ Format your output EXACTLY as follows using delimiter tags:
         return () => window.removeEventListener('beforeunload', handleBeforeUnload);
     }, [sessionEditedLineIds, aiUsedInSession, lines]);
 
-    const effectiveVideoSrc = localVideoUrl || videoUrl || `/api/stream/movies/${movieId}${seasonNum !== undefined && episodeNum !== undefined ? `?s=${seasonNum}&e=${episodeNum}` : ''}`;
+    const [qualityLevels, setQualityLevels] = useState<{ id: number; label: string; height?: number }[]>([]);
+    const [selectedQuality, setSelectedQuality] = useState<number>(-2);
+    const hlsRef = useRef<Hls | null>(null);
+
+    const effectiveVideoSrc = useMemo(() => {
+        if (localVideoUrl) return localVideoUrl;
+        if (videoUrl) return videoUrl;
+        const base = `/api/stream/movies/${movieId}`;
+        const queryParams = [];
+        if (seasonNum !== undefined && episodeNum !== undefined) {
+            queryParams.push(`s=${seasonNum}&e=${episodeNum}`);
+        }
+        queryParams.push('quality=360');
+        return `${base}?${queryParams.join('&')}`;
+    }, [localVideoUrl, videoUrl, movieId, seasonNum, episodeNum]);
+
+    const isHls = useMemo(() => {
+        return Boolean(
+            effectiveVideoSrc && (
+                effectiveVideoSrc.includes('.m3u8') ||
+                effectiveVideoSrc.includes('/hls/') ||
+                effectiveVideoSrc.includes('manifest/video') ||
+                effectiveVideoSrc.includes('cloudflarestream.com')
+            )
+        );
+    }, [effectiveVideoSrc]);
+
+    // HLS.js Player Integration with automatic lowest quality selection for fast syncing
+    useEffect(() => {
+        const video = videoRef.current;
+        if (!effectiveVideoSrc || !video) return;
+
+        let hlsInstance: Hls | null = null;
+
+        if (isHls) {
+            if (Hls.isSupported()) {
+                hlsInstance = new Hls({
+                    enableWorker: true,
+                    lowLatencyMode: true,
+                    backBufferLength: 30,
+                    maxBufferLength: 15,
+                    maxMaxBufferLength: 30,
+                    maxBufferSize: 15 * 1000 * 1000,
+                    startLevel: 0
+                });
+                hlsRef.current = hlsInstance;
+                hlsInstance.loadSource(effectiveVideoSrc);
+                hlsInstance.attachMedia(video);
+
+                hlsInstance.on(Hls.Events.MANIFEST_PARSED, (_, data) => {
+                    if (Array.isArray(data.levels) && data.levels.length > 0) {
+                        const parsed = data.levels.map((lvl, index) => ({
+                            id: index,
+                            height: lvl.height || 0,
+                            label: lvl.height ? `${lvl.height}p` : `کوالیتی ${index + 1}`
+                        }));
+
+                        // Sort ascending to find lowest resolution
+                        const sortedAsc = [...parsed].sort((a, b) => a.height - b.height);
+                        const lowestLevel = sortedAsc[0];
+
+                        setQualityLevels(parsed.sort((a, b) => b.height - a.height));
+
+                        // Auto-switch to the lowest resolution for speed and light bandwidth
+                        if (lowestLevel && hlsInstance) {
+                            hlsInstance.currentLevel = lowestLevel.id;
+                            hlsInstance.loadLevel = lowestLevel.id;
+                            setSelectedQuality(lowestLevel.id);
+                        }
+                    }
+                });
+
+                hlsInstance.on(Hls.Events.ERROR, (_, data) => {
+                    if (data.fatal) {
+                        switch (data.type) {
+                            case Hls.ErrorTypes.NETWORK_ERROR:
+                                hlsInstance?.startLoad();
+                                break;
+                            case Hls.ErrorTypes.MEDIA_ERROR:
+                                hlsInstance?.recoverMediaError();
+                                break;
+                            default:
+                                hlsInstance?.destroy();
+                                break;
+                        }
+                    }
+                });
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                video.src = effectiveVideoSrc;
+            }
+        } else {
+            hlsRef.current = null;
+            setQualityLevels([]);
+        }
+
+        return () => {
+            if (hlsInstance) {
+                hlsInstance.destroy();
+                hlsRef.current = null;
+            }
+        };
+    }, [effectiveVideoSrc, isHls]);
+
     const activeLine = lines.find(l => currentTime >= l.startSec && currentTime <= l.endSec);
 
     const toggleEmptyFilter = () => {
@@ -1593,7 +1696,7 @@ Format your output EXACTLY as follows using delimiter tags:
                                 {effectiveVideoSrc ? (
                                     <video
                                         ref={videoRef}
-                                        src={effectiveVideoSrc}
+                                        src={isHls ? undefined : effectiveVideoSrc}
                                         controls
                                         onTimeUpdate={handleTimeUpdate}
                                         className="dual-srt-video-el"
@@ -1628,8 +1731,30 @@ Format your output EXACTLY as follows using delimiter tags:
 
                             <div className="video-sync-bar">
                                 <div className="video-time-display">
-                                    <Clock size={16} /> {lang === 'en' ? 'Current Time:' : 'کاتی هەنووکە:'} <strong>{secToTimeString(currentTime)}</strong>
+                                    <Clock size={15} /> <strong>{secToTimeString(currentTime)}</strong>
                                 </div>
+                                {qualityLevels.length > 0 && (
+                                    <div className="video-editor-quality-badge-wrapper" title="کواڵێتی ڤیدیۆ بۆ ئێدیتەر">
+                                        <select
+                                            className="editor-quality-dropdown"
+                                            value={selectedQuality}
+                                            onChange={(e) => {
+                                                const val = parseInt(e.target.value, 10);
+                                                setSelectedQuality(val);
+                                                if (hlsRef.current) {
+                                                    hlsRef.current.currentLevel = val;
+                                                    hlsRef.current.loadLevel = val;
+                                                }
+                                            }}
+                                        >
+                                            {qualityLevels.map(q => (
+                                                <option key={q.id} value={q.id}>
+                                                    ⚡ {q.label} {q.height && q.height <= 480 ? '(نزم / خێرا)' : ''}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
                                 <div className="video-quick-controls">
                                     <button onClick={() => seekToTime(Math.max(0, currentTime - 5))} title={lang === 'en' ? '5s Backward' : '٥ چرکە بۆ دواوە'}><RotateCcw size={14} /> -5s</button>
                                     <button onClick={() => seekToTime(currentTime + 5)} title={lang === 'en' ? '5s Forward' : '٥ چرکە بۆ پێشەوە'}><RotateCw size={14} /> +5s</button>
