@@ -602,6 +602,13 @@ PART 2: IDIOMS, SLANG & CINEMATIC DIALOGUE (CONTEXT OVER LITERAL)
   • "Uncle" (Male) -> MUST ALWAYS be translated as "مام / خاڵ / مامە / خاڵە".
   • "Bracelet" -> "دەستبەند" (NEVER "دەستەوانە").
   • "Take the fun out of..." -> "تام و چێژەکەی لێ تێکدان / بێزارکردن" (NEVER "چێژ بردن").
+- AVOID STIFF DUBBING CLICHÉS (SLANG & INTENSIFIERS):
+  • NEVER translate "motherfucking", "shit", or "damn" mechanically into literal "نەفرەتی".
+  • When "motherfucking" is used as an intensifier of strength ("You're a motherfucking wolf!"), translate naturally as "تۆ گورگێکی حەقیقییت / تەواویت!" (NEVER "گورگێکی نەفرەتی").
+  • "Don't know [X] for shit" -> "فڕت بەسەر [X]ەوە نییە / تۆزقاڵێک لە [X] نازانیت" (NEVER "بە نەفرەت بیت هیچ لە...").
+  • "That's my boy!" -> "ئافەرین کوڕی خۆم! / ئەوەیە پیاو! / دەستخۆش کوڕم!" (Always correct Kurdish spelling: "ئافەرین", NEVER "ئافەرەم").
+  • "Shit is wild!" -> "شتێکی شێتانەیە! / زۆر سەیرە!"
+  • "The system don't give a shit/fuck about us" -> "سیستەم یەک زەڕە / یەک تۆزقاڵ بایەخمان پێ نادات."
 - STUDY THESE CRITICAL EXAMPLES:
   • "You had me there!" -> "دەستت لێم بڕی! / خستتە داوەکەتەوە! / باوەڕم پێ کردیت!" (NEVER "تۆ منی لێرە هێشتەوە!")
   • "I think she took that well." -> "وا بزانم دیارە پێی تێکنەچوو / باش قبووڵی کرد." (NEVER "بە باشی وەری گرت.")
