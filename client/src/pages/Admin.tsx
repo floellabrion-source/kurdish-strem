@@ -7,7 +7,8 @@ import {
     Image, Video, Layers, ChevronDown, ChevronUp, ChevronLeft, ChevronRight,
     PlusCircle, ListVideo, Upload, Languages, Shield, ShieldCheck, Link as LinkIcon, Star, Play, Search,
     Users, BarChart2, CreditCard, Sparkles, Filter, Download, Pause, History, Trophy, BookOpen,
-    HardDrive, Bell, Wrench, Globe, Eye, EyeOff, Zap, DollarSign, Brain, Clock, RefreshCw, Minimize2
+    HardDrive, Bell, Wrench, Globe, Eye, EyeOff, Zap, DollarSign, Brain, Clock, RefreshCw, Minimize2,
+    Wallet
 } from 'lucide-react';
 import { Movie, Season, Episode, LanguageMetrics, getCefrDisplayLevel, getCefrColor } from '../types';
 import { runAiTranslationAndAnalysis, triggerFileDownload, pauseTranslationTask, AI_TRANSLATION_MODELS, TRANSLATION_TONES, MODEL_PRICING } from '../utils/aiTranslator';
@@ -16,6 +17,7 @@ import AdminUsers from './AdminUsers';
 import AdminAnalytics from './AdminAnalytics';
 import AdminActivityLog from './AdminActivityLog';
 import AdminBackups from './AdminBackups';
+import AdminPayroll from './AdminPayroll';
 import { AdminNotificationManager } from '../components/AdminNotificationManager';
 import DualSrtVideoEditor from '../components/DualSrtVideoEditor';
 import EpisodeManagerModal from '../components/EpisodeManagerModal';
@@ -79,7 +81,7 @@ export default function Admin() {
     const canManageComments = isSuperAdmin || (user?.role === 'admin' && (user?.permissions ? Boolean(user.permissions.canManageComments) : true));
     const canPublishDirectly = isSuperAdmin || (user?.role === 'admin' && (user?.permissions ? Boolean(user.permissions.canPublishDirectly) : false));
 
-    const [activeTab, setActiveTab] = useState<'movies' | 'approvals' | 'hero' | 'credits' | 'plans' | 'users' | 'analytics' | 'activities' | 'ai_tracking' | 'glossary' | 'backups' | 'notifications_manager'>(() => {
+    const [activeTab, setActiveTab] = useState<'movies' | 'approvals' | 'hero' | 'credits' | 'plans' | 'users' | 'analytics' | 'activities' | 'ai_tracking' | 'glossary' | 'backups' | 'notifications_manager' | 'translator_payroll'>(() => {
         try {
             const urlParams = new URLSearchParams(window.location.search);
             const urlTab = urlParams.get('tab');
@@ -1226,6 +1228,11 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                         </button>
                     )}
                     {isSuperAdmin && (
+                        <button className={`admin-tab-btn ${activeTab === 'translator_payroll' ? 'active' : ''}`} onClick={() => setActiveTab('translator_payroll')}>
+                            <Wallet size={18} color="#34d399" /> {lang === 'en' ? 'Translator Payroll' : 'حیساباتی وەرگێڕەکان 💼'}
+                        </button>
+                    )}
+                    {isSuperAdmin && (
                         <button className={`admin-tab-btn ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')}>
                             <Users size={18} /> {lang === 'en' ? 'Users & Admins' : 'بەکارهێنەران و ئەدمینەکان'}
                         </button>
@@ -2034,6 +2041,7 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
 
             {activeTab === 'credits' && <AdminCredits />}
             {activeTab === 'plans' && isSuperAdmin && <AdminPlans />}
+            {activeTab === 'translator_payroll' && isSuperAdmin && <AdminPayroll />}
             {activeTab === 'users' && <AdminUsers />}
             {activeTab === 'analytics' && <AdminAnalytics />}
             {activeTab === 'backups' && isSuperAdmin && <AdminBackups />}
