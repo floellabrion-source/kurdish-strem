@@ -7366,6 +7366,123 @@ app.post('/api/payroll/record-edit', requireAuth, (req, res) => {
     }
 });
 
+// 1.1 تۆمارکردنی دەستکەوتی دێڕەکان بە یەکجار لە کاتی داگرتنی دوگمەی پاشەکەوتکردن (Record batch edits on Save)
+app.post('/api/payroll/record-batch-edits', requireAuth, (req, res) => {
+    try {
+        const user = req.user;
+        const isEligible = user.role === 'admin' || user.role === 'super_admin' || isSuperAdmin(user) || hasPermission(user, 'subtitles') || hasPermission(user, 'edit_subtitles');
+        if (!isEligible) {
+            return res.status(403).json({ error: 'تەنها ئەدمین و وەرگێڕەکان دەتوانن دەستکاری دێڕ تۆمار بکەن' });
+        }
+
+        const { movieId, movieTitle, seasonNum, episodeNum, edits } = req.body;
+        if (!movieId || !Array.isArray(edits) || edits.length === 0) {
+            const payroll = readTranslatorPayroll();
+            const userId = user.id || user.username;
+            const translator = payroll.translators[userId] || { unpaidLines: 0, totalEditedLines: 0, rate: payroll.settings.defaultRate };
+            const rate = translator.rate || payroll.settings.defaultRate;
+            const ratePerLine = rate.priceIqd / (rate.lines || 1);
+            return res.json({ 
+                success: true, 
+                addedCount: 0, 
+                updatedCount: 0, 
+                unpaidLines: translator.unpaidLines || 0,
+                estimatedEarningsIqd: Math.round((translator.unpaidLines || 0) * ratePerLine),
+                rate 
+            });
+        }
+
+        const payroll = readTranslatorPayroll();
+        const userId = user.id || user.username;
+
+        if (!payroll.translators[userId]) {
+            payroll.translators[userId] = {
+                userId: userId,
+                username: user.username,
+                name: user.name || user.username,
+                rate: { ...payroll.settings.defaultRate },
+                unpaidLines: 0,
+                totalEditedLines: 0,
+                advances: [],
+                payoutHistory: []
+            };
+        }
+
+        const translator = payroll.translators[userId];
+        translator.username = user.username;
+        translator.name = user.name || user.username;
+
+        let addedCount = 0;
+        let updatedCount = 0;
+
+        for (const item of edits) {
+            const { subtitleId, oldText, newText } = item;
+            if (subtitleId === undefined || subtitleId === null) continue;
+
+            const validation = validateKurdishLineEdit(oldText, newText);
+            if (!validation.valid) continue;
+
+            const existingIdx = payroll.editedLineEntries.findIndex(e =>
+                e.userId === userId &&
+                String(e.movieId) === String(movieId) &&
+                String(e.subtitleId) === String(subtitleId) &&
+                String(e.seasonNum || '') === String(seasonNum || '') &&
+                String(e.episodeNum || '') === String(episodeNum || '') &&
+                !e.isPaid
+            );
+
+            if (existingIdx !== -1) {
+                payroll.editedLineEntries[existingIdx].newText = String(newText).trim();
+                payroll.editedLineEntries[existingIdx].charDiff = validation.charDiff;
+                payroll.editedLineEntries[existingIdx].timestamp = Date.now();
+                updatedCount++;
+            } else {
+                payroll.editedLineEntries.push({
+                    id: uuidv4(),
+                    userId: userId,
+                    username: user.username,
+                    movieId: String(movieId),
+                    movieTitle: movieTitle || 'فیلمی دیارینەکراو',
+                    seasonNum: seasonNum || null,
+                    episodeNum: episodeNum || null,
+                    subtitleId: String(subtitleId),
+                    oldText: String(oldText || '').trim(),
+                    newText: String(newText || '').trim(),
+                    charDiff: validation.charDiff,
+                    timestamp: Date.now(),
+                    isPaid: false,
+                    payoutReceiptId: null
+                });
+
+                translator.unpaidLines = (translator.unpaidLines || 0) + 1;
+                translator.totalEditedLines = (translator.totalEditedLines || 0) + 1;
+                addedCount++;
+            }
+        }
+
+        if (addedCount > 0 || updatedCount > 0) {
+            writeTranslatorPayroll(payroll);
+        }
+
+        const rate = translator.rate || payroll.settings.defaultRate;
+        const ratePerLine = rate.priceIqd / (rate.lines || 1);
+        const estimatedEarningsIqd = Math.round((translator.unpaidLines || 0) * ratePerLine);
+
+        return res.json({
+            success: true,
+            addedCount,
+            updatedCount,
+            unpaidLines: translator.unpaidLines,
+            totalEditedLines: translator.totalEditedLines,
+            estimatedEarningsIqd,
+            rate
+        });
+    } catch (err) {
+        console.error('Error in record-batch-edits:', err);
+        return res.status(500).json({ error: 'هەڵە لە تۆمارکردنی دەستکارییەکان: ' + err.message });
+    }
+});
+
 // 2. ئامار و هەژماری تایبەتی وەرگێڕی چوونەژوورەوەبوو (My Payroll Stats)
 app.get('/api/payroll/my-stats', requireAuth, (req, res) => {
     try {

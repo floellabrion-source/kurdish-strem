@@ -3618,7 +3618,7 @@ html[dir="ltr"] [data-theme='light'] .dual-srt-video-panel,
     border-top: 1.5px solid #e2e8f0 !important;
 }
 
-/* ─── Translator Payroll Live Header Pill ─── */
+/* ─── Translator Payroll Live Header Pill (Dark Mode Default) ─── */
 .dual-srt-payroll-pill {
     display: inline-flex;
     align-items: center;
@@ -3661,5 +3661,50 @@ html[dir="ltr"] [data-theme='light'] .dual-srt-video-panel,
     color: #fde047;
     font-weight: 900;
 }
+
+/* ─── High-Contrast Light Mode Styling ─── */
+[data-theme='light'] .dual-srt-payroll-pill,
+.light-mode .dual-srt-payroll-pill,
+body.light-theme .dual-srt-payroll-pill {
+    background: #ecfdf5 !important;
+    border: 1.5px solid #10b981 !important;
+    box-shadow: 0 2px 10px rgba(16, 185, 129, 0.18) !important;
+}
+
+[data-theme='light'] .dual-srt-payroll-pill:hover,
+.light-mode .dual-srt-payroll-pill:hover,
+body.light-theme .dual-srt-payroll-pill:hover {
+    background: #d1fae5 !important;
+    border-color: #059669 !important;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.28) !important;
+}
+
+[data-theme='light'] .dual-srt-payroll-pill .payroll-tag,
+.light-mode .dual-srt-payroll-pill .payroll-tag,
+body.light-theme .dual-srt-payroll-pill .payroll-tag {
+    color: #047857 !important;
+    font-weight: 900 !important;
+}
+
+[data-theme='light'] .dual-srt-payroll-pill .payroll-lines-val,
+.light-mode .dual-srt-payroll-pill .payroll-lines-val,
+body.light-theme .dual-srt-payroll-pill .payroll-lines-val {
+    color: #0f172a !important;
+    font-weight: 900 !important;
+}
+
+[data-theme='light'] .dual-srt-payroll-pill .payroll-dot,
+.light-mode .dual-srt-payroll-pill .payroll-dot,
+body.light-theme .dual-srt-payroll-pill .payroll-dot {
+    color: #64748b !important;
+}
+
+[data-theme='light'] .dual-srt-payroll-pill .payroll-iqd-val,
+.light-mode .dual-srt-payroll-pill .payroll-iqd-val,
+body.light-theme .dual-srt-payroll-pill .payroll-iqd-val {
+    color: #b45309 !important;
+    font-weight: 900 !important;
+}
+
 
 

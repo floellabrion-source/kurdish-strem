@@ -7,6 +7,7 @@ import {
     ChevronDown, X, Trash2
 } from 'lucide-react';
 import './AdminPayroll.css';
+import '../components/TranslatorPayrollView.css';
 
 interface PayoutReceipt {
     receiptId: string;
@@ -217,14 +218,14 @@ ${r.advanceDeductedIqd > 0 ? `🤝 داشکاندنی پێشەکی: -${r.advance
                         <Wallet size={24} />
                     </div>
                     <div>
-                        <h2>بەڕێوەبردنی حیسابات و مووچەی وەرگێڕەکان (Super Admin Payroll)</h2>
-                        <p>چاودێری، دانانی نرخی دێڕ، تۆمارکردنی پێشەکی و پارەدانی فەرمی بە وەسڵی PDF</p>
+                        <h2>بەڕێوەبردنی حیساباتی وەرگێڕان</h2>
+                        <p>چاودێری دێڕەکان، دانانی نرخ، تۆمارکردنی پێشەکی و پارەدان بە وەسڵی فەرمی</p>
                     </div>
                 </div>
 
                 <button type="button" className="btn-refresh-payroll" onClick={fetchOverview}>
                     <RefreshCw size={16} />
-                    <span>نوێکردنەوەی ئامارەکان</span>
+                    <span>نوێکردنەوە</span>
                 </button>
             </div>
 
@@ -236,11 +237,11 @@ ${r.advanceDeductedIqd > 0 ? `🤝 داشکاندنی پێشەکی: -${r.advance
                         <div className="metric-icon" style={{ background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8' }}>
                             <Users size={22} />
                         </div>
-                        <span className="metric-chip">سەرجەم وەرگێڕەکان</span>
+                        <span className="metric-chip">وەرگێڕەکان</span>
                     </div>
                     <div className="metric-value-row">
                         <span className="metric-big-num">{overview.systemStats.totalTranslators}</span>
-                        <span className="metric-unit">وەرگێڕ / ئەدمین</span>
+                        <span className="metric-unit">کەس</span>
                     </div>
                 </div>
 
@@ -250,11 +251,11 @@ ${r.advanceDeductedIqd > 0 ? `🤝 داشکاندنی پێشەکی: -${r.advance
                         <div className="metric-icon" style={{ background: 'rgba(250, 204, 21, 0.15)', color: '#facc15' }}>
                             <Clock size={22} />
                         </div>
-                        <span className="metric-chip">کۆی دێڕە نەدراوەکان</span>
+                        <span className="metric-chip">دێڕی نەدراو</span>
                     </div>
                     <div className="metric-value-row">
                         <span className="metric-big-num">{overview.systemStats.totalUnpaidLines.toLocaleString()}</span>
-                        <span className="metric-unit">دێڕی کارپێکراو</span>
+                        <span className="metric-unit">دێڕ</span>
                     </div>
                 </div>
 
@@ -264,7 +265,7 @@ ${r.advanceDeductedIqd > 0 ? `🤝 داشکاندنی پێشەکی: -${r.advance
                         <div className="metric-icon" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34d399' }}>
                             <DollarSign size={22} />
                         </div>
-                        <span className="metric-chip green">کۆی پارەی شایستە بۆ دان</span>
+                        <span className="metric-chip green">شایستەی دان</span>
                     </div>
                     <div className="metric-value-row">
                         <span className="metric-big-num text-green">{overview.systemStats.totalEstimatedIqd.toLocaleString()}</span>
@@ -278,7 +279,7 @@ ${r.advanceDeductedIqd > 0 ? `🤝 داشکاندنی پێشەکی: -${r.advance
                         <div className="metric-icon" style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#c084fc' }}>
                             <CheckCircle size={22} />
                         </div>
-                        <span className="metric-chip">کۆی پارەی دراو لە مێژوودا</span>
+                        <span className="metric-chip">کۆی دراو</span>
                     </div>
                     <div className="metric-value-row">
                         <span className="metric-big-num">{overview.systemStats.totalPaidIqd.toLocaleString()}</span>
@@ -296,11 +297,11 @@ ${r.advanceDeductedIqd > 0 ? `🤝 داشکاندنی پێشەکی: -${r.advance
                             type="text"
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
-                            placeholder="گەڕان بەپێی ناوی وەرگێڕ یان یوزەرنەیم..."
+                            placeholder="گەڕان بەپێی ناوی وەرگێڕ..."
                         />
                     </div>
                     <div className="translators-count-tag">
-                        <span>{filteredTranslators.length} وەرگێڕ دۆزرایەوە</span>
+                        <span>{filteredTranslators.length} وەرگێڕ</span>
                     </div>
                 </div>
 
@@ -308,14 +309,14 @@ ${r.advanceDeductedIqd > 0 ? `🤝 داشکاندنی پێشەکی: -${r.advance
                     <table className="admin-payroll-table">
                         <thead>
                             <tr>
-                                <th>وەرگێڕ / ئەدمین</th>
-                                <th>نرخی دیاریکراو</th>
-                                <th>دێڕە کارپێکراوەکان</th>
-                                <th>شایستەی دارایی (IQD)</th>
-                                <th>پێشەکییەکان</th>
-                                <th>ماوە بۆ دان (Net)</th>
-                                <th>کۆی دێڕ لەمێژوودا</th>
-                                <th>کردارەکانی سەرۆک</th>
+                                <th>وەرگێڕ</th>
+                                <th>نرخی دێڕ</th>
+                                <th>دێڕی نەدراو</th>
+                                <th>شایستە</th>
+                                <th>پێشەکی</th>
+                                <th>صافی ماوە</th>
+                                <th>کۆی مێژوویی</th>
+                                <th>کردارەکان</th>
                             </tr>
                         </thead>
                         <tbody>

@@ -265,7 +265,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 99999;
+    z-index: 100005 !important;
     padding: 20px;
 }
 
@@ -524,3 +524,56 @@
         display: none !important;
     }
 }
+
+/* ─── Light Mode Styles for Translator Payroll View ─── */
+[data-theme='light'] .payroll-stat-card,
+.light-mode .payroll-stat-card,
+body.light-theme .payroll-stat-card {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05) !important;
+}
+
+[data-theme='light'] .payroll-stat-card.card-highlight,
+.light-mode .payroll-stat-card.card-highlight,
+body.light-theme .payroll-stat-card.card-highlight {
+    background: #f0fdf4 !important;
+    border-color: #86efac !important;
+}
+
+[data-theme='light'] .card-big-num,
+.light-mode .card-big-num,
+body.light-theme .card-big-num {
+    color: #0f172a !important;
+}
+
+[data-theme='light'] .payroll-table-section,
+.light-mode .payroll-table-section,
+body.light-theme .payroll-table-section {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+[data-theme='light'] .payroll-modern-table td,
+.light-mode .payroll-modern-table td,
+body.light-theme .payroll-modern-table td {
+    color: #1e293b !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+}
+
+[data-theme='light'] .payroll-tab-btn,
+.light-mode .payroll-tab-btn,
+body.light-theme .payroll-tab-btn {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #475569 !important;
+}
+
+[data-theme='light'] .payroll-tab-btn.active,
+.light-mode .payroll-tab-btn.active,
+body.light-theme .payroll-tab-btn.active {
+    background: #ecfdf5 !important;
+    border-color: #10b981 !important;
+    color: #047857 !important;
+}
+
