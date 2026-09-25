@@ -3706,5 +3706,140 @@ body.light-theme .dual-srt-payroll-pill .payroll-iqd-val {
     font-weight: 900 !important;
 }
 
+/* ─── Unsaved Changes Exit Confirmation Dialog ─── */
+.unsaved-exit-dialog-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.88);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    z-index: 9999999 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: fadeIn 0.15s ease-out;
+}
+
+.unsaved-exit-dialog-box {
+    background: #0f172a;
+    border: 1.5px solid rgba(239, 68, 68, 0.4);
+    border-radius: 20px;
+    width: 100%;
+    max-width: 520px;
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.85);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    color: #ffffff;
+}
+
+.unsaved-dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    background: rgba(239, 68, 68, 0.08);
+    border-bottom: 1.5px solid rgba(239, 68, 68, 0.2);
+}
+
+.unsaved-dialog-header h3 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 900;
+    color: #f87171;
+}
+
+.unsaved-dialog-body {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.unsaved-dialog-desc {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.7;
+    color: #cbd5e1;
+}
+
+.unsaved-dialog-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.btn-unsaved-save-exit {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: #10b981;
+    color: #ffffff;
+    border: none;
+    padding: 13px 20px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    transition: all 0.2s;
+}
+.btn-unsaved-save-exit:hover { background: #059669; transform: translateY(-1px); }
+
+.btn-unsaved-discard-exit {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: rgba(239, 68, 68, 0.12);
+    border: 1.5px solid rgba(239, 68, 68, 0.4);
+    color: #f87171;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 13.5px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.btn-unsaved-discard-exit:hover { background: rgba(239, 68, 68, 0.22); border-color: #ef4444; }
+
+.btn-unsaved-cancel {
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #94a3b8;
+    padding: 11px 20px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.btn-unsaved-cancel:hover { background: rgba(255, 255, 255, 0.12); color: #ffffff; }
+
+[data-theme='light'] .unsaved-exit-dialog-box,
+.light-mode .unsaved-exit-dialog-box,
+body.light-theme .unsaved-exit-dialog-box {
+    background: #ffffff !important;
+    border: 1.5px solid #fca5a5 !important;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.2) !important;
+}
+
+[data-theme='light'] .unsaved-dialog-desc,
+.light-mode .unsaved-dialog-desc,
+body.light-theme .unsaved-dialog-desc {
+    color: #334155 !important;
+}
+
+[data-theme='light'] .btn-unsaved-cancel,
+.light-mode .btn-unsaved-cancel,
+body.light-theme .btn-unsaved-cancel {
+    background: #f1f5f9 !important;
+    color: #475569 !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+
 
 

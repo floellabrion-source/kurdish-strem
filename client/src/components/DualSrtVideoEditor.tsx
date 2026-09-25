@@ -271,6 +271,7 @@ export default function DualSrtVideoEditor({
     const [payrollStats, setPayrollStats] = useState<{ unpaidLines: number; estimatedEarningsIqd: number; rate?: any } | null>(null);
     const [sessionEditedLineIds, setSessionEditedLineIds] = useState<Set<number>>(new Set());
     const initialKurdishMapRef = useRef<Record<number, string>>({});
+    const initialLineCountRef = useRef<number>(0);
 
     // Fetch initial translator stats on mount
     useEffect(() => {
@@ -475,6 +476,7 @@ export default function DualSrtVideoEditor({
                     kMap[l.id] = l.kurdish || '';
                 });
                 initialKurdishMapRef.current = kMap;
+                initialLineCountRef.current = mergedLines.length;
 
                 setLines(mergedLines);
                 setSelectedLineId(1);
@@ -1140,10 +1142,19 @@ Format your output EXACTLY as follows using delimiter tags:
     };
 
     // Close Confirmation with Unsaved Changes Protection
-    const isEditorDirty = sessionEditedLineIds.size > 0 || aiUsedInSession || lines.some(l => (l.kurdish || '') !== (initialKurdishMapRef.current[l.id] || ''));
+    const checkHasUnsavedChanges = (): boolean => {
+        if (sessionEditedLineIds.size > 0 || aiUsedInSession) return true;
+        if (lines.length !== (initialLineCountRef.current || 0)) return true;
+        for (const l of lines) {
+            const initialText = initialKurdishMapRef.current[l.id];
+            if (initialText === undefined) return true;
+            if ((l.kurdish || '') !== initialText) return true;
+        }
+        return false;
+    };
 
     const handleRequestClose = () => {
-        if (isEditorDirty) {
+        if (checkHasUnsavedChanges()) {
             setShowUnsavedExitModal(true);
         } else {
             if (onClose) onClose();
@@ -1164,14 +1175,14 @@ Format your output EXACTLY as follows using delimiter tags:
     // Browser tab close protection
     useEffect(() => {
         const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-            if (isEditorDirty) {
+            if (checkHasUnsavedChanges()) {
                 e.preventDefault();
                 e.returnValue = '';
             }
         };
         window.addEventListener('beforeunload', handleBeforeUnload);
         return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-    }, [isEditorDirty]);
+    }, [sessionEditedLineIds, aiUsedInSession, lines]);
 
     const effectiveVideoSrc = localVideoUrl || videoUrl || `/api/stream/movies/${movieId}${seasonNum !== undefined && episodeNum !== undefined ? `?s=${seasonNum}&e=${episodeNum}` : ''}`;
     const activeLine = lines.find(l => currentTime >= l.startSec && currentTime <= l.endSec);
@@ -2524,12 +2535,12 @@ Format your output EXACTLY as follows using delimiter tags:
 
             {/* Unsaved Changes Exit Confirmation Dialog */}
             {showUnsavedExitModal && (
-                <div className="payroll-modal-overlay" style={{ zIndex: 100020 }} onClick={() => setShowUnsavedExitModal(false)}>
-                    <div className="payroll-modal-box unsaved-exit-box" onClick={e => e.stopPropagation()} style={{ maxWidth: '500px' }}>
-                        <div className="modal-header" style={{ borderBottom: '1.5px solid rgba(239, 68, 68, 0.25)', background: 'rgba(239, 68, 68, 0.08)' }}>
+                <div className="unsaved-exit-dialog-overlay" onClick={() => setShowUnsavedExitModal(false)}>
+                    <div className="unsaved-exit-dialog-box" onClick={e => e.stopPropagation()}>
+                        <div className="unsaved-dialog-header">
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                 <AlertTriangle size={22} color="#f87171" />
-                                <h3 style={{ color: '#f87171', margin: 0, fontSize: '17px', fontWeight: 900 }}>
+                                <h3>
                                     {lang === 'en' ? 'Unsaved Changes!' : 'گۆڕانکاریی پاشەکەوتنەکراو هەیە!'}
                                 </h3>
                             </div>
@@ -2538,36 +2549,21 @@ Format your output EXACTLY as follows using delimiter tags:
                             </button>
                         </div>
                         
-                        <div className="modal-body-content" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                            <p style={{ margin: 0, fontSize: '14px', lineHeight: '1.7', color: '#cbd5e1' }}>
+                        <div className="unsaved-dialog-body">
+                            <p className="unsaved-dialog-desc">
                                 {lang === 'en' 
-                                    ? 'You have unsaved subtitle edits. Do you want to save your work before exiting or discard changes without recording payroll?'
+                                    ? 'You have unsaved subtitle edits. Do you want to save your work before exiting (to record your lines for payroll) or discard changes without recording payroll?'
                                     : 'تۆ دەستکاریت لە ژێرنووسەکاندا کردووە. دەتەوێت ئەم فایلە پاشەکەوت بکەیت و دێڕەکانت بۆ پارە هەژمار بکرێت، یان دایبخەیت بێ هەژمارکردنی پارە؟'
                                 }
                             </p>
 
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '6px' }}>
+                            <div className="unsaved-dialog-actions">
                                 {/* Option 1: Save & Exit */}
                                 <button
                                     type="button"
+                                    className="btn-unsaved-save-exit"
                                     onClick={handleSaveAndExit}
                                     disabled={saving}
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        gap: '8px',
-                                        background: '#10b981',
-                                        color: '#ffffff',
-                                        border: 'none',
-                                        padding: '13px 20px',
-                                        borderRadius: '12px',
-                                        fontSize: '14px',
-                                        fontWeight: 900,
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s',
-                                        boxShadow: '0 4px 15px rgba(16, 185, 129, 0.3)'
-                                    }}
                                 >
                                     <Save size={18} />
                                     <span>{lang === 'en' ? 'Save & Exit (Record Payroll)' : 'پاشەکەوتکردن و دەرچوون (هەژمارکردنی دێڕەکان) 💾'}</span>
@@ -2576,22 +2572,8 @@ Format your output EXACTLY as follows using delimiter tags:
                                 {/* Option 2: Discard & Exit */}
                                 <button
                                     type="button"
+                                    className="btn-unsaved-discard-exit"
                                     onClick={handleDiscardAndExit}
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        gap: '8px',
-                                        background: 'rgba(239, 68, 68, 0.15)',
-                                        border: '1.5px solid rgba(239, 68, 68, 0.4)',
-                                        color: '#f87171',
-                                        padding: '12px 20px',
-                                        borderRadius: '12px',
-                                        fontSize: '13.5px',
-                                        fontWeight: 800,
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s'
-                                    }}
                                 >
                                     <Trash2 size={16} />
                                     <span>{lang === 'en' ? 'Exit Without Saving (No Payroll)' : 'داخستن بێ پاشەکەوتکردن (بێ هەژمارکردنی پارە) 🚪'}</span>
@@ -2600,18 +2582,8 @@ Format your output EXACTLY as follows using delimiter tags:
                                 {/* Option 3: Stay / Cancel */}
                                 <button
                                     type="button"
+                                    className="btn-unsaved-cancel"
                                     onClick={() => setShowUnsavedExitModal(false)}
-                                    style={{
-                                        background: 'rgba(255, 255, 255, 0.08)',
-                                        border: '1px solid rgba(255, 255, 255, 0.12)',
-                                        color: '#94a3b8',
-                                        padding: '11px 20px',
-                                        borderRadius: '12px',
-                                        fontSize: '13px',
-                                        fontWeight: 700,
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s'
-                                    }}
                                 >
                                     {lang === 'en' ? 'Stay in Editor (Cancel)' : 'مانەوە لە ئیدیتۆر / پاشگەزبوونەوە ↩️'}
                                 </button>
