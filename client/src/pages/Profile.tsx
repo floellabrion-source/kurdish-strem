@@ -6,10 +6,12 @@ import {
     Settings, Edit2, Play, Bookmark, Film, Tv, CreditCard, ShoppingCart, 
     Clock, CalendarDays, Calendar, X, Zap, Check, Image as ImageIcon, 
     AlertCircle, AlertTriangle, ChevronDown, ChevronUp, Brain, Trophy, 
-    Sparkles, BookOpen, Layers, Volume2, Bell, Smartphone, Camera, Loader2, Trash2
+    Sparkles, BookOpen, Layers, Volume2, Bell, Smartphone, Camera, Loader2, Trash2,
+    Wallet
 } from 'lucide-react';
 import axios from '../api/client';
 import AchievementsGrid from '../components/AchievementsGrid';
+import TranslatorPayrollView from '../components/TranslatorPayrollView';
 import { calculateUserXP, getUserRank } from '../utils/achievements';
 import { OptimizedImage } from '../components/OptimizedImage';
 import { subscribeToPushNotifications } from '../utils/pushNotifications';
@@ -94,8 +96,8 @@ export default function Profile() {
     const { user, refreshUser, syncProgress } = useAuth();
     const { lang, t } = useLanguage();
 
-    // Main Tab State: 'media' | 'achievements' | 'notifications'
-    const [activeTab, setActiveTab] = useState<'media' | 'achievements' | 'notifications'>('media');
+    // Main Tab State: 'media' | 'achievements' | 'notifications' | 'payroll'
+    const [activeTab, setActiveTab] = useState<'media' | 'achievements' | 'notifications' | 'payroll'>('media');
 
     // Media library sub-filter
     const [mediaSubTab, setMediaSubTab] = useState<'all' | 'movies' | 'series' | 'watchlater'>('all');
@@ -258,7 +260,7 @@ export default function Profile() {
         );
     }
 
-    const handleTabChange = async (tab: 'media' | 'achievements' | 'notifications') => {
+    const handleTabChange = async (tab: 'media' | 'achievements' | 'notifications' | 'payroll') => {
         setActiveTab(tab);
         if (tab === 'notifications') {
             try {
@@ -513,6 +515,22 @@ export default function Profile() {
                     <span>🔔 {lang === 'en' ? 'Notifications' : 'ئاگادارییەکان'}</span>
                     {user?.notifications?.some(n => !n.read) && <span className="notification-dot-pulse"></span>}
                 </button>
+
+                {(user?.role === 'admin' || user?.role === 'super_admin' || user?.username === 'maher2' || (user?.permissions as any)?.subtitles || (user?.permissions as any)?.edit_subtitles) && (
+                    <button 
+                        className={`modern-tab-btn ${activeTab === 'payroll' ? 'active' : ''}`} 
+                        onClick={() => handleTabChange('payroll')}
+                        style={{
+                            borderColor: activeTab === 'payroll' ? 'rgba(52, 211, 153, 0.6)' : undefined,
+                            background: activeTab === 'payroll' ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(6, 95, 70, 0.3))' : undefined
+                        }}
+                    >
+                        <Wallet size={17} color="#34d399" />
+                        <span style={{ color: activeTab === 'payroll' ? '#34d399' : '#a7f3d0' }}>
+                            {lang === 'en' ? 'Translator Payroll' : 'حیساباتی وەرگێڕان 💼'}
+                        </span>
+                    </button>
+                )}
             </div>
 
             {/* 4. TAB CONTENTS AREA */}
@@ -771,6 +789,11 @@ export default function Profile() {
                         </div>
                     );
                 })()}
+
+                {/* TAB 4: TRANSLATOR PAYROLL & LEDGER */}
+                {activeTab === 'payroll' && (
+                    <TranslatorPayrollView />
+                )}
 
             </div>
         </div>

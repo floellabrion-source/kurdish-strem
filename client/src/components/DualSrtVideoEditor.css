@@ -3618,4 +3618,48 @@ html[dir="ltr"] [data-theme='light'] .dual-srt-video-panel,
     border-top: 1.5px solid #e2e8f0 !important;
 }
 
+/* ─── Translator Payroll Live Header Pill ─── */
+.dual-srt-payroll-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.18), rgba(6, 95, 70, 0.25));
+    border: 1.5px solid rgba(52, 211, 153, 0.45);
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.15);
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #a7f3d0;
+    margin-top: 4px;
+    backdrop-filter: blur(8px);
+    transition: all 0.25s ease;
+    user-select: none;
+}
+
+.dual-srt-payroll-pill:hover {
+    border-color: rgba(52, 211, 153, 0.8);
+    box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
+    transform: translateY(-1px);
+}
+
+.dual-srt-payroll-pill .payroll-tag {
+    color: #34d399;
+    font-weight: 800;
+}
+
+.dual-srt-payroll-pill .payroll-lines-val {
+    color: #ffffff;
+    font-weight: 900;
+}
+
+.dual-srt-payroll-pill .payroll-dot {
+    color: rgba(255, 255, 255, 0.35);
+}
+
+.dual-srt-payroll-pill .payroll-iqd-val {
+    color: #fde047;
+    font-weight: 900;
+}
+
 

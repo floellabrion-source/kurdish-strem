@@ -235,6 +235,28 @@ export default function DualSrtVideoEditor({
     // Automated Subtitle QC State
     const [showQcModal, setShowQcModal] = useState<boolean>(false);
 
+    // Translator Payroll Live State & Baseline Text Map
+    const [payrollStats, setPayrollStats] = useState<{ unpaidLines: number; estimatedEarningsIqd: number; rate?: any } | null>(null);
+    const initialKurdishMapRef = useRef<Record<number, string>>({});
+    const payrollDebounceTimersRef = useRef<Record<number, any>>({});
+
+    // Fetch initial translator stats on mount
+    useEffect(() => {
+        const fetchPayroll = async () => {
+            try {
+                const res = await axios.get('/api/payroll/my-stats');
+                if (res.data) {
+                    setPayrollStats({
+                        unpaidLines: res.data.unpaidLines || 0,
+                        estimatedEarningsIqd: res.data.estimatedEarningsIqd || 0,
+                        rate: res.data.rate
+                    });
+                }
+            } catch (e) {}
+        };
+        fetchPayroll();
+    }, []);
+
     // Live Subtitle QC Report
     const qcReport = useMemo(() => {
         return runSubtitleQc(lines);
@@ -415,6 +437,13 @@ export default function DualSrtVideoEditor({
 
                 const mergedLines = matchKurdishToEnglish(parsedOrig, parsedTrans);
 
+                // Baseline map for tracking 5-character diff for payroll
+                const kMap: Record<number, string> = {};
+                mergedLines.forEach(l => {
+                    kMap[l.id] = l.kurdish || '';
+                });
+                initialKurdishMapRef.current = kMap;
+
                 setLines(mergedLines);
                 setSelectedLineId(1);
 
@@ -524,6 +553,44 @@ export default function DualSrtVideoEditor({
         }
     };
 
+    // Debounced recording of 5+ character Kurdish line edits for translator payroll
+    const recordPayrollEditDebounced = (lineId: number, currentKurdish: string) => {
+        if (payrollDebounceTimersRef.current[lineId]) {
+            clearTimeout(payrollDebounceTimersRef.current[lineId]);
+        }
+
+        payrollDebounceTimersRef.current[lineId] = setTimeout(async () => {
+            const oldText = initialKurdishMapRef.current[lineId] || '';
+            const newText = String(currentKurdish || '').trim();
+
+            if (!newText || oldText === newText) return;
+
+            try {
+                const res = await axios.post('/api/payroll/record-edit', {
+                    movieId,
+                    movieTitle,
+                    seasonNum,
+                    episodeNum,
+                    subtitleId: lineId,
+                    oldText,
+                    newText
+                });
+
+                if (res.data?.success && res.data?.counted) {
+                    setPayrollStats({
+                        unpaidLines: res.data.unpaidLines,
+                        estimatedEarningsIqd: res.data.estimatedEarningsIqd,
+                        rate: res.data.rate
+                    });
+                    if (res.data.isNewEntry) {
+                        showToast(`✓ دێڕی #${lineId} بۆ حیساباتی وەرگێڕان تۆمارکرا (+١ دێڕ)`);
+                    }
+                    initialKurdishMapRef.current[lineId] = newText;
+                }
+            } catch (e) {}
+        }, 1200);
+    };
+
     const handleLineChange = (id: number, field: 'english' | 'kurdish' | 'startTime' | 'endTime', val: string) => {
         setLines(prev => prev.map(l => {
             if (l.id !== id) return l;
@@ -532,6 +599,10 @@ export default function DualSrtVideoEditor({
             if (field === 'endTime') updated.endSec = timeStringToSec(val);
             return updated;
         }));
+
+        if (field === 'kurdish') {
+            recordPayrollEditDebounced(id, val);
+        }
     };
 
     const setLineStartToCurrentVideo = (id: number) => {
@@ -1112,6 +1183,15 @@ Format your output EXACTLY as follows using delimiter tags:
                     <div className="dual-srt-title-wrap">
                         <div className="dual-srt-badge">{lang === 'en' ? 'Advanced Subtitle Editor' : 'ئیدیتۆری پێشکەوتووی سەبتایتڵ'}</div>
                         <h2>{movieTitle} {seasonNum !== undefined ? `• ${lang === 'en' ? 'Season' : 'سیزنی'} ${seasonNum}` : ''} {episodeNum !== undefined ? `• ${lang === 'en' ? 'Episode' : 'ئەڵقەی'} ${episodeNum}` : ''} {episodeTitle ? `(${episodeTitle})` : ''}</h2>
+                        
+                        {payrollStats && (
+                            <div className="dual-srt-payroll-pill" title={`نرخی تۆمارکراوی کارەکەت: هەر ${payrollStats.rate?.lines || 600} دێڕ = ${(payrollStats.rate?.priceIqd || 1500).toLocaleString()} دینار`}>
+                                <span className="payroll-tag">💼 حیساباتی وەرگێڕ:</span>
+                                <span className="payroll-lines-val">{payrollStats.unpaidLines.toLocaleString()} دێڕی کارکراو</span>
+                                <span className="payroll-dot">•</span>
+                                <span className="payroll-iqd-val">≈ {payrollStats.estimatedEarningsIqd.toLocaleString()} IQD</span>
+                            </div>
+                        )}
                     </div>
 
                     <div className="dual-srt-header-actions">
