@@ -298,7 +298,7 @@ export default function Home({ filter }: { filter?: 'movie' | 'series' | 'animat
         );
     };
 
-    const getLink = (movie: Movie) => `/movie/${movie.id}`;
+    const getLink = (movie: Movie) => movie.type === 'series' ? `/series/${movie.id}` : `/movie/${movie.id}`;
     const getPoster = (movie: Movie) => movie.posterCloudUrl || movie.posterUrl;
 
     const currentHero = heroMovies[heroIndex] || featured;

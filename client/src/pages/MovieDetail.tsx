@@ -89,27 +89,37 @@ export default function MovieDetail() {
     const [showAllRepeated, setShowAllRepeated] = useState(false);
     const [copied, setCopied] = useState(false);
 
+    const [customError, setCustomError] = useState<string | null>(null);
+
     useEffect(() => {
         setLoading(true);
+        setCustomError(null);
         axios.get(`/api/movies/${id}`)
             .then(res => {
                 if (res.data) {
-                    setMovie(res.data);
-                    if (res.data.type === 'series' && res.data.seasons && res.data.seasons.length > 0) {
-                        setActiveSeason(res.data.seasons[0].number);
+                    if (res.data.type === 'series') {
+                        navigate(`/series/${id}`, { replace: true });
+                        return;
                     }
+                    setMovie(res.data);
                 }
                 setLoading(false);
             })
-            .catch(() => {
+            .catch((err) => {
+                if (err.response?.status === 403) {
+                    setCustomError(lang === 'en' ? 'This content is currently in draft mode and will be available soon.' : 'ئەم بەرهەمە لە ئێستادا لە باری ڕەشنووس و ئامادەکردندایە و بەم زووانە بەردەست دەبێت.');
+                    setLoading(false);
+                    return;
+                }
                 axios.get(`/api/movies`)
                     .then(res => {
                         const found = Array.isArray(res.data) ? res.data.find((m: Movie) => m.id === id) : null;
                         if (found) {
-                            setMovie(found);
-                            if (found.type === 'series' && found.seasons && found.seasons.length > 0) {
-                                setActiveSeason(found.seasons[0].number);
+                            if (found.type === 'series') {
+                                navigate(`/series/${id}`, { replace: true });
+                                return;
                             }
+                            setMovie(found);
                         }
                         setLoading(false);
                     })
@@ -119,7 +129,7 @@ export default function MovieDetail() {
         axios.get(`/api/movies/${id}/comments`)
             .then(res => setComments(res.data || []))
             .catch(() => {});
-    }, [id]);
+    }, [id, lang, navigate]);
 
     const submitComment = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -146,7 +156,7 @@ export default function MovieDetail() {
     };
 
     if (loading) return <div className="loading-state">{t('loading')}</div>;
-    if (!movie) return <div className="error-state">{t('movie_not_found')}</div>;
+    if (!movie) return <div className="error-state">{customError || t('movie_not_found')}</div>;
 
     const isFavorite = user?.favorites?.includes(movie.id) || false;
     const isWatchLater = user?.watchLater?.includes(movie.id) || false;
