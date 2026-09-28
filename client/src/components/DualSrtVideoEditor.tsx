@@ -1996,6 +1996,16 @@ Format your output EXACTLY as follows using delimiter tags:
 
                             <div className="srt-search-right-tools">
                                 <button
+                                    className="btn-toggle-shift-bar"
+                                    style={{ background: 'rgba(245, 158, 11, 0.2)', borderColor: '#f59e0b', color: '#fcd34d' }}
+                                    onClick={() => setShowSmartSyncModal(true)}
+                                    title={lang === 'en' ? "Open Smart Time Sync & Framerate Calibration Modal" : "کردنەوەی مۆداڵی پێشکەوتووی سینکی زیرەکی کات و فڕەیم رەیت"}
+                                >
+                                    <Clock size={13} />
+                                    <span>{lang === 'en' ? 'Smart Time Sync ⏱️' : 'سینکی زیرەک ⏱️'}</span>
+                                </button>
+
+                                <button
                                     className={`btn-toggle-shift-bar ${filterMode === 'sensitive' ? 'active' : ''}`}
                                     style={filterMode === 'sensitive' ? { background: '#ef4444', borderColor: '#ef4444', color: '#ffffff' } : sensitiveScenes.length > 0 ? { background: 'rgba(239, 68, 68, 0.15)', borderColor: 'rgba(239, 68, 68, 0.35)', color: '#fca5a5' } : {}}
                                     onClick={() => setFilterMode(filterMode === 'sensitive' ? 'all' : 'sensitive')}
