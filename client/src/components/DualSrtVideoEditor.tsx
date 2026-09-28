@@ -10,6 +10,7 @@ import {
 import SubtitleDiffViewer from './SubtitleDiffViewer';
 import InternalNotesModal from './InternalNotesModal';
 import SubtitleQcModal from './SubtitleQcModal';
+import SmartTimeSyncModal from './SmartTimeSyncModal';
 import { runSubtitleQc } from '../utils/subtitleQc';
 import { generateLineAlternatives, LineAlternativeOption, translateBatch, SubBlock, MovieLoreAndBible, TRANSLATION_TONES, isLineUntranslated } from '../utils/aiTranslator';
 import { useAuth } from '../context/AuthContext';
@@ -241,6 +242,9 @@ export default function DualSrtVideoEditor({
     const [mobileTab, setMobileTab] = useState<'editor' | 'video'>('editor');
     const [showDiffViewer, setShowDiffViewer] = useState<boolean>(false);
     const [showNotesModal, setShowNotesModal] = useState<boolean>(false);
+    const [showSmartSyncModal, setShowSmartSyncModal] = useState<boolean>(false);
+    const linesHistoryRef = useRef<SubtitleLine[][]>([]);
+    const [canUndoSync, setCanUndoSync] = useState<boolean>(false);
     const [showUnsavedExitModal, setShowUnsavedExitModal] = useState<boolean>(false);
     const [lockState, setLockState] = useState<{
         locked: boolean;
@@ -687,15 +691,35 @@ export default function DualSrtVideoEditor({
         showToast(lang === 'en' ? 'Sensitive scene range added ✓' : 'مەودای دیمەنی نەشیاو بە سەرکەوتوویی زیادکرا ✓');
     };
 
-    // ─── TIME SHIFT & OFFSET TOOL ───
-    const shiftSubtitlesFrom = (fromId: number, deltaSeconds: number) => {
-        if (!deltaSeconds || isNaN(deltaSeconds)) return;
+    // ─── SMART TIME SYNC & OFFSET TOOLS ───
+    const pushHistoryState = () => {
+        linesHistoryRef.current.push(JSON.parse(JSON.stringify(lines)));
+        if (linesHistoryRef.current.length > 20) {
+            linesHistoryRef.current.shift();
+        }
+        setCanUndoSync(true);
+    };
+
+    const handleUndoSync = () => {
+        if (linesHistoryRef.current.length === 0) return;
+        const previousState = linesHistoryRef.current.pop();
+        if (previousState) {
+            setLines(previousState);
+            setCanUndoSync(linesHistoryRef.current.length > 0);
+            showToast(lang === 'en' ? 'Undid last time sync action ↩️' : 'دوایین کرداری سینککردنی کات گەڕێندرایەوە ↩️');
+        }
+    };
+
+    const handleApplySmartShift = (deltaSec: number, fromLineId: number) => {
+        if (!deltaSec || isNaN(deltaSec)) return;
+        pushHistoryState();
 
         setLines(prev => prev.map(l => {
-            if (l.id < fromId) return l;
+            if (fromLineId > 1 && l.id < fromLineId) return l;
 
-            const newStart = Math.max(0, l.startSec + deltaSeconds);
-            const newEnd = Math.max(newStart + 0.2, l.endSec + deltaSeconds);
+            const newStart = Math.max(0, l.startSec + deltaSec);
+            const duration = Math.max(0.2, l.endSec - l.startSec);
+            const newEnd = newStart + duration;
 
             return {
                 ...l,
@@ -706,8 +730,73 @@ export default function DualSrtVideoEditor({
             };
         }));
 
-        const sign = deltaSeconds > 0 ? `+${deltaSeconds}` : `${deltaSeconds}`;
-        showToast(`کاتی هەموو دێڕەکانی #${fromId} بەرەو خوارەوە بە بڕی (${sign}s) گۆڕدرا ✓`);
+        const sign = deltaSec > 0 ? `+${deltaSec.toFixed(3)}` : `${deltaSec.toFixed(3)}`;
+        const scopeText = fromLineId > 1
+            ? (lang === 'en' ? `from Line #${fromLineId} downwards` : `لە دێڕی #${fromLineId} بەرەو خوارەوە`)
+            : (lang === 'en' ? 'for all lines' : 'بۆ هەموو دێڕەکان');
+        showToast(lang === 'en' ? `Shifted subtitles by ${sign}s (${scopeText}) ✓` : `ژێرنووسەکان بە بڕی (${sign}s) گۆڕدران (${scopeText}) ✓`);
+    };
+
+    const handleApplySpeedFactor = (factor: number) => {
+        if (!factor || isNaN(factor) || factor <= 0) return;
+        pushHistoryState();
+
+        setLines(prev => prev.map(l => {
+            const newStart = Math.max(0, l.startSec * factor);
+            const newEnd = Math.max(newStart + 0.2, l.endSec * factor);
+
+            return {
+                ...l,
+                startSec: newStart,
+                endSec: newEnd,
+                startTime: secToTimeString(newStart),
+                endTime: secToTimeString(newEnd)
+            };
+        }));
+
+        showToast(lang === 'en' ? `Framerate/Speed ratio applied (factor: ${factor}) ✓` : `ڕێژەی خێرایی/فڕەیم رەیت بەسەرکەوتوویی جێبەجێکرا (factor: ${factor}) ✓`);
+    };
+
+    const handleApplyTwoPointStretch = (startLineId: number, startTargetSec: number, endLineId: number, endTargetSec: number) => {
+        const startLine = lines.find(l => l.id === startLineId);
+        const endLine = lines.find(l => l.id === endLineId);
+        if (!startLine || !endLine) {
+            showToast(lang === 'en' ? 'Selected reference lines not found' : 'دێڕە هەڵبژێردراوەکان نەدۆزرانەوە', 'error');
+            return;
+        }
+
+        const origT1 = startLine.startSec;
+        const origT2 = endLine.startSec;
+        const targetT1 = startTargetSec;
+        const targetT2 = endTargetSec;
+
+        if (Math.abs(origT2 - origT1) < 0.001) {
+            showToast(lang === 'en' ? 'Start and end reference lines cannot be at the same timestamp' : 'کاتی دێڕی دەستپێک و کۆتایی نابێت لە یەک کاتدا بن', 'error');
+            return;
+        }
+
+        const scale = (targetT2 - targetT1) / (origT2 - origT1);
+        pushHistoryState();
+
+        setLines(prev => prev.map(l => {
+            const newStart = Math.max(0, targetT1 + (l.startSec - origT1) * scale);
+            const duration = (l.endSec - l.startSec) * scale;
+            const newEnd = Math.max(newStart + 0.2, newStart + duration);
+
+            return {
+                ...l,
+                startSec: newStart,
+                endSec: newEnd,
+                startTime: secToTimeString(newStart),
+                endTime: secToTimeString(newEnd)
+            };
+        }));
+
+        showToast(lang === 'en' ? `Two-point linear calibration applied (Scale: ${scale.toFixed(4)}) 🎯` : `کالیبرەیشنی دوو خاڵی بە سەرکەوتوویی جێبەجێکرا (ڕێژە: ${scale.toFixed(4)}) 🎯`);
+    };
+
+    const shiftSubtitlesFrom = (fromId: number, deltaSeconds: number) => {
+        handleApplySmartShift(deltaSeconds, fromId);
     };
 
     const addNewLineAfter = (index: number) => {
@@ -1185,6 +1274,34 @@ Format your output EXACTLY as follows using delimiter tags:
         return () => window.removeEventListener('beforeunload', handleBeforeUnload);
     }, [sessionEditedLineIds, aiUsedInSession, lines]);
 
+    // Global Keyboard Shortcuts for live time sync (Shift + [ / Shift + ], etc.)
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            const target = e.target as HTMLElement;
+            if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+                return;
+            }
+
+            if (e.shiftKey && (e.key === '[' || e.key === '{')) {
+                e.preventDefault();
+                const step = e.ctrlKey ? -0.5 : -0.1;
+                handleApplySmartShift(step, e.ctrlKey ? 1 : selectedLineId);
+            } else if (e.shiftKey && (e.key === ']' || e.key === '}')) {
+                e.preventDefault();
+                const step = e.ctrlKey ? 0.5 : 0.1;
+                handleApplySmartShift(step, e.ctrlKey ? 1 : selectedLineId);
+            } else if (e.ctrlKey && (e.key === 'z' || e.key === 'Z') && !e.shiftKey) {
+                if (canUndoSync) {
+                    e.preventDefault();
+                    handleUndoSync();
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [lines, selectedLineId, canUndoSync, lang]);
+
     const [qualityLevels, setQualityLevels] = useState<{ id: number; label: string; height?: number }[]>([]);
     const [selectedQuality, setSelectedQuality] = useState<number>(-2);
     const hlsRef = useRef<Hls | null>(null);
@@ -1446,6 +1563,16 @@ Format your output EXACTLY as follows using delimiter tags:
                                 </button>
                             );
                         })()}
+
+                        <button
+                            className="btn-dual-toolbar-file"
+                            style={{ background: 'rgba(245, 158, 11, 0.15)', borderColor: 'rgba(245, 158, 11, 0.4)', color: '#fcd34d' }}
+                            onClick={() => setShowSmartSyncModal(true)}
+                            title={lang === 'en' ? "Smart Subtitle Time Sync & Framerate Calibration (Shift+[/])" : "ئۆتۆ-سینکی زیرەکی کات و ڕێکخستنی فڕەیم رەیت"}
+                        >
+                            <Clock size={16} />
+                            <span className="btn-label-text">{lang === 'en' ? 'Smart Time Sync ⏱️' : 'سینکی زیرەکی کات ⏱️'}</span>
+                        </button>
 
                         <button
                             className="btn-dual-toolbar-file"
@@ -2717,6 +2844,20 @@ Format your output EXACTLY as follows using delimiter tags:
                     </div>
                 </div>
             )}
+
+            {/* Smart Time Sync Modal */}
+            <SmartTimeSyncModal
+                isOpen={showSmartSyncModal}
+                onClose={() => setShowSmartSyncModal(false)}
+                lines={lines}
+                selectedLineId={selectedLineId}
+                currentTime={currentTime}
+                onApplyShift={handleApplySmartShift}
+                onApplyStretch={handleApplyTwoPointStretch}
+                onApplySpeedFactor={handleApplySpeedFactor}
+                onUndo={handleUndoSync}
+                canUndo={canUndoSync}
+            />
         </div>
     );
 }
