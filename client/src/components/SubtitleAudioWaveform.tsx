@@ -64,6 +64,7 @@ export default function SubtitleAudioWaveform({
 
     // Audio peaks buffer (50 samples per second)
     const audioPeaksRef = useRef<Float32Array | null>(null);
+    const initialLinesRef = useRef<SubtitleLine[]>([]);
     const snippetTimerRef = useRef<any>(null);
 
     // Drag interaction state
@@ -75,6 +76,13 @@ export default function SubtitleAudioWaveform({
         initialStartSec: number;
         initialEndSec: number;
     } | null>(null);
+
+    // Capture initial lines for static waveform audio envelope
+    useEffect(() => {
+        if (lines.length > 0 && initialLinesRef.current.length === 0) {
+            initialLinesRef.current = JSON.parse(JSON.stringify(lines));
+        }
+    }, [lines]);
 
     // Calculate visible window duration based on zoom (e.g. 1x = 20s, 8x = 2.5s)
     const windowDuration = useMemo(() => {
@@ -110,14 +118,12 @@ export default function SubtitleAudioWaveform({
 
         const extractAudioWaveform = async () => {
             if (!videoUrl && !videoRef.current?.src) {
-                // Generate procedural speech peaks from subtitle markers
                 generateProceduralPeaks();
                 return;
             }
 
             const targetUrl = videoUrl || videoRef.current?.src;
-            if (!targetUrl || targetUrl.startsWith('blob:') === false && !targetUrl.endsWith('.mp4') && !targetUrl.endsWith('.mkv') && !targetUrl.endsWith('.webm')) {
-                // HLS or remote streaming without direct audio decode support -> use smart procedural peaks
+            if (!targetUrl || (!targetUrl.startsWith('blob:') && !targetUrl.endsWith('.mp4') && !targetUrl.endsWith('.mkv') && !targetUrl.endsWith('.webm'))) {
                 generateProceduralPeaks();
                 return;
             }
@@ -125,7 +131,7 @@ export default function SubtitleAudioWaveform({
             setIsExtractingAudio(true);
             try {
                 const response = await fetch(targetUrl, {
-                    headers: { Range: 'bytes=0-15000000' } // Grab first ~15MB for fast audio decoding
+                    headers: { Range: 'bytes=0-15000000' }
                 });
                 if (!response.ok && response.status !== 206) {
                     throw new Error('Partial fetch failed');
@@ -165,7 +171,6 @@ export default function SubtitleAudioWaveform({
                 setIsExtractingAudio(false);
                 audioCtx.close();
             } catch (err) {
-                // Fallback to intelligent procedural dialogue peaks
                 if (!isCancelled) {
                     generateProceduralPeaks();
                     setIsExtractingAudio(false);
@@ -174,26 +179,26 @@ export default function SubtitleAudioWaveform({
         };
 
         const generateProceduralPeaks = () => {
-            const maxDuration = Math.max(duration || 3600, (lines[lines.length - 1]?.endSec || 0) + 60);
+            const sourceLines = initialLinesRef.current.length > 0 ? initialLinesRef.current : lines;
+            const maxDuration = Math.max(duration || 3600, (sourceLines[sourceLines.length - 1]?.endSec || 0) + 60);
             const peaksPerSec = 50;
             const totalPeaks = Math.floor(maxDuration * peaksPerSec);
             const peaks = new Float32Array(totalPeaks);
 
             // Base ambient noise
             for (let i = 0; i < totalPeaks; i++) {
-                peaks[i] = 0.05 + Math.sin(i * 0.1) * 0.03 + (Math.random() * 0.04);
+                peaks[i] = 0.04 + Math.sin(i * 0.1) * 0.02 + (Math.random() * 0.03);
             }
 
             // Synthesize realistic speech energy bursts inside subtitle ranges
-            lines.forEach(l => {
+            sourceLines.forEach(l => {
                 const startIdx = Math.max(0, Math.floor(l.startSec * peaksPerSec));
                 const endIdx = Math.min(totalPeaks, Math.floor(l.endSec * peaksPerSec));
                 for (let i = startIdx; i < endIdx; i++) {
                     const progress = (i - startIdx) / Math.max(1, endIdx - startIdx);
-                    // Speech envelope: attack, sustain with syllabic fluctuation, release
                     const envelope = Math.sin(progress * Math.PI);
-                    const syllable = 0.4 + 0.35 * Math.sin(i * 0.6) + 0.25 * Math.cos(i * 1.3);
-                    const speechPeak = envelope * syllable * (0.65 + Math.random() * 0.25);
+                    const syllable = 0.45 + 0.35 * Math.sin(i * 0.6) + 0.25 * Math.cos(i * 1.3);
+                    const speechPeak = envelope * syllable * (0.7 + Math.random() * 0.25);
                     peaks[i] = Math.max(peaks[i], Math.min(0.98, speechPeak));
                 }
             });
@@ -207,7 +212,7 @@ export default function SubtitleAudioWaveform({
         return () => {
             isCancelled = true;
         };
-    }, [videoUrl, duration, lines]);
+    }, [videoUrl, duration]);
 
     // ─── HIGH-DPI CANVAS RENDERING LOOP ───
     const renderWaveform = useCallback(() => {
@@ -508,54 +513,82 @@ export default function SubtitleAudioWaveform({
         }
 
         const peaksPerSec = 50;
-        const searchRangeSec = 1.2; // Look +/- 1.2s around current start & end
-        const threshold = 0.14; // Speech onset threshold
+        const silenceThreshold = 0.09; // Below this is ambient silence
+        const activeThreshold = 0.13;  // Definite speech energy
 
-        // 1. Find nearest speech onset for startSec
-        const currentStartIdx = Math.floor(selectedLine.startSec * peaksPerSec);
-        const searchStartMin = Math.max(0, Math.floor((selectedLine.startSec - searchRangeSec) * peaksPerSec));
-        const searchStartMax = Math.min(peaks.length - 1, Math.floor((selectedLine.startSec + searchRangeSec) * peaksPerSec));
+        // 1. Determine anchor search center
+        const centerSec = (selectedLine.startSec + selectedLine.endSec) / 2;
+        let centerIdx = Math.floor(centerSec * peaksPerSec);
 
-        let bestStartIdx = currentStartIdx;
-        let minStartDiff = Infinity;
-
-        for (let i = searchStartMin; i <= searchStartMax; i++) {
-            if (peaks[i] >= threshold && (i === 0 || peaks[i - 1] < threshold)) {
-                const diff = Math.abs(i - currentStartIdx);
-                if (diff < minStartDiff) {
-                    minStartDiff = diff;
-                    bestStartIdx = i;
+        // If the center point has low energy (e.g. user moved it away), find the nearest high-energy peak packet within +/- 5.0 seconds
+        if ((peaks[centerIdx] || 0) < activeThreshold) {
+            const maxSearch = Math.floor(5.0 * peaksPerSec);
+            let bestPeakIdx = centerIdx;
+            let maxPeakAmp = 0;
+            for (let offset = 1; offset <= maxSearch; offset++) {
+                const left = centerIdx - offset;
+                const right = centerIdx + offset;
+                if (left >= 0 && peaks[left] > maxPeakAmp && peaks[left] >= activeThreshold) {
+                    maxPeakAmp = peaks[left];
+                    bestPeakIdx = left;
                 }
+                if (right < peaks.length && peaks[right] > maxPeakAmp && peaks[right] >= activeThreshold) {
+                    maxPeakAmp = peaks[right];
+                    bestPeakIdx = right;
+                }
+            }
+            if (maxPeakAmp >= activeThreshold) {
+                centerIdx = bestPeakIdx;
             }
         }
 
-        // 2. Find nearest speech offset for endSec
-        const currentEndIdx = Math.floor(selectedLine.endSec * peaksPerSec);
-        const searchEndMin = Math.max(0, Math.floor((selectedLine.endSec - searchRangeSec) * peaksPerSec));
-        const searchEndMax = Math.min(peaks.length - 1, Math.floor((selectedLine.endSec + searchRangeSec) * peaksPerSec));
-
-        let bestEndIdx = currentEndIdx;
-        let minEndDiff = Infinity;
-
-        for (let i = searchEndMax; i >= searchEndMin; i--) {
-            if (peaks[i] >= threshold && (i === peaks.length - 1 || peaks[i + 1] < threshold)) {
-                const diff = Math.abs(i - currentEndIdx);
-                if (diff < minEndDiff) {
-                    minEndDiff = diff;
-                    bestEndIdx = i;
+        // 2. Scan BACKWARDS from centerIdx to find the true onset of the voice burst
+        let speechStartIdx = centerIdx;
+        let silenceCountBack = 0;
+        for (let i = centerIdx; i >= 0; i--) {
+            if (peaks[i] < silenceThreshold) {
+                silenceCountBack++;
+                if (silenceCountBack >= 6) { // ~120ms of silence
+                    speechStartIdx = i + 6;
+                    break;
                 }
+            } else {
+                silenceCountBack = 0;
+                speechStartIdx = i;
             }
+            if (centerIdx - i > 6.0 * peaksPerSec) break; // Maximum 6 seconds search
         }
 
-        // Apply snapped times with 80ms breathing padding
-        const newStartSec = Math.max(0, (bestStartIdx / peaksPerSec) - 0.08);
-        const newEndSec = Math.max(newStartSec + 0.4, (bestEndIdx / peaksPerSec) + 0.08);
+        // 3. Scan FORWARDS from centerIdx to find the true offset of the voice burst
+        let speechEndIdx = centerIdx;
+        let silenceCountForward = 0;
+        for (let i = centerIdx; i < peaks.length; i++) {
+            if (peaks[i] < silenceThreshold) {
+                silenceCountForward++;
+                if (silenceCountForward >= 6) { // ~120ms of silence
+                    speechEndIdx = i - 6;
+                    break;
+                }
+            } else {
+                silenceCountForward = 0;
+                speechEndIdx = i;
+            }
+            if (i - centerIdx > 6.0 * peaksPerSec) break; // Maximum 6 seconds search
+        }
+
+        // Apply natural 60ms attack & 80ms decay breathing padding
+        let newStartSec = Math.max(0, (speechStartIdx / peaksPerSec) - 0.06);
+        let newEndSec = Math.max(newStartSec + 0.4, (speechEndIdx / peaksPerSec) + 0.08);
+
+        // Format to exact milliseconds
+        newStartSec = Math.round(newStartSec * 1000) / 1000;
+        newEndSec = Math.round(newEndSec * 1000) / 1000;
 
         onLineTimeChange(selectedLine.id, newStartSec, newEndSec);
         if (onDragComplete) onDragComplete();
 
         if (onShowToast) {
-            onShowToast(`دێڕی #${selectedLine.id} بە دەنگی قسەکەر سینک کرا 🎙️✨`, 'success');
+            onShowToast(`دێڕی #${selectedLine.id} ڕێک بە دەنگی قسەکەرەوە سینک کرا (${formatWaveTime(newStartSec)} ➜ ${formatWaveTime(newEndSec)}) 🎙️✨`, 'success');
         }
     };
 
