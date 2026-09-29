@@ -10,6 +10,8 @@ if (!fs.existsSync(BACKUPS_DIR)) {
     fs.mkdirSync(BACKUPS_DIR, { recursive: true });
 }
 
+const db = require('../db');
+
 const DATA_FILES = [
     'users.json',
     'movies.json',
@@ -19,11 +21,13 @@ const DATA_FILES = [
     'analytics.json',
     'glossary.json',
     'internal_notes.json',
-    'subtitle_history.json'
+    'subtitle_history.json',
+    'translator_payroll.json',
+    'system_settings.json'
 ];
 
 /**
- * Creates a comprehensive snapshot of all database files
+ * Creates a comprehensive snapshot of all database files and sends to Telegram
  */
 function createBackup(triggerType = 'auto', reason = '') {
     try {
@@ -33,43 +37,52 @@ function createBackup(triggerType = 'auto', reason = '') {
         const targetFilename = `${backupId}.json.gz`;
         const targetPath = path.join(BACKUPS_DIR, targetFilename);
 
+        const users = db.getUsers();
+        const movies = db.getMovies();
+        const plans = db.getPlans();
+        const requests = db.getRequests();
+
         const snapshotData = {
             id: backupId,
             filename: targetFilename,
             createdAt: timestamp.toISOString(),
             triggerType, // 'auto' | 'manual'
             reason: reason || (triggerType === 'auto' ? 'باکئەپی ئۆتۆماتیکی ڕۆژانەی سیستەم' : 'باکئەپی دەستی لەلایەن بەڕێوەبەرەوە'),
-            files: {},
+            files: {
+                'users.json': users,
+                'movies.json': movies,
+                'plans.json': plans,
+                'requests.json': requests,
+                'activity_log.json': db.getActivityLogs(2000),
+                'analytics.json': db.getAnalytics(),
+                'glossary.json': db.getGlossary(),
+                'internal_notes.json': db.getInternalNotes(),
+                'subtitle_history.json': db.getSubtitleHistory(),
+                'translator_payroll.json': db.getTranslatorPayroll(),
+                'system_settings.json': db.getSystemSettings()
+            },
             stats: {
-                usersCount: 0,
-                moviesCount: 0,
-                plansCount: 0,
-                requestsCount: 0
+                usersCount: users.length,
+                moviesCount: movies.length,
+                plansCount: plans.length,
+                requestsCount: requests.length
             }
         };
 
-        DATA_FILES.forEach(filename => {
-            const filePath = path.join(DATA_DIR, filename);
-            if (fs.existsSync(filePath)) {
-                try {
-                    const content = fs.readFileSync(filePath, 'utf-8');
-                    const parsed = JSON.parse(content);
-                    snapshotData.files[filename] = parsed;
-
-                    if (filename === 'users.json' && Array.isArray(parsed)) snapshotData.stats.usersCount = parsed.length;
-                    if (filename === 'movies.json' && Array.isArray(parsed)) snapshotData.stats.moviesCount = parsed.length;
-                    if (filename === 'plans.json' && Array.isArray(parsed)) snapshotData.stats.plansCount = parsed.length;
-                    if (filename === 'requests.json' && Array.isArray(parsed)) snapshotData.stats.requestsCount = parsed.length;
-                } catch (err) {
-                    console.error(`Error reading ${filename} for backup:`, err);
-                }
-            }
+        // Also sync local json files in background
+        Object.entries(snapshotData.files).forEach(([fName, content]) => {
+            try {
+                fs.writeFileSync(path.join(DATA_DIR, fName), JSON.stringify(content, null, 2), 'utf-8');
+            } catch (e) {}
         });
 
         // Compress snapshot
         const jsonString = JSON.stringify(snapshotData);
         const compressed = zlib.gzipSync(Buffer.from(jsonString, 'utf-8'));
         fs.writeFileSync(targetPath, compressed);
+
+        // Also trigger SQLite native DB snapshot
+        db.backupDatabase();
 
         // Clean older backups (keep last 20)
         pruneOldBackups();
@@ -247,7 +260,19 @@ function restoreBackup(filename) {
         // Before restoring, create a safety restore checkpoint!
         createBackup('manual', 'باکئەپی فریاگوزاری پێش گەڕاندنەوەی داتا');
 
-        // Restore each file
+        // Restore to Database and JSON files
+        if (snapshotData.files['movies.json']) db.saveAllMovies(snapshotData.files['movies.json']);
+        if (snapshotData.files['users.json']) db.saveAllUsers(snapshotData.files['users.json']);
+        if (snapshotData.files['plans.json']) db.saveAllPlans(snapshotData.files['plans.json']);
+        if (snapshotData.files['requests.json']) db.saveAllRequests(snapshotData.files['requests.json']);
+        if (snapshotData.files['activity_log.json']) db.saveAllActivityLogs(snapshotData.files['activity_log.json']);
+        if (snapshotData.files['analytics.json']) db.saveAnalytics(snapshotData.files['analytics.json']);
+        if (snapshotData.files['glossary.json']) db.saveAllGlossary(snapshotData.files['glossary.json']);
+        if (snapshotData.files['internal_notes.json']) db.saveAllInternalNotes(snapshotData.files['internal_notes.json']);
+        if (snapshotData.files['subtitle_history.json']) db.saveAllSubtitleHistory(snapshotData.files['subtitle_history.json']);
+        if (snapshotData.files['translator_payroll.json']) db.saveTranslatorPayroll(snapshotData.files['translator_payroll.json']);
+        if (snapshotData.files['system_settings.json']) db.saveSystemSettings(snapshotData.files['system_settings.json']);
+
         Object.entries(snapshotData.files).forEach(([fileKey, fileContent]) => {
             const destPath = path.join(DATA_DIR, fileKey);
             fs.writeFileSync(destPath, JSON.stringify(fileContent, null, 2), 'utf-8');
