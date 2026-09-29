@@ -513,82 +513,97 @@ export default function SubtitleAudioWaveform({
         }
 
         const peaksPerSec = 50;
-        const silenceThreshold = 0.09; // Below this is ambient silence
-        const activeThreshold = 0.13;  // Definite speech energy
+        const silenceThreshold = 0.065; // Below this is ambient silence (captures soft vowels and fricatives)
+        const activeThreshold = 0.11;   // Speech energy threshold
+        const bridgeSilenceSamples = 18; // ~360ms tolerance to bridge natural inter-word pauses within a sentence
+
+        // Find adjacent subtitle boundaries to prevent collisions / overlaps
+        const sortedLines = [...lines].sort((a, b) => a.startSec - b.startSec);
+        const currentIndex = sortedLines.findIndex(l => l.id === selectedLine.id);
+        const prevLine = currentIndex > 0 ? sortedLines[currentIndex - 1] : null;
+        const nextLine = currentIndex >= 0 && currentIndex < sortedLines.length - 1 ? sortedLines[currentIndex + 1] : null;
+
+        const minBoundSec = prevLine ? Math.max(0, prevLine.endSec + 0.04) : 0;
+        const maxBoundSec = nextLine ? Math.max(minBoundSec + 0.3, nextLine.startSec - 0.04) : (peaks.length / peaksPerSec);
+
+        const minBoundIdx = Math.max(0, Math.floor(minBoundSec * peaksPerSec));
+        const maxBoundIdx = Math.min(peaks.length - 1, Math.floor(maxBoundSec * peaksPerSec));
 
         // 1. Determine anchor search center
         const centerSec = (selectedLine.startSec + selectedLine.endSec) / 2;
-        let centerIdx = Math.floor(centerSec * peaksPerSec);
+        let centerIdx = Math.max(minBoundIdx, Math.min(maxBoundIdx, Math.floor(centerSec * peaksPerSec)));
 
-        // If the center point has low energy (e.g. user moved it away), find the nearest high-energy peak packet within +/- 5.0 seconds
-        if ((peaks[centerIdx] || 0) < activeThreshold) {
-            const maxSearch = Math.floor(5.0 * peaksPerSec);
-            let bestPeakIdx = centerIdx;
-            let maxPeakAmp = 0;
-            for (let offset = 1; offset <= maxSearch; offset++) {
-                const left = centerIdx - offset;
-                const right = centerIdx + offset;
-                if (left >= 0 && peaks[left] > maxPeakAmp && peaks[left] >= activeThreshold) {
-                    maxPeakAmp = peaks[left];
-                    bestPeakIdx = left;
-                }
-                if (right < peaks.length && peaks[right] > maxPeakAmp && peaks[right] >= activeThreshold) {
-                    maxPeakAmp = peaks[right];
-                    bestPeakIdx = right;
-                }
-            }
-            if (maxPeakAmp >= activeThreshold) {
-                centerIdx = bestPeakIdx;
+        // Find the strongest dialogue energy packet within search window
+        const searchRange = Math.floor(5.0 * peaksPerSec);
+        const searchStart = Math.max(minBoundIdx, centerIdx - searchRange);
+        const searchEnd = Math.min(maxBoundIdx, centerIdx + searchRange);
+
+        let bestPeakIdx = centerIdx;
+        let maxPeakAmp = peaks[centerIdx] || 0;
+
+        for (let i = searchStart; i <= searchEnd; i++) {
+            if ((peaks[i] || 0) > maxPeakAmp) {
+                maxPeakAmp = peaks[i];
+                bestPeakIdx = i;
             }
         }
 
-        // 2. Scan BACKWARDS from centerIdx to find the true onset of the voice burst
+        if (maxPeakAmp >= activeThreshold) {
+            centerIdx = bestPeakIdx;
+        }
+
+        // 2. Scan BACKWARDS from centerIdx to find the true onset of the entire multi-word sentence
         let speechStartIdx = centerIdx;
         let silenceCountBack = 0;
-        for (let i = centerIdx; i >= 0; i--) {
-            if (peaks[i] < silenceThreshold) {
+        for (let i = centerIdx; i >= minBoundIdx; i--) {
+            if ((peaks[i] || 0) < silenceThreshold) {
                 silenceCountBack++;
-                if (silenceCountBack >= 6) { // ~120ms of silence
-                    speechStartIdx = i + 6;
+                if (silenceCountBack >= bridgeSilenceSamples) {
+                    // Reached a true sentence boundary (360ms of silence)
+                    speechStartIdx = Math.min(centerIdx, i + bridgeSilenceSamples);
                     break;
                 }
             } else {
                 silenceCountBack = 0;
                 speechStartIdx = i;
             }
-            if (centerIdx - i > 6.0 * peaksPerSec) break; // Maximum 6 seconds search
         }
 
-        // 3. Scan FORWARDS from centerIdx to find the true offset of the voice burst
+        // 3. Scan FORWARDS from centerIdx to find the true offset of the entire multi-word sentence
         let speechEndIdx = centerIdx;
         let silenceCountForward = 0;
-        for (let i = centerIdx; i < peaks.length; i++) {
-            if (peaks[i] < silenceThreshold) {
+        for (let i = centerIdx; i <= maxBoundIdx; i++) {
+            if ((peaks[i] || 0) < silenceThreshold) {
                 silenceCountForward++;
-                if (silenceCountForward >= 6) { // ~120ms of silence
-                    speechEndIdx = i - 6;
+                if (silenceCountForward >= bridgeSilenceSamples) {
+                    // Reached a true sentence boundary (360ms of silence)
+                    speechEndIdx = Math.max(centerIdx, i - bridgeSilenceSamples);
                     break;
                 }
             } else {
                 silenceCountForward = 0;
                 speechEndIdx = i;
             }
-            if (i - centerIdx > 6.0 * peaksPerSec) break; // Maximum 6 seconds search
         }
 
-        // Apply natural 60ms attack & 80ms decay breathing padding
-        let newStartSec = Math.max(0, (speechStartIdx / peaksPerSec) - 0.06);
-        let newEndSec = Math.max(newStartSec + 0.4, (speechEndIdx / peaksPerSec) + 0.08);
+        // Trim any edge noise and apply natural 60ms attack & 80ms decay breathing padding
+        let newStartSec = Math.max(minBoundSec, (speechStartIdx / peaksPerSec) - 0.06);
+        let newEndSec = Math.min(maxBoundSec, (speechEndIdx / peaksPerSec) + 0.08);
 
-        // Format to exact milliseconds
-        newStartSec = Math.round(newStartSec * 1000) / 1000;
-        newEndSec = Math.round(newEndSec * 1000) / 1000;
+        // Ensure minimum subtitle duration of at least 0.4s
+        if (newEndSec - newStartSec < 0.4) {
+            newEndSec = Math.min(maxBoundSec, newStartSec + 0.4);
+        }
+
+        // Round to 2 decimal places (standard SRT centisecond precision)
+        newStartSec = Math.round(newStartSec * 100) / 100;
+        newEndSec = Math.round(newEndSec * 100) / 100;
 
         onLineTimeChange(selectedLine.id, newStartSec, newEndSec);
         if (onDragComplete) onDragComplete();
 
         if (onShowToast) {
-            onShowToast(`دێڕی #${selectedLine.id} ڕێک بە دەنگی قسەکەرەوە سینک کرا (${formatWaveTime(newStartSec)} ➜ ${formatWaveTime(newEndSec)}) 🎙️✨`, 'success');
+            onShowToast(`دێڕی #${selectedLine.id} بەتەواوی ڕستەکە سینک کرا (${formatWaveTime(newStartSec)} ➜ ${formatWaveTime(newEndSec)}) 🎙️✨`, 'success');
         }
     };
 
