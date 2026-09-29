@@ -539,7 +539,7 @@
   {
     "id": "bae2eb30-7cb5-41ee-94df-9565e4a65190",
     "username": "1",
-    "token": "05de9d80-a814-4a1e-9b58-6113349eb339f3133ae0-56b8-433b-802e-b53f89fd1cb0",
+    "token": "b78d6b4e-b272-46c8-bb99-aa231e69f5161b0baca8-05c4-48f8-aff2-a2b4396b0d4e",
     "points": 0,
     "history": {
       "0126d3a0-9874-4adb-a562-45a5cb309c2f_s1_e1": {
@@ -1209,7 +1209,7 @@
       }
     },
     "passwordHash": "$2a$10$oT2f7AlGB.gHmDvDzTe0EeHVDtmOjbHj501ZoSlEPOEgyd.KjoAMO",
-    "tokenExpiresAt": 1789164889612,
+    "tokenExpiresAt": 1790967457608,
     "dailyGoal": 15,
     "permissions": {
       "canTranslate": true,
@@ -1219,7 +1219,7 @@
       "canPublishDirectly": true
     },
     "email": "",
-    "encryptedPassword": "da6f8b72c4f3d480bc7e232d9210cdb4:b4a6627080d8bb8912f23eab4d9c92ba",
+    "encryptedPassword": "452f3212359794bb683a17d1c714f075:70aa26f4fd68d25b99dc27be228d872a",
     "level": null,
     "assessmentResult": null,
     "dualSubWatchSeconds": 0,
@@ -1721,8 +1721,8 @@
         "nextReview": 1786922078808
       }
     ],
-    "token": "bf098da4-0b27-4b04-b744-51de4b2e9c8d0e43fc33-cfe9-4870-b9cb-79fad3652c05",
-    "tokenExpiresAt": 1789165128558,
+    "token": "f1015e91-c4c7-4cf2-839e-5adbc25cdd359e7942b1-41c5-418a-a2e5-d723e72cad03",
+    "tokenExpiresAt": 1790966441543,
     "passwordHash": "$2a$10$vWzlN8m4.EooLjk0Vr17b.goE7eom5aZ7Ki8et1gNzxxZY1u1hIZi",
     "favorites": [
       "25e932e2-0688-4e73-944b-ae4ca235955c",
@@ -2086,6 +2086,10 @@
       "2026-09-05": {
         "watchMinutes": 0,
         "sentencesSeen": 10
+      },
+      "2026-09-11": {
+        "watchMinutes": 0,
+        "sentencesSeen": 0
       }
     },
     "dailyGoal": 25,
@@ -2098,7 +2102,7 @@
     },
     "plainPassword": "123456",
     "email": "",
-    "encryptedPassword": "c7b730de329334fe80003e27b68268e9:9345bfbca6c5c5d0dfc9a49988bf85db",
+    "encryptedPassword": "b61a45e9a1462445d0667dc02a9f92a4:0cc4b53bd0807d0e23d859af2a44227d",
     "assessmentResult": null,
     "avatar": "/uploads/avatars/avatar_5477cdcd-0f70-40e0-b12b-bd735c0e28f4_1788553357294.jpg",
     "avatarUrl": "/uploads/avatars/avatar_5477cdcd-0f70-40e0-b12b-bd735c0e28f4_1788553357294.jpg",
@@ -2114,12 +2118,22 @@
     "passwordHash": "$2a$10$8c5xpU/hKIct5ErUZfrLbujrOrx0mTH7/W1gAgrVeWsP/2Rrrudde",
     "role": "super_admin",
     "points": 0,
-    "history": {},
+    "history": {
+      "25e932e2-0688-4e73-944b-ae4ca235955c_s1_e0": {
+        "time": 15,
+        "title": "The Holiday",
+        "date": "2026-09-11T20:25:12.112Z"
+      }
+    },
     "flashcards": [],
-    "token": "5be48e25-6125-4e62-9b6e-1afca0e4b264ab69e9d8-e3e8-43cb-a706-3b021f2d4dd0",
-    "tokenExpiresAt": 1788817266174,
-    "favorites": [],
-    "watchLater": [],
+    "token": "5923f40c-a625-4881-9365-5aafc986c69ec42b320f-b14c-44b0-9640-e7704b507f10",
+    "tokenExpiresAt": 1789763071239,
+    "favorites": [
+      "f47e7068-ca91-40ac-a836-25be3a52cdea"
+    ],
+    "watchLater": [
+      "f47e7068-ca91-40ac-a836-25be3a52cdea"
+    ],
     "watched": [],
     "credits": 1000,
     "creditUsage": [],
@@ -2145,7 +2159,12 @@
         "link": "/buy-credits"
       }
     ],
-    "dailyStats": {},
+    "dailyStats": {
+      "2026-09-11": {
+        "watchMinutes": 0,
+        "sentencesSeen": 10
+      }
+    },
     "dailyGoal": 15,
     "permissions": {
       "canTranslate": true,
@@ -2155,7 +2174,7 @@
       "canPublishDirectly": true
     },
     "email": "",
-    "encryptedPassword": "060fc55f494e2b6713e6e4210cba1a70:b4ad17143ba34e6f830a6f636120a367",
+    "encryptedPassword": "4c52b73140ebfedbdd691b3d8551b433:1d35f21015445c14ef5090f6ae74e3c2",
     "level": null,
     "assessmentResult": null,
     "dualSubWatchSeconds": 0,
@@ -2168,7 +2187,7 @@
     "id": "71ea823a-dadc-45dd-bfad-4b4df1806cf2",
     "username": "2",
     "passwordHash": "$2a$10$76JjE8993gjU/g3P3sAMp.HZXCUbGmv5Fd6tZyV1tsqzaDI3q5CBG",
-    "role": "user",
+    "role": "admin",
     "points": 0,
     "history": {
       "0126d3a0-9874-4adb-a562-45a5cb309c2f_s1_e1": {
@@ -2297,7 +2316,14 @@
     "isVip": false,
     "plan": null,
     "subscriptionExpiresAt": null,
-    "dualSubCycleStartTime": null
+    "dualSubCycleStartTime": null,
+    "permissions": {
+      "canTranslate": true,
+      "canAddMovies": true,
+      "canManageCredits": false,
+      "canManageComments": true,
+      "canPublishDirectly": false
+    }
   },
   {
     "id": "203ac76c-67a1-4889-9bed-24e8a28d5031",
@@ -2517,10 +2543,17 @@
     "assessmentResult": null,
     "encryptedPassword": "45b0a3034c68ffc248980f199593acdb:8066861bde9f0bb6010c9327c425a8cf",
     "dualSubWatchSeconds": 0,
-    "isVip": false,
+    "isVip": true,
     "plan": null,
     "subscriptionExpiresAt": null,
-    "dualSubCycleStartTime": null
+    "dualSubCycleStartTime": null,
+    "permissions": {
+      "canTranslate": true,
+      "canAddMovies": true,
+      "canManageCredits": false,
+      "canManageComments": true,
+      "canPublishDirectly": false
+    }
   },
   {
     "id": "07d245ea-1303-413f-ad1c-9d0ae4aa139b",
@@ -3146,7 +3179,16 @@
     "creditUsage": [],
     "suspendedUntil": null,
     "suspensionReason": null,
-    "notifications": [],
+    "notifications": [
+      {
+        "id": "a1e53a70-7b5d-46c5-ad39-30f4f1a3a9fa",
+        "title": "⚠️ لێبڕینی خاڵی XP بەهۆی ناچالاکی",
+        "message": "ماوەی 14 ڕۆژە فیلمت لە پلاتفۆرمەکە سەیر نەکردووە! ڕۆژانە 20 خاڵی XPت لێ کەم دەکرێتەوە. بۆ پاراستنی پلە و لێڤڵەکەت، ئێستا بگەڕێوە و دەست بە سەیرکردن بکە.",
+        "type": "warning",
+        "date": 1789243547190,
+        "read": false
+      }
+    ],
     "favorites": [],
     "watchLater": [],
     "watched": [],

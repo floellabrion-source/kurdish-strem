@@ -1,0 +1,142 @@
+{
+  "settings": {
+    "defaultRate": {
+      "lines": 600,
+      "priceIqd": 1500
+    }
+  },
+  "translators": {
+    "bae2eb30-7cb5-41ee-94df-9565e4a65190": {
+      "userId": "bae2eb30-7cb5-41ee-94df-9565e4a65190",
+      "username": "1",
+      "name": "1",
+      "rate": {
+        "lines": 600,
+        "priceIqd": 1500
+      },
+      "unpaidLines": 0,
+      "totalEditedLines": 5,
+      "advances": [],
+      "payoutHistory": [
+        {
+          "receiptId": "KST-PAY-20260925-8182",
+          "date": "2026-09-25T19:11:41.418Z",
+          "userId": "bae2eb30-7cb5-41ee-94df-9565e4a65190",
+          "username": "1",
+          "name": "1",
+          "linesPaid": 5,
+          "rate": {
+            "lines": 600,
+            "priceIqd": 1500
+          },
+          "grossAmountIqd": 13,
+          "advanceDeductedIqd": 0,
+          "netAmountPaidIqd": 13,
+          "paidBy": "maher2",
+          "note": "پارەدانی 5 دێڕی وەرگێڕان",
+          "movieBreakdown": [
+            {
+              "title": "Breaking Bad",
+              "lines": 5
+            }
+          ]
+        }
+      ]
+    },
+    "71ea823a-dadc-45dd-bfad-4b4df1806cf2": {
+      "userId": "71ea823a-dadc-45dd-bfad-4b4df1806cf2",
+      "username": "2",
+      "name": "2",
+      "rate": {
+        "lines": 100,
+        "priceIqd": 500
+      },
+      "unpaidLines": 0,
+      "totalEditedLines": 0,
+      "advances": [],
+      "payoutHistory": []
+    }
+  },
+  "editedLineEntries": [
+    {
+      "id": "e0f02e34-83a8-43f3-a1fe-7a6b4dabca33",
+      "userId": "bae2eb30-7cb5-41ee-94df-9565e4a65190",
+      "username": "1",
+      "movieId": "0126d3a0-9874-4adb-a562-45a5cb309c2f",
+      "movieTitle": "Breaking Bad",
+      "seasonNum": 1,
+      "episodeNum": 1,
+      "subtitleId": "2",
+      "oldText": "eeeeee",
+      "newText": "سلاو چۆنی",
+      "charDiff": 9,
+      "timestamp": 1790362721110,
+      "isPaid": true,
+      "payoutReceiptId": "KST-PAY-20260925-8182"
+    },
+    {
+      "id": "dc1acbf8-3e3e-4e78-837c-250d5f45571b",
+      "userId": "bae2eb30-7cb5-41ee-94df-9565e4a65190",
+      "username": "1",
+      "movieId": "0126d3a0-9874-4adb-a562-45a5cb309c2f",
+      "movieTitle": "Breaking Bad",
+      "seasonNum": 1,
+      "episodeNum": 1,
+      "subtitleId": "1",
+      "oldText": "mahyer",
+      "newText": "ماهیە",
+      "charDiff": 6,
+      "timestamp": 1790362808815,
+      "isPaid": true,
+      "payoutReceiptId": "KST-PAY-20260925-8182"
+    },
+    {
+      "id": "dc763cf9-3904-4a45-b0aa-fa06cdf5d4a8",
+      "userId": "bae2eb30-7cb5-41ee-94df-9565e4a65190",
+      "username": "1",
+      "movieId": "0126d3a0-9874-4adb-a562-45a5cb309c2f",
+      "movieTitle": "Breaking Bad",
+      "seasonNum": 1,
+      "episodeNum": 1,
+      "subtitleId": "3",
+      "oldText": "",
+      "newText": "ئەبدوللە هەولیری",
+      "charDiff": 16,
+      "timestamp": 1790362823144,
+      "isPaid": true,
+      "payoutReceiptId": "KST-PAY-20260925-8182"
+    },
+    {
+      "id": "bc93f9cc-ce55-4dcd-84d7-1d2dbcb1ce4c",
+      "userId": "bae2eb30-7cb5-41ee-94df-9565e4a65190",
+      "username": "1",
+      "movieId": "0126d3a0-9874-4adb-a562-45a5cb309c2f",
+      "movieTitle": "Breaking Bad",
+      "seasonNum": 1,
+      "episodeNum": 1,
+      "subtitleId": "4",
+      "oldText": "هه",
+      "newText": "سلاو چۆنی",
+      "charDiff": 7,
+      "timestamp": 1790362849813,
+      "isPaid": true,
+      "payoutReceiptId": "KST-PAY-20260925-8182"
+    },
+    {
+      "id": "e8477165-fa0d-4282-bfb5-4f0b200c7336",
+      "userId": "bae2eb30-7cb5-41ee-94df-9565e4a65190",
+      "username": "1",
+      "movieId": "0126d3a0-9874-4adb-a562-45a5cb309c2f",
+      "movieTitle": "Breaking Bad",
+      "seasonNum": 1,
+      "episodeNum": 1,
+      "subtitleId": "5",
+      "oldText": "ههه",
+      "newText": "مامۆپئیدەه٢پ٨٣٩٢",
+      "charDiff": 13,
+      "timestamp": 1790362884190,
+      "isPaid": true,
+      "payoutReceiptId": "KST-PAY-20260925-8182"
+    }
+  ]
+}

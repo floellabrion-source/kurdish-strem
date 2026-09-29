@@ -27,6 +27,48 @@ const cache = {
     kv: new Map()                // key -> object / string
 };
 
+// Synchronously populate RAM cache from JSON on require for 0ms instant startup
+const bootstrapSyncFromJson = () => {
+    try {
+        const usersFile = path.join(DATA_DIR, 'users.json');
+        if (fs.existsSync(usersFile) && cache.users.size === 0) {
+            const raw = fs.readFileSync(usersFile, 'utf-8');
+            const users = JSON.parse(raw);
+            if (Array.isArray(users)) {
+                users.forEach(u => { if (u && u.id) cache.users.set(String(u.id), u); });
+            }
+        }
+        const moviesFile = path.join(DATA_DIR, 'movies.json');
+        if (fs.existsSync(moviesFile) && cache.movies.size === 0) {
+            const raw = fs.readFileSync(moviesFile, 'utf-8');
+            const movies = JSON.parse(raw);
+            if (Array.isArray(movies)) {
+                movies.forEach(m => { if (m && m.id) cache.movies.set(String(m.id), m); });
+            }
+        }
+        const plansFile = path.join(DATA_DIR, 'plans.json');
+        if (fs.existsSync(plansFile) && cache.plans.size === 0) {
+            const raw = fs.readFileSync(plansFile, 'utf-8');
+            const plans = JSON.parse(raw);
+            if (Array.isArray(plans)) {
+                plans.forEach(p => { if (p && p.id) cache.plans.set(String(p.id), p); });
+            }
+        }
+        const glossaryFile = path.join(DATA_DIR, 'glossary.json');
+        if (fs.existsSync(glossaryFile) && cache.glossary.size === 0) {
+            const raw = fs.readFileSync(glossaryFile, 'utf-8');
+            const glossary = JSON.parse(raw);
+            if (Array.isArray(glossary)) {
+                glossary.forEach(g => { if (g && g.id) cache.glossary.set(String(g.id), g); });
+            }
+        }
+    } catch (e) {
+        console.error('❌ [Database] Synchronous bootstrap error:', e.message);
+    }
+};
+
+bootstrapSyncFromJson();
+
 let dbReady = false;
 const readyCallbacks = [];
 
@@ -219,7 +261,7 @@ const initDatabase = async () => {
         const movieRow = await get('SELECT COUNT(*) as count FROM movies');
         const userRow = await get('SELECT COUNT(*) as count FROM users');
 
-        if ((movieRow?.count || 0) === 0 && (userRow?.count || 0) === 0) {
+        if ((movieRow?.count || 0) === 0 || (userRow?.count || 0) === 0) {
             await performInitialJsonMigration();
         }
 
@@ -674,11 +716,30 @@ const deleteMovie = (id) => {
     return existed;
 };
 
+const writeDebounceTimers = new Map();
+const debounceWriteJson = (filename, data) => {
+    if (writeDebounceTimers.has(filename)) {
+        clearTimeout(writeDebounceTimers.get(filename));
+    }
+    writeDebounceTimers.set(filename, setTimeout(() => {
+        try {
+            const filePath = path.join(DATA_DIR, filename);
+            const tempPath = `${filePath}.tmp`;
+            fs.writeFileSync(tempPath, JSON.stringify(data, null, 2), 'utf-8');
+            fs.renameSync(tempPath, filePath);
+        } catch (e) {
+            console.error(`❌ [DB] Error writing ${filename}:`, e.message);
+        }
+        writeDebounceTimers.delete(filename);
+    }, 1000));
+};
+
 const saveAllMovies = (moviesArray) => {
     if (!Array.isArray(moviesArray)) return false;
     for (const m of moviesArray) {
         saveMovie(m);
     }
+    debounceWriteJson('movies.json', moviesArray);
     return true;
 };
 
@@ -764,6 +825,7 @@ const saveAllUsers = (usersArray) => {
     for (const u of usersArray) {
         saveUser(u);
     }
+    debounceWriteJson('users.json', usersArray);
     return true;
 };
 
