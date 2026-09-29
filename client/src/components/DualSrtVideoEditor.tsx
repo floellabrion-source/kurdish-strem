@@ -11,6 +11,7 @@ import SubtitleDiffViewer from './SubtitleDiffViewer';
 import InternalNotesModal from './InternalNotesModal';
 import SubtitleQcModal from './SubtitleQcModal';
 import SmartTimeSyncModal from './SmartTimeSyncModal';
+import SubtitleAudioWaveform from './SubtitleAudioWaveform';
 import { runSubtitleQc } from '../utils/subtitleQc';
 import { generateLineAlternatives, LineAlternativeOption, translateBatch, SubBlock, MovieLoreAndBible, TRANSLATION_TONES, isLineUntranslated } from '../utils/aiTranslator';
 import { useAuth } from '../context/AuthContext';
@@ -614,6 +615,19 @@ export default function DualSrtVideoEditor({
                 return next;
             });
         }
+    };
+
+    const handleWaveformLineTimeChange = (id: number, startSec: number, endSec: number) => {
+        setLines(prev => prev.map(l => {
+            if (l.id !== id) return l;
+            return {
+                ...l,
+                startSec,
+                endSec,
+                startTime: secToTimeString(startSec),
+                endTime: secToTimeString(endSec)
+            };
+        }));
     };
 
     const setLineStartToCurrentVideo = (id: number) => {
@@ -1887,6 +1901,21 @@ Format your output EXACTLY as follows using delimiter tags:
                                     <button onClick={() => seekToTime(currentTime + 5)} title={lang === 'en' ? '5s Forward' : '٥ چرکە بۆ پێشەوە'}><RotateCw size={14} /> +5s</button>
                                 </div>
                             </div>
+
+                            {/* Interactive Audio Waveform Visualizer & Voice Snapping */}
+                            <SubtitleAudioWaveform
+                                videoRef={videoRef}
+                                videoUrl={effectiveVideoSrc}
+                                currentTime={currentTime}
+                                duration={videoRef.current?.duration || 0}
+                                lines={lines}
+                                selectedLineId={selectedLineId}
+                                onSelectLine={(id) => setSelectedLineId(id)}
+                                onSeek={seekToTime}
+                                onLineTimeChange={handleWaveformLineTimeChange}
+                                onDragComplete={pushHistoryState}
+                                onShowToast={(msg, type) => showToast(msg, type || 'success')}
+                            />
 
                             {/* Inappropriate Scene Marker Toolbox for Non-dialogue & Dialogue scenes */}
                             <div className="video-sensitive-control-card">
