@@ -117,6 +117,49 @@
     filter: brightness(1.2);
 }
 
+/* Tone of Voice Selector Dropdown */
+.dual-tone-selector-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(30, 41, 59, 0.85);
+    border: 1px solid rgba(139, 92, 246, 0.4);
+    padding: 3px 8px;
+    border-radius: 9px;
+    box-shadow: 0 0 12px rgba(139, 92, 246, 0.2);
+    transition: all 0.2s ease;
+}
+
+.dual-tone-selector-wrapper:hover {
+    border-color: #a855f7;
+    box-shadow: 0 0 18px rgba(168, 85, 247, 0.35);
+}
+
+.tone-label-prefix {
+    font-size: 11px;
+    font-weight: 800;
+    color: #c084fc;
+    white-space: nowrap;
+}
+
+.dual-tone-select-dropdown {
+    background: transparent;
+    border: none;
+    color: #f1f5f9;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    outline: none;
+    padding: 4px 4px 4px 0;
+}
+
+.dual-tone-select-dropdown option {
+    background: #0f172a;
+    color: #ffffff;
+    font-size: 13px;
+    padding: 6px;
+}
+
 .btn-dual-ai-translate {
     display: flex;
     align-items: center;

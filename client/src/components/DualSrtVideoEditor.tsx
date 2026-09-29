@@ -263,7 +263,8 @@ export default function DualSrtVideoEditor({
     const [newTermScope, setNewTermScope] = useState<'show' | 'global'>('show');
     const [addingTerm, setAddingTerm] = useState<boolean>(false);
 
-    // AI Line Suggestions State (3 creative classified options: Casual, Formal, Punchy)
+    // AI Line Suggestions & Tone of Voice State (Casual, Formal, Family)
+    const [currentTone, setCurrentTone] = useState<string>(() => localStorage.getItem('ks_srt_ai_tone') || 'casual');
     const [lineSuggestions, setLineSuggestions] = useState<{
         lineId: number;
         options: LineAlternativeOption[];
@@ -880,10 +881,14 @@ export default function DualSrtVideoEditor({
                 ? `\nTEAM MANDATORY GLOSSARY (Strictly use these exact Kurdish translations for matching terms):\n` + relevantGlossary.map((g: any) => `- "${g.english}" => "${g.kurdish}"`).join('\n')
                 : '';
 
+            const selectedTone = currentTone || localStorage.getItem('ks_srt_ai_tone') || 'casual';
+            const toneObj = TRANSLATION_TONES.find(t => t.id === selectedTone) || TRANSLATION_TONES[0];
+            const toneRuleStr = toneObj ? `\nTONE OF VOICE REQUIREMENT:\n${toneObj.promptRule}\n` : '';
+
             const prompt = `ACT AS AN EXPERT CINEMATIC SUBTITLE TRANSLATOR.
 Movie/Show: "${movieTitle || 'Movie'}" ${episodeTitle ? `- Episode: "${episodeTitle}"` : ''}
 ${glossaryText}
-
+${toneRuleStr}
 SURROUNDING SCENE CONTEXT (PRECEDING 5 LINES):
 ${beforeLines || '(Start of scene)'}
 
@@ -895,7 +900,7 @@ SURROUNDING SCENE CONTEXT (FOLLOWING 5 LINES):
 ${afterLines || '(End of scene)'}
 
 CRITICAL RULES:
-1. Translate specifically into natural, fluent Central Kurdish (Sorani) cinematic dialogue.
+1. Translate specifically into natural, fluent Central Kurdish (Sorani) cinematic dialogue adhering to the specified Tone of Voice.
 2. CRITICAL MULTI-LINE RULE: If the target English subtitle contains MULTIPLE LINES (e.g. 2 lines separated by a line break) or formatting tags (such as <i>...</i>, ♪, etc.), YOU MUST TRANSLATE EVERY SINGLE LINE AND KEEP THE EXACT SAME NUMBER OF LINES AND TAGS! NEVER translate only the top line and omit the bottom line!
 3. Provide 3 DISTINCT and natural translation variations in Central Kurdish (Sorani).
 Format your output EXACTLY as follows using delimiter tags:
@@ -1546,6 +1551,28 @@ Format your output EXACTLY as follows using delimiter tags:
                             {showVideoPanel ? <EyeOff size={16} /> : <Eye size={16} />}
                             <span className="btn-label-text">{showVideoPanel ? (lang === 'en' ? 'Hide Video' : 'شاردنەوەی ڤیدیۆ') : (lang === 'en' ? 'Show Video' : 'پیشاندانی ڤیدیۆ')}</span>
                         </button>
+
+                        {/* Tone of Voice Selector for AI Translation */}
+                        <div className="dual-tone-selector-wrapper" title={lang === 'en' ? "Tone of Voice for AI translation" : "تۆنی دەنگ و شێوازی وەرگێڕان"}>
+                            <span className="tone-label-prefix">🎭 {lang === 'en' ? 'Tone:' : 'تۆنی دەنگ:'}</span>
+                            <select
+                                className="dual-tone-select-dropdown"
+                                value={currentTone}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    setCurrentTone(val);
+                                    localStorage.setItem('ks_srt_ai_tone', val);
+                                    const tObj = TRANSLATION_TONES.find(t => t.id === val);
+                                    showToast(lang === 'en' ? `Translation Tone: ${tObj?.name || val}` : `تۆنی دەنگ دیاریکرا: ${tObj?.name || val} ✨`);
+                                }}
+                            >
+                                {TRANSLATION_TONES.map(t => (
+                                    <option key={t.id} value={t.id}>
+                                        {t.icon} {t.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
 
                         {(() => {
                             const isAllRunning = translateAllProgress?.status === 'running';
