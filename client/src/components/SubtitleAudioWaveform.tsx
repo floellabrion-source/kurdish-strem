@@ -65,6 +65,7 @@ export default function SubtitleAudioWaveform({
     // Audio peaks buffer (50 samples per second)
     const audioPeaksRef = useRef<Float32Array | null>(null);
     const initialLinesRef = useRef<SubtitleLine[]>([]);
+    const lastLinesLengthRef = useRef<number>(0);
     const snippetTimerRef = useRef<any>(null);
 
     // Drag interaction state
@@ -77,10 +78,11 @@ export default function SubtitleAudioWaveform({
         initialEndSec: number;
     } | null>(null);
 
-    // Capture initial lines for static waveform audio envelope
+    // Capture initial lines for static waveform audio envelope & master timing reference
     useEffect(() => {
-        if (lines.length > 0 && initialLinesRef.current.length === 0) {
+        if (lines.length > 0 && (initialLinesRef.current.length === 0 || Math.abs(lines.length - lastLinesLengthRef.current) > 5)) {
             initialLinesRef.current = JSON.parse(JSON.stringify(lines));
+            lastLinesLengthRef.current = lines.length;
         }
     }, [lines]);
 
@@ -185,20 +187,21 @@ export default function SubtitleAudioWaveform({
             const totalPeaks = Math.floor(maxDuration * peaksPerSec);
             const peaks = new Float32Array(totalPeaks);
 
-            // Base ambient noise
+            // Base ambient noise (low clean baseline: 0.01 - 0.03)
             for (let i = 0; i < totalPeaks; i++) {
-                peaks[i] = 0.04 + Math.sin(i * 0.1) * 0.02 + (Math.random() * 0.03);
+                peaks[i] = 0.015 + Math.sin(i * 0.05) * 0.008 + (Math.random() * 0.01);
             }
 
             // Synthesize realistic speech energy bursts inside subtitle ranges
             sourceLines.forEach(l => {
                 const startIdx = Math.max(0, Math.floor(l.startSec * peaksPerSec));
                 const endIdx = Math.min(totalPeaks, Math.floor(l.endSec * peaksPerSec));
+                const dur = Math.max(1, endIdx - startIdx);
                 for (let i = startIdx; i < endIdx; i++) {
-                    const progress = (i - startIdx) / Math.max(1, endIdx - startIdx);
+                    const progress = (i - startIdx) / dur;
                     const envelope = Math.sin(progress * Math.PI);
-                    const syllable = 0.45 + 0.35 * Math.sin(i * 0.6) + 0.25 * Math.cos(i * 1.3);
-                    const speechPeak = envelope * syllable * (0.7 + Math.random() * 0.25);
+                    const syllable = 0.5 + 0.3 * Math.sin(i * 0.7) + 0.2 * Math.cos(i * 1.4);
+                    const speechPeak = 0.25 + envelope * syllable * (0.65 + Math.random() * 0.15);
                     peaks[i] = Math.max(peaks[i], Math.min(0.98, speechPeak));
                 }
             });
@@ -507,15 +510,7 @@ export default function SubtitleAudioWaveform({
     const handleSnapToVoice = () => {
         if (!selectedLine) return;
         const peaks = audioPeaksRef.current;
-        if (!peaks || peaks.length === 0) {
-            if (onShowToast) onShowToast('داتای دەنگ ئامادە نییە بۆ نوسان', 'error');
-            return;
-        }
-
         const peaksPerSec = 50;
-        const silenceThreshold = 0.065; // Below this is ambient silence (captures soft vowels and fricatives)
-        const activeThreshold = 0.11;   // Speech energy threshold
-        const bridgeSilenceSamples = 18; // ~360ms tolerance to bridge natural inter-word pauses within a sentence
 
         // Find adjacent subtitle boundaries to prevent collisions / overlaps
         const sortedLines = [...lines].sort((a, b) => a.startSec - b.startSec);
@@ -524,86 +519,130 @@ export default function SubtitleAudioWaveform({
         const nextLine = currentIndex >= 0 && currentIndex < sortedLines.length - 1 ? sortedLines[currentIndex + 1] : null;
 
         const minBoundSec = prevLine ? Math.max(0, prevLine.endSec + 0.04) : 0;
-        const maxBoundSec = nextLine ? Math.max(minBoundSec + 0.3, nextLine.startSec - 0.04) : (peaks.length / peaksPerSec);
+        const maxBoundSec = nextLine ? Math.max(minBoundSec + 0.3, nextLine.startSec - 0.04) : (peaks ? peaks.length / peaksPerSec : 999999);
 
-        const minBoundIdx = Math.max(0, Math.floor(minBoundSec * peaksPerSec));
-        const maxBoundIdx = Math.min(peaks.length - 1, Math.floor(maxBoundSec * peaksPerSec));
+        // Check if we have an original baseline master timing for this line
+        const origLine = initialLinesRef.current.find(l => l.id === selectedLine.id);
 
-        // 1. Determine anchor search center
-        const centerSec = (selectedLine.startSec + selectedLine.endSec) / 2;
-        let centerIdx = Math.max(minBoundIdx, Math.min(maxBoundIdx, Math.floor(centerSec * peaksPerSec)));
+        let newStartSec = selectedLine.startSec;
+        let newEndSec = selectedLine.endSec;
 
-        // Find the strongest dialogue energy packet within search window
-        const searchRange = Math.floor(5.0 * peaksPerSec);
-        const searchStart = Math.max(minBoundIdx, centerIdx - searchRange);
-        const searchEnd = Math.min(maxBoundIdx, centerIdx + searchRange);
+        if (origLine && origLine.endSec > origLine.startSec) {
+            // Case 1: Line has authentic master dialogue timing -> Snap back to the speaker's true dialogue envelope
+            newStartSec = Math.max(minBoundSec, origLine.startSec);
+            newEndSec = Math.min(maxBoundSec, origLine.endSec);
 
-        let bestPeakIdx = centerIdx;
-        let maxPeakAmp = peaks[centerIdx] || 0;
+            // If audio peaks are loaded, fine-tune onset & offset around the original sentence
+            if (peaks && peaks.length > 0) {
+                const speechThreshold = 0.12;
+                const startIdx = Math.max(0, Math.floor(newStartSec * peaksPerSec));
+                const endIdx = Math.min(peaks.length - 1, Math.floor(newEndSec * peaksPerSec));
 
-        for (let i = searchStart; i <= searchEnd; i++) {
-            if ((peaks[i] || 0) > maxPeakAmp) {
-                maxPeakAmp = peaks[i];
-                bestPeakIdx = i;
-            }
-        }
-
-        if (maxPeakAmp >= activeThreshold) {
-            centerIdx = bestPeakIdx;
-        }
-
-        // 2. Scan BACKWARDS from centerIdx to find the true onset of the entire multi-word sentence
-        let speechStartIdx = centerIdx;
-        let silenceCountBack = 0;
-        for (let i = centerIdx; i >= minBoundIdx; i--) {
-            if ((peaks[i] || 0) < silenceThreshold) {
-                silenceCountBack++;
-                if (silenceCountBack >= bridgeSilenceSamples) {
-                    // Reached a true sentence boundary (360ms of silence)
-                    speechStartIdx = Math.min(centerIdx, i + bridgeSilenceSamples);
-                    break;
+                // Fine-tune start (look +/- 0.4s around original start)
+                let fineStartIdx = startIdx;
+                for (let i = Math.max(0, startIdx - 20); i <= Math.min(peaks.length - 1, startIdx + 20); i++) {
+                    if ((peaks[i] || 0) >= speechThreshold) {
+                        fineStartIdx = i;
+                        break;
+                    }
                 }
-            } else {
-                silenceCountBack = 0;
-                speechStartIdx = i;
-            }
-        }
 
-        // 3. Scan FORWARDS from centerIdx to find the true offset of the entire multi-word sentence
-        let speechEndIdx = centerIdx;
-        let silenceCountForward = 0;
-        for (let i = centerIdx; i <= maxBoundIdx; i++) {
-            if ((peaks[i] || 0) < silenceThreshold) {
-                silenceCountForward++;
-                if (silenceCountForward >= bridgeSilenceSamples) {
-                    // Reached a true sentence boundary (360ms of silence)
-                    speechEndIdx = Math.max(centerIdx, i - bridgeSilenceSamples);
-                    break;
+                // Fine-tune end (look +/- 0.4s around original end)
+                let fineEndIdx = endIdx;
+                for (let i = Math.min(peaks.length - 1, endIdx + 20); i >= Math.max(0, endIdx - 20); i--) {
+                    if ((peaks[i] || 0) >= speechThreshold) {
+                        fineEndIdx = i;
+                        break;
+                    }
                 }
-            } else {
-                silenceCountForward = 0;
-                speechEndIdx = i;
+
+                if (fineEndIdx > fineStartIdx) {
+                    newStartSec = Math.max(minBoundSec, (fineStartIdx / peaksPerSec) - 0.05);
+                    newEndSec = Math.min(maxBoundSec, (fineEndIdx / peaksPerSec) + 0.06);
+                }
             }
+        } else if (peaks && peaks.length > 0) {
+            // Case 2: Newly created line without master timing -> Scan audio waveform around center
+            const silenceThreshold = 0.08;
+            const activeThreshold = 0.14;
+            const bridgeSilenceSamples = 16; // ~320ms tolerance
+
+            const minBoundIdx = Math.max(0, Math.floor(minBoundSec * peaksPerSec));
+            const maxBoundIdx = Math.min(peaks.length - 1, Math.floor(maxBoundSec * peaksPerSec));
+
+            const centerSec = (selectedLine.startSec + selectedLine.endSec) / 2;
+            let centerIdx = Math.max(minBoundIdx, Math.min(maxBoundIdx, Math.floor(centerSec * peaksPerSec)));
+
+            // Find strongest peak
+            const searchRange = Math.floor(4.0 * peaksPerSec);
+            const searchStart = Math.max(minBoundIdx, centerIdx - searchRange);
+            const searchEnd = Math.min(maxBoundIdx, centerIdx + searchRange);
+
+            let bestPeakIdx = centerIdx;
+            let maxPeakAmp = peaks[centerIdx] || 0;
+            for (let i = searchStart; i <= searchEnd; i++) {
+                if ((peaks[i] || 0) > maxPeakAmp) {
+                    maxPeakAmp = peaks[i];
+                    bestPeakIdx = i;
+                }
+            }
+            if (maxPeakAmp >= activeThreshold) {
+                centerIdx = bestPeakIdx;
+            }
+
+            // Scan backwards
+            let speechStartIdx = centerIdx;
+            let silenceCountBack = 0;
+            for (let i = centerIdx; i >= minBoundIdx; i--) {
+                if ((peaks[i] || 0) < silenceThreshold) {
+                    silenceCountBack++;
+                    if (silenceCountBack >= bridgeSilenceSamples) {
+                        speechStartIdx = Math.min(centerIdx, i + bridgeSilenceSamples);
+                        break;
+                    }
+                } else {
+                    silenceCountBack = 0;
+                    speechStartIdx = i;
+                }
+            }
+
+            // Scan forwards
+            let speechEndIdx = centerIdx;
+            let silenceCountForward = 0;
+            for (let i = centerIdx; i <= maxBoundIdx; i++) {
+                if ((peaks[i] || 0) < silenceThreshold) {
+                    silenceCountForward++;
+                    if (silenceCountForward >= bridgeSilenceSamples) {
+                        speechEndIdx = Math.max(centerIdx, i - bridgeSilenceSamples);
+                        break;
+                    }
+                } else {
+                    silenceCountForward = 0;
+                    speechEndIdx = i;
+                }
+            }
+
+            newStartSec = Math.max(minBoundSec, (speechStartIdx / peaksPerSec) - 0.05);
+            newEndSec = Math.min(maxBoundSec, (speechEndIdx / peaksPerSec) + 0.06);
         }
 
-        // Trim any edge noise and apply natural 60ms attack & 80ms decay breathing padding
-        let newStartSec = Math.max(minBoundSec, (speechStartIdx / peaksPerSec) - 0.06);
-        let newEndSec = Math.min(maxBoundSec, (speechEndIdx / peaksPerSec) + 0.08);
-
-        // Ensure minimum subtitle duration of at least 0.4s
+        // Guarantee minimum duration of 0.4s
         if (newEndSec - newStartSec < 0.4) {
             newEndSec = Math.min(maxBoundSec, newStartSec + 0.4);
         }
 
-        // Round to 2 decimal places (standard SRT centisecond precision)
+        // Round to centiseconds
         newStartSec = Math.round(newStartSec * 100) / 100;
         newEndSec = Math.round(newEndSec * 100) / 100;
 
         onLineTimeChange(selectedLine.id, newStartSec, newEndSec);
         if (onDragComplete) onDragComplete();
 
+        // Also seek playhead to the snapped start so the user can immediately hear from the beginning
+        onSeek(newStartSec);
+
         if (onShowToast) {
-            onShowToast(`دێڕی #${selectedLine.id} بەتەواوی ڕستەکە سینک کرا (${formatWaveTime(newStartSec)} ➜ ${formatWaveTime(newEndSec)}) 🎙️✨`, 'success');
+            onShowToast(`دێڕی #${selectedLine.id} ڕێک لەسەر دەنگی قسەکەرەکە جێگیر کرایەوە (${formatWaveTime(newStartSec)} ➜ ${formatWaveTime(newEndSec)}) 🎙️✨`, 'success');
         }
     };
 
