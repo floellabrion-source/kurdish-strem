@@ -1093,7 +1093,10 @@ const getTokenFromReq = (req) => {
 const getUser = (req) => {
     const token = getTokenFromReq(req);
     if (!token) return null;
-    const user = readUsers().find((u) => u.token === token);
+    let user = db.getUserByToken ? db.getUserByToken(token) : null;
+    if (!user) {
+        user = readUsers().find((u) => u.token === token);
+    }
     if (!user) return null;
     if (!user.tokenExpiresAt || user.tokenExpiresAt < Date.now()) return null;
     return user;

@@ -775,6 +775,29 @@ const getUserByEmail = (email) => {
     return null;
 };
 
+const getUserByToken = (token) => {
+    if (!token) return null;
+    // 1. Instant check in L1 RAM cache
+    for (const u of cache.users.values()) {
+        if (u && u.token === token) return u;
+    }
+    // 2. Cross-worker PM2 cluster synchronization fallback
+    try {
+        const usersFile = path.join(DATA_DIR, 'users.json');
+        if (fs.existsSync(usersFile)) {
+            const raw = fs.readFileSync(usersFile, 'utf-8');
+            const users = JSON.parse(raw);
+            if (Array.isArray(users)) {
+                for (const u of users) {
+                    if (u && u.id) cache.users.set(String(u.id), u);
+                    if (u && u.token === token) return u;
+                }
+            }
+        }
+    } catch (e) {}
+    return null;
+};
+
 const saveUser = (user) => {
     if (!user || !user.id) return false;
     const now = new Date().toISOString();
@@ -784,7 +807,13 @@ const saveUser = (user) => {
     // 1. Instant L1 RAM Update
     cache.users.set(String(user.id), user);
 
-    // 2. Non-blocking SQLite persistence
+    // 2. Cross-cluster sync to users.json
+    try {
+        const usersArray = Array.from(cache.users.values());
+        debounceWriteJson('users.json', usersArray);
+    } catch (e) {}
+
+    // 3. Non-blocking SQLite persistence
     run(`
         INSERT INTO users (id, username, email, role, credits, createdAt, updatedAt, data)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -1288,6 +1317,7 @@ module.exports = {
     getUserById,
     getUserByUsername,
     getUserByEmail,
+    getUserByToken,
     saveUser,
     deleteUser,
     saveAllUsers,

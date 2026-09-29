@@ -27,9 +27,9 @@ apiClient.interceptors.response.use((response) => {
 }, (error) => {
     if (error.response?.status === 401) {
         const url = error.config?.url || '';
-        // Only trigger token purge if an authenticated request failed (NOT login or register)
-        if (!url.includes('/api/auth/login') && !url.includes('/api/auth/register') && !url.includes('/api/auth/forgot')) {
-            console.warn('[API Client] Unauthorized request (401). Purging invalid token.');
+        // Only trigger token purge if /api/auth/me explicitly failed with 401
+        if (url.includes('/api/auth/me')) {
+            console.warn('[API Client] /api/auth/me returned 401. Purging invalid token.');
             const currentToken = localStorage.getItem('kurdish_stream_token') || localStorage.getItem('ks_token');
             if (currentToken) {
                 localStorage.removeItem('kurdish_stream_token');
