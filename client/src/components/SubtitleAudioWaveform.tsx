@@ -64,7 +64,7 @@ export default function SubtitleAudioWaveform({
 
     // Audio peaks buffer (50 samples per second)
     const audioPeaksRef = useRef<Float32Array | null>(null);
-    const snippetTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const snippetTimerRef = useRef<any>(null);
 
     // Drag interaction state
     const dragRef = useRef<{
