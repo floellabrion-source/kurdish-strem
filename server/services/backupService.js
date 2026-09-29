@@ -129,7 +129,7 @@ function createBackup(triggerType = 'auto', reason = '') {
  * Sends a backup archive file to Telegram Chat
  */
 async function sendBackupToTelegram(filePath, filename, caption) {
-    const token = process.env.TELEGRAM_BOT_TOKEN || '8888836091:AAG3EqdiVnuMApik7QEo8WJl6TeavBFcprY';
+    const token = process.env.TELEGRAM_BOT_TOKEN || '8740203359:AAFNtgcYdr3smrB5pjA6x58Z8h5ipIMRWks';
     const chatId = process.env.TELEGRAM_CHAT_ID || '1838030544';
 
     if (!token || !chatId || !fs.existsSync(filePath)) {
