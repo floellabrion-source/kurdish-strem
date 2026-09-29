@@ -78,6 +78,8 @@ const PORT = process.env.PORT || 3001;
 const OMDB_API_KEY = process.env.OMDB_API_KEY || '';
 const TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
+const db = require('./db');
+
 const MOVIES_DIR = path.join(__dirname, '..', 'uploads', 'movies');
 const DATA_FILE = path.join(__dirname, 'data', 'movies.json');
 const USERS_FILE = path.join(__dirname, 'data', 'users.json');
@@ -87,66 +89,21 @@ const PLANS_FILE = path.join(__dirname, 'data', 'plans.json');
 const SUBTITLE_HISTORY_FILE = path.join(__dirname, 'data', 'subtitle_history.json');
 
 if (!fs.existsSync(MOVIES_DIR)) fs.mkdirSync(MOVIES_DIR, { recursive: true });
-if (!fs.existsSync(path.join(__dirname, 'data'))) fs.mkdirSync(path.join(__dirname, 'data'), { recursive: true });
-if (!fs.existsSync(DATA_FILE)) fs.writeFileSync(DATA_FILE, '[]');
-if (!fs.existsSync(USERS_FILE)) fs.writeFileSync(USERS_FILE, '[]');
-if (!fs.existsSync(ANALYTICS_FILE)) fs.writeFileSync(ANALYTICS_FILE, JSON.stringify({ visits: [] }));
-if (!fs.existsSync(REQUESTS_FILE)) fs.writeFileSync(REQUESTS_FILE, '[]');
-if (!fs.existsSync(PLANS_FILE)) fs.writeFileSync(PLANS_FILE, '[]');
-if (!fs.existsSync(SUBTITLE_HISTORY_FILE)) fs.writeFileSync(SUBTITLE_HISTORY_FILE, '[]');
 
-const readSubtitleHistory = () => {
-    try {
-        if (!fs.existsSync(SUBTITLE_HISTORY_FILE)) return [];
-        return JSON.parse(fs.readFileSync(SUBTITLE_HISTORY_FILE, 'utf-8'));
-    } catch (e) {
-        return [];
-    }
+const readSubtitleHistory = (movieId, seasonNum, episodeNum) => {
+    return db.getSubtitleHistory(movieId, seasonNum, episodeNum);
 };
 
 const writeSubtitleHistory = (data) => {
-    try {
-        fs.writeFileSync(SUBTITLE_HISTORY_FILE, JSON.stringify(data, null, 2));
-    } catch (e) {
-        console.error('Error writing subtitle history:', e);
-    }
+    db.saveAllSubtitleHistory(data);
 };
-
-const TRANSLATOR_PAYROLL_FILE = path.join(__dirname, 'data', 'translator_payroll.json');
-const DEFAULT_PAYROLL_DATA = {
-    settings: {
-        defaultRate: { lines: 600, priceIqd: 1500 }
-    },
-    translators: {},
-    editedLineEntries: []
-};
-
-if (!fs.existsSync(TRANSLATOR_PAYROLL_FILE)) {
-    fs.writeFileSync(TRANSLATOR_PAYROLL_FILE, JSON.stringify(DEFAULT_PAYROLL_DATA, null, 2));
-}
 
 const readTranslatorPayroll = () => {
-    try {
-        if (!fs.existsSync(TRANSLATOR_PAYROLL_FILE)) return { ...DEFAULT_PAYROLL_DATA };
-        const raw = fs.readFileSync(TRANSLATOR_PAYROLL_FILE, 'utf-8');
-        const data = JSON.parse(raw);
-        return {
-            settings: { ...DEFAULT_PAYROLL_DATA.settings, ...(data.settings || {}) },
-            translators: data.translators || {},
-            editedLineEntries: data.editedLineEntries || []
-        };
-    } catch (e) {
-        console.error('Error reading translator payroll:', e);
-        return { ...DEFAULT_PAYROLL_DATA };
-    }
+    return db.getTranslatorPayroll();
 };
 
 const writeTranslatorPayroll = (data) => {
-    try {
-        fs.writeFileSync(TRANSLATOR_PAYROLL_FILE, JSON.stringify(data, null, 2));
-    } catch (e) {
-        console.error('Error writing translator payroll:', e);
-    }
+    db.saveTranslatorPayroll(data);
 };
 
 // Anti-Cheat & 5-character Kurdish line edit validator
@@ -195,28 +152,13 @@ const validateKurdishLineEdit = (oldText = '', newText = '') => {
     return { valid: true, charDiff: diffScore };
 };
 
-const INTERNAL_NOTES_FILE = path.join(__dirname, 'data', 'internal_notes.json');
-if (!fs.existsSync(INTERNAL_NOTES_FILE)) fs.writeFileSync(INTERNAL_NOTES_FILE, '[]');
-
 const readInternalNotes = () => {
-    try {
-        if (!fs.existsSync(INTERNAL_NOTES_FILE)) return [];
-        return JSON.parse(fs.readFileSync(INTERNAL_NOTES_FILE, 'utf-8'));
-    } catch (e) {
-        return [];
-    }
+    return db.getInternalNotes();
 };
 
 const writeInternalNotes = (data) => {
-    try {
-        fs.writeFileSync(INTERNAL_NOTES_FILE, JSON.stringify(data, null, 2));
-    } catch (e) {
-        console.error('Error writing internal notes:', e);
-    }
+    db.saveAllInternalNotes(data);
 };
-
-const ACTIVITY_LOG_FILE = path.join(__dirname, 'data', 'activity_log.json');
-if (!fs.existsSync(ACTIVITY_LOG_FILE)) fs.writeFileSync(ACTIVITY_LOG_FILE, '[]');
 
 const DEFAULT_SYSTEM_SETTINGS = {
     dualSubTrialMinutes: 60,
@@ -226,81 +168,28 @@ const DEFAULT_SYSTEM_SETTINGS = {
     initialRegistrationCredits: 75
 };
 
-const SYSTEM_SETTINGS_FILE = path.join(__dirname, 'data', 'system_settings.json');
-if (!fs.existsSync(SYSTEM_SETTINGS_FILE)) {
-    fs.writeFileSync(SYSTEM_SETTINGS_FILE, JSON.stringify(DEFAULT_SYSTEM_SETTINGS, null, 2));
-}
-
 const readSystemSettings = () => {
-    try {
-        if (!fs.existsSync(SYSTEM_SETTINGS_FILE)) {
-            return { ...DEFAULT_SYSTEM_SETTINGS };
-        }
-        const data = JSON.parse(fs.readFileSync(SYSTEM_SETTINGS_FILE, 'utf-8'));
-        return { ...DEFAULT_SYSTEM_SETTINGS, ...data };
-    } catch (e) {
-        return { ...DEFAULT_SYSTEM_SETTINGS };
-    }
+    return db.getSystemSettings();
 };
 
 const writeSystemSettings = (data) => {
-    try {
-        fs.writeFileSync(SYSTEM_SETTINGS_FILE, JSON.stringify(data, null, 2));
-    } catch (e) {
-        console.error('Error writing system settings:', e);
-    }
+    db.saveSystemSettings(data);
 };
 
-const GLOSSARY_FILE = path.join(__dirname, 'data', 'glossary.json');
-const INITIAL_GLOSSARY = [
-    { id: 'gl_1', english: 'agent', kurdish: 'بریکار', alternatives: ['مەئموور', 'نوێنەر'], category: 'سیخوڕی و ئەمنی', note: 'لە فیلمی سیخوڕیدا بریکار بەکاردێت نەک عامیل', createdBy: { username: 'سیستەم', role: 'super_admin' }, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-    { id: 'gl_2', english: 'protocol', kurdish: 'پرۆتۆکۆل', alternatives: ['ڕێکار', 'یاسا'], category: 'تەکنیکی و سەربازی', note: 'ڕێکاری فەرمی یان پرۆتۆکۆڵی ئەمنی', createdBy: { username: 'سیستەم', role: 'super_admin' }, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-    { id: 'gl_3', english: 'trailer', kurdish: 'تڕەیلەر', alternatives: ['پێشبینین', 'تەیرەلەر'], category: 'سینەما', note: 'ڤیدیۆی کورتی ناساندنی فیلم', createdBy: { username: 'سیستەم', role: 'super_admin' }, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-    { id: 'gl_4', english: 'season', kurdish: 'وەرز', alternatives: ['بەش'], category: 'سینەما', note: 'وەرز بۆ زنجیرە بەکاردێت', createdBy: { username: 'سیستەم', role: 'super_admin' }, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-    { id: 'gl_5', english: 'episode', kurdish: 'ئەڵقە', alternatives: ['بەش'], category: 'سینەما', note: 'ئەڵقەی زنجیرە', createdBy: { username: 'سیستەم', role: 'super_admin' }, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-    { id: 'gl_6', english: 'sequel', kurdish: 'بەشی دووەم', alternatives: ['تەواوکەر', 'پاشکۆ'], category: 'سینەما', note: 'تەواوکەری بەشەکانی پێشوو', createdBy: { username: 'سیستەم', role: 'super_admin' }, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-    { id: 'gl_7', english: 'undercover', kurdish: 'نهێنی / بەنهێنی', alternatives: ['سیخوڕی', 'شاردراوە'], category: 'پۆلیسی و سیخوڕی', note: 'پۆلیس یان بریکاری نهێنی', createdBy: { username: 'سیستەم', role: 'super_admin' }, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-    { id: 'gl_8', english: 'flashback', kurdish: 'گەڕانەوە بۆ ڕابردوو', alternatives: ['فلاشباک'], category: 'سینەما', note: 'دیمەنی یادەوەری و ڕابردوو', createdBy: { username: 'سیستەم', role: 'super_admin' }, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-    { id: 'gl_9', english: 'target', kurdish: 'ئامانج', alternatives: ['نیشانە'], category: 'سەربازی و کردار', note: 'ئامانجی پێکراو یان دیاریکراو', createdBy: { username: 'سیستەم', role: 'super_admin' }, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-    { id: 'gl_10', english: 'suspect', kurdish: 'گومانلێکراو', alternatives: ['تۆمەتبار'], category: 'پۆلیسی و یاسایی', note: 'کەسی گومانلێکراو لە تاوانێکدا', createdBy: { username: 'سیستەم', role: 'super_admin' }, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
-];
-
-if (!fs.existsSync(GLOSSARY_FILE)) {
-    fs.writeFileSync(GLOSSARY_FILE, JSON.stringify(INITIAL_GLOSSARY, null, 2));
-}
-
 const readGlossary = () => {
-    try {
-        if (!fs.existsSync(GLOSSARY_FILE)) return [];
-        return JSON.parse(fs.readFileSync(GLOSSARY_FILE, 'utf-8'));
-    } catch (e) {
-        return [];
-    }
+    return db.getGlossary();
 };
 
 const writeGlossary = (data) => {
-    try {
-        fs.writeFileSync(GLOSSARY_FILE, JSON.stringify(data, null, 2));
-    } catch (e) {
-        console.error('Error writing glossary:', e);
-    }
+    db.saveAllGlossary(data);
 };
 
 const readActivityLogs = () => {
-    try {
-        if (!fs.existsSync(ACTIVITY_LOG_FILE)) return [];
-        return JSON.parse(fs.readFileSync(ACTIVITY_LOG_FILE, 'utf-8'));
-    } catch (e) {
-        return [];
-    }
+    return db.getActivityLogs();
 };
 
 const writeActivityLogs = (data) => {
-    try {
-        fs.writeFileSync(ACTIVITY_LOG_FILE, JSON.stringify(data, null, 2));
-    } catch (e) {
-        console.error('Error writing activity logs:', e);
-    }
+    db.saveAllActivityLogs(data);
 };
 
 // ==========================================
@@ -881,39 +770,8 @@ app.use((req, res, next) => {
     next();
 });
 
-let lastMoviesFileMtime = 0;
-
-const readMovies = (bypassCache = false) => {
-    try {
-        if (!fs.existsSync(DATA_FILE)) return [];
-        const stat = fs.statSync(DATA_FILE);
-        const currentMtime = stat.mtimeMs;
-
-        // Invalidate in-memory cache if file on disk changed
-        if (currentMtime !== lastMoviesFileMtime) {
-            moviesCache.clear();
-            lastMoviesFileMtime = currentMtime;
-        } else if (!bypassCache) {
-            const cached = moviesCache.get('all_movies');
-            if (cached) return cached;
-        }
-
-        const data = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
-        const movies = data.map((m) => ({
-            ...m,
-            type: m.type || 'movie',
-            posterCloudUrl: m.posterCloudUrl || null,
-            videoUrl: m.videoUrl || null,
-            fakeViews: m.fakeViews || 0,
-            realViews: m.realViews || 0,
-            retention: m.retention || { full: 0, partial75: 0, partial50: 0, partial25: 0 }
-        }));
-        moviesCache.set('all_movies', movies);
-        return movies;
-    } catch (err) {
-        console.error('Error reading movies:', err);
-        return [];
-    }
+const readMovies = () => {
+    return db.getMovies();
 };
 
 const execFileAsync = (command, args) => new Promise((resolve, reject) => {
@@ -1003,14 +861,7 @@ const extractSceneMedia = async (videoPath, timestampSeconds) => {
 };
 
 const writeMovies = (data) => {
-    moviesCache.clear();
-    const result = fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
-    try {
-        if (fs.existsSync(DATA_FILE)) {
-            lastMoviesFileMtime = fs.statSync(DATA_FILE).mtimeMs;
-        }
-    } catch {}
-    return result;
+    return db.saveAllMovies(data);
 };
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
@@ -1094,12 +945,12 @@ const checkAndExpireDualSubQuota = (users) => {
 };
 
 const readUsers = () => {
-    const users = JSON.parse(fs.readFileSync(USERS_FILE, 'utf-8'));
+    const users = db.getUsers();
     let needSave = false;
     if (checkAndExpireSubscriptions(users)) needSave = true;
     if (checkAndExpireDualSubQuota(users)) needSave = true;
     if (needSave) {
-        fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+        db.saveAllUsers(users);
     }
     const hasAdmin = users.some((u) => u.role === 'admin' || u.role === 'super_admin');
     return users.map((u) => {
@@ -1149,38 +1000,33 @@ const readUsers = () => {
     });
 };
 
-const writeUsers = (data) => fs.writeFileSync(USERS_FILE, JSON.stringify(data, null, 2));
+const writeUsers = (data) => {
+    return db.saveAllUsers(data);
+};
 
 const readAnalytics = () => {
-    try {
-        return JSON.parse(fs.readFileSync(ANALYTICS_FILE, 'utf-8'));
-    } catch {
-        return { visits: [] };
-    }
+    return db.getAnalytics();
 };
 
-const writeAnalytics = (data) => fs.writeFileSync(ANALYTICS_FILE, JSON.stringify(data, null, 2));
+const writeAnalytics = (data) => {
+    return db.saveAnalytics(data);
+};
 
 const readRequests = () => {
-    try {
-        if (!fs.existsSync(REQUESTS_FILE)) fs.writeFileSync(REQUESTS_FILE, '[]');
-        return JSON.parse(fs.readFileSync(REQUESTS_FILE, 'utf-8'));
-    } catch (e) {
-        return [];
-    }
+    return db.getRequests();
 };
-const writeRequests = (data) => fs.writeFileSync(REQUESTS_FILE, JSON.stringify(data, null, 2));
+
+const writeRequests = (data) => {
+    return db.saveAllRequests(data);
+};
 
 const readPlans = () => {
-    try {
-        if (!fs.existsSync(PLANS_FILE)) fs.writeFileSync(PLANS_FILE, '[]');
-        const content = fs.readFileSync(PLANS_FILE, 'utf-8');
-        return JSON.parse(content || '[]');
-    } catch (e) {
-        return [];
-    }
+    return db.getPlans();
 };
-const writePlans = (data) => fs.writeFileSync(PLANS_FILE, JSON.stringify(data, null, 2));
+
+const writePlans = (data) => {
+    return db.saveAllPlans(data);
+};
 
 const crypto = require('crypto');
 
