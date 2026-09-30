@@ -1503,8 +1503,8 @@ setInterval(() => {
 }, 2 * 60 * 1000);
 
 const sendOtpTelegram = async (target, code, purpose) => {
-    const token = process.env.TELEGRAM_BOT_TOKEN || '8888836091:AAG3EqdiVnuMApik7QEo8WJl6TeavBFcprY';
-    const chatId = process.env.TELEGRAM_CHAT_ID || '1838030544';
+    const token = process.env.TELEGRAM_BOT_TOKEN;
+    const chatId = process.env.TELEGRAM_CHAT_ID;
     if (!token || !chatId) return false;
 
     try {
