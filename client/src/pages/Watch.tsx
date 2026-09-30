@@ -930,8 +930,32 @@ export default function Watch() {
         setWordLookupData({ word: cleanWord || word, translation: '' });
 
         try {
+            // Extract surrounding scene dialogue (5 before, 5 after)
+            const currentIdx = originalSubs.findIndex(s => s.id === currentOrigSub?.id);
+            const beforeLines = currentIdx > 0 
+                ? originalSubs.slice(Math.max(0, currentIdx - 5), currentIdx).map(s => `• "${s.text.replace(/\n/g, ' ')}"`).join('\n')
+                : '';
+            const afterLines = currentIdx >= 0 && currentIdx < originalSubs.length - 1
+                ? originalSubs.slice(currentIdx + 1, currentIdx + 6).map(s => `• "${s.text.replace(/\n/g, ' ')}"`).join('\n')
+                : '';
+            const currentSentence = currentOrigSub?.text || '';
+            const movieInfo = movie?.title ? `Movie: ${movie.title} (${movie.genre || ''})` : '';
+
+            const wordPrompt = `ACT AS AN EXPERT CINEMATIC SUBTITLE TRANSLATOR FOR CENTRAL KURDISH (SORANI).
+Your task is to provide the EXACT CONTEXTUAL TRANSLATION for the word "${cleanWord}" as used specifically in this movie scene dialogue:
+
+${movieInfo ? `${movieInfo}\n` : ''}${currentSentence ? `CURRENT SPOKEN SENTENCE:\n"${currentSentence}"\n` : ''}${beforeLines ? `PREVIOUS 5 DIALOGUE LINES:\n${beforeLines}\n` : ''}${afterLines ? `NEXT 5 DIALOGUE LINES:\n${afterLines}\n` : ''}
+GOLDEN TRANSLATION RULES FOR THIS DOMAIN:
+- If this is a legal/crime context and word is "enterprise", it means "تۆڕی تاوانکاری / باند" (not company).
+- If this is sci-fi/physics and word is "fabric" in "fabric of time", it means "پێکهاتەی کات / تەونی کات".
+- If this is theatre/show and phrase is "melt faces", it means "عەقڵ لە سەر بردن / سەرسامکردن".
+- If the word is part of an idiom (e.g., "break a leg", "piece of cake", "had me there"), provide the true idiomatic meaning.
+
+OUTPUT FORMAT:
+Provide ONLY the precise contextual Kurdish (Sorani) meaning in 1-4 words (no long explanations, no English text).`;
+
             const res = await postAiWithRetry({
-                contents: [{ parts: [{ text: `Translate the English word "${cleanWord}" to Kurdish (Sorani). Give ONLY the direct meaning in 1-3 words, no explanation, no extra text.` }] }],
+                contents: [{ parts: [{ text: wordPrompt }] }],
                 aiTask: 'word_translation'
             });
             const answer = (res.data.candidates?.[0]?.content?.parts?.[0]?.text || 'هەڵە ڕوویدا').trim();

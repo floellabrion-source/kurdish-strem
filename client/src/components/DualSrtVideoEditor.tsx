@@ -989,16 +989,22 @@ Format your output EXACTLY as follows using delimiter tags:
         setGeneratingAlternativesLine(line.id);
         try {
             const currentIndex = lines.findIndex(l => l.id === line.id);
-            const beforeLines = lines.slice(Math.max(0, currentIndex - 3), currentIndex)
+            const beforeLines = lines.slice(Math.max(0, currentIndex - 5), currentIndex)
                 .filter(l => l.english.trim())
-                .map(l => `EN: "${l.english.replace(/\n/g, ' ')}" -> KU: "${l.kurdish?.replace(/\n/g, ' ') || ''}"`)
+                .map(l => `[PREV]: EN: "${l.english.replace(/\n/g, ' ')}" -> KU: "${l.kurdish?.replace(/\n/g, ' ') || ''}"`)
                 .join('\n');
+            const afterLines = lines.slice(currentIndex + 1, currentIndex + 6)
+                .filter(l => l.english.trim())
+                .map(l => `[NEXT]: EN: "${l.english.replace(/\n/g, ' ')}"`)
+                .join('\n');
+
+            const surroundingContext = [beforeLines, afterLines].filter(Boolean).join('\n');
 
             const selectedModel = localStorage.getItem('ks_srt_ai_model') || 'google/gemini-3.8-flash';
             const alts = await generateLineAlternatives(
                 line.english,
                 line.kurdish,
-                beforeLines,
+                surroundingContext,
                 selectedModel,
                 movieTitle
             );
