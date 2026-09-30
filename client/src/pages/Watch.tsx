@@ -1043,22 +1043,38 @@ Provide ONLY the precise contextual Kurdish (Sorani) meaning in 1-4 words (no lo
         setAiExplanation('');
 
         try {
-            const res = await postAiWithRetry({
-                contents: [{ parts: [{ text: `You are an expert English-to-Kurdish translator and grammar teacher. Analyze this sentence for a Kurdish student.
+            // Extract surrounding scene dialogue (5 before, 5 after)
+            const currentIdx = originalSubs.findIndex(s => s.id === currentOrigSub?.id || s.text.includes(text));
+            const beforeLines = currentIdx > 0 
+                ? originalSubs.slice(Math.max(0, currentIdx - 5), currentIdx).map(s => `• "${s.text.replace(/\n/g, ' ')}"`).join('\n')
+                : '';
+            const afterLines = currentIdx >= 0 && currentIdx < originalSubs.length - 1
+                ? originalSubs.slice(currentIdx + 1, currentIdx + 6).map(s => `• "${s.text.replace(/\n/g, ' ')}"`).join('\n')
+                : '';
+            const movieInfo = movie?.title ? `Movie / Show: ${movie.title} (${movie.genre || ''})` : '';
+
+            const teacherPrompt = `You are an expert English-to-Kurdish translator, cinematic linguist, and grammar teacher. Analyze this sentence for a Kurdish student in the exact context of this movie scene.
+
+${movieInfo ? `${movieInfo}\n` : ''}${beforeLines ? `PREVIOUS 5 DIALOGUE LINES:\n${beforeLines}\n` : ''}${afterLines ? `NEXT 5 DIALOGUE LINES:\n${afterLines}\n` : ''}
+TARGET SPOKEN SENTENCE:
+"${text}"
+
 Task:
-1. Exact Meaning (مانای ڕستەکە بە کوردی).
-2. Word-by-Word Translation (شیکردنەوەی وشە بە وشە).
-3. Grammar/Context (ڕێزمان و مەبەست).
+1. Exact Meaning (مانای ڕستەکە بە کوردی بەپێی سیاقی دیمەنەکە).
+2. Word-by-Word Translation (شیکردنەوەی وشە بە وشە بەپێی ڕۆڵی لەم ڕستەیەدا).
+3. Grammar/Context (ڕێزمان و مەبەستی وتووێژەکە لەم کەشەدا).
 
 Format exactly like this using emojis:
 📌 مانای ڕستەکە: (Translation here)
 📝 وشە بە وشە: (Word1: Meaning1, Word2: Meaning2, ...)
-💡 ڕێزمان و مەبەست: (Detailed grammar explanation here)
+💡 ڕێزمان و مەبەست: (Detailed grammar & situational context explanation here)
 
-CRITICAL RULE: The entire explanation MUST be in Kurdish Sorani using the Arabic alphabet. Do not use Markdown formatting symbols like # or **.
+CRITICAL RULE: The entire explanation MUST be in Central Kurdish (Sorani) using the Arabic alphabet. Do not use Markdown formatting symbols like # or **.`;
 
-Sentence: "${text}"` }] }],
-                aiTask: 'sentence_translation'
+            const res = await postAiWithRetry({
+                contents: [{ parts: [{ text: teacherPrompt }] }],
+                aiTask: 'sentence_translation',
+                max_tokens: 500
             });
             const expl = res.data?.candidates?.[0]?.content?.parts?.[0]?.text || 'وەڵامێک نەهات.';
             setAiExplanation(expl);
