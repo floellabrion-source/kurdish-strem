@@ -343,12 +343,12 @@ ${movieTitle ? `TITLE: ${movieTitle}` : ''}
 ${userContext ? `EXISTING CONTEXT: ${userContext}` : ''}
 
 YOUR MISSION:
-Extract with 100% precision all character identities, exact biological/character genders, interpersonal relationships, and unique movie lore terms.
+Extract with 100% precision all character identities, exact biological/character genders, interpersonal relationships, genre classification (e.g. Prison/Theatre, Courtroom/Legal, Sci-Fi, Medical, Action, Comedy), and unique movie lore terms.
 
 CRITICAL GENDER & KINSHIP RULES:
 - "Aunt" (Lucy, May, etc.) MUST ALWAYS be Female (مێ - پوورە). NEVER designate as male or call "خاڵە".
 - "Uncle" MUST ALWAYS be Male (نێر - مام / خاڵ / مامە / خاڵە).
-- Identify who is speaking to whom (e.g. husband/wife, parent/child, friends).
+- Identify who is speaking to whom (e.g. husband/wife, parent/child, friends, inmates/wardens).
 
 OUTPUT FORMAT STRICTLY AS JSON:
 \`\`\`json
@@ -358,21 +358,21 @@ OUTPUT FORMAT STRICTLY AS JSON:
       "name": "Aunt Lucy",
       "kurdishName": "پوورە لوسی",
       "gender": "Female",
-      "role": "پووری پادینگتۆن (FEMALE Aunt - strictly پوورە)"
+      "role": "پووری پاڵەوان (FEMALE Aunt - strictly پوورە)"
     },
     {
-      "name": "Henry Brown",
-      "kurdishName": "هێنری براون",
+      "name": "Brent",
+      "kurdishName": "برێنت",
       "gender": "Male",
-      "role": "باوک، هاوسەری مێری"
+      "role": "زیندانی، بەشداربووی شانۆ"
     }
   ],
   "specialEntities": [
-    { "english": "El Dorado", "kurdish": "ئێل دۆرادۆ", "description": "شاری زێڕینی ونبووی ئەفسانەیی" },
-    { "english": "Inca", "kurdish": "ئینکا", "description": "شارستانییەتی ئینکا" },
-    { "english": "bracelet", "kurdish": "دەستبەند", "description": "دەستبەند (نەک دەستەوانە)" }
+    { "english": "enterprise", "kurdish": "تۆڕی تاوانکاری / باند", "description": "لە دۆسیەی دادگا و تاواندا بە واتای باند یان تۆڕی تاوانکاری دێت" },
+    { "english": "fabric of time", "kurdish": "پێکهاتەی کات / تەونی کات", "description": "چەمکی کات لە زانستی فیزیا و سینەمادا" },
+    { "english": "melt their faces off", "kurdish": "عەقڵ لە سەریان ببەن", "description": "ئیدیۆمی سەرسامکردنی بینەران بە نمایش" }
   ],
-  "genreAndToneNotes": "کۆمیدی و سەرکێشی خێزانی، دیالۆگی وتووێژی ڕۆژانەی گەرموگوڕ"
+  "genreAndToneNotes": "درامای زیندان و شانۆ، وتووێژی ڕۆژانەی پڕ لە هەست و ئیدیۆمی سینەمایی"
 }
 \`\`\`
 
@@ -452,6 +452,8 @@ TRANSLATION VARIATION STYLES:
 2. FORMAL (ئەدەبی و پاراو): High-standard, literary, elegant Kurdish grammar.
 3. PUNCHY (کورت و چڕ): Punchy, fast-reading, compact subtitle length without omitting core meaning.
 
+${GOLDEN_TRANSLATION_RULES_PROMPT}
+
 CRITICAL RULES:
 - If English has multiple dialogue lines or hyphens (-), preserve the exact multi-line structure in all 3 options.
 - No word-for-word translation calques.
@@ -510,6 +512,102 @@ CRITICAL RULES:
         ];
     }
 };
+
+export const GOLDEN_TRANSLATION_RULES_PROMPT = `
+================================================================================
+💎 THE GOLDEN RULES OF CINEMATIC KURDISH (SORANI) TRANSLATION (98%+ QUALITY)
+================================================================================
+
+1. MULTI-GENRE DOMAIN LOCALIZATION (STRICT ADAPTATION):
+   A. LEGAL, CRIME & PRISON (دادگا، یاسا، تاوانکاری و زیندان):
+      • "enterprise" in crime/court context -> "تۆڕی تاوانکاری / باند" (NEVER literal "دامەزراوە / کۆمپانیا").
+      • "Your Honor" -> "جەنابی دادوەر"
+      • "parole" -> "ئازادکردنی مەرجدار"
+      • "bail" -> "کەفالەت / بارمتە"
+      • "plea deal / plea bargain" -> "ڕێککەوتنی دانپێدانان"
+      • "warden / superintendent" -> "بەڕێوەبەری زیندان"
+      • "inmate" -> "زیندانی"
+      • "solitary confinement" -> "ژووری تاکەکەسی / زیندانی تاکەکەسی"
+      • "felony" -> "تاوانی گەورە"
+      • "misdemeanor" -> "سەرپێچی / تاوانی بچووک"
+      • "probable cause" -> "گومانی بنەڕەتی / بەڵگەی سەلمێنەر"
+
+   B. SCI-FI, SPACE & PHYSICS (زانستی، فیزیا، کەش و گەردوون):
+      • "fabric of time / space-time fabric" -> "پێکهاتەی کات / تەونی کات / شانەی کات" (NEVER literal "چڕاوی کات").
+      • "wormhole" -> "کونە کرمی"
+      • "singularity" -> "خاڵی چڕی بێکۆتایی / سەنگولاریتی"
+      • "alternate timeline" -> "هێڵی کاتی جێگرەوە"
+      • "multiverse" -> "فرەگەردوون"
+      • "warp drive" -> "بزوێنەری خێرایی سەرووی ڕووناکی"
+      • "black hole event horizon" -> "ئاسۆی ڕووداوی کونە ڕەش"
+
+   C. CINEMA, THEATRE & PERFORMANCE (شانۆ، سینەما و هونەر):
+      • "melt their faces off" (in performance) -> "عەقڵ لە سەریان ببەن / سەرسامیان بکەن"
+      • "take some liberties" (with a script/play) -> "دەستکراوەتر بین / دەستکاری دەقەکە بکەین"
+      • "take the stage" -> "دەست بەسەر شانۆکەدا بگرێت / بچێتە سەر تەختەی شانۆ"
+      • "break a leg!" -> "سەرکەوتوو بیت! / بەختێکی باش!"
+      • "rehearsal" -> "مەشق / پڕۆڤە"
+      • "props" -> "کەلوپەلی شانۆ"
+
+   D. ACTION, MILITARY & TACTICAL (ئاکشن، سەربازی و جەنگ):
+      • "hold your fire!" -> "تەقە مەکەن! / دەست ڕابگرن!"
+      • "cover me!" -> "پشتم بگرە! / پارێزگاریم لێ بکە!"
+      • "roger that / copy that" -> "تێگەیشتم / وەرگیرا"
+      • "stand down!" -> "پاشەکشە بکەن! / بوەستن!"
+      • "perimeter secured" -> "چێوەکە پارێزراوە / ناوچەکە کۆنترۆڵ کراوە"
+      • "collateral damage" -> "زیانی لاوەکی (قوربانیانی مەدەنی)"
+
+   E. MEDICAL & HOSPITAL (پزیشکی و نەخۆشخانە):
+      • "flatlining" -> "دڵی لە لێدان کەوتووە / شەپۆلی دڵی نەماوە"
+      • "crash cart" -> "عەرەبانەی فریاگوزاری"
+      • "IV drip" -> "سێرۆم"
+      • "vital signs" -> "نیشانە گرنگەکانی ژیان"
+
+2. SPOKEN SALUTATIONS & CALL-OUTS (بانگکردن و ئاخاوتنی سروشتی):
+   • "Gentlemen" (as a spoken address/call-out) -> "هاوڕێیان / برادەران / کوڕینە" (NEVER literal "پیاوان" which sounds unnatural in Kurdish dialogue).
+   • "Guys / Folks" -> "هاوڕێیان / برادەران / خەڵکینە"
+   • "Ladies and gentlemen" -> "خانمان و بەڕێزان"
+   • "My man" -> "براکەم / کاکە گیان / هاوڕێم"
+
+3. UNFULFILLED MODALS & PAST COUNTERFACTUAL POTENTIAL (ڕێزمانی مۆداڵی ڕابردوو):
+   • "could have been" -> "دەکرا ببیتە / دەتوانرا ببێتە" (NEVER present tense "دەتوانیت ببیت").
+     Example: "to talk about what you could have been" -> "باسی ئەوە بکات کە دەکرا ببیتە چی"
+   • "would have been" -> "دەبووە / دەکرا وابوایە"
+   • "should have been / should have known" -> "دەبوو وابێت / دەبوو بزانم"
+   • "must have been" -> "دەبێت وابووبێت / دیارە وابووە"
+
+4. AUTHENTIC COLLOQUIAL IDIOMS & PHRASES:
+   • "big money sitting out in these seats" -> "چەندین کەسی دەوڵەمەند و پارەدار لەسەر ئەو کورسییانە دانیشتوون"
+   • "You can make it up" -> "دەتوانی لەلای خۆتەوە دایبهێنیت"
+   • "Can't let this go" -> "ناتوانم وازی لێ بێنم / ناتوانم لێی ببوورم"
+   • "I don't buy it" -> "باوەڕ بەوە ناکەم / پێم قووت ناچێت"
+   • "You had me there!" -> "دەستت لێم بڕی! / خستتە داوەکەتەوە! / باوەڕم پێ کردیت!" (NEVER "تۆ منی لێرە هێشتەوە!")
+   • "I think she took that well." -> "وا بزانم دیارە پێی تێکنەچوو / باش قبووڵی کرد."
+   • "Maybe you're not a failure after all." -> "ڕەنگە لە کۆتاییدا ئەوەندەش شکستخواردوو نەبیت."
+   • "Over my dead body!" -> "بەسەر لاشەی مندا! / مەگەر بمکوژیت!"
+   • "Cut me some slack!" -> "ئەوەندە توند مەبە لەگەڵم! / کەمێک لێم گەڕێ!"
+   • "Speak of the devil!" -> "ناوی گورگ بێنە و دار هەڵگرە! / باسی کێمان دەکرد!"
+   • "Spill the beans!" -> "ڕاستییەکە بدرکێنە! / هەموو شتێک بڵێ!"
+   • "In your dreams!" -> "لە خەوتدا بیبینیت!"
+   • "Cut it out!" -> "بەسیکە! / وازی لێبێنە!"
+   • "Hit the road!" -> "بکەوە ڕێ! / دەی بڕۆ!"
+   • "Piece of cake!" -> "وەک ئاو خواردنەوەیە / زۆر ئاسانە!"
+   • "Under the weather" -> "کەمێک نەخۆش و بێتاقەتم."
+   • "That's my boy!" -> "ئافەرین کوڕی خۆم! / ئەوەیە پیاو! / دەستخۆش کوڕم!" (Always correct Kurdish spelling: "ئافەرین", NEVER "ئافەرەم").
+
+5. KINSHIP & GENDER PRECISION:
+   • "Aunt" (Female) -> MUST ALWAYS be translated as "پوور / پوورە" (NEVER translate as male "خاڵە" or "مامە").
+   • "Uncle" (Male) -> MUST ALWAYS be translated as "مام / خاڵ / مامە / خاڵە".
+   • "Bracelet" -> "دەستبەند" (NEVER "دەستەوانە").
+   • "Take the fun out of..." -> "تام و چێژەکەی لێ تێکدان / بێزارکردن" (NEVER "چێژ بردن").
+
+6. AVOID STIFF DUBBING CLICHÉS (SLANG & INTENSIFIERS):
+   • NEVER translate "motherfucking", "shit", or "damn" mechanically into literal "نەفرەتی".
+   • When "motherfucking" is used as an intensifier of strength ("You're a motherfucking wolf!"), translate naturally as "تۆ گورگێکی حەقیقییت / تەواویت!" (NEVER "گورگێکی نەفرەتی").
+   • "Don't know [X] for shit" -> "فڕت بەسەر [X]ەوە نییە / تۆزقاڵێک لە [X] نازانیت" (NEVER "بە نەفرەت بیت هیچ لە...").
+   • "Shit is wild!" -> "شتێکی شێتانەیە! / زۆر سەیرە!"
+   • "The system don't give a shit/fuck about us" -> "سیستەم یەک زەڕە / یەک تۆزقاڵ بایەخمان پێ نادات."
+`;
 
 export const isLineUntranslated = (kurdishText: string, englishText: string): boolean => {
     if (!kurdishText || !kurdishText.trim()) return true;
@@ -590,47 +688,20 @@ ${glossarySection}
 ${movieContextStr ? `CONTEXT & SETTING: ${movieContextStr}` : ''}
 ${toneRuleStr}
 
+${GOLDEN_TRANSLATION_RULES_PROMPT}
+
 PART 1: COMPLETE SEMANTIC MEANING (NO OMITTED CLAUSES)
 - FULL SENTENCE COVERAGE: Translate the COMPLETE meaning of all clauses and details naturally into Kurdish. Do NOT drop, omit, or over-summarize any part of what the speaker said, but ALWAYS express it in fluent, idiomatic Kurdish (NEVER word-for-word robotic translation).
 - ACTIVE VOICE OVER PASSIVE: Transform awkward English passives ("It was decided that...") into natural Kurdish active structures ("بڕیاریان دا کە...").
 - DUAL-SPEAKER HYPHENS: If a subtitle block has multiple speakers marked with hyphens (-), strictly keep both lines with their hyphens (-) and translate each speaker separately.
 
-PART 2: IDIOMS, SLANG & CINEMATIC DIALOGUE (CONTEXT OVER LITERAL)
-- ZERO LITERAL CALQUES: NEVER translate English idioms, metaphors, or conversational slang word-for-word. Always translate the true intended meaning into authentic colloquial Kurdish spoken dialogue.
-- KINSHIP & GENDER PRECISION:
-  • "Aunt" (Female) -> MUST ALWAYS be translated as "پوور / پوورە" (NEVER translate as male "خاڵە" or "مامە").
-  • "Uncle" (Male) -> MUST ALWAYS be translated as "مام / خاڵ / مامە / خاڵە".
-  • "Bracelet" -> "دەستبەند" (NEVER "دەستەوانە").
-  • "Take the fun out of..." -> "تام و چێژەکەی لێ تێکدان / بێزارکردن" (NEVER "چێژ بردن").
-- AVOID STIFF DUBBING CLICHÉS (SLANG & INTENSIFIERS):
-  • NEVER translate "motherfucking", "shit", or "damn" mechanically into literal "نەفرەتی".
-  • When "motherfucking" is used as an intensifier of strength ("You're a motherfucking wolf!"), translate naturally as "تۆ گورگێکی حەقیقییت / تەواویت!" (NEVER "گورگێکی نەفرەتی").
-  • "Don't know [X] for shit" -> "فڕت بەسەر [X]ەوە نییە / تۆزقاڵێک لە [X] نازانیت" (NEVER "بە نەفرەت بیت هیچ لە...").
-  • "That's my boy!" -> "ئافەرین کوڕی خۆم! / ئەوەیە پیاو! / دەستخۆش کوڕم!" (Always correct Kurdish spelling: "ئافەرین", NEVER "ئافەرەم").
-  • "Shit is wild!" -> "شتێکی شێتانەیە! / زۆر سەیرە!"
-  • "The system don't give a shit/fuck about us" -> "سیستەم یەک زەڕە / یەک تۆزقاڵ بایەخمان پێ نادات."
-- STUDY THESE CRITICAL EXAMPLES:
-  • "You had me there!" -> "دەستت لێم بڕی! / خستتە داوەکەتەوە! / باوەڕم پێ کردیت!" (NEVER "تۆ منی لێرە هێشتەوە!")
-  • "I think she took that well." -> "وا بزانم دیارە پێی تێکنەچوو / باش قبووڵی کرد." (NEVER "بە باشی وەری گرت.")
-  • "Maybe you're not a failure after all." -> "ڕەنگە لە کۆتاییدا ئەوەندەش شکستخواردوو نەبیت." (NEVER 3rd person "شکستی نەهێناوە")
-  • "Over my dead body!" -> "بەسەر لاشەی مندا! / مەگەر بمکوژیت!" (NEVER "بە سەر لاشەی مردوومدا")
-  • "Cut me some slack!" -> "ئەوەندە توند مەبە لەگەڵم! / کەمێک لێم گەڕێ!"
-  • "Speak of the devil!" -> "ناوی گورگ بێنە و دار هەڵگرە! / باسی کێمان دەکرد!"
-  • "Spill the beans!" -> "ڕاستییەکە بدرکێنە! / هەموو شتێک بڵێ!"
-  • "In your dreams!" -> "لە خەوتدا بیبینیت!"
-  • "Cut it out!" -> "بەسیکە! / وازی لێبێنە!"
-  • "Hit the road!" -> "بکەوە ڕێ! / دەی بڕۆ!"
-  • "Piece of cake!" -> "وەک ئاو خواردنەوەیە / زۆر ئاسانە!"
-  • "Under the weather" -> "کەمێک نەخۆش و بێتاقەتم."
-  • "Break a leg!" -> "سەرکەوتوو بیت! / بەختێکی باش!"
-
-PART 3: STRICT GRAMMATICAL PRONOUN & COHESION RULES
+PART 2: STRICT GRAMMATICAL PRONOUN & COHESION RULES
 - PRONOUN CONJUGATION: When English says "You", Kurdish MUST conjugate for 2nd person ("تۆ ... دەکەیت / نەبوویت / بیت"), NEVER shift to 3rd person ("ئەو / دەکات").
 - NATURAL WORD ORDER: Place verbs naturally in Kurdish sentences. Avoid awkward, stiff machine-translated structures.
 - KURDISH PUNCTUATION: Use proper Kurdish punctuation (، for comma, ؟ for question mark) while preserving exclamation marks (!) and ellipses (...).
 - SURROUNDING CONTEXT: Always read the lines before and after to match emotional intensity, sarcasm, jokes, and character gender.
 
-PART 4: STRICT SRT FORMATTING & DATA INTEGRITY (CRITICAL)
+PART 3: STRICT SRT FORMATTING & DATA INTEGRITY (CRITICAL)
 - TARGET BATCH ONLY: If "PREVIOUS DIALOGUE CONTEXT" was provided above, it is for context only. Translate ONLY the target subtitle batch below (starting from ID ${targetBlocks[0]?.id || 1}).
 - ABSOLUTE PRESERVATION OF TIMESTAMPS & INDEX NUMBERS: Copy the EXACT Index Number and EXACT Timestamp from original. DO NOT alter timestamps. DO NOT merge or split blocks.
 - STRICT LINE-BY-LINE PROCESSING: Process sequentially, line by line. Do not skip any blocks.
