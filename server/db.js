@@ -651,15 +651,69 @@ const loadAllToCache = async () => {
 // Start initial loading
 initDatabase();
 
-// ─── HIGH-SPEED SYNCHRONOUS IN-MEMORY API WITH ASYNC SQLITE PERSISTENCE ───
+// ─── HIGH-SPEED SYNCHRONOUS IN-MEMORY API WITH MULTI-WORKER DISK SYNC & SQLITE PERSISTENCE ───
+
+let lastLoadedMtimes = {
+    movies: 0,
+    users: 0,
+    plans: 0,
+    requests: 0,
+    glossary: 0
+};
+
+const syncMoviesFromDiskIfNeeded = () => {
+    try {
+        const filePath = path.join(DATA_DIR, 'movies.json');
+        if (!fs.existsSync(filePath)) return;
+        const stats = fs.statSync(filePath);
+        if (stats.mtimeMs > lastLoadedMtimes.movies) {
+            const raw = fs.readFileSync(filePath, 'utf-8');
+            const arr = JSON.parse(raw);
+            if (Array.isArray(arr)) {
+                const newMap = new Map();
+                for (const m of arr) {
+                    if (m && m.id) {
+                        newMap.set(String(m.id), m);
+                    }
+                }
+                cache.movies = newMap;
+                lastLoadedMtimes.movies = stats.mtimeMs;
+            }
+        }
+    } catch (e) {}
+};
+
+const syncUsersFromDiskIfNeeded = () => {
+    try {
+        const filePath = path.join(DATA_DIR, 'users.json');
+        if (!fs.existsSync(filePath)) return;
+        const stats = fs.statSync(filePath);
+        if (stats.mtimeMs > lastLoadedMtimes.users) {
+            const raw = fs.readFileSync(filePath, 'utf-8');
+            const arr = JSON.parse(raw);
+            if (Array.isArray(arr)) {
+                const newMap = new Map();
+                for (const u of arr) {
+                    if (u && u.id) {
+                        newMap.set(String(u.id), u);
+                    }
+                }
+                cache.users = newMap;
+                lastLoadedMtimes.users = stats.mtimeMs;
+            }
+        }
+    } catch (e) {}
+};
 
 // Movies
 const getMovies = () => {
+    syncMoviesFromDiskIfNeeded();
     return Array.from(cache.movies.values());
 };
 
 const getMovieById = (id) => {
     if (!id) return null;
+    syncMoviesFromDiskIfNeeded();
     return cache.movies.get(String(id)) || null;
 };
 
@@ -713,6 +767,16 @@ const deleteMovie = (id) => {
     run('DELETE FROM movies WHERE id = ?', [strId])
         .catch(err => console.error(`❌ [DB] Error deleting movie #${id}:`, err));
 
+    // Update movies.json on disk immediately to broadcast to all PM2 cluster workers
+    try {
+        const remaining = Array.from(cache.movies.values());
+        const filePath = path.join(DATA_DIR, 'movies.json');
+        const tempPath = `${filePath}.tmp`;
+        fs.writeFileSync(tempPath, JSON.stringify(remaining, null, 2), 'utf-8');
+        fs.renameSync(tempPath, filePath);
+        lastLoadedMtimes.movies = fs.statSync(filePath).mtimeMs;
+    } catch (e) {}
+
     return existed;
 };
 
@@ -727,6 +791,8 @@ const debounceWriteJson = (filename, data) => {
             const tempPath = `${filePath}.tmp`;
             fs.writeFileSync(tempPath, JSON.stringify(data, null, 2), 'utf-8');
             fs.renameSync(tempPath, filePath);
+            if (filename === 'movies.json') lastLoadedMtimes.movies = fs.statSync(filePath).mtimeMs;
+            if (filename === 'users.json') lastLoadedMtimes.users = fs.statSync(filePath).mtimeMs;
         } catch (e) {
             console.error(`❌ [DB] Error writing ${filename}:`, e.message);
         }
@@ -736,10 +802,34 @@ const debounceWriteJson = (filename, data) => {
 
 const saveAllMovies = (moviesArray) => {
     if (!Array.isArray(moviesArray)) return false;
-    for (const m of moviesArray) {
-        saveMovie(m);
+    const incomingIds = new Set(moviesArray.map(m => String(m.id).trim()));
+
+    // 1. Reconcile and delete removed movies from RAM and SQLite
+    for (const [id] of cache.movies) {
+        if (!incomingIds.has(id)) {
+            cache.movies.delete(id);
+            run('DELETE FROM movies WHERE id = ?', [id]).catch(() => {});
+        }
     }
-    debounceWriteJson('movies.json', moviesArray);
+
+    // 2. Save and update incoming movies
+    for (const m of moviesArray) {
+        if (m && m.id) {
+            saveMovie(m);
+        }
+    }
+
+    // 3. Write instantly to movies.json so all workers stay 100% in sync
+    try {
+        const filePath = path.join(DATA_DIR, 'movies.json');
+        const tempPath = `${filePath}.tmp`;
+        fs.writeFileSync(tempPath, JSON.stringify(moviesArray, null, 2), 'utf-8');
+        fs.renameSync(tempPath, filePath);
+        lastLoadedMtimes.movies = fs.statSync(filePath).mtimeMs;
+    } catch (e) {
+        console.error(`❌ [DB] Error writing movies.json:`, e.message);
+    }
+
     return true;
 };
 
