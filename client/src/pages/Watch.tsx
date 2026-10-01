@@ -141,6 +141,7 @@ export default function Watch() {
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(0);
     const [buffered, setBuffered] = useState(0);
+    const [isBuffering, setIsBuffering] = useState(false);
     const [isPlaying, setIsPlaying] = useState(false);
     const [isMuted, setIsMuted] = useState(false);
     const [volume, setVolume] = useState(1);
@@ -1561,8 +1562,6 @@ CRITICAL RULES:
         }
 
         if (v.paused) { 
-            // Guard: If paused less than 350ms ago, ignore synthetic or duplicate click/touch
-            if (now - lastPauseTimeRef.current < 350) return;
             v.play().catch(() => {}); 
             setIsPlaying(true); 
             setPlayPauseIndicator('play');
@@ -2104,9 +2103,25 @@ CRITICAL RULES:
             <video
                 ref={videoRef}
                 src={isHls ? undefined : (effectiveStreamUrl || undefined)}
+                poster={movie?.posterCloudUrl || movie?.posterUrl || undefined}
+                preload="auto"
                 className={`watch-video ${isSensitiveNow ? 'blur-video' : ''} aspect-${aspectRatio} ${isFlipped ? 'video-flipped' : ''}`}
                 autoPlay
                 playsInline
+                onWaiting={() => setIsBuffering(true)}
+                onCanPlay={() => setIsBuffering(false)}
+                onPlaying={() => {
+                    setIsBuffering(false);
+                    setIsPlaying(true);
+                }}
+                onProgress={e => {
+                    const v = e.currentTarget;
+                    if (v.buffered && v.buffered.length > 0) {
+                        try {
+                            setBuffered(v.buffered.end(v.buffered.length - 1));
+                        } catch {}
+                    }
+                }}
                 onTimeUpdate={handleTimeUpdate}
                 onLoadedMetadata={e => {
                     setVideoLoadError('');
@@ -2244,6 +2259,13 @@ CRITICAL RULES:
                             <Pause size={44} fill="#ffffff" color="#ffffff" />
                         )}
                     </div>
+                </div>
+            )}
+
+            {/* BUFFERING SPINNER */}
+            {isBuffering && isPlaying && !videoLoadError && (
+                <div className="player-buffering-overlay">
+                    <div className="player-buffering-spinner" />
                 </div>
             )}
 
