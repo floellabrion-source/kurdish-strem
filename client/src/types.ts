@@ -100,7 +100,8 @@ export interface Movie {
     videoUpdatedAt?: number;
     originalSrt: string | null;
     translatedSrt: string | null;
-    createdAt: number;
+    createdAt: number | string;
+    updatedAt?: number | string;
     type: 'movie' | 'series' | 'animation';
     imdbRating?: string | number;
     sensitiveScenes?: { start: number, end: number }[];

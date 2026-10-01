@@ -708,7 +708,12 @@ const syncUsersFromDiskIfNeeded = () => {
 // Movies
 const getMovies = () => {
     syncMoviesFromDiskIfNeeded();
-    return Array.from(cache.movies.values());
+    const list = Array.from(cache.movies.values());
+    return list.sort((a, b) => {
+        const timeA = new Date(a.createdAt || a.updatedAt || 0).getTime() || 0;
+        const timeB = new Date(b.createdAt || b.updatedAt || 0).getTime() || 0;
+        return timeB - timeA;
+    });
 };
 
 const getMovieById = (id) => {

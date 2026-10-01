@@ -224,10 +224,11 @@ export default function Home({ filter }: { filter?: 'movie' | 'series' | 'animat
     }
 
     // Sort by live viewers or latest
+    const getTime = (m: Movie) => new Date(m.createdAt || m.updatedAt || 0).getTime() || 0;
     if (sortBy === 'views') {
-        filtered.sort((a, b) => ((liveViewers[b.id] || 0) - (liveViewers[a.id] || 0) || (b.realViews ?? b.views ?? 0) - (a.realViews ?? a.views ?? 0) || (b.createdAt || 0) - (a.createdAt || 0)));
+        filtered.sort((a, b) => ((liveViewers[b.id] || 0) - (liveViewers[a.id] || 0) || (b.realViews ?? b.views ?? 0) - (a.realViews ?? a.views ?? 0) || getTime(b) - getTime(a)));
     } else {
-        filtered.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        filtered.sort((a, b) => getTime(b) - getTime(a));
     }
 
     // Move watched movies to the bottom

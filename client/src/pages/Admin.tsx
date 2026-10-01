@@ -1157,6 +1157,10 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
         const matchesLevel = !selectedAdminLevel || m.languageMetrics?.cefrLevel === selectedAdminLevel || m.level === selectedAdminLevel;
 
         return matchesType && matchesSearch && matchesGenres && matchesLevel;
+    }).sort((a, b) => {
+        const timeA = new Date(a.createdAt || a.updatedAt || 0).getTime() || 0;
+        const timeB = new Date(b.createdAt || b.updatedAt || 0).getTime() || 0;
+        return timeB - timeA;
     });
 
     return (
