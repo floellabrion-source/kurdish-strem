@@ -580,9 +580,18 @@ export default function DualSrtVideoEditor({
         const currentLine = lines.find(l => curr >= l.startSec && curr <= l.endSec);
         if (currentLine && currentLine.id !== activeLineId) {
             setActiveLineId(currentLine.id);
+            const container = linesContainerRef.current;
             const el = document.getElementById(`sub-row-${currentLine.id}`);
-            if (el && linesContainerRef.current) {
-                el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            if (el && container) {
+                const containerRect = container.getBoundingClientRect();
+                const elRect = el.getBoundingClientRect();
+                if (elRect.top < containerRect.top + 60 || elRect.bottom > containerRect.bottom - 60) {
+                    const offsetTop = el.offsetTop - container.offsetTop;
+                    container.scrollTo({
+                        top: Math.max(0, offsetTop - (container.clientHeight / 2) + (el.clientHeight / 2)),
+                        behavior: 'smooth'
+                    });
+                }
             }
         }
     };
