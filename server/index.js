@@ -3266,8 +3266,26 @@ const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'google/gemini-2.0-flas
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || '';
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
+// Helper to detect and collapse repetitive hallucination loops (e.g. "گەردەلوولی گەردەلوولی...")
+const cleanRepetitiveLoops = (text) => {
+    if (!text || typeof text !== 'string') return '';
+    let cleaned = text;
+
+    // 1. Collapse consecutive multi-word repeating phrases (e.g. "ڕستەی درێژ ڕستەی درێژ")
+    cleaned = cleaned.replace(/(\b[^\s\n\r]+(?:\s+[^\s\n\r]+){0,2}\b)(?:\s+\1){2,}/giu, '$1');
+
+    // 2. Collapse single Kurdish/Arabic/Latin words repeated 2+ times consecutively
+    cleaned = cleaned.replace(/([\u0600-\u06FF\w]+)(?:\s+\1){2,}/giu, '$1');
+
+    // 3. Collapse repeating string chunks (4-30 chars) repeated 3+ times
+    cleaned = cleaned.replace(/(.{4,30}?)\1{3,}/giu, '$1');
+
+    return cleaned.trim();
+};
+
 const toGeminiLikeResponse = (openRouterData, modelUsed) => {
-    const text = openRouterData?.choices?.[0]?.message?.content || '';
+    const rawText = openRouterData?.choices?.[0]?.message?.content || '';
+    const text = cleanRepetitiveLoops(rawText);
     return {
         candidates: [{ content: { parts: [{ text }] } }],
         provider: 'openrouter',
@@ -3285,7 +3303,9 @@ const callOpenRouter = async (input, options = {}) => {
             model: modelToUse,
             messages: [{ role: 'user', content: prompt }],
             max_tokens: maxTokens,
-            temperature: 0.2
+            temperature: 0.25,
+            frequency_penalty: 0.35,
+            presence_penalty: 0.15
         };
 
         const response = await axios.post(OPENROUTER_URL, payload, {

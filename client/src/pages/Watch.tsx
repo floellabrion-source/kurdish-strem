@@ -1070,7 +1070,7 @@ Format exactly like this using emojis:
 📝 وشە بە وشە: (Word1: Meaning1, Word2: Meaning2, ...)
 💡 ڕێزمان و مەبەست: (Detailed grammar & situational context explanation here)
 
-CRITICAL RULE: The entire explanation MUST be in Central Kurdish (Sorani) using the Arabic alphabet. Do not use Markdown formatting symbols like # or **.`;
+CRITICAL RULE: The entire explanation MUST be in Central Kurdish (Sorani) using the Arabic alphabet. Do not use Markdown formatting symbols like # or **. Keep the explanation natural, concise, and direct without looping or repeating words.`;
 
             const res = await postAiWithRetry({
                 contents: [{ parts: [{ text: teacherPrompt }] }],
