@@ -95,6 +95,18 @@ export default function SeriesPage() {
         if (!loading && movie && movie.type !== 'series') {
             navigate('/');
         }
+        if (movie) {
+            const titleText = `زنجیرەی ${movie.title}${movie.kurdishTitle ? ' (' + movie.kurdishTitle + ')' : ''} بە ژێرنووسی کوردی | KST Film`;
+            document.title = titleText;
+
+            let metaDesc = document.querySelector('meta[name="description"]');
+            if (!metaDesc) {
+                metaDesc = document.createElement('meta');
+                metaDesc.setAttribute('name', 'description');
+                document.head.appendChild(metaDesc);
+            }
+            metaDesc.setAttribute('content', `سەیرکردنی زنجیرەی ${movie.title} (${movie.year || ''}) بە ژێرنووسی کوردی و ئینگلیزی دووانە لە کەی ئێس تی فیلم (kstfilm.com). ${movie.description || ''}`);
+        }
     }, [loading, movie, navigate]);
 
     const handleWordClick = (word: string, meaning: string) => {

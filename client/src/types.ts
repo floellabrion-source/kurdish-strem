@@ -82,6 +82,7 @@ export const getCefrColor = (level: string): { bg: string; text: string } => {
 export interface Movie {
     id: string;
     title: string;
+    kurdishTitle?: string;
     level?: string; // Difficulty level ('A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2' | 'ئاسان' | 'مامناوەند' | 'قورس')
     languageMetrics?: LanguageMetrics;
     description: string;

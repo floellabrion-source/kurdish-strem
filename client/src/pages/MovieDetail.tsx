@@ -131,6 +131,21 @@ export default function MovieDetail() {
             .catch(() => {});
     }, [id, lang, navigate]);
 
+    // Dynamic SEO Document Title & Meta Description
+    useEffect(() => {
+        if (!movie) return;
+        const titleText = `${movie.title}${movie.kurdishTitle ? ' (' + movie.kurdishTitle + ')' : ''} بە ژێرنووسی کوردی | KST Film`;
+        document.title = titleText;
+
+        let metaDesc = document.querySelector('meta[name="description"]');
+        if (!metaDesc) {
+            metaDesc = document.createElement('meta');
+            metaDesc.setAttribute('name', 'description');
+            document.head.appendChild(metaDesc);
+        }
+        metaDesc.setAttribute('content', `سەیرکردنی فیلمی ${movie.title} (${movie.year || ''}) بە ژێرنووسی کوردی و ئینگلیزی دووانە لە کەی ئێس تی فیلم (kstfilm.com). ${movie.description || ''}`);
+    }, [movie]);
+
     const submitComment = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user) {

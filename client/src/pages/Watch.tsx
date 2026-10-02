@@ -1493,6 +1493,19 @@ CRITICAL RULES:
                 );
             }
             setLoading(false);
+            if (m) {
+                const epText = episodeNum > 0 ? ` (ئەڵقەی ${episodeNum})` : '';
+                const titleText = `سەیرکردنی ${m.title}${epText}${m.kurdishTitle ? ' (' + m.kurdishTitle + ')' : ''} بە ژێرنووسی کوردی | KST Film`;
+                document.title = titleText;
+
+                let metaDesc = document.querySelector('meta[name="description"]');
+                if (!metaDesc) {
+                    metaDesc = document.createElement('meta');
+                    metaDesc.setAttribute('name', 'description');
+                    document.head.appendChild(metaDesc);
+                }
+                metaDesc.setAttribute('content', `سەیرکردنی ئۆنلاینی ${m.title}${epText} بە ژێرنووسی کوردی و ئینگلیزی دووانە لە کەی ئێس تی فیلم (kstfilm.com).`);
+            }
         }).catch(() => setLoading(false));
     }, [id, seasonNum, episodeNum]);
 

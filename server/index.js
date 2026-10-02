@@ -551,6 +551,110 @@ app.use(cors(corsOptions));
 app.use(compression());
 app.use(express.json({ limit: '20mb' }));
 
+// ─── Search Engine & Crawler Meta Pre-rendering (Googlebot / SEO) ───
+const { seoPrerender } = require('./middleware/seoPrerender');
+app.use(seoPrerender(db));
+
+// ─── Dynamic Sitemap for Google Search Console & SEO ───
+app.get('/sitemap.xml', (req, res) => {
+    try {
+        const movies = db.getMovies() || [];
+        const baseUrl = 'https://kstfilm.com';
+        const now = new Date().toISOString().split('T')[0];
+
+        const escapeXml = (unsafe) => {
+            return String(unsafe || '').replace(/[<>&'"]/g, (c) => {
+                switch (c) {
+                    case '<': return '&lt;';
+                    case '>': return '&gt;';
+                    case '&': return '&amp;';
+                    case '\'': return '&apos;';
+                    case '"': return '&quot;';
+                    default: return c;
+                }
+            });
+        };
+
+        let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+        xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n`;
+
+        // 1. Core Platform Pages
+        xml += `  <url>\n    <loc>${baseUrl}/</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>1.0</priority>\n  </url>\n`;
+        xml += `  <url>\n    <loc>${baseUrl}/movies</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>0.95</priority>\n  </url>\n`;
+        xml += `  <url>\n    <loc>${baseUrl}/series</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>0.95</priority>\n  </url>\n`;
+        xml += `  <url>\n    <loc>${baseUrl}/flashcards</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
+
+        // 2. All Movies & Series Pages
+        movies.forEach(m => {
+            if (!m || !m.id) return;
+            const isSeries = m.type === 'series';
+            const pagePath = isSeries ? `series/${m.id}` : `movie/${m.id}`;
+            const watchPath = `watch/${m.id}`;
+            const priority = isSeries ? '0.9' : '0.85';
+            const posterUrl = m.posterCloudUrl || (m.posterUrl ? (m.posterUrl.startsWith('http') ? m.posterUrl : `${baseUrl}${m.posterUrl}`) : '');
+
+            // Main Detail Page
+            xml += `  <url>\n`;
+            xml += `    <loc>${baseUrl}/${pagePath}</loc>\n`;
+            xml += `    <lastmod>${now}</lastmod>\n`;
+            xml += `    <changefreq>weekly</changefreq>\n`;
+            xml += `    <priority>${priority}</priority>\n`;
+            if (posterUrl) {
+                xml += `    <image:image>\n`;
+                xml += `      <image:loc>${escapeXml(posterUrl)}</image:loc>\n`;
+                xml += `      <image:title>${escapeXml(m.title + (m.kurdishTitle ? ' - ' + m.kurdishTitle : ''))}</image:title>\n`;
+                xml += `    </image:image>\n`;
+            }
+            xml += `  </url>\n`;
+
+            // Watch Page
+            xml += `  <url>\n`;
+            xml += `    <loc>${baseUrl}/${watchPath}</loc>\n`;
+            xml += `    <lastmod>${now}</lastmod>\n`;
+            xml += `    <changefreq>weekly</changefreq>\n`;
+            xml += `    <priority>0.8</priority>\n`;
+            xml += `  </url>\n`;
+
+            // TV Series Episodes
+            if (isSeries && Array.isArray(m.seasons)) {
+                m.seasons.forEach(s => {
+                    if (Array.isArray(s.episodes)) {
+                        s.episodes.forEach(ep => {
+                            xml += `  <url>\n`;
+                            xml += `    <loc>${baseUrl}/watch/${m.id}?s=${s.number}&amp;e=${ep.number}</loc>\n`;
+                            xml += `    <lastmod>${now}</lastmod>\n`;
+                            xml += `    <changefreq>monthly</changefreq>\n`;
+                            xml += `    <priority>0.75</priority>\n`;
+                            xml += `  </url>\n`;
+                        });
+                    }
+                });
+            }
+        });
+
+        xml += `</urlset>`;
+
+        res.header('Content-Type', 'application/xml; charset=utf-8');
+        res.header('Cache-Control', 'public, max-age=3600');
+        return res.send(xml);
+    } catch (err) {
+        console.error('[Sitemap] Error generating dynamic sitemap:', err);
+        return res.status(500).send('Error generating sitemap');
+    }
+});
+
+// ─── Dynamic robots.txt ───
+app.get('/robots.txt', (req, res) => {
+    res.header('Content-Type', 'text/plain; charset=utf-8');
+    res.send(`User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api/
+
+Sitemap: https://kstfilm.com/sitemap.xml
+`);
+});
+
 // ======= Rate Limiters & Security =======
 const { loginLimiter, registerLimiter, creditRequestLimiter, aiLimiter, apiGlobalLimiter, otpSendLimiter, otpVerifyLimiter, passwordResetLimiter } = require('./middleware/rateLimiter');
 const { sanitizeFilename, isValidImageFile } = require('./utils/fileSecurity');
