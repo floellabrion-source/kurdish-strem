@@ -96,6 +96,20 @@
     color: #c084fc;
 }
 
+.btn-wf-icon.active-vad {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: rgba(16, 185, 129, 0.5);
+    color: #34d399;
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.25);
+}
+
+.btn-wf-icon.active-snap {
+    background: rgba(6, 182, 212, 0.2);
+    border-color: rgba(6, 182, 212, 0.5);
+    color: #22d3ee;
+    box-shadow: 0 0 8px rgba(34, 211, 238, 0.25);
+}
+
 .wf-zoom-controls {
     display: flex;
     align-items: center;
