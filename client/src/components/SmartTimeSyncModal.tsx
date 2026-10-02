@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
     Clock, X, Zap, Sliders, CheckCircle2, RotateCcw, 
-    ArrowRight, Gauge, Play, ArrowLeft, Layers
+    ArrowRight, Gauge, Play, ArrowLeft, Layers, HelpCircle, Info, Lightbulb, Check
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import './SmartTimeSyncModal.css';
@@ -52,6 +52,7 @@ export default function SmartTimeSyncModal({
 }: SmartTimeSyncModalProps) {
     const { lang } = useLanguage();
     const [activeTab, setActiveTab] = useState<'anchor' | 'offset' | 'stretch'>('anchor');
+    const [showHelp, setShowHelp] = useState(false);
 
     // Anchor Sync state
     const [anchorScope, setAnchorScope] = useState<'all' | 'from_current'>('all');
@@ -128,6 +129,16 @@ export default function SmartTimeSyncModal({
                         </div>
                     </div>
                     <div className="smart-sync-header-right">
+                        <button 
+                            type="button" 
+                            className={`btn-sync-help ${showHelp ? 'active' : ''}`}
+                            onClick={() => setShowHelp(!showHelp)}
+                            title={lang === 'en' ? 'How to use & Features Guide' : 'ڕێنمایی بەکارهێنان و سوودەکان'}
+                        >
+                            <HelpCircle size={15} />
+                            <span>{lang === 'en' ? 'Guide' : 'ڕێنمایی'}</span>
+                        </button>
+
                         {canUndo && (
                             <button className="btn-sync-undo" onClick={onUndo} title={lang === 'en' ? 'Undo previous sync change' : 'گەڕانەوە بۆ پێش گۆڕانکاری (Undo)'}>
                                 <RotateCcw size={15} />
@@ -164,6 +175,68 @@ export default function SmartTimeSyncModal({
                         <span>{lang === 'en' ? 'Framerate Drift Stretch' : 'چارەسەری خێرایی فرەیم (24/25fps)'}</span>
                     </button>
                 </div>
+
+                {/* Dynamic Help / Guide Panel */}
+                {showHelp && (
+                    <div className="smart-sync-help-panel animate-fade">
+                        <div className="help-panel-header">
+                            <div className="help-title-badge">
+                                <Lightbulb size={16} color="#fbbf24" />
+                                <strong>
+                                    {activeTab === 'anchor' 
+                                        ? (lang === 'en' ? 'Guide: 1-Click Video Anchor Sync' : 'ڕێنمایی: سینکی خێرا بە کاتی ڤیدیۆ (Anchor)')
+                                        : activeTab === 'offset'
+                                        ? (lang === 'en' ? 'Guide: Manual Time Shift' : 'ڕێنمایی: گواستنەوەی کاتی گشتی (Shift)')
+                                        : (lang === 'en' ? 'Guide: Framerate Drift Fix' : 'ڕێنمایی: چارەسەری خێرایی فڕەیم (FPS)')}
+                                </strong>
+                            </div>
+                            <button className="help-close-btn" onClick={() => setShowHelp(false)} title={lang === 'en' ? 'Close Guide' : 'داخستنی ڕێنمایی'}>
+                                <X size={14} />
+                            </button>
+                        </div>
+
+                        <div className="help-content-grid">
+                            <div className="help-info-block benefit">
+                                <span className="help-block-tag">💡 {lang === 'en' ? 'Why use this?' : 'بۆچی باشە؟'}</span>
+                                <p>
+                                    {activeTab === 'anchor' && (lang === 'en'
+                                        ? 'Best when subtitles are uniformly early or late across the entire movie (e.g. 5 seconds delayed from the beginning).'
+                                        : 'خێراترین ڕێگایە کاتێک تەواوی ژێرنووسەکە لە هەموو شوێنێکدا بە بڕێکی یەکسان پێشکەوتووە یان دواکەوتووە لە سەرەتای فیلمەوە (بۆ نموونە لە هەموو فیلمەکەدا ٥ چرکە درەنگتر دێت).')}
+                                    {activeTab === 'offset' && (lang === 'en'
+                                        ? 'Best for precise fine-tuning when you want to nudge subtitles earlier or later by small exact increments (like 0.2s, 0.5s or custom seconds).'
+                                        : 'بۆ ڕێکخستنی دەستی و زۆر ورد، کاتێک دەتەوێت بە بڕی کەم (وەک 0.2s یان 0.5s یان ژمارەیەکی دیاریکراو) ژێرنووسەکە پێش یان پاش بخەیت.')}
+                                    {activeTab === 'stretch' && (lang === 'en'
+                                        ? 'Best when subtitles match at the beginning, but gradually drift apart and become out-of-sync towards the end due to 23.976fps vs 25fps framerate differences.'
+                                        : 'چارەسەری کێشەی خاووبوونەوەی پلە بە پلە دەکات کاتێک ژێرنووس لە سەرەتادا تەواو ڕێکە بەڵام بەرەو نیوە و کۆتایی فیلمەکە کاتەکەی تێکدەچێت (بەهۆی جیاوازی 23.976fps و 25fps).')}
+                                </p>
+                            </div>
+
+                            <div className="help-info-block steps">
+                                <span className="help-block-tag">🎯 {lang === 'en' ? 'How to use:' : 'چۆن بەکاری بهێنیت؟'}</span>
+                                {activeTab === 'anchor' && (
+                                    <ol>
+                                        <li>{lang === 'en' ? 'Select the first subtitle line from the list.' : 'لە لیستی ژێرنووسەکان، کلیک لەسەر یەکەم دێڕ بکە.'}</li>
+                                        <li>{lang === 'en' ? 'Seek the video to the exact moment where the actor begins speaking that line.' : 'ڤیدیۆکە ببە سەر ئەو چرکەیەی کە ئەکتەرەکە دەست بە قسەکردنی ئەو دێڕە دەکات.'}</li>
+                                        <li>{lang === 'en' ? 'Click "Sync Subtitles Now" to shift all lines into perfect alignment instantly.' : 'کلیک لە دوگمەی گەورەی هاوتاکردن (Sync) بکە تا هەموو دێڕەکان ڕاستەوخۆ لەگەڵ دەنگەکە هاوتا ببن.'}</li>
+                                    </ol>
+                                )}
+                                {activeTab === 'offset' && (
+                                    <ol>
+                                        <li>{lang === 'en' ? 'Use the quick increment buttons (+0.5s, -0.5s, ...) for rapid adjustments.' : 'دوگمە خێراکان (+0.5s, -0.5s, ...) دابگرە بۆ تاقیکردنەوە و چاککردنی خێرا.'}</li>
+                                        <li>{lang === 'en' ? 'Or type custom seconds and click Earlier (-) or Later (+).' : 'یان ژمارەی دڵخوازی خۆت بنووسە و دوگمەی (پێشخستن / پاشخستن) دابگرە.'}</li>
+                                        <li>{lang === 'en' ? 'Select scope: All subtitles or only from selected line downwards.' : 'دیاری بکە کە ئایا بۆ تەواوی فیلمەکە بێت یان تەنها لەو دێڕەوە بەرەو خوارەوە.'}</li>
+                                    </ol>
+                                )}
+                                {activeTab === 'stretch' && (
+                                    <ol>
+                                        <li>{lang === 'en' ? 'Click the standard FPS conversion button (e.g. 23.976 fps ➔ 25.000 fps).' : 'تەنها کلیک لەسەر یەکێک لە دوگمەکانی گۆڕینی خێرایی باو بکە (وەک 23.976 ➔ 25fps).'}</li>
+                                        <li>{lang === 'en' ? 'The engine smoothly stretches/compresses the timestamps mathematically.' : 'سیستمەکە هەموو دێڕەکان بە شێوەیەکی زیرەک ڕادەکێشێت و ڕێکیان دەخاتەوە.'}</li>
+                                    </ol>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Tab Content */}
                 <div className="smart-sync-body">
