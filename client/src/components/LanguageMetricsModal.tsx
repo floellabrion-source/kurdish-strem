@@ -71,7 +71,7 @@ export default function LanguageMetricsModal({
     // Auto-parse pasted/uploaded text
     const handleAutoParse = () => {
         if (!rawText.trim()) return;
-        const parsed = parseLinguisticAnalysisText(rawText);
+        const parsed = parseLinguisticAnalysisText(rawText, rawText);
         setMetrics(parsed);
         setActiveTab('preview');
     };
@@ -133,7 +133,7 @@ export default function LanguageMetricsModal({
             const content = event.target?.result as string;
             if (content) {
                 setRawText(content);
-                const parsed = parseLinguisticAnalysisText(content);
+                const parsed = parseLinguisticAnalysisText(content, content);
                 setMetrics(parsed);
                 setActiveTab('preview');
             }

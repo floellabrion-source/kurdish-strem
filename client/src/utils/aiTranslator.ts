@@ -1307,7 +1307,7 @@ export async function runAiTranslationAndAnalysis(
             try {
                 const analysisRes = await generateLinguisticAnalysis(origText, selectedModel, contextStr, signal);
                 analysisReport = analysisRes.text;
-                parsedMetrics = parseLinguisticAnalysisText(analysisReport);
+                parsedMetrics = parseLinguisticAnalysisText(analysisReport, origText);
 
                 // Compute exact word count mathematically from subtitle blocks
                 const exactWordCount = parsedOrigBlocks.reduce((acc, b) => {
