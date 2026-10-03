@@ -174,6 +174,8 @@ export default function Admin() {
         episodeId?: string;
         episodeTitle?: string;
         initialMetrics?: LanguageMetrics;
+        englishSrtUrl?: string | null;
+        movieContext?: string;
     } | null>(null);
 
     const handleSaveLanguageMetrics = async (newMetrics: LanguageMetrics) => {
@@ -1535,7 +1537,9 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                                         onClick={() => setMetricsTarget({
                                             movieId: movie.id,
                                             movieTitle: movie.title,
-                                            initialMetrics: movie.languageMetrics
+                                            initialMetrics: movie.languageMetrics,
+                                            englishSrtUrl: movie.originalSrt || movie.translatedSrt,
+                                            movieContext: `${movie.title} (${movie.year || ''}) - ${movie.genre || ''}`
                                         })}
                                         style={movie.languageMetrics?.cefrLevel ? { color: '#38bdf8', borderColor: 'rgba(56, 189, 248, 0.4)' } : undefined}
                                     >
@@ -1828,7 +1832,9 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                                                 onClick={() => setMetricsTarget({
                                                     movieId: movie.id,
                                                     movieTitle: movie.title,
-                                                    initialMetrics: movie.languageMetrics
+                                                    initialMetrics: movie.languageMetrics,
+                                                    englishSrtUrl: movie.originalSrt || movie.translatedSrt,
+                                                    movieContext: `${movie.title} (${movie.year || ''}) - ${movie.genre || ''}`
                                                 })}
                                                 style={{
                                                     display: 'flex',
@@ -2075,8 +2081,10 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                         movieTitle: movie.title,
                         seasonNum: sNum,
                         episodeId: ep.id,
-                        episodeTitle: `${ep.number} (${ep.title})`,
-                        initialMetrics: ep.languageMetrics
+                        episodeTitle: `وەرزی ${sNum} ئەڵقەی ${ep.number} (${ep.title})`,
+                        initialMetrics: ep.languageMetrics,
+                        englishSrtUrl: ep.originalSrt || ep.translatedSrt,
+                        movieContext: `${movie.title} - Season ${sNum} Episode ${ep.number} (${ep.title})`
                     })}
                     onReloadMovie={load}
                     uploading={uploading}
@@ -2107,6 +2115,9 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                     title={metricsTarget.movieTitle}
                     subtitle={metricsTarget.episodeTitle}
                     initialMetrics={metricsTarget.initialMetrics}
+                    movieId={metricsTarget.movieId}
+                    englishSrtUrl={metricsTarget.englishSrtUrl}
+                    movieContext={metricsTarget.movieContext}
                     onSave={handleSaveLanguageMetrics}
                     onClose={() => setMetricsTarget(null)}
                 />

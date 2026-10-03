@@ -410,40 +410,50 @@
 .rep-word-chip-edit {
     display: flex;
     align-items: center;
-    gap: 6px;
-    background: rgba(0, 0, 0, 0.35);
-    border: 1px solid rgba(139, 92, 246, 0.3);
-    border-radius: 8px;
-    padding: 4px 8px;
+    gap: 8px;
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(139, 92, 246, 0.35);
+    border-radius: 10px;
+    padding: 6px 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transition: border-color 0.2s;
+}
+
+.rep-word-chip-edit:focus-within {
+    border-color: #a855f7;
 }
 
 .rw-count-input {
-    width: 38px;
-    height: 24px;
-    background: #8b5cf6;
+    width: 44px;
+    height: 26px;
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
     color: #ffffff;
     border: none;
-    border-radius: 4px;
-    font-size: 11px;
+    border-radius: 6px;
+    font-size: 12px;
     font-weight: 800;
     text-align: center;
 }
 
 .rw-word-input {
-    background: transparent;
-    border: none;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    padding: 3px 8px;
     color: #ffffff;
     font-weight: 700;
     font-size: 12px;
-    width: 70px;
+    width: 100px;
 }
 
 .rw-meaning-input {
-    background: transparent;
-    border: none;
-    color: #94a3b8;
-    font-size: 11px;
-    width: 70px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    padding: 3px 8px;
+    color: #e2e8f0;
+    font-size: 12px;
+    width: 130px;
 }
 
 /* Footer */

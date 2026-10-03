@@ -6,7 +6,13 @@ import {
     FileText, BarChart3, Sparkles, Copy, Clapperboard, BookOpen, 
     Zap, DollarSign, Gauge, Sliders, Check, Coins
 } from 'lucide-react';
-import { MovieLoreAndBible, extractMovieLoreAndCharacterBible, translateBatch, isLineUntranslated } from '../utils/aiTranslator';
+import { 
+    MovieLoreAndBible, 
+    extractMovieLoreAndCharacterBible, 
+    translateBatch, 
+    isLineUntranslated,
+    generateLinguisticAnalysis 
+} from '../utils/aiTranslator';
 import './SrtTranslator.css';
 
 const BATCH_SIZE = 12;
@@ -170,77 +176,7 @@ export const parseFilenameContext = (filename: string) => {
     };
 };
 
-// ─── PART 1: LINGUISTIC ANALYSIS & STATISTICS ───
-const generateLinguisticAnalysis = async (
-    fullEnglishText: string, 
-    model: string, 
-    movieContext?: string,
-    signal?: AbortSignal
-): Promise<{ text: string; inTok: number; outTok: number }> => {
-    // Provide a larger, comprehensive subtitle sample
-    const sampleText = fullEnglishText.length > 25000 
-        ? fullEnglishText.slice(0, 25000) 
-        : fullEnglishText;
 
-    const prompt = `ACT AS A PROFESSIONAL SUBTITLE TRANSLATOR AND LINGUISTIC ANALYZER. Your task is to provide a comprehensive, highly accurate linguistic analysis of the following English subtitle script in Central Kurdish (Sorani).
-${movieContext ? `MOVIE / SHOW CONTEXT: ${movieContext}` : ''}
-
-PART 1: LINGUISTIC ANALYSIS & STATISTICS (MUST BE WRITTEN IN SORANI KURDISH)
-Analyze the English text and strictly provide the following 4 parts clearly in Central Kurdish (Sorani):
-
-١. دابەشبوونی ئاستی وشەکان بەپێی ستانداردی ئەوروپی (CEFR Level Word Distribution):
-Calculate the percentage of words belonging to ALL 6 levels: A1, A2, B1, B2, C1, and C2.
-(CRITICAL RULE: The percentages MUST sum to 100%. In spoken dialogue and family animations, A1 and A2 are the fundamental base vocabulary and MUST be accurately counted and represented, usually forming 35% to 65% of the total words).
-Format strictly as:
-- A1: [percentage]%
-- A2: [percentage]%
-- B1: [percentage]%
-- B2: [percentage]%
-- C1: [percentage]%
-- C2: [percentage]%
-
-٢. ١٠ قورسترین و پێشکەوتووترین وشە (Top 10 Difficult Words):
-List EXACTLY 10 (or more) of the most difficult academic, advanced, or technical words found in the script.
-Keep the main target word in English, but translate its part of speech, CEFR level, and its definition/explanation into Central Kurdish (Sorani).
-(CRITICAL: Every single word MUST have its clear definition in Sorani Kurdish - NEVER leave the definition empty or as a dash).
-Format strictly as:
-1. [English Word] ([Part of Speech], [CEFR Level]): [Definition / Meaning in Sorani Kurdish]
-2. [English Word] ([Part of Speech], [CEFR Level]): [Definition / Meaning in Sorani Kurdish]
-... (Must provide at least 10 words)
-
-٣. کۆی گشتیی وشەکان (Total Word Count):
-Count the total number of words in the provided English text and state the exact word count (e.g. کۆی گشتیی وشەکان: 7,452 وشە).
-
-٤. ئەو وشە سەرەکییانەی زۆرترین جار دووبارە بوونەتەوە (Repeated Content Words):
-Identify the top 10 content words (nouns, verbs, adjectives, adverbs) that are repeated in the text.
-List the English word, how many times it occurs, and its translation/meaning in Central Kurdish (Sorani).
-Format strictly as:
-1. [English Word] - [Count] جار : [Translation/Meaning in Sorani Kurdish]
-2. [English Word] - [Count] جار : [Translation/Meaning in Sorani Kurdish]
-... (Provide 10 repeated content words)
-
-Here is the English subtitle text to analyze:
-\n${sampleText}`;
-
-    const resp = await axios.post('/api/ai/generate', {
-        contents: [{ parts: [{ text: prompt }] }],
-        aiTask: 'srt_translation',
-        model: model,
-        max_tokens: 2500,
-        movieTitle: movieContext || 'Linguistic Analysis'
-    }, {
-        timeout: 180000,
-        signal
-    });
-
-    let raw: string = resp.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    const cleanText = raw.replace(/```(txt|markdown|text)?/gi, '').replace(/```/g, '').trim();
-
-    const inTok = Math.round(prompt.length / 3.8);
-    const outTok = Math.round(cleanText.length / 3.2);
-
-    return { text: cleanText, inTok, outTok };
-};
 
 export default function SrtTranslator() {
     const { user, refreshUser } = useAuth();
