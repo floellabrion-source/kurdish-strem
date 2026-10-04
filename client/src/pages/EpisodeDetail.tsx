@@ -161,7 +161,7 @@ export default function EpisodeDetail() {
                     <div className="lm-card"><strong>{metrics.cefrLevel}</strong><span>{t('cefr_level')}</span></div>
                 </div>
                 <div className="lm-bars">
-                    {Object.entries(metrics.distribution).map(([level, value]) => (
+                    {metrics?.distribution && Object.entries(metrics.distribution).filter(([k, v]) => k !== 'Unknown' || (Number(v) > 0)).map(([level, value]) => (
                         <div className="lm-row" key={level}>
                             <span className="lm-label">{level}</span>
                             <div className="lm-track"><div className="lm-fill" style={{ width: `${value}%` }} /></div>
