@@ -3443,40 +3443,26 @@ CRITICAL RULES:
                     </div>
 
                     <div className="controls-right">
-                        {/* Quick Pill Badges for Subtitles & Quality */}
-                        <button 
-                            type="button"
-                            className={`quick-pill-badge ${showOriginal ? 'active' : ''}`}
-                            onClick={handleToggleOriginal}
-                            title={lang === 'en' ? 'Toggle English Subtitles' : (showOriginal ? 'کوژاندنەوەی سەبتایتڵی ئینگلیزی' : 'داگیرساندنی سەبتایتڵی ئینگلیزی')}
-                        >
-                            <span className="badge-txt-full">English</span>
-                            <span className="badge-txt-short">EN</span>
-                        </button>
+                        {/* Quick Pill Badges for Subtitles (EN & KU) */}
+                        <div className="sub-toggle-pill-group">
+                            <button 
+                                type="button"
+                                className={`quick-pill-badge ${showOriginal ? 'active' : ''}`}
+                                onClick={handleToggleOriginal}
+                                title={lang === 'en' ? 'Toggle English Subtitles (EN)' : (showOriginal ? 'کوژاندنەوەی ژێرنووسی ئینگلیزی (EN)' : 'داگیرساندنی ژێرنووسی ئینگلیزی (EN)')}
+                            >
+                                <span className="badge-txt-short">EN</span>
+                            </button>
 
-                        <button 
-                            type="button"
-                            className={`quick-pill-badge ${showTranslated ? 'active' : ''}`}
-                            onClick={handleToggleTranslated}
-                            title={lang === 'en' ? 'Toggle Kurdish Subtitles' : (showTranslated ? 'کوژاندنەوەی سەبتایتڵی کوردی' : 'داگیرساندنی سەبتایتڵی کوردی')}
-                        >
-                            <span className="badge-txt-full">{lang === 'en' ? 'Kurdish' : 'کوردی'}</span>
-                            <span className="badge-txt-short">KU</span>
-                        </button>
-
-                        <button 
-                            type="button"
-                            className="quick-pill-badge quality-badge"
-                            onClick={() => {
-                                setShowSettings(true);
-                                setSettingsTab('quality');
-                            }}
-                            title={lang === 'en' ? 'Change Quality' : 'کوالیتی ڤیدیۆ'}
-                        >
-                            {currentQuality === -1 
-                                ? 'Auto' 
-                                : (qualityLevels.find(q => q.id === currentQuality)?.label || `${currentQuality}p`)}
-                        </button>
+                            <button 
+                                type="button"
+                                className={`quick-pill-badge ${showTranslated ? 'active' : ''}`}
+                                onClick={handleToggleTranslated}
+                                title={lang === 'en' ? 'Toggle Kurdish Subtitles (KU)' : (showTranslated ? 'کوژاندنەوەی ژێرنووسی کوردی (KU)' : 'داگیرساندنی ژێرنووسی کوردی (KU)')}
+                            >
+                                <span className="badge-txt-short">KU</span>
+                            </button>
+                        </div>
 
                         <button 
                             type="button"
