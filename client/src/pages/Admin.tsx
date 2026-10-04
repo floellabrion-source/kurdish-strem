@@ -171,10 +171,12 @@ export default function Admin() {
         movieId: string;
         movieTitle: string;
         seasonNum?: number;
+        episodeNum?: number;
         episodeId?: string;
         episodeTitle?: string;
         initialMetrics?: LanguageMetrics;
         englishSrtUrl?: string | null;
+        kurdishSrtUrl?: string | null;
         movieContext?: string;
     } | null>(null);
 
@@ -1538,7 +1540,8 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                                             movieId: movie.id,
                                             movieTitle: movie.title,
                                             initialMetrics: movie.languageMetrics,
-                                            englishSrtUrl: movie.originalSrt || movie.translatedSrt,
+                                            englishSrtUrl: movie.originalSrt,
+                                            kurdishSrtUrl: movie.translatedSrt,
                                             movieContext: `${movie.title} (${movie.year || ''}) - ${movie.genre || ''}`
                                         })}
                                         style={movie.languageMetrics?.cefrLevel ? { color: '#38bdf8', borderColor: 'rgba(56, 189, 248, 0.4)' } : undefined}
@@ -1833,7 +1836,8 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                                                     movieId: movie.id,
                                                     movieTitle: movie.title,
                                                     initialMetrics: movie.languageMetrics,
-                                                    englishSrtUrl: movie.originalSrt || movie.translatedSrt,
+                                                    englishSrtUrl: movie.originalSrt,
+                                                    kurdishSrtUrl: movie.translatedSrt,
                                                     movieContext: `${movie.title} (${movie.year || ''}) - ${movie.genre || ''}`
                                                 })}
                                                 style={{
@@ -2080,10 +2084,12 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                         movieId: movie.id,
                         movieTitle: movie.title,
                         seasonNum: sNum,
+                        episodeNum: ep.number,
                         episodeId: ep.id,
                         episodeTitle: `وەرزی ${sNum} ئەڵقەی ${ep.number} (${ep.title})`,
                         initialMetrics: ep.languageMetrics,
-                        englishSrtUrl: ep.originalSrt || ep.translatedSrt,
+                        englishSrtUrl: ep.originalSrt,
+                        kurdishSrtUrl: ep.translatedSrt,
                         movieContext: `${movie.title} - Season ${sNum} Episode ${ep.number} (${ep.title})`
                     })}
                     onReloadMovie={load}
@@ -2116,7 +2122,10 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                     subtitle={metricsTarget.episodeTitle}
                     initialMetrics={metricsTarget.initialMetrics}
                     movieId={metricsTarget.movieId}
+                    seasonNum={metricsTarget.seasonNum}
+                    episodeNum={metricsTarget.episodeNum}
                     englishSrtUrl={metricsTarget.englishSrtUrl}
+                    kurdishSrtUrl={metricsTarget.kurdishSrtUrl}
                     movieContext={metricsTarget.movieContext}
                     onSave={handleSaveLanguageMetrics}
                     onClose={() => setMetricsTarget(null)}

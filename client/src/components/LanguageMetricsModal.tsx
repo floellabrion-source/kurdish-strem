@@ -15,7 +15,10 @@ interface LanguageMetricsModalProps {
     subtitle?: string;
     initialMetrics?: LanguageMetrics;
     movieId?: string;
+    seasonNum?: number;
+    episodeNum?: number;
     englishSrtUrl?: string | null;
+    kurdishSrtUrl?: string | null;
     movieContext?: string;
     onSave: (metrics: LanguageMetrics) => Promise<void>;
     onClose: () => void;
@@ -26,7 +29,10 @@ export default function LanguageMetricsModal({
     subtitle,
     initialMetrics,
     movieId,
+    seasonNum,
+    episodeNum,
     englishSrtUrl,
+    kurdishSrtUrl,
     movieContext,
     onSave,
     onClose
@@ -48,6 +54,60 @@ export default function LanguageMetricsModal({
     const [activeTab, setActiveTab] = useState<'paste' | 'preview'>(
         initialMetrics && initialMetrics.totalWords > 0 ? 'preview' : 'paste'
     );
+
+    // Robust function to fetch full subtitle script from server or URLs
+    const fetchSubtitleText = async (): Promise<string> => {
+        if (rawText.trim().length > 100) {
+            return rawText.trim();
+        }
+
+        // 1. Try server srt-content endpoint if movieId is available
+        if (movieId) {
+            try {
+                const srtResp = await axios.get(`/api/admin/movies/${movieId}/srt-content`, {
+                    params: { seasonNum, episodeNum }
+                });
+                if (srtResp.data) {
+                    const orig = srtResp.data.originalSrtText || '';
+                    const trans = srtResp.data.translatedSrtText || '';
+                    const fetched = orig.trim() || trans.trim();
+                    if (fetched.length > 50) {
+                        setRawText(fetched);
+                        return fetched;
+                    }
+                }
+            } catch (err) {
+                console.warn('Could not fetch srt-content endpoint:', err);
+            }
+        }
+
+        // 2. Try englishSrtUrl or kurdishSrtUrl
+        const urlsToTry = [englishSrtUrl, kurdishSrtUrl].filter(Boolean) as string[];
+        for (const url of urlsToTry) {
+            try {
+                let targetUrl = url;
+                if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://') && !targetUrl.startsWith('/')) {
+                    targetUrl = `/${targetUrl}`;
+                }
+                const srtResp = await axios.get(targetUrl, { responseType: 'text' });
+                if (srtResp.data && typeof srtResp.data === 'string' && srtResp.data.trim().length > 50) {
+                    setRawText(srtResp.data);
+                    return srtResp.data;
+                }
+            } catch (e) {
+                console.warn(`Could not fetch srt URL (${url}):`, e);
+            }
+        }
+
+        return rawText.trim();
+    };
+
+    // Preload subtitle text automatically when modal opens
+    useEffect(() => {
+        if (!rawText.trim()) {
+            fetchSubtitleText().catch(() => {});
+        }
+    }, [movieId, seasonNum, episodeNum, englishSrtUrl, kurdishSrtUrl]);
 
     // Auto-normalize distribution to exactly 100%
     const handleNormalizeDistribution = () => {
@@ -76,43 +136,38 @@ export default function LanguageMetricsModal({
         setActiveTab('preview');
     };
 
-    // 1-Click Direct AI Analysis (Guaranteed 10 difficult words + 10 repeated words + CEFR percentages)
+    // 1-Click Direct AI Analysis (Guaranteed 10 difficult words + 10 repeated words + accurate word count + CEFR percentages)
     const handleRunOneClickAi = async () => {
         setIsAnalyzing(true);
-        setAnalysisStatus('خەریکی هێنانی دەقی سەبتایتڵ و ژماردنی وشەکانە...');
+        setAnalysisStatus('خەریکی بارکردنی فایلی سەبتایتڵ و ژماردنی وشەکانە...');
         try {
-            let textToAnalyze = rawText.trim();
+            const textToAnalyze = await fetchSubtitleText();
 
-            // If no text pasted yet, try fetching from englishSrtUrl
-            if (!textToAnalyze && englishSrtUrl) {
-                try {
-                    const srtResp = await axios.get(englishSrtUrl, { responseType: 'text' });
-                    if (srtResp.data && typeof srtResp.data === 'string') {
-                        textToAnalyze = srtResp.data;
-                    }
-                } catch (e) {
-                    console.warn('Could not auto-fetch srt URL:', e);
-                }
-            }
-
-            if (!textToAnalyze) {
-                alert('تکایە سەرەتا دەقی سەبتایتڵەکە لە خانەی خوارەوە دابنێ یان فایلی .txt / .srt داغڵ بکە.');
+            // Deterministic validation: must have real subtitles (at least 20 words)
+            const stats = extractDeterministicSubtitleStats(textToAnalyze);
+            if (!textToAnalyze || stats.totalWords < 20) {
+                alert('تکایە سەرەتا فایلی سەبتایتڵی .srt لە ڕێگەی دووگمەی (داغڵکردنی فایلی .srt) باربکە یان دەقەکەی لە خوارەوە پەیست بکە، چونکە هێشتا سەبتایتڵ بۆ ئەم بەرهەمە لە سێرڤەر بەردەست نییە.');
                 setIsAnalyzing(false);
+                setAnalysisStatus('');
                 return;
             }
 
-            setAnalysisStatus('زیرەکی دەستکرد خەریکی شیکارییە (١٠ وشەی ئەکادیمی و ١٠ وشەی دووبارەبوو بە وەرگێڕانی دروست)...');
+            setAnalysisStatus(`فایلی سەبتایتڵ دۆزرایەوە (${stats.totalWords.toLocaleString()} وشە). زیرەکی دەستکرد خەریکی شیکارییە...`);
             const contextStr = movieContext || `${title} ${subtitle || ''}`;
             const aiRes = await generateLinguisticAnalysis(textToAnalyze, 'google/gemini-2.5-flash', contextStr);
             
             setRawText(aiRes.text);
             const parsed = parseLinguisticAnalysisText(aiRes.text, textToAnalyze);
+            // Ensure exact full script word count is preserved
+            if (stats.totalWords > 0) {
+                parsed.totalWords = stats.totalWords;
+            }
             setMetrics(parsed);
             setActiveTab('preview');
         } catch (err: any) {
             console.error('AI Linguistic Analysis failed:', err);
-            // Even if AI call failed, provide deterministic statistics
-            if (rawText.trim() || englishSrtUrl) {
+            // Fallback deterministic computation
+            if (rawText.trim()) {
                 const parsed = parseLinguisticAnalysisText(rawText, rawText);
                 setMetrics(parsed);
                 setActiveTab('preview');
