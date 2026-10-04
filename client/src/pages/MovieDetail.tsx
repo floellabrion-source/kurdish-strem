@@ -213,7 +213,7 @@ export default function MovieDetail() {
     const totalEpisodes = seasons.reduce((acc, s) => acc + s.episodes.length, 0);
     const activeSeasonData = seasons.find(s => s.number === activeSeason);
     // Function to calculate aggregate language metrics for a series
-    const getAggregateMetrics = () => {
+    const getAggregateMetrics = (): LanguageMetrics => {
         const manualMetrics = normalizeLanguageMetrics(movie.languageMetrics);
         const fallbackMetrics = manualMetrics || buildLanguageMetrics(getDescription(), isSeries, movie.level);
 
@@ -222,15 +222,9 @@ export default function MovieDetail() {
         }
 
         const allEpisodes = seasons.flatMap(s => s.episodes || []);
-        const epsWithMetrics = allEpisodes.filter(ep => {
-            if (!ep.languageMetrics) return false;
-            const m = ep.languageMetrics;
-            // Be more lenient in checking if metrics exist
-            const words = typeof m.totalWords === 'string' 
-                ? parseInt((m.totalWords as string).replace(/[^\d]/g, '')) 
-                : Number(m.totalWords);
-            return words > 0 || (m.distribution && Object.values(m.distribution).some(v => Number(v) > 0));
-        });
+        const epsWithMetrics = allEpisodes
+            .map(ep => normalizeLanguageMetrics(ep.languageMetrics))
+            .filter((m): m is LanguageMetrics => Boolean(m && (m.totalWords > 0 || (m.distribution && Object.values(m.distribution).some(v => Number(v) > 0)))));
         
         if (epsWithMetrics.length === 0) {
             return fallbackMetrics;
@@ -247,16 +241,11 @@ export default function MovieDetail() {
 
         let count = 0;
 
-        epsWithMetrics.forEach(ep => {
-            const m = ep.languageMetrics;
-            if (!m) return;
+        epsWithMetrics.forEach(m => {
             count++;
             
-            const epWords = typeof m.totalWords === 'string' 
-                ? parseInt((m.totalWords as string).replace(/[^\d]/g, '')) 
-                : Number(m.totalWords);
-            
-            totalWords += (epWords || 0);
+            const epWords = Number(m.totalWords) || 0;
+            totalWords += epWords;
             totalLexical += (Number(m.lexicalDensity) || 0);
             totalDiversity += (Number(m.vocabDiversity) || 0);
             
@@ -271,17 +260,23 @@ export default function MovieDetail() {
             if (m.repeatedWords && Array.isArray(m.repeatedWords)) {
                 m.repeatedWords.forEach((rw: any) => {
                     if (rw.word) {
+                        const cleanWord = String(rw.word).trim();
                         const rwCount = typeof rw.count === 'string' ? parseInt(rw.count.replace(/[^\d]/g, '')) : Number(rw.count);
-                        wordFrequencies[rw.word] = (wordFrequencies[rw.word] || 0) + (rwCount || 0);
-                        if (rw.meaning) wordMeanings[rw.word] = rw.meaning;
+                        wordFrequencies[cleanWord] = (wordFrequencies[cleanWord] || 0) + (rwCount || 1);
+                        if (rw.meaning && !wordMeanings[cleanWord]) {
+                            wordMeanings[cleanWord] = rw.meaning;
+                        }
                     }
                 });
             }
 
             if (m.difficultWords && Array.isArray(m.difficultWords)) {
                 m.difficultWords.forEach((dw: any) => {
-                    if (dw.word && !difficultWordsMap.has(dw.word)) {
-                        difficultWordsMap.set(dw.word, dw);
+                    if (dw.word) {
+                        const cleanWord = String(dw.word).trim();
+                        if (!difficultWordsMap.has(cleanWord)) {
+                            difficultWordsMap.set(cleanWord, { ...dw, word: cleanWord });
+                        }
                     }
                 });
             }
@@ -293,7 +288,7 @@ export default function MovieDetail() {
             word,
             count: wordFrequencies[word],
             meaning: wordMeanings[word] || ''
-        })).sort((a, b) => b.count - a.count).slice(0, 20); // Keep top 20 for series
+        })).sort((a, b) => b.count - a.count).slice(0, 30);
 
         const avgDist = {
             A1: Number((dist.A1 / count).toFixed(1)),
@@ -305,14 +300,23 @@ export default function MovieDetail() {
             Unknown: Number((dist.Unknown / count).toFixed(1))
         };
 
-        // Re-normalize avgDist to sum to ~100% if possible, but simple average is usually fine
-        
-        let calculatedLevel = 'A1';
-        if (avgDist.C2 > 0.5) calculatedLevel = 'C2';
-        else if (avgDist.C1 > 1) calculatedLevel = 'C1';
-        else if (avgDist.B2 > 3) calculatedLevel = 'B2';
-        else if (avgDist.B1 > 7) calculatedLevel = 'B1';
-        else if (avgDist.A2 > 12) calculatedLevel = 'A2';
+        const cefrWeights: Record<string, number> = { A1: 1, A2: 2, B1: 3, B2: 4, C1: 5, C2: 6 };
+        let totalWeight = 0;
+        let weightSum = 0;
+        (['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const).forEach(k => {
+            const val = avgDist[k] || 0;
+            weightSum += val * cefrWeights[k];
+            totalWeight += val;
+        });
+        const avgScore = totalWeight > 0 ? (weightSum / totalWeight) : 2.5;
+
+        let calculatedLevel = 'B1';
+        if (avgScore < 1.7) calculatedLevel = 'A1';
+        else if (avgScore < 2.3) calculatedLevel = 'A2';
+        else if (avgScore < 3.3) calculatedLevel = 'B1';
+        else if (avgScore < 4.3) calculatedLevel = 'B2';
+        else if (avgScore < 5.3) calculatedLevel = 'C1';
+        else calculatedLevel = 'C2';
 
         return {
             totalWords,
@@ -321,7 +325,7 @@ export default function MovieDetail() {
             cefrLevel: calculatedLevel as any,
             distribution: avgDist,
             repeatedWords: aggregatedRepeatedWords,
-            difficultWords: Array.from(difficultWordsMap.values()).slice(0, 15) // Top 15 diff words
+            difficultWords: Array.from(difficultWordsMap.values()).slice(0, 25)
         };
     };
 
@@ -389,7 +393,7 @@ export default function MovieDetail() {
                                     </span>
                                 )}
                                 {(() => {
-                                    const lvl = getCefrDisplayLevel(movie.level, movie.languageMetrics?.cefrLevel);
+                                    const lvl = getCefrDisplayLevel(metrics?.cefrLevel || movie.languageMetrics?.cefrLevel || movie.level);
                                     if (!lvl) return null;
                                     const colorInfo = getCefrColor(lvl);
                                     return (
