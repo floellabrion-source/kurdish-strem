@@ -3461,7 +3461,7 @@ CRITICAL RULES:
                             title={lang === 'en' ? 'Toggle Kurdish Subtitles' : (showTranslated ? 'کوژاندنەوەی سەبتایتڵی کوردی' : 'داگیرساندنی سەبتایتڵی کوردی')}
                         >
                             <span className="badge-txt-full">{lang === 'en' ? 'Kurdish' : 'کوردی'}</span>
-                            <span className="badge-txt-short">{lang === 'en' ? 'KU' : 'کوردی'}</span>
+                            <span className="badge-txt-short">KU</span>
                         </button>
 
                         <button 
