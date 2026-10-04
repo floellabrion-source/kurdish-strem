@@ -1672,6 +1672,7 @@
     inset: 0 !important;
     width: 100vw !important;
     height: 100vh !important;
+    height: 100dvh !important;
     background: rgba(0, 0, 0, 0.88) !important;
     backdrop-filter: blur(16px) !important;
     -webkit-backdrop-filter: blur(16px) !important;
@@ -1681,9 +1682,10 @@
     z-index: 999999 !important;
     direction: rtl;
     overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch;
+    -webkit-overflow-scrolling: touch !important;
     padding: 20px 12px;
-    overscroll-behavior: contain;
+    overscroll-behavior: contain !important;
+    touch-action: pan-y !important;
     box-sizing: border-box;
 }
 
@@ -1710,6 +1712,11 @@
     max-width: 520px;
     width: 94%;
     max-height: calc(100vh - 36px);
+    max-height: calc(100dvh - 36px);
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior: contain !important;
+    touch-action: pan-y !important;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -1717,6 +1724,7 @@
     position: relative;
     box-shadow: 0 30px 80px rgba(0, 0, 0, 0.95);
     flex-shrink: 0;
+    box-sizing: border-box;
 }
 
 .practice-modal-card {
@@ -2535,6 +2543,35 @@
         padding: 5px 10px;
         font-size: 11px;
         border-radius: 999px;
+    }
+
+    /* Fix for iOS Safari and Mobile Modal Scrolling */
+    .practice-overlay,
+    .modal-overlay,
+    .resume-overlay {
+        padding: 12px 8px !important;
+        align-items: flex-start !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        overscroll-behavior: contain !important;
+        touch-action: pan-y !important;
+    }
+
+    .practice-card,
+    .practice-modal-card,
+    .modal-content,
+    .ai-explanation-card {
+        padding: 18px 14px !important;
+        gap: 12px !important;
+        max-height: calc(100dvh - 24px) !important;
+        width: 96% !important;
+        max-width: 480px !important;
+        margin: auto !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        overscroll-behavior: contain !important;
+        touch-action: pan-y !important;
+        box-sizing: border-box !important;
     }
 
     /* Subtitles on Mobile (Portrait & Small Screens) */

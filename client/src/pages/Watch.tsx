@@ -1116,6 +1116,21 @@ CRITICAL RULE: The entire explanation MUST be in Central Kurdish (Sorani) using 
     const [sentenceDiff, setSentenceDiff] = useState<SentenceWordDiff[]>([]);
     const [selectedMistakeWord, setSelectedMistakeWord] = useState<SentenceWordDiff | null>(null);
 
+    // Lock background scroll when any modal is open on mobile / iOS
+    useEffect(() => {
+        const isAnyModalOpen = Boolean(practiceActive || aiModalOpen || showDualTrialModal);
+        if (isAnyModalOpen) {
+            const prevOverflow = document.body.style.overflow;
+            const prevTouchAction = document.body.style.touchAction;
+            document.body.style.overflow = 'hidden';
+            document.body.style.touchAction = 'none';
+            return () => {
+                document.body.style.overflow = prevOverflow;
+                document.body.style.touchAction = prevTouchAction;
+            };
+        }
+    }, [practiceActive, aiModalOpen, showDualTrialModal]);
+
     const computeSentenceDiff = (spoken: string, target: string): SentenceWordDiff[] => {
         const norm = (s: string) => s.toLowerCase().replace(/[^\w\s]/g, '').trim();
         const spW = norm(spoken).split(/\s+/).filter(Boolean);
