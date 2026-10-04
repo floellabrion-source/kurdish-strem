@@ -1564,9 +1564,43 @@ CRITICAL RULES:
     }, [isPlaying, isMuted, subDelay, volume]);
 
     useEffect(() => {
-        const handler = () => setIsFullscreen(!!document.fullscreenElement);
+        const handler = () => {
+            const doc: any = document;
+            const video: any = videoRef.current;
+            const isFs = Boolean(
+                doc.fullscreenElement ||
+                doc.webkitFullscreenElement ||
+                doc.mozFullScreenElement ||
+                doc.msFullscreenElement ||
+                video?.webkitDisplayingFullscreen
+            );
+            setIsFullscreen(isFs);
+            if (!isFs && window.screen && (window.screen.orientation as any)?.unlock) {
+                try { (window.screen.orientation as any).unlock(); } catch (e) {}
+            }
+        };
+
         document.addEventListener('fullscreenchange', handler);
-        return () => document.removeEventListener('fullscreenchange', handler);
+        document.addEventListener('webkitfullscreenchange', handler);
+        document.addEventListener('mozfullscreenchange', handler);
+        document.addEventListener('MSFullscreenChange', handler);
+
+        const video = videoRef.current;
+        if (video) {
+            video.addEventListener('webkitbeginfullscreen', handler);
+            video.addEventListener('webkitendfullscreen', handler);
+        }
+
+        return () => {
+            document.removeEventListener('fullscreenchange', handler);
+            document.removeEventListener('webkitfullscreenchange', handler);
+            document.removeEventListener('mozfullscreenchange', handler);
+            document.removeEventListener('MSFullscreenChange', handler);
+            if (video) {
+                video.removeEventListener('webkitbeginfullscreen', handler);
+                video.removeEventListener('webkitendfullscreen', handler);
+            }
+        };
     }, []);
 
     const resetControlsTimer = useCallback(() => {
@@ -1796,10 +1830,62 @@ CRITICAL RULES:
         if (videoRef.current) videoRef.current.volume = val;
     };
 
-    const toggleFullscreen = () => {
-        if (!containerRef.current) return;
-        if (!document.fullscreenElement) containerRef.current.requestFullscreen();
-        else document.exitFullscreen();
+    const toggleFullscreen = async () => {
+        const doc: any = document;
+        const container: any = containerRef.current;
+        const video: any = videoRef.current;
+
+        const isFs = Boolean(
+            doc.fullscreenElement ||
+            doc.webkitFullscreenElement ||
+            doc.mozFullScreenElement ||
+            doc.msFullscreenElement ||
+            video?.webkitDisplayingFullscreen
+        );
+
+        if (!isFs) {
+            try {
+                if (container?.requestFullscreen) {
+                    await container.requestFullscreen();
+                } else if (container?.webkitRequestFullscreen) {
+                    await container.webkitRequestFullscreen();
+                } else if (container?.mozRequestFullScreen) {
+                    await container.mozRequestFullScreen();
+                } else if (container?.msRequestFullscreen) {
+                    await container.msRequestFullscreen();
+                } else if (video?.webkitEnterFullscreen) {
+                    video.webkitEnterFullscreen();
+                }
+
+                // Automatically rotate / lock to landscape on mobile devices
+                if (window.screen && (window.screen.orientation as any)?.lock) {
+                    await (window.screen.orientation as any).lock('landscape').catch(() => {});
+                }
+            } catch (err) {
+                console.warn('Fullscreen failed:', err);
+                if (video?.webkitEnterFullscreen) {
+                    try { video.webkitEnterFullscreen(); } catch (e) {}
+                }
+            }
+        } else {
+            try {
+                if (doc.exitFullscreen) {
+                    await doc.exitFullscreen();
+                } else if (doc.webkitExitFullscreen) {
+                    await doc.webkitExitFullscreen();
+                } else if (doc.mozCancelFullScreen) {
+                    await doc.mozCancelFullScreen();
+                } else if (doc.msExitFullscreen) {
+                    await doc.msExitFullscreen();
+                }
+
+                if (window.screen && (window.screen.orientation as any)?.unlock) {
+                    try { (window.screen.orientation as any).unlock(); } catch (e) {}
+                }
+            } catch (err) {
+                console.warn('Exit fullscreen failed:', err);
+            }
+        }
     };
 
     const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
