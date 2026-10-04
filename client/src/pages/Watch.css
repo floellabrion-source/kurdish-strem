@@ -1256,18 +1256,13 @@
 }
 
 .fullscreen-btn {
-    background: rgba(139, 92, 246, 0.18) !important;
-    border: 1.5px solid rgba(139, 92, 246, 0.45) !important;
-    border-radius: 10px !important;
     color: #ffffff !important;
     transition: all 0.15s ease !important;
 }
 
 .fullscreen-btn:hover {
-    background: #8b5cf6 !important;
-    border-color: #a855f7 !important;
-    box-shadow: 0 0 15px rgba(139, 92, 246, 0.5) !important;
-    transform: scale(1.06) !important;
+    color: #a855f7 !important;
+    transform: scale(1.08) !important;
 }
 
 /* ── Modern Nested Settings Flyout Menu (Image 1 Redesign) ── */
@@ -2792,15 +2787,15 @@
     }
 
     .fullscreen-btn {
-        min-width: 36px !important;
-        min-height: 36px !important;
-        width: 36px !important;
-        height: 36px !important;
-        background: linear-gradient(135deg, rgba(139, 92, 246, 0.35), rgba(124, 58, 237, 0.45)) !important;
-        border: 1.5px solid rgba(168, 85, 247, 0.6) !important;
-        box-shadow: 0 0 12px rgba(139, 92, 246, 0.4) !important;
-        border-radius: 10px !important;
-        color: #ffffff !important;
+        width: 32px !important;
+        height: 32px !important;
+        min-width: 32px !important;
+        min-height: 32px !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        border-radius: 8px !important;
+        color: rgba(255, 255, 255, 0.9) !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
@@ -2809,8 +2804,8 @@
     }
 
     .fullscreen-btn svg {
-        width: 18px !important;
-        height: 18px !important;
+        width: 17px !important;
+        height: 17px !important;
     }
 
     .pip-btn {
