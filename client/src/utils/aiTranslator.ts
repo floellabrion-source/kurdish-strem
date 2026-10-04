@@ -304,11 +304,11 @@ export const extractDeterministicSubtitleStats = (rawText: string): Deterministi
             freqMap[lower] = (freqMap[lower] || 0) + 1;
         }
 
-        // Detect potential advanced / academic words (length >= 7, complex morphological patterns)
+        // Detect potential advanced / academic words (length >= 6, complex morphological patterns or academic stems)
         if (
-            lower.length >= 7 && 
+            lower.length >= 6 && 
             !stopWords.has(lower) &&
-            /(tion|ment|ence|ance|able|ible|ology|ous|ity|ive|ate|ical|ism|ist|phy|ify|hood|ship)$/i.test(lower)
+            (/(tion|ment|ence|ance|able|ible|ology|ous|ious|ity|ive|ate|ical|ism|ist|phy|ify|hood|ship|ward|wise|less|ness|tial|cial|tious|cious)$/i.test(lower) || lower.length >= 8)
         ) {
             candidateAdvancedSet.add(lower);
         }
@@ -316,7 +316,7 @@ export const extractDeterministicSubtitleStats = (rawText: string): Deterministi
 
     const sortedRepeated = Object.entries(freqMap)
         .sort((a, b) => b[1] - a[1])
-        .slice(0, 15)
+        .slice(0, 20)
         .map(([word, count]) => ({
             word: word.charAt(0).toUpperCase() + word.slice(1),
             count
@@ -332,7 +332,7 @@ export const extractDeterministicSubtitleStats = (rawText: string): Deterministi
         uniqueWords,
         vocabDiversity,
         topRepeated: sortedRepeated,
-        candidateAdvancedWords: Array.from(candidateAdvancedSet).slice(0, 20)
+        candidateAdvancedWords: Array.from(candidateAdvancedSet).slice(0, 30)
     };
 };
 
@@ -353,14 +353,19 @@ export const generateLinguisticAnalysis = async (
     const prompt = `ACT AS A HIGH-PRECISION LINGUISTIC ANALYZER AND CEFR EXPERT FOR CENTRAL KURDISH (SORANI).
 ${movieContext ? `MOVIE / STORY CONTEXT: ${movieContext}` : ''}
 
-Here are the deterministically computed word statistics for this subtitle script:
+🚨 STRICT SOURCE RULE: You MUST extract all 10 difficult words and all 10 repeated words EXCLUSIVELY and DIRECTLY from the provided English subtitle script below. NEVER invent, hallucinate, or bring external words that do not appear in this subtitle file.
+
+Here are the real deterministically extracted words and counts from this exact subtitle script:
 - Total Exact Word Count: ${stats.totalWords} words
 - Unique Vocabulary Diversity: ${stats.vocabDiversity}%
-- Top Repeated Content Words detected in this script:
-${stats.topRepeated.map((r, i) => `${i + 1}. "${r.word}" (occurs ${r.count} times)`).join('\n')}
+- Top Repeated Content Words detected in this script (Extract 10 from here):
+${stats.topRepeated.slice(0, 15).map((r, i) => `${i + 1}. "${r.word}" (occurs ${r.count} times)`).join('\n')}
+
+- Candidate Academic & Advanced Words detected in this script (Select 10 from here):
+${stats.candidateAdvancedWords.slice(0, 20).map((w, i) => `${i + 1}. "${w}"`).join('\n')}
 
 YOUR TASK:
-Generate an accurate, comprehensive, 98%+ contextually authentic linguistic and CEFR analysis in Central Kurdish (Sorani).
+Generate an accurate, comprehensive, 98%+ contextually authentic linguistic and CEFR analysis in Central Kurdish (Sorani) for THIS SPECIFIC SCRIPT.
 
 CRITICAL REQUIREMENTS:
 1. JSON STRUCTURE: Include a JSON block wrapped in \`\`\`json ... \`\`\` containing:
@@ -378,17 +383,17 @@ CRITICAL REQUIREMENTS:
     "C2": [percentage]
   },
   "difficultWords": [
-    { "word": "EnglishWord", "type": "Noun/Verb/Adj, C1/B2/C2", "definition": "Direct Sorani definition matching the movie context" }
-    // MUST INCLUDE EXACTLY 10 DIFFICULT ACADEMIC/ADVANCED WORDS FROM THE SCRIPT!
+    { "word": "RealEnglishWordFromScript", "type": "Noun/Verb/Adj, C1/B2/C2", "definition": "Direct Sorani definition matching the movie context" }
+    // MUST INCLUDE EXACTLY 10 DIFFICULT ACADEMIC/ADVANCED WORDS FOUND IN THIS SCRIPT!
   ],
   "repeatedWords": [
-    { "word": "EnglishWord", "count": number, "meaning": "Sorani translation matching the movie context" }
-    // MUST INCLUDE EXACTLY 10 REPEATED WORDS WITH EXACT COUNTS AND KURDISH MEANINGS!
+    { "word": "RealEnglishWordFromScript", "count": number, "meaning": "Sorani translation matching the movie context" }
+    // MUST INCLUDE EXACTLY 10 REPEATED WORDS WITH EXACT SCRIPT COUNTS AND KURDISH MEANINGS!
   ]
 }
 
 2. PERCENTAGE RULE:
-The CEFR distribution percentages (A1, A2, B1, B2, C1, C2) MUST SUM EXACTLY TO 100%. In spoken dialogue/films, A1 and A2 form the foundational base (typically 35% to 65% combined), while B1, B2, C1, C2 represent conversational and advanced vocabulary. None of the levels should be 0%.
+The CEFR distribution percentages (A1, A2, B1, B2, C1, C2) MUST SUM EXACTLY TO 100%. None of the levels should be 0%.
 
 3. WORDS REQUIREMENTS:
 - Exactly 10 Difficult Academic Words (ئەکادیمی و پێشکەوتوو): Real advanced words found in the script, with accurate Sorani explanations. NEVER leave definitions empty.
@@ -1105,7 +1110,16 @@ export const parseLinguisticAnalysisText = (rawText: string, fallbackEnglishText
         }
     }
 
-    // STEP 3: Ensure 100% Guaranteed 10 Words for Repeated Words using deterministic counts
+    // STEP 2.5: STRICT SCRIPT WORD VALIDATION (Filter out any external hallucinated words)
+    const scriptWordMatches = (fallbackEnglishText || rawText).toLowerCase().match(/\b[a-zA-Z]{2,}\b/g) || [];
+    const scriptWordSet = new Set(scriptWordMatches);
+
+    if (scriptWordSet.size >= 15) {
+        difficultWords = difficultWords.filter(dw => scriptWordSet.has(dw.word.toLowerCase()));
+        repeatedWords = repeatedWords.filter(rw => scriptWordSet.has(rw.word.toLowerCase()));
+    }
+
+    // STEP 3: Ensure 100% Guaranteed 10 Words for Repeated Words using deterministic counts from script
     if (repeatedWords.length < 10 && stats.topRepeated.length > 0) {
         for (const tr of stats.topRepeated) {
             if (!repeatedWords.some(rw => rw.word.toLowerCase() === tr.word.toLowerCase())) {
@@ -1130,7 +1144,7 @@ export const parseLinguisticAnalysisText = (rawText: string, fallbackEnglishText
         }
     });
 
-    // STEP 4: Ensure Guaranteed 10 Difficult Words
+    // STEP 4: Ensure Guaranteed 10 Difficult Words strictly from candidate words in script
     if (difficultWords.length < 10 && stats.candidateAdvancedWords.length > 0) {
         for (const cWord of stats.candidateAdvancedWords) {
             const titleCase = cWord.charAt(0).toUpperCase() + cWord.slice(1);
