@@ -1939,8 +1939,24 @@ Format your output EXACTLY as follows using delimiter tags:
                                     </div>
                                 )}
                                 <div className="video-quick-controls">
-                                    <button onClick={() => seekToTime(Math.max(0, currentTime - 5))} title={lang === 'en' ? '5s Backward' : '٥ چرکە بۆ دواوە'}><RotateCcw size={14} /> -5s</button>
-                                    <button onClick={() => seekToTime(currentTime + 5)} title={lang === 'en' ? '5s Forward' : '٥ چرکە بۆ پێشەوە'}><RotateCw size={14} /> +5s</button>
+                                    <button
+                                        type="button"
+                                        className="btn-quick-seek btn-seek-back"
+                                        onClick={() => seekToTime(Math.max(0, currentTime - 5))}
+                                        title={lang === 'en' ? '5s Backward' : '٥ چرکە بۆ دواوە'}
+                                    >
+                                        <RotateCcw size={12} className="seek-icon" />
+                                        <span>-5s</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="btn-quick-seek btn-seek-fwd"
+                                        onClick={() => seekToTime(currentTime + 5)}
+                                        title={lang === 'en' ? '5s Forward' : '٥ چرکە بۆ پێشەوە'}
+                                    >
+                                        <RotateCw size={12} className="seek-icon" />
+                                        <span>+5s</span>
+                                    </button>
                                 </div>
                             </div>
 
