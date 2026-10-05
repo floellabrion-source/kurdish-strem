@@ -107,6 +107,7 @@ export default function Watch() {
     const isScrubbingRef = useRef(false);
     const ignoreVideoErrorUntilRef = useRef(0);
     const modalOpenedAtRef = useRef(0);
+    const isViewportFullscreenRef = useRef(false);
 
     const [movie, setMovie] = useState<Movie | null>(null);
     const [loading, setLoading] = useState(true);
@@ -1566,17 +1567,22 @@ CRITICAL RULES:
     useEffect(() => {
         const handler = () => {
             const doc: any = document;
-            const video: any = videoRef.current;
-            const isFs = Boolean(
+            const isNativeFs = Boolean(
                 doc.fullscreenElement ||
                 doc.webkitFullscreenElement ||
                 doc.mozFullScreenElement ||
-                doc.msFullscreenElement ||
-                video?.webkitDisplayingFullscreen
+                doc.msFullscreenElement
             );
-            setIsFullscreen(isFs);
-            if (!isFs && window.screen && (window.screen.orientation as any)?.unlock) {
-                try { (window.screen.orientation as any).unlock(); } catch (e) {}
+            
+            if (!isNativeFs && !isViewportFullscreenRef.current) {
+                setIsFullscreen(false);
+                document.body.classList.remove('player-in-fullscreen');
+                if (window.screen && (window.screen.orientation as any)?.unlock) {
+                    try { (window.screen.orientation as any).unlock(); } catch (e) {}
+                }
+            } else if (isNativeFs) {
+                setIsFullscreen(true);
+                document.body.classList.add('player-in-fullscreen');
             }
         };
 
@@ -1585,21 +1591,12 @@ CRITICAL RULES:
         document.addEventListener('mozfullscreenchange', handler);
         document.addEventListener('MSFullscreenChange', handler);
 
-        const video = videoRef.current;
-        if (video) {
-            video.addEventListener('webkitbeginfullscreen', handler);
-            video.addEventListener('webkitendfullscreen', handler);
-        }
-
         return () => {
             document.removeEventListener('fullscreenchange', handler);
             document.removeEventListener('webkitfullscreenchange', handler);
             document.removeEventListener('mozfullscreenchange', handler);
             document.removeEventListener('MSFullscreenChange', handler);
-            if (video) {
-                video.removeEventListener('webkitbeginfullscreen', handler);
-                video.removeEventListener('webkitendfullscreen', handler);
-            }
+            document.body.classList.remove('player-in-fullscreen');
         };
     }, []);
 
@@ -1833,41 +1830,16 @@ CRITICAL RULES:
     const toggleFullscreen = async () => {
         const doc: any = document;
         const container: any = containerRef.current;
-        const video: any = videoRef.current;
 
-        const isFs = Boolean(
+        const isNativeFs = Boolean(
             doc.fullscreenElement ||
             doc.webkitFullscreenElement ||
             doc.mozFullScreenElement ||
-            doc.msFullscreenElement ||
-            video?.webkitDisplayingFullscreen
+            doc.msFullscreenElement
         );
 
-        if (!isFs) {
-            try {
-                if (container?.requestFullscreen) {
-                    await container.requestFullscreen();
-                } else if (container?.webkitRequestFullscreen) {
-                    await container.webkitRequestFullscreen();
-                } else if (container?.mozRequestFullScreen) {
-                    await container.mozRequestFullScreen();
-                } else if (container?.msRequestFullscreen) {
-                    await container.msRequestFullscreen();
-                } else if (video?.webkitEnterFullscreen) {
-                    video.webkitEnterFullscreen();
-                }
-
-                // Automatically rotate / lock to landscape on mobile devices
-                if (window.screen && (window.screen.orientation as any)?.lock) {
-                    await (window.screen.orientation as any).lock('landscape').catch(() => {});
-                }
-            } catch (err) {
-                console.warn('Fullscreen failed:', err);
-                if (video?.webkitEnterFullscreen) {
-                    try { video.webkitEnterFullscreen(); } catch (e) {}
-                }
-            }
-        } else {
+        if (isFullscreen || isNativeFs || isViewportFullscreenRef.current) {
+            // Exit fullscreen
             try {
                 if (doc.exitFullscreen) {
                     await doc.exitFullscreen();
@@ -1878,13 +1850,55 @@ CRITICAL RULES:
                 } else if (doc.msExitFullscreen) {
                     await doc.msExitFullscreen();
                 }
+            } catch (e) {}
 
-                if (window.screen && (window.screen.orientation as any)?.unlock) {
-                    try { (window.screen.orientation as any).unlock(); } catch (e) {}
-                }
-            } catch (err) {
-                console.warn('Exit fullscreen failed:', err);
+            isViewportFullscreenRef.current = false;
+            setIsFullscreen(false);
+            document.body.classList.remove('player-in-fullscreen');
+
+            if (window.screen && (window.screen.orientation as any)?.unlock) {
+                try { (window.screen.orientation as any).unlock(); } catch (e) {}
             }
+            return;
+        }
+
+        // Enter fullscreen
+        // Try native container requestFullscreen first (supported on Desktop, Android Chrome, iPadOS)
+        let enteredNative = false;
+        try {
+            if (container?.requestFullscreen) {
+                await container.requestFullscreen();
+                enteredNative = true;
+            } else if (container?.webkitRequestFullscreen) {
+                await container.webkitRequestFullscreen();
+                enteredNative = true;
+            } else if (container?.mozRequestFullScreen) {
+                await container.mozRequestFullScreen();
+                enteredNative = true;
+            } else if (container?.msRequestFullscreen) {
+                await container.msRequestFullscreen();
+                enteredNative = true;
+            }
+        } catch (err) {
+            console.warn('Native container fullscreen unavailable or blocked:', err);
+        }
+
+        if (enteredNative) {
+            isViewportFullscreenRef.current = false;
+            setIsFullscreen(true);
+            document.body.classList.add('player-in-fullscreen');
+        } else {
+            // Fallback for iPhone/iOS Safari: Viewport Fullscreen (preserves React DOM, custom subtitles, dual subtitles & controls)
+            isViewportFullscreenRef.current = true;
+            setIsFullscreen(true);
+            document.body.classList.add('player-in-fullscreen');
+        }
+
+        // Automatically rotate / lock to landscape on mobile devices if supported
+        if (window.screen && (window.screen.orientation as any)?.lock) {
+            try {
+                await (window.screen.orientation as any).lock('landscape');
+            } catch (e) {}
         }
     };
 
@@ -2198,7 +2212,7 @@ CRITICAL RULES:
 
     return (
         <div
-            className="watch-container"
+            className={`watch-container ${isFullscreen ? 'is-fullscreen ios-fullscreen' : ''}`}
             ref={containerRef}
             onMouseMove={handleContainerMouseMove}
             onMouseLeave={() => isPlaying && setShowControls(false)}
@@ -2222,6 +2236,8 @@ CRITICAL RULES:
                 className={`watch-video ${isSensitiveNow ? 'blur-video' : ''} aspect-${aspectRatio} ${isFlipped ? 'video-flipped' : ''}`}
                 autoPlay
                 playsInline
+                controls={false}
+                {...({ 'webkit-playsinline': 'true', 'x5-playsinline': 'true', 'x5-video-player-type': 'h5-page' } as any)}
                 onWaiting={() => setIsBuffering(true)}
                 onCanPlay={() => setIsBuffering(false)}
                 onPlaying={() => {
