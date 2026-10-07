@@ -7158,8 +7158,8 @@ app.post('/api/admin/notifications/broadcast', requireAuth, requireSuperAdmin, a
     }
 });
 
-// ======= DYNAMIC OPENGRAPH SOCIAL MEDIA PREVIEWS (Telegram, WhatsApp, Facebook, Viber) =======
-const BOT_USER_AGENTS = /telegrambot|whatsapp|facebookexternalhit|twitterbot|discordbot|skypeuripreview|linkedinbot|viber|slackbot|applebot|curl|wget/i;
+// ======= DYNAMIC OPENGRAPH SOCIAL MEDIA PREVIEWS (Google, Telegram, WhatsApp, Facebook, Viber) =======
+const BOT_USER_AGENTS = /googlebot|google-inspectiontool|bingbot|yandex|baiduspider|telegrambot|whatsapp|facebookexternalhit|twitterbot|discordbot|skypeuripreview|linkedinbot|viber|slackbot|applebot|curl|wget/i;
 
 function renderOpenGraphHtml(item, reqUrl) {
     const isSeries = item.type === 'series';
@@ -7177,6 +7177,8 @@ function renderOpenGraphHtml(item, reqUrl) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${title}</title>
+    <meta name="description" content="${description}">
+    <link rel="canonical" href="${canonicalUrl}" />
     
     <!-- OpenGraph Metadata -->
     <meta property="og:type" content="video.movie" />
