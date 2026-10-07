@@ -6758,6 +6758,33 @@ app.get('/api/admin/analytics', requireAuth, requireAdmin, (req, res) => {
     }
 });
 
+// Reset/Clear Analytics (Super Admin only)
+app.post('/api/admin/analytics/reset', requireAuth, requireAdmin, (req, res) => {
+    try {
+        const emptyAnalytics = {
+            visits: [],
+            watchEvents: []
+        };
+        writeAnalytics(emptyAnalytics);
+        
+        // Also clear live watchers in-memory map
+        liveWatchers.clear();
+
+        logActivity(
+            req.user?.id || 'admin',
+            req.user?.username || 'admin',
+            'ANALYTICS_RESET',
+            'سفرکردنەوەی تەواوی ئامار و سەردانکەرەکان لەلایەن ئەدمینەوە',
+            req
+        );
+
+        res.json({ success: true, message: 'ئامارەکان بە سەرکەوتوویی سفرکرانەوە' });
+    } catch (err) {
+        console.error('[Admin Analytics Reset Error]:', err);
+        res.status(500).json({ error: 'سفرکردنەوەی ئامارەکان سەرکەوتوو نەبوو: ' + err.message });
+    }
+});
+
 // ==========================================
 // فەرهەنگۆک و وشەنامەی یەکگرتووی تیم (Team Translation Glossary)
 // ==========================================

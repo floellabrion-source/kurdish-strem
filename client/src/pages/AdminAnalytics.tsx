@@ -6,7 +6,7 @@ import {
     Smartphone, Monitor, Tablet, Globe, 
     TrendingUp, RefreshCw, Flame, Eye, Play, Sparkles, 
     Award, Tv, Radio, MapPin, Clock, UserCheck, ShieldCheck,
-    Compass, Laptop
+    Compass, Laptop, Trash2
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import './AdminAnalytics.css';
@@ -103,6 +103,7 @@ export default function AdminAnalytics() {
     const [data, setData] = useState<AnalyticsData | null>(null);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [resetting, setResetting] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
     const [selectedPeriod, setSelectedPeriod] = useState<'thisWeek' | 'thisMonth' | 'thisYear' | 'allTime'>('thisWeek');
     const [autoRefresh, setAutoRefresh] = useState(true);
@@ -120,6 +121,19 @@ export default function AdminAnalytics() {
         } finally {
             setLoading(false);
             if (isManual) setRefreshing(false);
+        }
+    };
+
+    const handleResetAnalytics = async () => {
+        if (!window.confirm(lang === 'en' ? 'Are you sure you want to reset all visitor analytics and history to zero?' : 'دڵنیایت لەوەی دەتەوێت هەموو ئامارەکان و مێژووی سەردانکەران سفر بکەیتەوە لە ئێستاوە؟')) return;
+        try {
+            setResetting(true);
+            await axios.post('/api/admin/analytics/reset');
+            await loadAnalytics(true);
+        } catch (err: any) {
+            alert(err.response?.data?.error || err.message);
+        } finally {
+            setResetting(false);
         }
     };
 
@@ -193,6 +207,16 @@ export default function AdminAnalytics() {
                     >
                         <RefreshCw size={16} className={refreshing ? 'spinning' : ''} />
                         <span>{lang === 'en' ? 'Refresh' : 'نوێکردنەوە'}</span>
+                    </button>
+
+                    <button 
+                        className="btn-reset-analytics"
+                        onClick={handleResetAnalytics} 
+                        disabled={resetting}
+                        title={lang === 'en' ? 'Reset all analytics to zero' : 'سفرکردنەوەی هەموو ئامارەکان'}
+                    >
+                        <Trash2 size={15} />
+                        <span>{resetting ? (lang === 'en' ? 'Resetting...' : 'خەریکی سفرکردنەوەیە...') : (lang === 'en' ? 'Reset Stats' : 'سفرکردنەوەی ئامارەکان')}</span>
                     </button>
                 </div>
             </div>

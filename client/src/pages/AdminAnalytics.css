@@ -101,6 +101,35 @@
     transform: translateY(-1px);
 }
 
+.btn-reset-analytics {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: rgba(239, 68, 68, 0.12);
+    color: #fca5a5;
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-reset-analytics:hover {
+    background: #ef4444;
+    color: #ffffff;
+    border-color: #ef4444;
+    box-shadow: 0 0 14px rgba(239, 68, 68, 0.4);
+    transform: translateY(-1px);
+}
+
+.btn-reset-analytics:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
 /* --- 4 Primary Stat Highlight Cards --- */
 .primary-stats-grid {
     display: grid;
