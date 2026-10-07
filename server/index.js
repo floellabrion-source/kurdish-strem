@@ -797,7 +797,14 @@ const COUNTRY_MAP = {
     'AE': { name: 'ئیمارات', en: 'UAE', flag: '🇦🇪' },
     'QA': { name: 'قەتەر', en: 'Qatar', flag: '🇶🇦' },
     'KW': { name: 'کووەیت', en: 'Kuwait', flag: '🇰🇼' },
-    'SA': { name: 'عەرەبستانی سعودی', en: 'Saudi Arabia', flag: '🇸🇦' }
+    'SA': { name: 'عەرەبستانی سعودی', en: 'Saudi Arabia', flag: '🇸🇦' },
+    'EG': { name: 'میسر', en: 'Egypt', flag: '🇪🇬' },
+    'KR': { name: 'کۆریای باشوور', en: 'South Korea', flag: '🇰🇷' },
+    'IN': { name: 'هیندستان', en: 'India', flag: '🇮🇳' },
+    'MY': { name: 'مالیزیا', en: 'Malaysia', flag: '🇲🇾' },
+    'SG': { name: 'سینگاپوور', en: 'Singapore', flag: '🇸🇬' },
+    'JP': { name: 'ژاپۆن', en: 'Japan', flag: '🇯🇵' },
+    'CN': { name: 'چین', en: 'China', flag: '🇨🇳' }
 };
 
 function getCountryInfo(code) {
@@ -809,12 +816,40 @@ function getCountryInfo(code) {
     return { code: upper, name: upper, en: upper, flag: '🌍' };
 }
 
-// Analytics middleware
+// Smart Visitor & Analytics Middleware
+const BOT_REGEX = /googlebot|google-inspectiontool|bingbot|yandex|baiduspider|duckduckbot|slurp|facebookexternalhit|twitterbot|telegrambot|whatsapp|discordbot|applebot|curl|wget|python|postman|insomnia|go-http-client|headlesschrome|phantomjs|petalbot|semrush|ahrefs|mj12bot|dotbot|screaming frog|uptime|bot|crawler|spider/i;
+const IGNORED_PATHS = /^\/(?:api|assets|static|uploads|subtitles|ws|health|favicon|manifest|robots\.txt|sitemap\.xml)/i;
+const STATIC_EXTENSIONS = /\.(?:js|css|png|jpg|jpeg|gif|webp|svg|ico|woff2?|ttf|eot|mp4|mkv|m3u8|ts|vtt|srt|json)$/i;
+
 app.use((req, res, next) => {
     try {
+        // Only track legitimate human page views (GET requests to platform routes)
+        if (req.method !== 'GET') return next();
+        if (IGNORED_PATHS.test(req.path) || STATIC_EXTENSIONS.test(req.path)) return next();
+
         let ip = req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.socket?.remoteAddress || req.ip || '';
         if (typeof ip === 'string' && ip.includes(',')) ip = ip.split(',')[0].trim();
+        
+        // Exclude localhost/loopback
+        if (ip === '127.0.0.1' || ip === '::1' || ip === 'localhost') return next();
+
         const ua = req.headers['user-agent'] || '';
+        
+        // Filter out automated bots/scrapers
+        if (BOT_REGEX.test(ua)) return next();
+
+        // Exclude admin dashboard activities from skewing consumer traffic
+        const authHeader = req.headers.authorization || '';
+        if (authHeader.startsWith('Bearer ')) {
+            try {
+                const token = authHeader.split(' ')[1];
+                const decoded = jwt.verify(token, JWT_SECRET);
+                if (decoded && (decoded.role === 'admin' || decoded.role === 'owner')) {
+                    return next();
+                }
+            } catch (e) {}
+        }
+
         const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
         
         const rawCountry = req.headers['cf-ipcountry'] || 'IQ';
@@ -851,6 +886,7 @@ app.use((req, res, next) => {
         const analytics = readAnalytics();
         if (!analytics.visits) analytics.visits = [];
         
+        // Deduplicate unique visitors per IP on the same day
         const existingVisit = analytics.visits.find(v => v.ip === ip && v.date === today);
         if (!existingVisit) {
             analytics.visits.push({ 
@@ -865,7 +901,7 @@ app.use((req, res, next) => {
                 date: today, 
                 timestamp: Date.now() 
             });
-            if (analytics.visits.length > 10000) analytics.visits = analytics.visits.slice(-10000);
+            if (analytics.visits.length > 20000) analytics.visits = analytics.visits.slice(-20000);
             writeAnalytics(analytics);
         }
     } catch (err) {
