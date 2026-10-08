@@ -200,7 +200,11 @@ export default function EpisodeManagerModal({
     const fetchAiSynopsis = async () => {
         setFetchingSynopsis(true);
         try {
-            const prompt = `کورتەیەکی سەرنجڕاکێش و پوخت بە کوردی سۆرانی (٢ بۆ ٣ دێڕ) بۆ ئەم زنجیرەیە یان فیلمە بنووسە: "${movie.title}".
+            const targetDesc = aiHubTarget?.type === 'single' && aiHubTarget?.episode
+                ? `زنجیرەی "${movie.title}" - سیزنی ${aiHubTarget.seasonNum} - ئەڵقەی ${aiHubTarget.episode.number} (${aiHubTarget.episode.title || ''})`
+                : `زنجیرە یان فیلمی: "${movie.title}"`;
+
+            const prompt = `کورتەیەکی سەرنجڕاکێش و پوخت بە کوردی سۆرانی (٢ بۆ ٣ دێڕ) لەسەر چیرۆک و ڕووداوەکان بنووسە بۆ ${targetDesc}.
 تەنها دەقی کورتەکە بنووسە بەبێ هیچ پێشەکی، ناونیشان، یان کەوانەی زیادە.`;
             const res = await axios.post('/api/ai/generate', {
                 contents: [{ parts: [{ text: prompt }] }],
@@ -318,9 +322,9 @@ export default function EpisodeManagerModal({
             seasonNum,
             episode: ep
         });
-        if (!aiStoryContext && (movie.descriptionKu || movie.description)) {
-            setAiStoryContext(movie.descriptionKu || movie.description || '');
-        }
+        // Always reset context for the active episode so previous episode's text doesn't persist
+        const initialContext = ep.description || movie.descriptionKu || movie.description || '';
+        setAiStoryContext(initialContext);
 
         // Check if there is already partial translation
         axios.get(`/api/admin/movies/${movie.id}/srt-content`, {
@@ -369,9 +373,7 @@ export default function EpisodeManagerModal({
             seasonNum: season.number,
             season
         });
-        if (!aiStoryContext && (movie.descriptionKu || movie.description)) {
-            setAiStoryContext(movie.descriptionKu || movie.description || '');
-        }
+        setAiStoryContext(movie.descriptionKu || movie.description || '');
     };
 
     // ─── 6. START PROCESSING FROM AI MASTER HUB ───
