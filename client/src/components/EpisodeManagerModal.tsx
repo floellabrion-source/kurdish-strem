@@ -487,21 +487,12 @@ export default function EpisodeManagerModal({
                     showToast(`وەرگێڕانی ئەڵقەی ${ep.number} ڕاگیرا ⏸️`);
                     updateAiTask(taskId, { status: 'paused', statusText: 'وەرگێڕان ڕاگیرا' });
                 } else {
-                    const updatedSeasons = (movie.seasons || []).map(s => {
-                        if (s.number !== seasonNum) return s;
-                        return {
-                            ...s,
-                            episodes: s.episodes.map(e => {
-                                if (e.id !== ep.id) return e;
-                                return {
-                                    ...e,
-                                    translatedSrt: mode === 'analyze_only' ? (e.translatedSrt || null) : 'translated.srt',
-                                    languageMetrics: result.metrics || e.languageMetrics
-                                };
-                            })
-                        };
+                    // Call atomic endpoint to guarantee this episode's metrics are saved without wiping others
+                    await axios.post(`/api/admin/movies/${movie.id}/seasons/${seasonNum}/episodes/${ep.id}/metrics`, {
+                        languageMetrics: result.metrics || ep.languageMetrics,
+                        translatedSrt: mode === 'analyze_only' ? (ep.translatedSrt || null) : 'translated.srt'
                     });
-                    await axios.put(`/api/admin/movies/${movie.id}`, { seasons: updatedSeasons });
+                    if (onReloadMovie) onReloadMovie();
                     showToast(`ئەڵقەی ${ep.number} بە سەرکەوتوویی تەواو بوو! ✓`);
                     removeAiTask(taskId);
                     setEpTransProgress(prev => {
@@ -521,7 +512,6 @@ export default function EpisodeManagerModal({
                 }
 
                 let doneCount = 0;
-                let workingSeasons: Season[] = JSON.parse(JSON.stringify(movie.seasons || []));
 
                 for (const ep of eps) {
                     if (signal.aborted) break;
@@ -563,21 +553,12 @@ export default function EpisodeManagerModal({
 
                     if (result.status === 'done') {
                         doneCount++;
-                        workingSeasons = workingSeasons.map((s: Season) => {
-                            if (s.number !== season.number) return s;
-                            return {
-                                ...s,
-                                episodes: s.episodes.map((e: Episode) => {
-                                    if (e.id !== ep.id) return e;
-                                    return {
-                                        ...e,
-                                        translatedSrt: mode === 'analyze_only' ? (e.translatedSrt || null) : 'translated.srt',
-                                        languageMetrics: result.metrics || e.languageMetrics
-                                    };
-                                })
-                            };
+                        // Atomic save for each completed episode in bulk mode
+                        await axios.post(`/api/admin/movies/${movie.id}/seasons/${season.number}/episodes/${ep.id}/metrics`, {
+                            languageMetrics: result.metrics || ep.languageMetrics,
+                            translatedSrt: mode === 'analyze_only' ? (ep.translatedSrt || null) : 'translated.srt'
                         });
-                        await axios.put(`/api/admin/movies/${movie.id}`, { seasons: workingSeasons });
+                        if (onReloadMovie) onReloadMovie();
                     }
                 }
                 removeAiTask(taskId);

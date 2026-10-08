@@ -4318,9 +4318,36 @@ app.put('/api/admin/movies/:id', requireAuth, requireAdmin, async (req, res) => 
 
     const cleanTitle = title ? await resolveCleanTitle(title) : movies[idx].title;
 
+    let mergedSeasons = rest.seasons !== undefined ? rest.seasons : movies[idx].seasons;
+    if (Array.isArray(rest.seasons) && Array.isArray(movies[idx].seasons)) {
+        mergedSeasons = rest.seasons.map(inSeason => {
+            const existingSeason = movies[idx].seasons.find(s => s.number === inSeason.number);
+            if (!existingSeason) return inSeason;
+            return {
+                ...existingSeason,
+                ...inSeason,
+                episodes: (inSeason.episodes || []).map(inEp => {
+                    const existingEp = (existingSeason.episodes || []).find(e => e.id === inEp.id || String(e.number) === String(inEp.number));
+                    if (!existingEp) return inEp;
+                    return {
+                        ...existingEp,
+                        ...inEp,
+                        languageMetrics: inEp.languageMetrics !== undefined ? inEp.languageMetrics : existingEp.languageMetrics,
+                        videoUrl: inEp.videoUrl !== undefined ? inEp.videoUrl : existingEp.videoUrl,
+                        videoFile: inEp.videoFile !== undefined ? inEp.videoFile : existingEp.videoFile,
+                        originalSrt: inEp.originalSrt !== undefined ? inEp.originalSrt : existingEp.originalSrt,
+                        translatedSrt: inEp.translatedSrt !== undefined ? inEp.translatedSrt : existingEp.translatedSrt,
+                        sensitiveScenes: inEp.sensitiveScenes !== undefined ? inEp.sensitiveScenes : existingEp.sensitiveScenes
+                    };
+                })
+            };
+        });
+    }
+
     movies[idx] = { 
         ...movies[idx], 
         ...rest,
+        seasons: mergedSeasons,
         title: cleanTitle,
         level: level || undefined,
         languageMetrics: languageMetrics || undefined,
@@ -6017,6 +6044,43 @@ app.post(['/api/admin/movies/:id/seasons/:seasonNum/episodes/:epId/video-url', '
     } catch (err) {
         console.error('Error saving episode video URL:', err);
         return res.status(500).json({ error: 'هەڵە لە پاشەکەوتکردنی لینکی ڤیدیۆ' });
+    }
+});
+
+// Atomic update for Episode Language Metrics (prevents overwriting other episodes)
+app.post(['/api/admin/movies/:id/seasons/:seasonNum/episodes/:epId/metrics', '/api/admin/movies/:id/seasons/:seasonNum/episodes/:epId/language-metrics'], requireAuth, requireAdmin, (req, res) => {
+    try {
+        const { id, seasonNum, epId } = req.params;
+        const { languageMetrics, metrics, translatedSrt } = req.body;
+        const finalMetrics = languageMetrics || metrics;
+
+        const movies = readMovies();
+        const mIdx = movies.findIndex(m => m.id === id);
+        if (mIdx === -1) return res.status(404).json({ error: 'فیلم/زنجیرە نەدۆزرایەوە' });
+
+        const sNum = parseInt(seasonNum, 10);
+        const sIdx = (movies[mIdx].seasons || []).findIndex(s => s.number === sNum);
+        if (sIdx === -1) return res.status(404).json({ error: 'سیزن نەدۆزرایەوە' });
+
+        const epIdx = (movies[mIdx].seasons[sIdx].episodes || []).findIndex(e => e.id === epId || String(e.number) === String(epId));
+        if (epIdx === -1) return res.status(404).json({ error: 'ئەڵقە نەدۆزرایەوە' });
+
+        if (finalMetrics) {
+            movies[mIdx].seasons[sIdx].episodes[epIdx].languageMetrics = finalMetrics;
+        }
+        if (translatedSrt !== undefined) {
+            movies[mIdx].seasons[sIdx].episodes[epIdx].translatedSrt = translatedSrt;
+        }
+        writeMovies(movies);
+
+        return res.json({ 
+            success: true, 
+            message: 'ئامارەکانی زمانی ئەڵقە بە سەرکەوتوویی پاشەکەوت کران',
+            episode: movies[mIdx].seasons[sIdx].episodes[epIdx]
+        });
+    } catch (err) {
+        console.error('Error saving episode language metrics:', err);
+        return res.status(500).json({ error: 'هەڵە لە پاشەکەوتکردنی ئامارەکان' });
     }
 });
 

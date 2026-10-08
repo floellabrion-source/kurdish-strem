@@ -183,34 +183,51 @@ export default function Admin() {
     const handleSaveLanguageMetrics = async (newMetrics: LanguageMetrics) => {
         if (!metricsTarget) return;
         try {
-            const movie = movies.find(m => m.id === metricsTarget.movieId);
-            if (!movie) return;
-
-            if (metricsTarget.seasonNum !== undefined && metricsTarget.episodeId) {
-                const updatedSeasons = (movie.seasons || []).map(s => {
-                    if (s.number !== metricsTarget.seasonNum) return s;
+            const { movieId, seasonNum, episodeId } = metricsTarget;
+            
+            // 1. Optimistic UI update
+            setMovies(prev => prev.map(m => {
+                if (m.id !== movieId) return m;
+                if (seasonNum !== undefined && episodeId) {
                     return {
-                        ...s,
-                        episodes: s.episodes.map(e => {
-                            if (e.id !== metricsTarget.episodeId) return e;
-                            return { ...e, languageMetrics: newMetrics };
+                        ...m,
+                        seasons: (m.seasons || []).map((s: Season) => {
+                            if (s.number !== seasonNum) return s;
+                            return {
+                                ...s,
+                                episodes: (s.episodes || []).map((e: Episode) => {
+                                    if (e.id !== episodeId && String(e.number) !== String(episodeId)) return e;
+                                    return { ...e, languageMetrics: newMetrics };
+                                })
+                            };
                         })
                     };
+                } else {
+                    return {
+                        ...m,
+                        languageMetrics: newMetrics,
+                        level: newMetrics.cefrLevel || m.level || 'A2'
+                    };
+                }
+            }));
+
+            if (seasonNum !== undefined && episodeId) {
+                // Call atomic endpoint
+                await axios.post(`/api/admin/movies/${movieId}/seasons/${seasonNum}/episodes/${episodeId}/metrics`, {
+                    languageMetrics: newMetrics
                 });
-                await axios.put(`/api/admin/movies/${movie.id}`, { seasons: updatedSeasons });
                 toast('ئامارەکانی زمانی ئەڵقە بە سەرکەوتوویی پاشەکەوت کران ✓');
             } else {
                 const levelCefr = newMetrics.cefrLevel || 'A2';
-                await axios.put(`/api/admin/movies/${movie.id}`, { languageMetrics: newMetrics, level: levelCefr });
+                await axios.put(`/api/admin/movies/${movieId}`, { languageMetrics: newMetrics, level: levelCefr });
                 toast('ئامارەکانی زمانی فیلم بە سەرکەوتوویی پاشەکەوت کران ✓');
+            }
+            setMetricsTarget(null);
+        } catch (err) {
+            console.error(err);
+            toast('نەتوانرا ئامارەکان پاشەکەوت بکرێن', 'error');
         }
-        load();
-        setMetricsTarget(null);
-    } catch (err) {
-        console.error(err);
-        toast('نەتوانرا ئامارەکان پاشەکەوت بکرێن', 'error');
-    }
-};
+    };
 
 const [movieTransProgress, setMovieTransProgress] = useState<Record<string, { status: 'running' | 'paused' | 'done', statusText: string, percent: number }>>({});
 const [aiMovieTarget, setAiMovieTarget] = useState<Movie | null>(null);
