@@ -5987,6 +5987,39 @@ app.post('/api/admin/movies/:id/seasons/:seasonNum/episodes/:episodeNum/video', 
     res.json({ success: true, filename: req.file.filename });
 });
 
+// Atomic update for Episode Video URL (prevents race condition when updating multiple episodes)
+app.post(['/api/admin/movies/:id/seasons/:seasonNum/episodes/:epId/video-url', '/api/admin/movies/:id/seasons/:seasonNum/episodes/:epId/url'], requireAuth, requireAdmin, (req, res) => {
+    try {
+        const { id, seasonNum, epId } = req.params;
+        const { videoUrl, url } = req.body;
+        const finalUrl = (videoUrl !== undefined ? videoUrl : url) || '';
+
+        const movies = readMovies();
+        const mIdx = movies.findIndex(m => m.id === id);
+        if (mIdx === -1) return res.status(404).json({ error: 'فیلم/زنجیرە نەدۆزرایەوە' });
+
+        const sNum = parseInt(seasonNum, 10);
+        const sIdx = (movies[mIdx].seasons || []).findIndex(s => s.number === sNum);
+        if (sIdx === -1) return res.status(404).json({ error: 'سیزن نەدۆزرایەوە' });
+
+        const epIdx = (movies[mIdx].seasons[sIdx].episodes || []).findIndex(e => e.id === epId || String(e.number) === String(epId));
+        if (epIdx === -1) return res.status(404).json({ error: 'ئەڵقە نەدۆزرایەوە' });
+
+        movies[mIdx].seasons[sIdx].episodes[epIdx].videoUrl = finalUrl.trim();
+        movies[mIdx].seasons[sIdx].episodes[epIdx].videoUpdatedAt = Date.now();
+        writeMovies(movies);
+
+        return res.json({ 
+            success: true, 
+            message: 'لینکی ڤیدیۆ بە سەرکەوتوویی پاشەکەوت کرا',
+            episode: movies[mIdx].seasons[sIdx].episodes[epIdx]
+        });
+    } catch (err) {
+        console.error('Error saving episode video URL:', err);
+        return res.status(500).json({ error: 'هەڵە لە پاشەکەوتکردنی لینکی ڤیدیۆ' });
+    }
+});
+
 const epSrtUpload = makeStorage(
     (req) => path.join(MOVIES_DIR, req.params.id, 'seasons', `s${req.params.seasonNum}`, `e${req.params.episodeNum}`),
     (req) => `${req.params.type}.srt`

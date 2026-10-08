@@ -1046,29 +1046,66 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
     };
 
     const saveMovieVideoUrl = async (movieId: string, url: string) => {
-        const m = movies.find(x => x.id === movieId);
-        if (!m) return;
-        const updated = JSON.parse(JSON.stringify(m));
-        updated.videoUrl = url;
+        const cleanUrl = (url || '').trim();
+        setMovies(prev => prev.map(m => m.id === movieId ? { ...m, videoUrl: cleanUrl } : m));
         try {
-            await axios.put(`/api/admin/movies/${movieId}`, updated);
+            await axios.put(`/api/admin/movies/${movieId}`, { videoUrl: cleanUrl });
             toast('لینکی ڤیدیۆ پاشەکەوت کرا ✓');
-            load();
-        } catch { toast('کێشەیەک ڕووی دا', 'error'); }
+        } catch {
+            const m = movies.find(x => x.id === movieId);
+            if (!m) return;
+            const updated = JSON.parse(JSON.stringify(m));
+            updated.videoUrl = cleanUrl;
+            try {
+                await axios.put(`/api/admin/movies/${movieId}`, updated);
+                toast('لینکی ڤیدیۆ پاشەکەوت کرا ✓');
+            } catch { toast('کێشەیەک ڕووی دا', 'error'); }
+        }
     };
 
     const saveEpVideoUrl = async (movieId: string, seasonNum: number, epId: string, url: string) => {
-        const m = movies.find(x => x.id === movieId);
-        if (!m) return;
-        const updated = JSON.parse(JSON.stringify(m));
-        const season = updated.seasons?.find((s: Season) => s.number === seasonNum);
-        const ep = season?.episodes.find((e: Episode) => e.id === epId);
-        if (ep) { ep.videoUrl = url; }
+        const cleanUrl = (url || '').trim();
+        // 1. Optimistic instant state update to prevent race conditions when quickly updating episodes
+        setMovies(prev => prev.map(m => {
+            if (m.id !== movieId) return m;
+            return {
+                ...m,
+                seasons: (m.seasons || []).map((s: Season) => {
+                    if (s.number !== seasonNum) return s;
+                    return {
+                        ...s,
+                        episodes: (s.episodes || []).map((e: Episode) => {
+                            if (e.id === epId || String(e.number) === String(epId)) {
+                                return { ...e, videoUrl: cleanUrl, videoUpdatedAt: Date.now() };
+                            }
+                            return e;
+                        })
+                    };
+                })
+            };
+        }));
+
+        // 2. Call dedicated atomic endpoint
         try {
-            await axios.put(`/api/admin/movies/${movieId}`, updated);
-            toast('لینکی ڤیدیۆ پاشەکەوت کرا ✓');
-            load();
-        } catch { toast('کێشەیەک ڕووی دا', 'error'); }
+            const res = await axios.post(`/api/admin/movies/${movieId}/seasons/${seasonNum}/episodes/${epId}/video-url`, {
+                videoUrl: cleanUrl
+            });
+            if (res.data?.success) {
+                toast('لینکی ڤیدیۆ پاشەکەوت کرا ✓');
+            }
+        } catch {
+            // Fallback
+            const m = movies.find(x => x.id === movieId);
+            if (!m) return;
+            const updated = JSON.parse(JSON.stringify(m));
+            const season = updated.seasons?.find((s: Season) => s.number === seasonNum);
+            const ep = season?.episodes?.find((e: Episode) => e.id === epId || String(e.number) === String(epId));
+            if (ep) { ep.videoUrl = cleanUrl; }
+            try {
+                await axios.put(`/api/admin/movies/${movieId}`, updated);
+                toast('لینکی ڤیدیۆ پاشەکەوت کرا ✓');
+            } catch { toast('کێشەیەک ڕووی دا', 'error'); }
+        }
     };
 
     const fetchImdbRating = async (title: string, isEditForm: boolean = false) => {
