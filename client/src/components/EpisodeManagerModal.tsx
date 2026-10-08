@@ -812,40 +812,11 @@ export default function EpisodeManagerModal({
                                                 <div key={ep.id} className={`ep-item-card ${hasSub ? 'has-subtitles-card' : ''}`}>
                                                     {/* Top Bar: Action Icons + Title & Badge */}
                                                     <div className="ep-item-top">
+                                                        <div className="ep-title-row">
+                                                            <span className="ep-number-badge">{ep.number}</span>
+                                                            <span className="ep-title-text" title={ep.title}>{ep.title}</span>
+                                                        </div>
                                                         <div className="ep-item-actions-left">
-                                                            {onDeleteEpisode && (
-                                                                <button
-                                                                    className="ep-action-btn del"
-                                                                    title={lang === 'en' ? 'Delete Episode' : 'سڕینەوەی ئەڵقە'}
-                                                                    onClick={() => onDeleteEpisode(movie.id, season.number, ep.id)}
-                                                                >
-                                                                    <Trash2 size={13} />
-                                                                </button>
-                                                            )}
-                                                            <button
-                                                                className="ep-action-btn edit"
-                                                                title={lang === 'en' ? 'Edit Episode Info' : 'دەستکاریکردنی زانیاری ئەڵقە'}
-                                                                onClick={() => onEditEpisode(movie.id, season.number, ep)}
-                                                            >
-                                                                <Edit3 size={13} />
-                                                            </button>
-                                                            <button
-                                                                className="ep-action-btn srt-editor-btn"
-                                                                title={lang === 'en' ? 'Edit Subtitles with Video' : 'ئیدیتکردنی هەردوو سەبتایتڵ لەگەڵ ڤیدیۆکە'}
-                                                                onClick={() => onOpenSrtEditor(movie.id, movie.title, season.number, ep.number, ep.title, epEffectiveVideoUrl)}
-                                                            >
-                                                                <BarChart2 size={13} />
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                className={`ep-action-btn status-btn ${ep.status === 'published' ? 'is-published' : 'is-draft'}`}
-                                                                title={ep.status === 'published' 
-                                                                    ? "بڵاوکراوەتەوە بۆ بینەران - کلیک بکە بۆ گۆڕین بۆ دۆخی تەکنیک و وەرگێڕان" 
-                                                                    : "لە دۆخی تەکنیک و وەرگێڕاندایە (تەنها ئەدمین) - کلیک بکە بۆ بڵاوکردنەوە بۆ بینەران"}
-                                                                onClick={() => handleToggleEpStatus(season.number, ep)}
-                                                            >
-                                                                {ep.status === 'published' ? <Globe size={13} color="#34d399" /> : <Wrench size={13} color="#fbbf24" />}
-                                                            </button>
                                                             {(() => {
                                                                 const isReserved = Boolean(ep.reservation && ep.reservation.expiresAt > Date.now());
                                                                 const isMyReserve = Boolean(isReserved && ep.reservation?.userId === user?.id);
@@ -865,47 +836,74 @@ export default function EpisodeManagerModal({
                                                                     </button>
                                                                 );
                                                             })()}
+                                                            <button
+                                                                type="button"
+                                                                className={`ep-action-btn status-btn ${ep.status === 'published' ? 'is-published' : 'is-draft'}`}
+                                                                title={ep.status === 'published' 
+                                                                    ? "بڵاوکراوەتەوە بۆ بینەران - کلیک بکە بۆ گۆڕین بۆ دۆخی تەکنیک و وەرگێڕان" 
+                                                                    : "لە دۆخی تەکنیک و وەرگێڕاندایە (تەنها ئەدمین) - کلیک بکە بۆ بڵاوکردنەوە بۆ بینەران"}
+                                                                onClick={() => handleToggleEpStatus(season.number, ep)}
+                                                            >
+                                                                {ep.status === 'published' ? <Globe size={13} color="#34d399" /> : <Wrench size={13} color="#fbbf24" />}
+                                                            </button>
+                                                            <button
+                                                                className="ep-action-btn srt-editor-btn"
+                                                                title={lang === 'en' ? 'Edit Subtitles with Video' : 'ئیدیتکردنی هەردوو سەبتایتڵ لەگەڵ ڤیدیۆکە'}
+                                                                onClick={() => onOpenSrtEditor(movie.id, movie.title, season.number, ep.number, ep.title, epEffectiveVideoUrl)}
+                                                            >
+                                                                <BarChart2 size={13} />
+                                                            </button>
+                                                            <button
+                                                                className="ep-action-btn edit"
+                                                                title={lang === 'en' ? 'Edit Episode Info' : 'دەستکاریکردنی زانیاری ئەڵقە'}
+                                                                onClick={() => onEditEpisode(movie.id, season.number, ep)}
+                                                            >
+                                                                <Edit3 size={13} />
+                                                            </button>
+                                                            {onDeleteEpisode && (
+                                                                <button
+                                                                    className="ep-action-btn del"
+                                                                    title={lang === 'en' ? 'Delete Episode' : 'سڕینەوەی ئەڵقە'}
+                                                                    onClick={() => onDeleteEpisode(movie.id, season.number, ep.id)}
+                                                                >
+                                                                    <Trash2 size={13} />
+                                                                </button>
+                                                            )}
                                                         </div>
-                                                        <div className="ep-item-info-right">
-                                                            <div className="ep-title-row">
-                                                                <span className="ep-title-text">{ep.title}</span>
-                                                                <span className="ep-number-badge">{ep.number}</span>
-                                                            </div>
-                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px', flexWrap: 'wrap' }}>
-                                                                {(() => {
-                                                                    const isReserved = Boolean(ep.reservation && ep.reservation.expiresAt > Date.now());
-                                                                    if (!isReserved) return null;
-                                                                    const isMyReserve = Boolean(ep.reservation?.userId === user?.id);
-                                                                    const remainingText = getReservationRemainingLabel(ep.reservation!.expiresAt);
-                                                                    return (
-                                                                        <span
-                                                                            className={`ep-status-tag reservation-tag ${isMyReserve ? 'my-reserve' : 'other-reserve'}`}
-                                                                            title={`حجزکراوە تا: ${new Date(ep.reservation!.expiresAt).toLocaleDateString('ckb')}`}
-                                                                            onClick={() => {
-                                                                                setReserveDaysInput(ep.reservation?.days || 5);
-                                                                                setReserveTarget({ seasonNum: season.number, ep });
-                                                                            }}
-                                                                            style={{ cursor: 'pointer' }}
-                                                                        >
-                                                                            <Lock size={10} /> 🔒 {ep.reservation?.username} ({remainingText})
-                                                                        </span>
-                                                                    );
-                                                                })()}
-                                                                {hasVideo && hasSub ? (
-                                                                    <span className="ep-status-tag ready">✅ {lang === 'en' ? 'Ready' : 'بە تەواوی ئامادەیە'}</span>
-                                                                ) : hasSub ? (
-                                                                    <span className="ep-status-tag sub-only">📝 {lang === 'en' ? 'Subtitles Present' : 'سەبتایتڵ هەیە'}</span>
-                                                                ) : hasVideo ? (
-                                                                    <span className="ep-status-tag video-only">🎬 {lang === 'en' ? 'Video Present' : 'ڤیدیۆ هەیە'}</span>
-                                                                ) : (
-                                                                    <span className="ep-status-tag missing">⏳ {lang === 'en' ? 'Empty' : 'بەتاڵە'}</span>
-                                                                )}
-                                                                {hasSensitive && (
-                                                                    <span className="ep-status-tag sensitive">🛡️ {lang === 'en' ? 'Sensitive Scenes' : 'دیمەنی نەشیاو'} ({ep.sensitiveScenes?.length})</span>
-                                                                )}
-                                                                {ep.duration && <span className="ep-duration-text">{ep.duration}</span>}
-                                                            </div>
-                                                        </div>
+                                                    </div>
+                                                    <div className="ep-status-row-badges">
+                                                        {(() => {
+                                                            const isReserved = Boolean(ep.reservation && ep.reservation.expiresAt > Date.now());
+                                                            if (!isReserved) return null;
+                                                            const isMyReserve = Boolean(ep.reservation?.userId === user?.id);
+                                                            const remainingText = getReservationRemainingLabel(ep.reservation!.expiresAt);
+                                                            return (
+                                                                <span
+                                                                    className={`ep-status-tag reservation-tag ${isMyReserve ? 'my-reserve' : 'other-reserve'}`}
+                                                                    title={`حجزکراوە تا: ${new Date(ep.reservation!.expiresAt).toLocaleDateString('ckb')}`}
+                                                                    onClick={() => {
+                                                                        setReserveDaysInput(ep.reservation?.days || 5);
+                                                                        setReserveTarget({ seasonNum: season.number, ep });
+                                                                    }}
+                                                                    style={{ cursor: 'pointer' }}
+                                                                >
+                                                                    <Lock size={10} /> 🔒 {ep.reservation?.username} ({remainingText})
+                                                                </span>
+                                                            );
+                                                        })()}
+                                                        {hasVideo && hasSub ? (
+                                                            <span className="ep-status-tag ready">✅ {lang === 'en' ? 'Ready' : 'بە تەواوی ئامادەیە'}</span>
+                                                        ) : hasSub ? (
+                                                            <span className="ep-status-tag sub-only">📝 {lang === 'en' ? 'Subtitles Present' : 'سەبتایتڵ هەیە'}</span>
+                                                        ) : hasVideo ? (
+                                                            <span className="ep-status-tag video-only">🎬 {lang === 'en' ? 'Video Present' : 'ڤیدیۆ هەیە'}</span>
+                                                        ) : (
+                                                            <span className="ep-status-tag missing">⏳ {lang === 'en' ? 'Empty' : 'بەتاڵە'}</span>
+                                                        )}
+                                                        {hasSensitive && (
+                                                            <span className="ep-status-tag sensitive">🛡️ {lang === 'en' ? 'Sensitive Scenes' : 'دیمەنی نەشیاو'} ({ep.sensitiveScenes?.length})</span>
+                                                        )}
+                                                        {ep.duration && <span className="ep-duration-text">{ep.duration}</span>}
                                                     </div>
 
                                                     {/* Section 1: Video */}
