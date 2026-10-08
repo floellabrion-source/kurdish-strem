@@ -906,7 +906,7 @@ export default function EpisodeManagerModal({
                                                         </div>
                                                         <div className="ep-buttons-row">
                                                             <button
-                                                                className={`ep-source-btn ${ep.videoUrl && !ep.videoUrl.includes('r2') ? 'done' : ''}`}
+                                                                className={`ep-source-btn ${ep.videoUrl ? 'done' : ''}`}
                                                                 onClick={() => {
                                                                     const u = window.prompt(lang === 'en' ? 'Episode Video URL:' : 'URL ڤیدیۆی ئەڵقە:', ep.videoUrl || '');
                                                                     if (u !== null) onEpVideoUrl(movie.id, season.number, ep.id, u);
