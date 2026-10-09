@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import apiClient from '../api/client';
-import { Play, Clock, Calendar, Star, Film, Search, Layers, User, Filter, Eye, ChevronDown, ChevronLeft, ChevronRight, Brain, Sparkles, Flame } from 'lucide-react';
-import { Movie, getCefrDisplayLevel, getCefrColor } from '../types';
+import { Play, Clock, Calendar, Star, Film, Search, Layers, User, Filter, Eye, ChevronDown, ChevronLeft, ChevronRight, Brain, Sparkles, Flame, Globe } from 'lucide-react';
+import { Movie, getCefrDisplayLevel, getCefrColor, ACCENT_OPTIONS } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { OptimizedImage } from '../components/OptimizedImage';
@@ -88,11 +88,13 @@ export default function Home({ filter }: { filter?: 'movie' | 'series' | 'animat
     const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
     const [selectedYear, setSelectedYear] = useState<string>('');
     const [selectedLevel, setSelectedLevel] = useState<string>(() => searchParams.get('level') || '');
+    const [selectedAccent, setSelectedAccent] = useState<string>(() => searchParams.get('accent') || '');
     const [sortBy, setSortBy] = useState<'latest' | 'views'>('latest');
     const [liveViewers, setLiveViewers] = useState<Record<string, number>>({});
     const [showGenreMenu, setShowGenreMenu] = useState(false);
     const [showYearMenu, setShowYearMenu] = useState(false);
     const [showLevelMenu, setShowLevelMenu] = useState(false);
+    const [showAccentMenu, setShowAccentMenu] = useState(false);
     const filtersRef = useRef<HTMLDivElement>(null);
     const { user } = useAuth();
     const { lang, t } = useLanguage();
@@ -117,6 +119,8 @@ export default function Home({ filter }: { filter?: 'movie' | 'series' | 'animat
     useEffect(() => {
         const lvl = searchParams.get('level');
         setSelectedLevel(lvl || '');
+        const acc = searchParams.get('accent');
+        setSelectedAccent(acc || '');
         const q = searchParams.get('q');
         if (q !== null) {
             setSearch(q);
@@ -162,6 +166,7 @@ export default function Home({ filter }: { filter?: 'movie' | 'series' | 'animat
                 setShowGenreMenu(false);
                 setShowYearMenu(false);
                 setShowLevelMenu(false);
+                setShowAccentMenu(false);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
@@ -223,6 +228,16 @@ export default function Home({ filter }: { filter?: 'movie' | 'series' | 'animat
         });
     }
 
+    if (selectedAccent) {
+        const acc = selectedAccent.toLowerCase();
+        filtered = filtered.filter(m => {
+            const mAcc = m.accent?.toLowerCase();
+            const mCountry = m.country?.toLowerCase();
+            const mCountries = Array.isArray(m.countries) ? m.countries.map(c => c.toLowerCase()) : [];
+            return mAcc === acc || mCountry === acc || mCountries.includes(acc);
+        });
+    }
+
     // Sort by live viewers or latest
     const getTime = (m: Movie) => new Date(m.createdAt || m.updatedAt || 0).getTime() || 0;
     if (sortBy === 'views') {
@@ -247,7 +262,7 @@ export default function Home({ filter }: { filter?: 'movie' | 'series' | 'animat
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [search, selectedGenres, selectedYear, selectedLevel, sortBy, filter]);
+    }, [search, selectedGenres, selectedYear, selectedLevel, selectedAccent, sortBy, filter]);
 
     useEffect(() => {
         if (heroMovies.length <= 1) return;
@@ -307,12 +322,13 @@ export default function Home({ filter }: { filter?: 'movie' | 'series' | 'animat
     return (
         <div className={`home ${lang === 'en' ? 'ltr' : ''}`} dir={lang === 'en' ? 'ltr' : 'rtl'}>
             {/* Mobile Menu Overlay */}
-            {(showGenreMenu || showLevelMenu) && (
+            {(showGenreMenu || showLevelMenu || showAccentMenu) && (
                 <div 
                     className="menu-overlay-mobile" 
                     onClick={() => {
                         setShowGenreMenu(false);
                         setShowLevelMenu(false);
+                        setShowAccentMenu(false);
                     }}
                 />
             )}
@@ -336,6 +352,12 @@ export default function Home({ filter }: { filter?: 'movie' | 'series' | 'animat
                             <div className="hero-content animate-fade">
                                 <h1 className="hero-title">{currentHero.title}</h1>
                                 <div className="hero-meta">
+                                    {currentHero.countryFlag && (
+                                        <span className="hero-flag-badge" title={currentHero.accentLabel || currentHero.country}>
+                                            {currentHero.countryFlag} {currentHero.accentLabel || ''}
+                                        </span>
+                                    )}
+                                    {currentHero.countryFlag && <span className="hero-separator">|</span>}
                                     {currentHero.imdbRating && (
                                         <span className="hero-imdb-badge">
                                             <span className="imdb-label">IMDb</span> {currentHero.imdbRating} <Star size={14} fill="#fbbf24" color="#fbbf24" />
@@ -531,7 +553,7 @@ export default function Home({ filter }: { filter?: 'movie' | 'series' | 'animat
                         </div>
 
                         <div className={`filter-dropdown ${showLevelMenu ? 'active' : ''}`}>
-                            <button className={`filter-btn ${selectedLevel ? 'active' : ''}`} onClick={() => { setShowLevelMenu(!showLevelMenu); setShowGenreMenu(false); }} title={t('language_level')}>
+                            <button className={`filter-btn ${selectedLevel ? 'active' : ''}`} onClick={() => { setShowLevelMenu(!showLevelMenu); setShowGenreMenu(false); setShowAccentMenu(false); }} title={t('language_level')}>
                                 <Layers size={16} /> 
                                 <span className="filter-btn-text">{selectedLevel || t('language_level')}</span> 
                                 {selectedLevel && <span className="filter-badge level-badge-dot">{selectedLevel}</span>}
@@ -549,9 +571,51 @@ export default function Home({ filter }: { filter?: 'movie' | 'series' | 'animat
                                             {t('all_filter')}
                                         </label>
                                         {['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].map(l => (
-                                            <label key={l} className={`year-btn-modern ${selectedLevel === l ? 'active' : ''}`}>
+                                             <label key={l} className={`year-btn-modern ${selectedLevel === l ? 'active' : ''}`}>
                                                 <input type="radio" name="level" checked={selectedLevel === l} onChange={() => setSelectedLevel(l)} style={{ display: 'none' }} />
                                                 {l}
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Accent / Spoken Dialect Filter */}
+                        <div className={`filter-dropdown ${showAccentMenu ? 'active' : ''}`}>
+                            <button 
+                                className={`filter-btn ${selectedAccent ? 'active' : ''}`} 
+                                onClick={() => { setShowAccentMenu(!showAccentMenu); setShowGenreMenu(false); setShowLevelMenu(false); }} 
+                                title={lang === 'en' ? 'Accent / Dialect' : 'شێوەزار و وڵات'}
+                            >
+                                <Globe size={16} /> 
+                                <span className="filter-btn-text">
+                                    {selectedAccent ? (ACCENT_OPTIONS.find(a => a.code.toLowerCase() === selectedAccent.toLowerCase() || a.accent === selectedAccent.toLowerCase())?.[lang === 'en' ? 'labelEn' : 'labelKu'] || selectedAccent) : (lang === 'en' ? 'Accents' : 'شێوەزارەکان')}
+                                </span> 
+                                {selectedAccent && <span className="filter-badge level-badge-dot">✓</span>}
+                                <ChevronDown size={14} className={`chevron ${showAccentMenu ? 'open' : ''}`} />
+                            </button>
+                            {showAccentMenu && (
+                                <div className="filter-menu year-menu modern-menu accent-menu-popup">
+                                    <div className="menu-header">
+                                        <span>{lang === 'en' ? 'Spoken Accent / Country' : 'دیاریکردنی شێوەزار و وڵات'}</span>
+                                        {selectedAccent && <button className="clear-btn-small" onClick={() => setSelectedAccent('')}>{t('clear')}</button>}
+                                    </div>
+                                    <div className="year-grid-modern">
+                                        <label className={`year-btn-modern ${selectedAccent === '' ? 'active' : ''}`}>
+                                            <input type="radio" name="accent" checked={selectedAccent === ''} onChange={() => setSelectedAccent('')} style={{ display: 'none' }} />
+                                            {lang === 'en' ? 'All Accents 🌍' : 'هەموو شێوەزارەکان 🌍'}
+                                        </label>
+                                        {ACCENT_OPTIONS.map(a => (
+                                            <label key={a.code} className={`year-btn-modern ${selectedAccent === a.accent || selectedAccent === a.code ? 'active' : ''}`}>
+                                                <input 
+                                                    type="radio" 
+                                                    name="accent" 
+                                                    checked={selectedAccent === a.accent || selectedAccent === a.code} 
+                                                    onChange={() => setSelectedAccent(a.accent)} 
+                                                    style={{ display: 'none' }} 
+                                                />
+                                                {lang === 'en' ? a.labelEn : a.labelKu}
                                             </label>
                                         ))}
                                     </div>
@@ -586,7 +650,7 @@ export default function Home({ filter }: { filter?: 'movie' | 'series' | 'animat
                     <div className="empty-state" style={{ textAlign: 'center', padding: '60px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
                         <Search size={48} style={{ opacity: 0.4 }} />
                         <h3 style={{ fontSize: '18px', fontWeight: 800 }}>{t('not_found')}</h3>
-                        {(search || selectedGenres.length > 0 || selectedYear || selectedLevel) && (
+                        {(search || selectedGenres.length > 0 || selectedYear || selectedLevel || selectedAccent) && (
                             <button 
                                 type="button"
                                 onClick={() => {
@@ -594,6 +658,7 @@ export default function Home({ filter }: { filter?: 'movie' | 'series' | 'animat
                                     setSelectedGenres([]);
                                     setSelectedYear('');
                                     setSelectedLevel('');
+                                    setSelectedAccent('');
                                 }}
                                 style={{
                                     background: 'linear-gradient(135deg, #8b5cf6, #6366f1)',
@@ -630,28 +695,40 @@ export default function Home({ filter }: { filter?: 'movie' | 'series' | 'animat
                                                     <span>{movie.imdbRating}</span>
                                                 </div>
                                             ) : <div />}
-                                            {(() => {
-                                                const lvl = getCefrDisplayLevel(movie.level, movie.languageMetrics?.cefrLevel);
-                                                if (!lvl) return null;
-                                                const colorInfo = getCefrColor(lvl);
-                                                return (
-                                                    <div 
-                                                        className="overlay-level-badge" 
-                                                        style={{
-                                                            background: colorInfo.bg,
-                                                            color: colorInfo.text
-                                                        }}
-                                                    >
-                                                        {lvl}
-                                                    </div>
-                                                );
-                                            })()}
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                                {movie.countryFlag && (
+                                                    <span className="overlay-flag-badge" title={movie.accentLabel || movie.country}>
+                                                        {movie.countryFlag}
+                                                    </span>
+                                                )}
+                                                {(() => {
+                                                    const lvl = getCefrDisplayLevel(movie.level, movie.languageMetrics?.cefrLevel);
+                                                    if (!lvl) return null;
+                                                    const colorInfo = getCefrColor(lvl);
+                                                    return (
+                                                        <div 
+                                                            className="overlay-level-badge" 
+                                                            style={{
+                                                                background: colorInfo.bg,
+                                                                color: colorInfo.text
+                                                            }}
+                                                        >
+                                                            {lvl}
+                                                        </div>
+                                                    );
+                                                })()}
+                                            </div>
                                         </div>
                                         <p className="overlay-plot">
                                             {getDescription(movie).split('.')[0]}...
                                         </p>
                                     </div>
                                     <div className="movie-card-badges">
+                                        {movie.countryFlag && (
+                                            <div className="card-badge card-flag-badge" title={movie.accentLabel || movie.country}>
+                                                {movie.countryFlag}
+                                            </div>
+                                        )}
                                         {movie.imdbRating && <div className="card-badge"><Star size={10} fill="#fbbf24" color="#fbbf24" /> {movie.imdbRating}</div>}
                                     </div>
                                     {movie.year && <div className="card-badge-right">{movie.year}</div>}

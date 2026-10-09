@@ -4110,6 +4110,284 @@ async function translateText(text, targetLang) {
     return text;
 }
 
+// Country, Flag & Spoken Accent Detection System
+const COUNTRY_ACCENT_DICTIONARY = [
+    {
+        keywords: ['united states', 'usa', 'u.s.a.', 'us', 'america'],
+        code: 'US',
+        countryName: 'ئەمریکا',
+        countryNameEn: 'United States',
+        flag: '🇺🇸',
+        accent: 'american',
+        accentLabelKu: 'ئینگلیزی - ئەمریکی',
+        accentLabelEn: 'American English'
+    },
+    {
+        keywords: ['united kingdom', 'uk', 'u.k.', 'great britain', 'britain', 'england', 'scotland', 'wales', 'northern ireland'],
+        code: 'GB',
+        countryName: 'بەریتانیا',
+        countryNameEn: 'United Kingdom',
+        flag: '🇬🇧',
+        accent: 'british',
+        accentLabelKu: 'ئینگلیزی - بەریتانی',
+        accentLabelEn: 'British English'
+    },
+    {
+        keywords: ['canada'],
+        code: 'CA',
+        countryName: 'کەنەدا',
+        countryNameEn: 'Canada',
+        flag: '🇨🇦',
+        accent: 'canadian',
+        accentLabelKu: 'ئینگلیزی - کەنەدی',
+        accentLabelEn: 'Canadian English'
+    },
+    {
+        keywords: ['australia'],
+        code: 'AU',
+        countryName: 'ئوستوڕاڵیا',
+        countryNameEn: 'Australia',
+        flag: '🇦🇺',
+        accent: 'australian',
+        accentLabelKu: 'ئینگلیزی - ئوستوڕاڵی',
+        accentLabelEn: 'Australian English'
+    },
+    {
+        keywords: ['france', 'french'],
+        code: 'FR',
+        countryName: 'فەرەنسا',
+        countryNameEn: 'France',
+        flag: '🇫🇷',
+        accent: 'french',
+        accentLabelKu: 'فەرەنسی',
+        accentLabelEn: 'French'
+    },
+    {
+        keywords: ['spain', 'spanish'],
+        code: 'ES',
+        countryName: 'ئیسپانیا',
+        countryNameEn: 'Spain',
+        flag: '🇪🇸',
+        accent: 'spanish',
+        accentLabelKu: 'ئیسپانی',
+        accentLabelEn: 'Spanish'
+    },
+    {
+        keywords: ['germany', 'german'],
+        code: 'DE',
+        countryName: 'ئەڵمانیا',
+        countryNameEn: 'Germany',
+        flag: '🇩🇪',
+        accent: 'german',
+        accentLabelKu: 'ئەڵمانی',
+        accentLabelEn: 'German'
+    },
+    {
+        keywords: ['turkey', 'turkish', 'türkiye'],
+        code: 'TR',
+        countryName: 'تورکیا',
+        countryNameEn: 'Turkey',
+        flag: '🇹🇷',
+        accent: 'turkish',
+        accentLabelKu: 'تورکی',
+        accentLabelEn: 'Turkish'
+    },
+    {
+        keywords: ['japan', 'japanese'],
+        code: 'JP',
+        countryName: 'ژاپۆن',
+        countryNameEn: 'Japan',
+        flag: '🇯🇵',
+        accent: 'japanese',
+        accentLabelKu: 'ژاپۆنی',
+        accentLabelEn: 'Japanese'
+    },
+    {
+        keywords: ['south korea', 'korea', 'korean'],
+        code: 'KR',
+        countryName: 'کۆریای باشوور',
+        countryNameEn: 'South Korea',
+        flag: '🇰🇷',
+        accent: 'korean',
+        accentLabelKu: 'کۆری',
+        accentLabelEn: 'Korean'
+    },
+    {
+        keywords: ['india', 'hindi', 'indian'],
+        code: 'IN',
+        countryName: 'هیندستان',
+        countryNameEn: 'India',
+        flag: '🇮🇳',
+        accent: 'indian',
+        accentLabelKu: 'هیندی',
+        accentLabelEn: 'Hindi'
+    },
+    {
+        keywords: ['italy', 'italian'],
+        code: 'IT',
+        countryName: 'ئیتاڵیا',
+        countryNameEn: 'Italy',
+        flag: '🇮🇹',
+        accent: 'italian',
+        accentLabelKu: 'ئیتاڵی',
+        accentLabelEn: 'Italian'
+    },
+    {
+        keywords: ['ireland', 'irish'],
+        code: 'IE',
+        countryName: 'ئێرلەندا',
+        countryNameEn: 'Ireland',
+        flag: '🇮🇪',
+        accent: 'irish',
+        accentLabelKu: 'ئینگلیزی - ئێرلەندی',
+        accentLabelEn: 'Irish English'
+    },
+    {
+        keywords: ['new zealand', 'nz'],
+        code: 'NZ',
+        countryName: 'نیوزلەندا',
+        countryNameEn: 'New Zealand',
+        flag: '🇳🇿',
+        accent: 'new_zealand',
+        accentLabelKu: 'ئینگلیزی - نیوزلەندی',
+        accentLabelEn: 'New Zealand English'
+    },
+    {
+        keywords: ['mexico', 'mexican'],
+        code: 'MX',
+        countryName: 'مەکسیک',
+        countryNameEn: 'Mexico',
+        flag: '🇲🇽',
+        accent: 'spanish',
+        accentLabelKu: 'ئیسپانی (مەکسیکی)',
+        accentLabelEn: 'Spanish (Mexican)'
+    },
+    {
+        keywords: ['russia', 'russian'],
+        code: 'RU',
+        countryName: 'ڕووسیا',
+        countryNameEn: 'Russia',
+        flag: '🇷🇺',
+        accent: 'russian',
+        accentLabelKu: 'ڕووسی',
+        accentLabelEn: 'Russian'
+    },
+    {
+        keywords: ['china', 'chinese', 'hong kong', 'taiwan'],
+        code: 'CN',
+        countryName: 'چین',
+        countryNameEn: 'China',
+        flag: '🇨🇳',
+        accent: 'chinese',
+        accentLabelKu: 'چینی',
+        accentLabelEn: 'Chinese'
+    },
+    {
+        keywords: ['sweden', 'swedish'],
+        code: 'SE',
+        countryName: 'سوید',
+        countryNameEn: 'Sweden',
+        flag: '🇸🇪',
+        accent: 'swedish',
+        accentLabelKu: 'سویدی',
+        accentLabelEn: 'Swedish'
+    },
+    {
+        keywords: ['norway', 'norwegian'],
+        code: 'NO',
+        countryName: 'نەرویج',
+        countryNameEn: 'Norway',
+        flag: '🇳🇴',
+        accent: 'norwegian',
+        accentLabelKu: 'نەرویجی',
+        accentLabelEn: 'Norwegian'
+    },
+    {
+        keywords: ['denmark', 'danish'],
+        code: 'DK',
+        countryName: 'دانیمارک',
+        countryNameEn: 'Denmark',
+        flag: '🇩🇰',
+        accent: 'danish',
+        accentLabelKu: 'دانیمارکی',
+        accentLabelEn: 'Danish'
+    },
+    {
+        keywords: ['iraq', 'kurdish', 'kurdistan', 'iraqi'],
+        code: 'IQ',
+        countryName: 'کوردستان / عێراق',
+        countryNameEn: 'Kurdistan / Iraq',
+        flag: '🇮🇶',
+        accent: 'kurdish',
+        accentLabelKu: 'کوردی',
+        accentLabelEn: 'Kurdish'
+    }
+];
+
+function detectMovieCountryAndAccent(rawCountry = '', rawLanguage = '') {
+    const rawCountryStr = String(rawCountry || '').trim();
+    const rawLangStr = String(rawLanguage || '').trim();
+
+    if (!rawCountryStr && !rawLangStr) {
+        return {
+            country: 'US',
+            countryName: 'ئەمریکا',
+            countryFlag: '🇺🇸',
+            accent: 'american',
+            accentLabel: 'ئینگلیزی - ئەمریکی',
+            countries: ['US']
+        };
+    }
+
+    // Split multiple countries (e.g. "United Kingdom, United States, Canada")
+    const splitCountries = rawCountryStr
+        .split(/[,،/|]/)
+        .map(s => s.trim())
+        .filter(Boolean);
+
+    const detectedList = [];
+
+    for (const cStr of splitCountries) {
+        const lower = cStr.toLowerCase();
+        const found = COUNTRY_ACCENT_DICTIONARY.find(entry => 
+            entry.keywords.some(k => lower === k || lower.includes(k))
+        );
+        if (found && !detectedList.some(d => d.code === found.code)) {
+            detectedList.push(found);
+        }
+    }
+
+    // If no country was matched from country string, try language
+    if (detectedList.length === 0 && rawLangStr) {
+        const lowerLang = rawLangStr.toLowerCase();
+        const foundLang = COUNTRY_ACCENT_DICTIONARY.find(entry => 
+            entry.keywords.some(k => lowerLang.includes(k))
+        );
+        if (foundLang) {
+            detectedList.push(foundLang);
+        }
+    }
+
+    // Primary detected country is the FIRST in the list
+    const primary = detectedList[0] || COUNTRY_ACCENT_DICTIONARY[0]; // Default US if unknown
+
+    return {
+        country: primary.code,
+        countryName: primary.countryName,
+        countryFlag: primary.flag,
+        accent: primary.accent,
+        accentLabel: primary.accentLabelKu,
+        countries: detectedList.length > 0 ? detectedList.map(d => d.code) : [primary.code],
+        allDetected: detectedList.map(d => ({
+            code: d.code,
+            name: d.countryName,
+            flag: d.flag,
+            accent: d.accent,
+            accentLabel: d.accentLabelKu
+        }))
+    };
+}
+
 app.get('/api/omdb-rating', requireAuth, requireAdmin, async (req, res) => {
     const { title } = req.query;
     if (!title) return res.status(400).json({ error: 'پێویستە ناو، لینک، یان کودی IMDb فیلمەکە بنێریت' });
@@ -4222,6 +4500,8 @@ app.get('/api/omdb-rating', requireAuth, requireAdmin, async (req, res) => {
                 }
             }
 
+            const detectedGeo = detectMovieCountryAndAccent(data.Country, data.Language);
+
             res.json({ 
                 title: resolvedTitle,
                 imdbID: data.imdbID || (imdbIdMatch ? imdbIdMatch[0] : ''),
@@ -4241,7 +4521,15 @@ app.get('/api/omdb-rating', requireAuth, requireAdmin, async (req, res) => {
                 director: data.Director && data.Director !== 'N/A' ? data.Director : '',
                 awards: data.Awards && data.Awards !== 'N/A' ? data.Awards : '',
                 seasons: seasonsData,
-                language: data.Language && data.Language !== 'N/A' ? data.Language : ''
+                language: data.Language && data.Language !== 'N/A' ? data.Language : '',
+                country: detectedGeo.country,
+                countryName: detectedGeo.countryName,
+                countryFlag: detectedGeo.countryFlag,
+                accent: detectedGeo.accent,
+                accentLabel: detectedGeo.accentLabel,
+                countries: detectedGeo.countries,
+                allDetectedCountries: detectedGeo.allDetected,
+                rawCountry: data.Country && data.Country !== 'N/A' ? data.Country : ''
             });
         } else {
             res.status(404).json({ error: response.data.Error || 'فیلمەکە نەدۆزرایەوە لە IMDb/OMDb' });
@@ -4253,7 +4541,7 @@ app.get('/api/omdb-rating', requireAuth, requireAdmin, async (req, res) => {
                 return res.status(401).json({ error: 'کێشە لە API Key هەیە (Unauthorized). دڵنیابە کلیلەکە ڕاستە و چالاککراوە.' });
             }
         }
-        res.status(500).json({ error: `کێشەیەک لە پەیوەندیکردن بە OMDb API ڕوویدا: ${error.message}` });
+        res.status(500).json({ error: `هەڵەیەک لە پەیوەندیکردن بە OMDb API ڕوویدا: ${error.message}` });
     }
 });
 
@@ -4278,7 +4566,12 @@ async function resolveCleanTitle(rawTitle) {
 }
 
 app.post('/api/admin/movies', requireAuth, requirePermission('canAddMovies'), async (req, res) => {
-    const { title, description, descriptionKu, descriptionEn, descriptionAr, language, genre, year, endYear, duration, type, imdbRating, posterUrl, seasons, level, languageMetrics, status } = req.body;
+    const { 
+        title, description, descriptionKu, descriptionEn, descriptionAr, 
+        language, genre, year, endYear, duration, type, imdbRating, posterUrl, 
+        seasons, level, languageMetrics, status,
+        country, countryFlag, accent, accentLabel, countries
+    } = req.body;
     const id = uuidv4();
     fs.mkdirSync(path.join(MOVIES_DIR, id), { recursive: true });
 
@@ -4296,6 +4589,11 @@ app.post('/api/admin/movies', requireAuth, requirePermission('canAddMovies'), as
         descriptionEn: descriptionEn || '',
         descriptionAr: descriptionAr || '',
         language: language || '',
+        country: country || 'US',
+        countryFlag: countryFlag || '🇺🇸',
+        accent: accent || 'american',
+        accentLabel: accentLabel || 'ئینگلیزی - ئەمریکی',
+        countries: Array.isArray(countries) && countries.length > 0 ? countries : [country || 'US'],
         genre: genre || '',
         year: +year || new Date().getFullYear(),
         endYear: endYear || null,
@@ -4320,7 +4618,6 @@ app.post('/api/admin/movies', requireAuth, requirePermission('canAddMovies'), as
         },
         approvedBy: initialStatus === 'published' ? req.user.username : undefined,
         approvedAt: initialStatus === 'published' ? new Date().toISOString() : undefined
-    };
     movies.unshift(newItem);
     writeMovies(movies);
     res.json(newItem);

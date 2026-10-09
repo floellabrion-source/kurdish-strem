@@ -79,6 +79,29 @@ export const getCefrColor = (level: string): { bg: string; text: string } => {
     return { bg: 'rgba(99, 102, 241, 0.9)', text: '#ffffff' };
 };
 
+export const ACCENT_OPTIONS = [
+    { code: 'US', flag: '🇺🇸', accent: 'american', labelKu: '🇺🇸 ئینگلیزی - ئەمریکی (American)', labelEn: '🇺🇸 American English' },
+    { code: 'GB', flag: '🇬🇧', accent: 'british', labelKu: '🇬🇧 ئینگلیزی - بەریتانی (British)', labelEn: '🇬🇧 British English' },
+    { code: 'CA', flag: '🇨🇦', accent: 'canadian', labelKu: '🇨🇦 ئینگلیزی - کەنەدی (Canadian)', labelEn: '🇨🇦 Canadian English' },
+    { code: 'AU', flag: '🇦🇺', accent: 'australian', labelKu: '🇦🇺 ئینگلیزی - ئوستوڕاڵی (Australian)', labelEn: '🇦🇺 Australian English' },
+    { code: 'IE', flag: '🇮🇪', accent: 'irish', labelKu: '🇮🇪 ئینگلیزی - ئێرلەندی (Irish)', labelEn: '🇮🇪 Irish English' },
+    { code: 'NZ', flag: '🇳🇿', accent: 'new_zealand', labelKu: '🇳🇿 ئینگلیزی - نیوزلەندی (New Zealand)', labelEn: '🇳🇿 New Zealand English' },
+    { code: 'ES', flag: '🇪🇸', accent: 'spanish', labelKu: '🇪🇸 ئیسپانی (Spanish)', labelEn: '🇪🇸 Spanish' },
+    { code: 'FR', flag: '🇫🇷', accent: 'french', labelKu: '🇫🇷 فەرەنسی (French)', labelEn: '🇫🇷 French' },
+    { code: 'DE', flag: '🇩🇪', accent: 'german', labelKu: '🇩🇪 ئەڵمانی (German)', labelEn: '🇩🇪 German' },
+    { code: 'TR', flag: '🇹🇷', accent: 'turkish', labelKu: '🇹🇷 تورکی (Turkish)', labelEn: '🇹🇷 Turkish' },
+    { code: 'JP', flag: '🇯🇵', accent: 'japanese', labelKu: '🇯🇵 ژاپۆنی (Japanese)', labelEn: '🇯🇵 Japanese' },
+    { code: 'KR', flag: '🇰🇷', accent: 'korean', labelKu: '🇰🇷 کۆری (Korean)', labelEn: '🇰🇷 Korean' },
+    { code: 'IN', flag: '🇮🇳', accent: 'indian', labelKu: '🇮🇳 هیندی (Hindi)', labelEn: '🇮🇳 Hindi' },
+    { code: 'IT', flag: '🇮🇹', accent: 'italian', labelKu: '🇮🇹 ئیتاڵی (Italian)', labelEn: '🇮🇹 Italian' },
+    { code: 'RU', flag: '🇷🇺', accent: 'russian', labelKu: '🇷🇺 ڕووسی (Russian)', labelEn: '🇷🇺 Russian' },
+    { code: 'CN', flag: '🇨🇳', accent: 'chinese', labelKu: '🇨🇳 چینی (Chinese)', labelEn: '🇨🇳 Chinese' },
+    { code: 'SE', flag: '🇸🇪', accent: 'swedish', labelKu: '🇸🇪 سویدی (Swedish)', labelEn: '🇸🇪 Swedish' },
+    { code: 'NO', flag: '🇳🇴', accent: 'norwegian', labelKu: '🇳🇴 نەرویجی (Norwegian)', labelEn: '🇳🇴 Norwegian' },
+    { code: 'DK', flag: '🇩🇰', accent: 'danish', labelKu: '🇩🇰 دانیمارکی (Danish)', labelEn: '🇩🇰 Danish' },
+    { code: 'IQ', flag: '🇮🇶', accent: 'kurdish', labelKu: '🇮🇶 کوردی / عێراقی (Kurdish)', labelEn: '🇮🇶 Kurdish / Iraqi' }
+];
+
 export interface Movie {
     id: string;
     title: string;
@@ -90,6 +113,11 @@ export interface Movie {
     descriptionEn?: string;
     descriptionAr?: string;
     language?: string;
+    country?: string;
+    countryFlag?: string;
+    accent?: string;
+    accentLabel?: string;
+    countries?: string[];
     genre: string;
     year: number;
     endYear?: number | null;

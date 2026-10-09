@@ -415,6 +415,11 @@ export default function MovieDetail() {
                                         <Globe size={12} /> {movie.language.split(',')[0]}
                                     </span>
                                 )}
+                                {movie.countryFlag && (
+                                    <span className="detail-country-badge" title={movie.accentLabel || movie.country}>
+                                        <span>{movie.countryFlag}</span> {movie.accentLabel || movie.country}
+                                    </span>
+                                )}
                             </div>
 
                             <h1 className="detail-title">{movie.title}</h1>

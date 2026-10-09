@@ -10,7 +10,7 @@ import {
     HardDrive, Bell, Wrench, Globe, Eye, EyeOff, Zap, DollarSign, Brain, Clock, RefreshCw, Minimize2,
     Wallet
 } from 'lucide-react';
-import { Movie, Season, Episode, LanguageMetrics, getCefrDisplayLevel, getCefrColor } from '../types';
+import { Movie, Season, Episode, LanguageMetrics, getCefrDisplayLevel, getCefrColor, ACCENT_OPTIONS } from '../types';
 import { runAiTranslationAndAnalysis, triggerFileDownload, pauseTranslationTask, AI_TRANSLATION_MODELS, TRANSLATION_TONES, MODEL_PRICING } from '../utils/aiTranslator';
 import SrtTranslator from './SrtTranslator';
 import AdminUsers from './AdminUsers';
@@ -570,7 +570,9 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
     const adminFiltersRef = useRef<HTMLDivElement>(null);
 
     const [form, setForm] = useState({
-        title: '', description: '', descriptionKu: '', descriptionEn: '', descriptionAr: '', language: '', genre: '', year: new Date().getFullYear().toString(), endYear: '',
+        title: '', description: '', descriptionKu: '', descriptionEn: '', descriptionAr: '', language: '',
+        country: 'US', countryFlag: '🇺🇸', accent: 'american', accentLabel: 'ئینگلیزی - ئەمریکی', countries: ['US'] as string[],
+        genre: '', year: new Date().getFullYear().toString(), endYear: '',
         duration: '', type: 'movie' as 'movie' | 'series' | 'animation', imdbRating: '' as string | number,
         posterUrl: '', seasons: [] as Season[], status: 'published' as 'published' | 'draft'
     });
@@ -680,7 +682,7 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
             const res = await axios.post('/api/admin/movies', { ...formToSend, year: parseInt(formToSend.year), endYear: formToSend.endYear ? parseInt(formToSend.endYear) : null });
             toast('بە سەرکەوتوویی زیاد کرا ✓');
             setShowForm(false);
-            setForm({ title: '', description: '', descriptionKu: '', descriptionEn: '', descriptionAr: '', language: '', genre: '', year: new Date().getFullYear().toString(), endYear: '', duration: '', type: 'movie' as 'movie' | 'series' | 'animation', imdbRating: '', posterUrl: '', seasons: [], status: 'published' });
+            setForm({ title: '', description: '', descriptionKu: '', descriptionEn: '', descriptionAr: '', language: '', country: 'US', countryFlag: '🇺🇸', accent: 'american', accentLabel: 'ئینگلیزی - ئەمریکی', countries: ['US'], genre: '', year: new Date().getFullYear().toString(), endYear: '', duration: '', type: 'movie' as 'movie' | 'series' | 'animation', imdbRating: '', posterUrl: '', seasons: [], status: 'published' });
             if (res.data) {
                 setMovies(prev => [res.data, ...prev.filter(m => m.id !== res.data.id)]);
             }
@@ -1146,7 +1148,12 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                 poster, 
                 type, 
                 seasons, 
-                language 
+                language,
+                country,
+                countryFlag,
+                accent,
+                accentLabel,
+                countries
             } = response.data;
             
             // Translate genres
@@ -1167,6 +1174,11 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                     descriptionEn: m.descriptionEn || plotEn || '',
                     descriptionAr: m.descriptionAr || plotAr || '',
                     language: m.language || language || '',
+                    country: country || m.country || 'US',
+                    countryFlag: countryFlag || m.countryFlag || '🇺🇸',
+                    accent: accent || m.accent || 'american',
+                    accentLabel: accentLabel || m.accentLabel || 'ئینگلیزی - ئەمریکی',
+                    countries: countries && countries.length > 0 ? countries : (m.countries || [country || 'US']),
                     genre: m.genre || kurdishGenres || '',
                     year: m.year || year || m.year,
                     endYear: endYear !== undefined ? endYear : m.endYear,
@@ -1185,6 +1197,11 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                     descriptionEn: f.descriptionEn || plotEn || '',
                     descriptionAr: f.descriptionAr || plotAr || '',
                     language: f.language || language || '',
+                    country: country || f.country || 'US',
+                    countryFlag: countryFlag || f.countryFlag || '🇺🇸',
+                    accent: accent || f.accent || 'american',
+                    accentLabel: accentLabel || f.accentLabel || 'ئینگلیزی - ئەمریکی',
+                    countries: countries && countries.length > 0 ? countries : [country || 'US'],
                     genre: f.genre || kurdishGenres || '',
                     year: year ? year.toString() : f.year,
                     endYear: endYear ? endYear.toString() : '',
@@ -2216,7 +2233,7 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                                 </button>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
-                                <button onClick={() => setForm({ title: '', description: '', descriptionKu: '', descriptionEn: '', descriptionAr: '', language: '', genre: '', year: new Date().getFullYear().toString(), endYear: '', duration: '', type: 'movie', imdbRating: '', posterUrl: '', seasons: [], status: 'published' })} className="btn-cancel" style={{ padding: '4px 10px', fontSize: '12px' }}>{lang === 'en' ? 'Clear Form' : 'سڕینەوەی فۆڕم'}</button>
+                                <button onClick={() => setForm({ title: '', description: '', descriptionKu: '', descriptionEn: '', descriptionAr: '', language: '', country: 'US', countryFlag: '🇺🇸', accent: 'american', accentLabel: 'ئینگلیزی - ئەمریکی', countries: ['US'], genre: '', year: new Date().getFullYear().toString(), endYear: '', duration: '', type: 'movie', imdbRating: '', posterUrl: '', seasons: [], status: 'published' })} className="btn-cancel" style={{ padding: '4px 10px', fontSize: '12px' }}>{lang === 'en' ? 'Clear Form' : 'سڕینەوەی فۆڕم'}</button>
                             </div>
                             <div className="form-group">
                                 <label>{lang === 'en' ? 'Movie / Series Title, IMDb Code, or Full URL *' : 'ناوی فیلم / زنجیرە، کودی IMDb، یان لینکی تەواو *'}</label>
@@ -2287,6 +2304,31 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                                 <div className="form-group"><label>{lang === 'en' ? 'Release Year' : 'ساڵ (دەستپێک)'}</label><input type="number" value={form.year} onChange={e => setForm(f => ({ ...f, year: e.target.value }))} className="form-input" /></div>
                                 {form.type === 'series' && <div className="form-group"><label>{lang === 'en' ? 'End Year (Empty = Ongoing)' : 'ساڵی کۆتایی (بەتاڵ بێ ئەگەر بەردەوامە)'}</label><input type="number" value={form.endYear || ''} onChange={e => setForm(f => ({ ...f, endYear: e.target.value }))} className="form-input" placeholder={lang === 'en' ? "e.g. 2024" : "بۆ نمونە: 2013"} /></div>}
                                 {(form.type === 'movie' || form.type === 'animation') && <div className="form-group"><label>{lang === 'en' ? 'Duration' : 'کات'}</label><input type="text" value={form.duration} onChange={e => setForm(f => ({ ...f, duration: e.target.value }))} className="form-input" /></div>}
+                            </div>
+                            <div className="form-group">
+                                <label>{lang === 'en' ? 'Country & Spoken Accent' : 'وڵات و شێوەزاری قسەکردن'}</label>
+                                <select 
+                                    value={form.country || 'US'} 
+                                    onChange={e => {
+                                        const val = e.target.value;
+                                        const item = ACCENT_OPTIONS.find(opt => opt.code === val);
+                                        setForm(f => ({ 
+                                            ...f, 
+                                            country: val,
+                                            countryFlag: item?.flag || '🇺🇸',
+                                            accent: item?.accent || 'american',
+                                            accentLabel: item?.labelKu || 'ئینگلیزی - ئەمریکی',
+                                            countries: [val]
+                                        }));
+                                    }}
+                                    className="form-input"
+                                >
+                                    {ACCENT_OPTIONS.map(opt => (
+                                        <option key={opt.code} value={opt.code}>
+                                            {opt.flag} {lang === 'en' ? opt.labelEn : opt.labelKu}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
                             <div className="form-group">
                                 <label>{lang === 'en' ? 'Publishing / Translation Status' : 'دۆخی بڵاوکردنەوە / وەرگێڕان'}</label>
@@ -2464,6 +2506,31 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                                 <div className="form-group"><label>{lang === 'en' ? 'Release Year' : 'ساڵ (دەستپێک)'}</label><input type="number" value={editMovie.year} onChange={e => setEditMovie(m => m ? { ...m, year: +e.target.value } : null)} className="form-input" /></div>
                                 {editMovie.type === 'series' && <div className="form-group"><label>{lang === 'en' ? 'End Year' : 'ساڵی کۆتایی'}</label><input type="number" value={editMovie.endYear || ''} onChange={e => setEditMovie(m => m ? { ...m, endYear: e.target.value ? +e.target.value : null } : null)} className="form-input" placeholder={lang === 'en' ? "Empty = Ongoing" : "بەتاڵ = بەردەوامە"} /></div>}
                                 <div className="form-group"><label>{lang === 'en' ? 'Duration' : 'کات'}</label><input type="text" value={editMovie.duration} onChange={e => setEditMovie(m => m ? { ...m, duration: e.target.value } : null)} className="form-input" /></div>
+                            </div>
+                            <div className="form-group">
+                                <label>{lang === 'en' ? 'Country & Spoken Accent' : 'وڵات و شێوەزاری قسەکردن'}</label>
+                                <select 
+                                    value={editMovie.country || 'US'} 
+                                    onChange={e => {
+                                        const val = e.target.value;
+                                        const item = ACCENT_OPTIONS.find(opt => opt.code === val);
+                                        setEditMovie(m => m ? ({ 
+                                            ...m, 
+                                            country: val,
+                                            countryFlag: item?.flag || '🇺🇸',
+                                            accent: item?.accent || 'american',
+                                            accentLabel: item?.labelKu || 'ئینگلیزی - ئەمریکی',
+                                            countries: [val]
+                                        }) : null);
+                                    }}
+                                    className="form-input"
+                                >
+                                    {ACCENT_OPTIONS.map(opt => (
+                                        <option key={opt.code} value={opt.code}>
+                                            {opt.flag} {lang === 'en' ? opt.labelEn : opt.labelKu}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
                             <div className="form-group">
                                 <label>{lang === 'en' ? 'Publishing / Translation Status' : 'دۆخی بڵاوکردنەوە / وەرگێڕان'}</label>

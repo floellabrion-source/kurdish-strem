@@ -3380,10 +3380,34 @@ CRITICAL RULES:
 
             {/* TOP BAR */}
             <div className={`watch-topbar ${showControls ? 'visible' : ''}`}>
-                <button className="watch-back" onClick={backTo}>
-                    <ArrowRight size={20} />
-                    <span className="back-title">{episodeTitle || movie.title}</span>
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <button className="watch-back" onClick={backTo}>
+                        <ArrowRight size={20} />
+                        <span className="back-title">{episodeTitle || movie.title}</span>
+                    </button>
+                    {movie.countryFlag && (
+                        <span 
+                            className="watch-accent-pill" 
+                            title={movie.accentLabel || movie.country}
+                            style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '5px',
+                                background: 'rgba(0, 0, 0, 0.55)',
+                                backdropFilter: 'blur(10px)',
+                                border: '1px solid rgba(255, 255, 255, 0.15)',
+                                borderRadius: '999px',
+                                padding: '3px 10px',
+                                color: '#e2e8f0',
+                                fontSize: '12px',
+                                fontWeight: '700'
+                            }}
+                        >
+                            <span>{movie.countryFlag}</span>
+                            {movie.accentLabel && <span style={{ opacity: 0.9 }}>{movie.accentLabel.split('(')[0].replace(/🇺🇸|🇬🇧|🇨🇦|🇦🇺|🇮🇪|🇳🇿|🇪🇸|🇫🇷|🇩🇪|🇹🇷|🇯🇵|🇰🇷|🇮🇳|🇮🇹|🇷🇺|🇨🇳|🇸🇪|🇳🇴|🇩🇰|🇮🇶/g, '').trim()}</span>}
+                        </span>
+                    )}
+                </div>
                 {nextEpisode && (
                     <div className="sub-toggles">
                         <button className="next-ep-btn" onClick={goToNext}>
