@@ -13,6 +13,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { wordCache } from '../utils/wordCache';
 import { DualSubTrialModal } from '../components/DualSubTrialModal';
+import { CountryFlag } from '../components/CountryFlag';
 import Hls from 'hls.js';
 import './Watch.css';
 
@@ -3385,15 +3386,15 @@ CRITICAL RULES:
                         <ArrowRight size={20} />
                         <span className="back-title">{episodeTitle || movie.title}</span>
                     </button>
-                    {movie.countryFlag && (
+                    {(movie.country || movie.countryFlag) && (
                         <span 
                             className="watch-accent-pill" 
-                            title={movie.accentLabel || movie.country}
+                            title={movie.accentLabel || movie.country || ''}
                             style={{
                                 display: 'inline-flex',
                                 alignItems: 'center',
-                                gap: '5px',
-                                background: 'rgba(0, 0, 0, 0.55)',
+                                gap: '6px',
+                                background: 'rgba(0, 0, 0, 0.65)',
                                 backdropFilter: 'blur(10px)',
                                 border: '1px solid rgba(255, 255, 255, 0.15)',
                                 borderRadius: '999px',
@@ -3403,8 +3404,8 @@ CRITICAL RULES:
                                 fontWeight: '700'
                             }}
                         >
-                            <span>{movie.countryFlag}</span>
-                            {movie.accentLabel && <span style={{ opacity: 0.9 }}>{movie.accentLabel.split('(')[0].replace(/🇺🇸|🇬🇧|🇨🇦|🇦🇺|🇮🇪|🇳🇿|🇪🇸|🇫🇷|🇩🇪|🇹🇷|🇯🇵|🇰🇷|🇮🇳|🇮🇹|🇷🇺|🇨🇳|🇸🇪|🇳🇴|🇩🇰|🇮🇶/g, '').trim()}</span>}
+                            <CountryFlag code={movie.country || 'US'} size="sm" />
+                            {movie.accentLabel && <span style={{ opacity: 0.9 }}>{movie.accentLabel}</span>}
                         </span>
                     )}
                 </div>

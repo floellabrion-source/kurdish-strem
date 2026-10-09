@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import apiClient from '../api/client';
 import { Play, Clock, Calendar, Star, Film, Search, Layers, User, Filter, Eye, ChevronDown, ChevronLeft, ChevronRight, Brain, Sparkles, Flame, Globe } from 'lucide-react';
@@ -6,6 +6,7 @@ import { Movie, getCefrDisplayLevel, getCefrColor, ACCENT_OPTIONS } from '../typ
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { OptimizedImage } from '../components/OptimizedImage';
+import { CountryFlag } from '../components/CountryFlag';
 import './Home.css';
 
 export interface GenreItem {
@@ -98,6 +99,26 @@ export default function Home({ filter }: { filter?: 'movie' | 'series' | 'animat
     const filtersRef = useRef<HTMLDivElement>(null);
     const { user } = useAuth();
     const { lang, t } = useLanguage();
+
+    const availableAccents = useMemo(() => {
+        const map = new Map<string, { code: string; labelKu: string; labelEn: string }>();
+        movies.forEach(m => {
+            const raw = (m.country || m.accent || '').trim();
+            if (raw) {
+                const upper = raw.toUpperCase();
+                const opt = ACCENT_OPTIONS.find(a => a.code.toUpperCase() === upper || a.accent.toUpperCase() === upper);
+                const codeKey = opt?.code || upper;
+                if (!map.has(codeKey)) {
+                    map.set(codeKey, {
+                        code: codeKey,
+                        labelKu: opt?.labelKu || opt?.nameKu || codeKey,
+                        labelEn: opt?.labelEn || opt?.nameEn || codeKey
+                    });
+                }
+            }
+        });
+        return Array.from(map.values());
+    }, [movies]);
 
     const [heroIndex, setHeroIndex] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
@@ -581,47 +602,54 @@ export default function Home({ filter }: { filter?: 'movie' | 'series' | 'animat
                             )}
                         </div>
 
-                        {/* Accent / Spoken Dialect Filter */}
-                        <div className={`filter-dropdown ${showAccentMenu ? 'active' : ''}`}>
-                            <button 
-                                className={`filter-btn ${selectedAccent ? 'active' : ''}`} 
-                                onClick={() => { setShowAccentMenu(!showAccentMenu); setShowGenreMenu(false); setShowLevelMenu(false); }} 
-                                title={lang === 'en' ? 'Accent / Dialect' : 'شێوەزار و وڵات'}
-                            >
-                                <Globe size={16} /> 
-                                <span className="filter-btn-text">
-                                    {selectedAccent ? (ACCENT_OPTIONS.find(a => a.code.toLowerCase() === selectedAccent.toLowerCase() || a.accent === selectedAccent.toLowerCase())?.[lang === 'en' ? 'labelEn' : 'labelKu'] || selectedAccent) : (lang === 'en' ? 'Accents' : 'شێوەزارەکان')}
-                                </span> 
-                                {selectedAccent && <span className="filter-badge level-badge-dot">✓</span>}
-                                <ChevronDown size={14} className={`chevron ${showAccentMenu ? 'open' : ''}`} />
-                            </button>
-                            {showAccentMenu && (
-                                <div className="filter-menu year-menu modern-menu accent-menu-popup">
-                                    <div className="menu-header">
-                                        <span>{lang === 'en' ? 'Spoken Accent / Country' : 'دیاریکردنی شێوەزار و وڵات'}</span>
-                                        {selectedAccent && <button className="clear-btn-small" onClick={() => setSelectedAccent('')}>{t('clear')}</button>}
-                                    </div>
-                                    <div className="year-grid-modern">
-                                        <label className={`year-btn-modern ${selectedAccent === '' ? 'active' : ''}`}>
-                                            <input type="radio" name="accent" checked={selectedAccent === ''} onChange={() => setSelectedAccent('')} style={{ display: 'none' }} />
-                                            {lang === 'en' ? 'All Accents 🌍' : 'هەموو شێوەزارەکان 🌍'}
-                                        </label>
-                                        {ACCENT_OPTIONS.map(a => (
-                                            <label key={a.code} className={`year-btn-modern ${selectedAccent === a.accent || selectedAccent === a.code ? 'active' : ''}`}>
-                                                <input 
-                                                    type="radio" 
-                                                    name="accent" 
-                                                    checked={selectedAccent === a.accent || selectedAccent === a.code} 
-                                                    onChange={() => setSelectedAccent(a.accent)} 
-                                                    style={{ display: 'none' }} 
-                                                />
-                                                {lang === 'en' ? a.labelEn : a.labelKu}
+                        {/* Accent / Spoken Dialect Filter - Only available countries */}
+                        {availableAccents.length > 0 && (
+                            <div className={`filter-dropdown ${showAccentMenu ? 'active' : ''}`}>
+                                <button 
+                                    className={`filter-btn ${selectedAccent ? 'active' : ''}`} 
+                                    onClick={() => { setShowAccentMenu(!showAccentMenu); setShowGenreMenu(false); setShowLevelMenu(false); }} 
+                                    title={lang === 'en' ? 'Accent / Country' : 'شێوەزار و وڵات'}
+                                >
+                                    {selectedAccent ? (
+                                        <CountryFlag code={selectedAccent} size="sm" />
+                                    ) : (
+                                        <Globe size={16} />
+                                    )}
+                                    <span className="filter-btn-text">
+                                        {selectedAccent ? (availableAccents.find(a => a.code.toLowerCase() === selectedAccent.toLowerCase())?.[lang === 'en' ? 'labelEn' : 'labelKu'] || selectedAccent.toUpperCase()) : (lang === 'en' ? 'Accents' : 'شێوەزارەکان')}
+                                    </span> 
+                                    {selectedAccent && <span className="filter-badge level-badge-dot">✓</span>}
+                                    <ChevronDown size={14} className={`chevron ${showAccentMenu ? 'open' : ''}`} />
+                                </button>
+                                {showAccentMenu && (
+                                    <div className="filter-menu year-menu modern-menu accent-menu-popup">
+                                        <div className="menu-header">
+                                            <span>{lang === 'en' ? 'Spoken Accent' : 'شێوەزار و وڵات'}</span>
+                                            {selectedAccent && <button className="clear-btn-small" onClick={() => setSelectedAccent('')}>{t('clear')}</button>}
+                                        </div>
+                                        <div className="year-grid-modern">
+                                            <label className={`year-btn-modern ${selectedAccent === '' ? 'active' : ''}`}>
+                                                <input type="radio" name="accent" checked={selectedAccent === ''} onChange={() => setSelectedAccent('')} style={{ display: 'none' }} />
+                                                {lang === 'en' ? 'All Accents 🌍' : 'هەموو شێوەزارەکان 🌍'}
                                             </label>
-                                        ))}
+                                            {availableAccents.map(a => (
+                                                <label key={a.code} className={`year-btn-modern ${selectedAccent.toLowerCase() === a.code.toLowerCase() ? 'active' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
+                                                    <input 
+                                                        type="radio" 
+                                                        name="accent" 
+                                                        checked={selectedAccent.toLowerCase() === a.code.toLowerCase()} 
+                                                        onChange={() => setSelectedAccent(a.code)} 
+                                                        style={{ display: 'none' }} 
+                                                    />
+                                                    <CountryFlag code={a.code} size="sm" />
+                                                    <span>{lang === 'en' ? a.labelEn : a.labelKu}</span>
+                                                </label>
+                                            ))}
+                                        </div>
                                     </div>
-                                </div>
-                            )}
-                        </div>
+                                )}
+                            </div>
+                        )}
 
                         {/* Most Watched Button - Super Admin Only */}
                         {user?.role === 'super_admin' && (
@@ -696,9 +724,9 @@ export default function Home({ filter }: { filter?: 'movie' | 'series' | 'animat
                                                 </div>
                                             ) : <div />}
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                                {movie.countryFlag && (
-                                                    <span className="overlay-flag-badge" title={movie.accentLabel || movie.country}>
-                                                        {movie.countryFlag}
+                                                {(movie.country || movie.countryFlag) && (
+                                                    <span className="overlay-flag-badge" title={movie.accentLabel || movie.country || ''} style={{ display: 'inline-flex', alignItems: 'center' }}>
+                                                        <CountryFlag code={movie.country || 'US'} size="sm" />
                                                     </span>
                                                 )}
                                                 {(() => {
@@ -724,9 +752,9 @@ export default function Home({ filter }: { filter?: 'movie' | 'series' | 'animat
                                         </p>
                                     </div>
                                     <div className="movie-card-badges">
-                                        {movie.countryFlag && (
-                                            <div className="card-badge card-flag-badge" title={movie.accentLabel || movie.country}>
-                                                {movie.countryFlag}
+                                        {(movie.country || movie.countryFlag) && (
+                                            <div className="card-badge card-flag-badge" title={movie.accentLabel || movie.country || ''} style={{ padding: '3px 6px', display: 'inline-flex', alignItems: 'center' }}>
+                                                <CountryFlag code={movie.country || 'US'} size="sm" />
                                             </div>
                                         )}
                                         {movie.imdbRating && <div className="card-badge"><Star size={10} fill="#fbbf24" color="#fbbf24" /> {movie.imdbRating}</div>}

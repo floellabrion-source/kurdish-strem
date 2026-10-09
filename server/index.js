@@ -4119,8 +4119,8 @@ const COUNTRY_ACCENT_DICTIONARY = [
         countryNameEn: 'United States',
         flag: '🇺🇸',
         accent: 'american',
-        accentLabelKu: 'ئینگلیزی - ئەمریکی',
-        accentLabelEn: 'American English'
+        accentLabelKu: 'ئەمریکی',
+        accentLabelEn: 'American'
     },
     {
         keywords: ['united kingdom', 'uk', 'u.k.', 'great britain', 'britain', 'england', 'scotland', 'wales', 'northern ireland'],
@@ -4129,8 +4129,8 @@ const COUNTRY_ACCENT_DICTIONARY = [
         countryNameEn: 'United Kingdom',
         flag: '🇬🇧',
         accent: 'british',
-        accentLabelKu: 'ئینگلیزی - بەریتانی',
-        accentLabelEn: 'British English'
+        accentLabelKu: 'بەریتانی',
+        accentLabelEn: 'British'
     },
     {
         keywords: ['canada'],
@@ -4139,8 +4139,8 @@ const COUNTRY_ACCENT_DICTIONARY = [
         countryNameEn: 'Canada',
         flag: '🇨🇦',
         accent: 'canadian',
-        accentLabelKu: 'ئینگلیزی - کەنەدی',
-        accentLabelEn: 'Canadian English'
+        accentLabelKu: 'کەنەدی',
+        accentLabelEn: 'Canadian'
     },
     {
         keywords: ['australia'],
@@ -4149,17 +4149,17 @@ const COUNTRY_ACCENT_DICTIONARY = [
         countryNameEn: 'Australia',
         flag: '🇦🇺',
         accent: 'australian',
-        accentLabelKu: 'ئینگلیزی - ئوستوڕاڵی',
-        accentLabelEn: 'Australian English'
+        accentLabelKu: 'ئوستوڕاڵی',
+        accentLabelEn: 'Australian'
     },
     {
         keywords: ['france', 'french'],
         code: 'FR',
-        countryName: 'فەرەنسا',
+        countryName: 'فەڕەنسا',
         countryNameEn: 'France',
         flag: '🇫🇷',
         accent: 'french',
-        accentLabelKu: 'فەرەنسی',
+        accentLabelKu: 'فەڕەنسی',
         accentLabelEn: 'French'
     },
     {
@@ -4239,8 +4239,8 @@ const COUNTRY_ACCENT_DICTIONARY = [
         countryNameEn: 'Ireland',
         flag: '🇮🇪',
         accent: 'irish',
-        accentLabelKu: 'ئینگلیزی - ئێرلەندی',
-        accentLabelEn: 'Irish English'
+        accentLabelKu: 'ئێرلەندی',
+        accentLabelEn: 'Irish'
     },
     {
         keywords: ['new zealand', 'nz'],
@@ -4249,8 +4249,8 @@ const COUNTRY_ACCENT_DICTIONARY = [
         countryNameEn: 'New Zealand',
         flag: '🇳🇿',
         accent: 'new_zealand',
-        accentLabelKu: 'ئینگلیزی - نیوزلەندی',
-        accentLabelEn: 'New Zealand English'
+        accentLabelKu: 'نیوزلەندی',
+        accentLabelEn: 'New Zealand'
     },
     {
         keywords: ['mexico', 'mexican'],
@@ -4259,8 +4259,8 @@ const COUNTRY_ACCENT_DICTIONARY = [
         countryNameEn: 'Mexico',
         flag: '🇲🇽',
         accent: 'spanish',
-        accentLabelKu: 'ئیسپانی (مەکسیکی)',
-        accentLabelEn: 'Spanish (Mexican)'
+        accentLabelKu: 'مەکسیکی',
+        accentLabelEn: 'Mexican'
     },
     {
         keywords: ['russia', 'russian'],

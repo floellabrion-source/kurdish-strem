@@ -80,26 +80,26 @@ export const getCefrColor = (level: string): { bg: string; text: string } => {
 };
 
 export const ACCENT_OPTIONS = [
-    { code: 'US', flag: '🇺🇸', accent: 'american', labelKu: '🇺🇸 ئینگلیزی - ئەمریکی (American)', labelEn: '🇺🇸 American English' },
-    { code: 'GB', flag: '🇬🇧', accent: 'british', labelKu: '🇬🇧 ئینگلیزی - بەریتانی (British)', labelEn: '🇬🇧 British English' },
-    { code: 'CA', flag: '🇨🇦', accent: 'canadian', labelKu: '🇨🇦 ئینگلیزی - کەنەدی (Canadian)', labelEn: '🇨🇦 Canadian English' },
-    { code: 'AU', flag: '🇦🇺', accent: 'australian', labelKu: '🇦🇺 ئینگلیزی - ئوستوڕاڵی (Australian)', labelEn: '🇦🇺 Australian English' },
-    { code: 'IE', flag: '🇮🇪', accent: 'irish', labelKu: '🇮🇪 ئینگلیزی - ئێرلەندی (Irish)', labelEn: '🇮🇪 Irish English' },
-    { code: 'NZ', flag: '🇳🇿', accent: 'new_zealand', labelKu: '🇳🇿 ئینگلیزی - نیوزلەندی (New Zealand)', labelEn: '🇳🇿 New Zealand English' },
-    { code: 'ES', flag: '🇪🇸', accent: 'spanish', labelKu: '🇪🇸 ئیسپانی (Spanish)', labelEn: '🇪🇸 Spanish' },
-    { code: 'FR', flag: '🇫🇷', accent: 'french', labelKu: '🇫🇷 فەرەنسی (French)', labelEn: '🇫🇷 French' },
-    { code: 'DE', flag: '🇩🇪', accent: 'german', labelKu: '🇩🇪 ئەڵمانی (German)', labelEn: '🇩🇪 German' },
-    { code: 'TR', flag: '🇹🇷', accent: 'turkish', labelKu: '🇹🇷 تورکی (Turkish)', labelEn: '🇹🇷 Turkish' },
-    { code: 'JP', flag: '🇯🇵', accent: 'japanese', labelKu: '🇯🇵 ژاپۆنی (Japanese)', labelEn: '🇯🇵 Japanese' },
-    { code: 'KR', flag: '🇰🇷', accent: 'korean', labelKu: '🇰🇷 کۆری (Korean)', labelEn: '🇰🇷 Korean' },
-    { code: 'IN', flag: '🇮🇳', accent: 'indian', labelKu: '🇮🇳 هیندی (Hindi)', labelEn: '🇮🇳 Hindi' },
-    { code: 'IT', flag: '🇮🇹', accent: 'italian', labelKu: '🇮🇹 ئیتاڵی (Italian)', labelEn: '🇮🇹 Italian' },
-    { code: 'RU', flag: '🇷🇺', accent: 'russian', labelKu: '🇷🇺 ڕووسی (Russian)', labelEn: '🇷🇺 Russian' },
-    { code: 'CN', flag: '🇨🇳', accent: 'chinese', labelKu: '🇨🇳 چینی (Chinese)', labelEn: '🇨🇳 Chinese' },
-    { code: 'SE', flag: '🇸🇪', accent: 'swedish', labelKu: '🇸🇪 سویدی (Swedish)', labelEn: '🇸🇪 Swedish' },
-    { code: 'NO', flag: '🇳🇴', accent: 'norwegian', labelKu: '🇳🇴 نەرویجی (Norwegian)', labelEn: '🇳🇴 Norwegian' },
-    { code: 'DK', flag: '🇩🇰', accent: 'danish', labelKu: '🇩🇰 دانیمارکی (Danish)', labelEn: '🇩🇰 Danish' },
-    { code: 'IQ', flag: '🇮🇶', accent: 'kurdish', labelKu: '🇮🇶 کوردی / عێراقی (Kurdish)', labelEn: '🇮🇶 Kurdish / Iraqi' }
+    { code: 'US', flag: '🇺🇸', accent: 'american', nameKu: 'ئەمریکا', nameEn: 'USA', labelKu: 'ئەمریکی', labelEn: 'American' },
+    { code: 'GB', flag: '🇬🇧', accent: 'british', nameKu: 'بەریتانیا', nameEn: 'UK', labelKu: 'بەریتانی', labelEn: 'British' },
+    { code: 'CA', flag: '🇨🇦', accent: 'canadian', nameKu: 'کەنەدا', nameEn: 'Canada', labelKu: 'کەنەدی', labelEn: 'Canadian' },
+    { code: 'AU', flag: '🇦🇺', accent: 'australian', nameKu: 'ئوستوڕاڵیا', nameEn: 'Australia', labelKu: 'ئوستوڕاڵی', labelEn: 'Australian' },
+    { code: 'IE', flag: '🇮🇪', accent: 'irish', nameKu: 'ئێرلەندا', nameEn: 'Ireland', labelKu: 'ئێرلەندی', labelEn: 'Irish' },
+    { code: 'NZ', flag: '🇳🇿', accent: 'new_zealand', nameKu: 'نیوزلەندا', nameEn: 'New Zealand', labelKu: 'نیوزلەندی', labelEn: 'New Zealand' },
+    { code: 'ES', flag: '🇪🇸', accent: 'spanish', nameKu: 'ئیسپانیا', nameEn: 'Spain', labelKu: 'ئیسپانی', labelEn: 'Spanish' },
+    { code: 'FR', flag: '🇫🇷', accent: 'french', nameKu: 'فەڕەنسا', nameEn: 'France', labelKu: 'فەڕەنسی', labelEn: 'French' },
+    { code: 'DE', flag: '🇩🇪', accent: 'german', nameKu: 'ئەڵمانیا', nameEn: 'Germany', labelKu: 'ئەڵمانی', labelEn: 'German' },
+    { code: 'TR', flag: '🇹🇷', accent: 'turkish', nameKu: 'تورکیا', nameEn: 'Turkey', labelKu: 'تورکی', labelEn: 'Turkish' },
+    { code: 'JP', flag: '🇯🇵', accent: 'japanese', nameKu: 'ژاپۆن', nameEn: 'Japan', labelKu: 'ژاپۆنی', labelEn: 'Japanese' },
+    { code: 'KR', flag: '🇰🇷', accent: 'korean', nameKu: 'کۆریای باشوور', nameEn: 'South Korea', labelKu: 'کۆری', labelEn: 'Korean' },
+    { code: 'IN', flag: '🇮🇳', accent: 'indian', nameKu: 'هیندستان', nameEn: 'India', labelKu: 'هیندی', labelEn: 'Hindi' },
+    { code: 'IT', flag: '🇮🇹', accent: 'italian', nameKu: 'ئیتاڵیا', nameEn: 'Italy', labelKu: 'ئیتاڵی', labelEn: 'Italian' },
+    { code: 'RU', flag: '🇷🇺', accent: 'russian', nameKu: 'ڕووسیا', nameEn: 'Russia', labelKu: 'ڕووسی', labelEn: 'Russian' },
+    { code: 'CN', flag: '🇨🇳', accent: 'chinese', nameKu: 'چین', nameEn: 'China', labelKu: 'چینی', labelEn: 'Chinese' },
+    { code: 'SE', flag: '🇸🇪', accent: 'swedish', nameKu: 'سوید', nameEn: 'Sweden', labelKu: 'سویدی', labelEn: 'Swedish' },
+    { code: 'NO', flag: '🇳🇴', accent: 'norwegian', nameKu: 'نەرویج', nameEn: 'Norway', labelKu: 'نەرویجی', labelEn: 'Norwegian' },
+    { code: 'DK', flag: '🇩🇰', accent: 'danish', nameKu: 'دانیمارک', nameEn: 'Denmark', labelKu: 'دانیمارکی', labelEn: 'Danish' },
+    { code: 'IQ', flag: '🇮🇶', accent: 'kurdish', nameKu: 'کوردستان', nameEn: 'Kurdistan', labelKu: 'کوردی', labelEn: 'Kurdish' }
 ];
 
 export interface Movie {

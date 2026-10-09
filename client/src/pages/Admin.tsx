@@ -2317,7 +2317,7 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                                             country: val,
                                             countryFlag: item?.flag || '🇺🇸',
                                             accent: item?.accent || 'american',
-                                            accentLabel: item?.labelKu || 'ئینگلیزی - ئەمریکی',
+                                            accentLabel: item?.labelKu || 'ئەمریکی',
                                             countries: [val]
                                         }));
                                     }}
@@ -2519,7 +2519,7 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                                             country: val,
                                             countryFlag: item?.flag || '🇺🇸',
                                             accent: item?.accent || 'american',
-                                            accentLabel: item?.labelKu || 'ئینگلیزی - ئەمریکی',
+                                            accentLabel: item?.labelKu || 'ئەمریکی',
                                             countries: [val]
                                         }) : null);
                                     }}

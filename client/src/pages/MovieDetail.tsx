@@ -4,7 +4,8 @@ import axios from '../api/client';
 import { Play, Heart, Clock, CheckCircle, Eye, Globe, Bookmark, Star, ArrowLeft, ArrowRight, MessageSquare, Send, Share2, Check } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { Movie, LanguageMetrics, getCefrDisplayLevel, getCefrColor } from '../types';
+import { Movie, LanguageMetrics, getCefrDisplayLevel, getCefrColor, ACCENT_OPTIONS } from '../types';
+import { CountryFlag } from '../components/CountryFlag';
 import './MovieDetail.css';
 
 const CEFR_PRESETS: Record<string, LanguageMetrics['distribution']> = {
@@ -415,9 +416,10 @@ export default function MovieDetail() {
                                         <Globe size={12} /> {movie.language.split(',')[0]}
                                     </span>
                                 )}
-                                {movie.countryFlag && (
-                                    <span className="detail-country-badge" title={movie.accentLabel || movie.country}>
-                                        <span>{movie.countryFlag}</span> {movie.accentLabel || movie.country}
+                                {(movie.country || movie.countryFlag) && (
+                                    <span className="detail-country-badge" title={movie.accentLabel || movie.country || ''}>
+                                        <CountryFlag code={movie.country || 'US'} size="sm" />
+                                        <span>{ACCENT_OPTIONS.find(a => a.code.toLowerCase() === (movie.country || '').toLowerCase())?.[lang === 'en' ? 'labelEn' : 'labelKu'] || movie.accentLabel || movie.country}</span>
                                     </span>
                                 )}
                             </div>
