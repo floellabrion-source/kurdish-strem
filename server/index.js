@@ -816,27 +816,28 @@ function getCountryInfo(code) {
     return { code: upper, name: upper, en: upper, flag: '🌍' };
 }
 
-// Smart Visitor & Analytics Middleware
+// Smart Visitor & Analytics System
 const BOT_REGEX = /googlebot|google-inspectiontool|bingbot|yandex|baiduspider|duckduckbot|slurp|facebookexternalhit|twitterbot|telegrambot|whatsapp|discordbot|applebot|curl|wget|python|postman|insomnia|go-http-client|headlesschrome|phantomjs|petalbot|semrush|ahrefs|mj12bot|dotbot|screaming frog|uptime|bot|crawler|spider/i;
-const IGNORED_PATHS = /^\/(?:api|assets|static|uploads|subtitles|ws|health|favicon|manifest|robots\.txt|sitemap\.xml)/i;
-const STATIC_EXTENSIONS = /\.(?:js|css|png|jpg|jpeg|gif|webp|svg|ico|woff2?|ttf|eot|mp4|mkv|m3u8|ts|vtt|srt|json)$/i;
+const IGNORED_STATIC = /\.(?:js|css|png|jpg|jpeg|gif|webp|svg|ico|woff2?|ttf|eot|mp4|mkv|m3u8|ts|vtt|srt|json)$/i;
 
-app.use((req, res, next) => {
+function trackVisitor(req, pagePath = '/') {
     try {
-        // Only track legitimate human page views (GET requests to platform routes)
-        if (req.method !== 'GET') return next();
-        if (IGNORED_PATHS.test(req.path) || STATIC_EXTENSIONS.test(req.path)) return next();
+        let ip = req.headers['cf-connecting-ip'] || 
+                 req.headers['x-forwarded-for'] || 
+                 req.headers['x-real-ip'] || 
+                 req.socket?.remoteAddress || 
+                 req.ip || '';
 
-        let ip = req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.socket?.remoteAddress || req.ip || '';
         if (typeof ip === 'string' && ip.includes(',')) ip = ip.split(',')[0].trim();
-        
-        // Exclude localhost/loopback
-        if (ip === '127.0.0.1' || ip === '::1' || ip === 'localhost') return next();
+        if (typeof ip === 'string' && ip.startsWith('::ffff:')) ip = ip.substring(7);
+
+        // Exclude internal loopback in pure dev if desired, but allow normal tracking
+        if (!ip) ip = '127.0.0.1';
 
         const ua = req.headers['user-agent'] || '';
         
         // Filter out automated bots/scrapers
-        if (BOT_REGEX.test(ua)) return next();
+        if (BOT_REGEX.test(ua)) return;
 
         // Exclude admin dashboard activities from skewing consumer traffic
         const authHeader = req.headers.authorization || '';
@@ -844,13 +845,14 @@ app.use((req, res, next) => {
             try {
                 const token = authHeader.split(' ')[1];
                 const decoded = jwt.verify(token, JWT_SECRET);
-                if (decoded && (decoded.role === 'admin' || decoded.role === 'owner')) {
-                    return next();
+                if (decoded && (decoded.role === 'admin' || decoded.role === 'super_admin' || decoded.role === 'owner' || decoded.username === 'maher2')) {
+                    return;
                 }
             } catch (e) {}
         }
 
-        const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+        const now = new Date();
+        const today = now.toISOString().split('T')[0]; // YYYY-MM-DD
         
         const rawCountry = req.headers['cf-ipcountry'] || 'IQ';
         const countryInfo = getCountryInfo(rawCountry);
@@ -883,8 +885,8 @@ app.use((req, res, next) => {
 
         const deviceType = isTablet ? 'tablet' : (isMobile ? 'mobile' : 'desktop');
 
-        const analytics = readAnalytics();
-        if (!analytics.visits) analytics.visits = [];
+        const analytics = readAnalytics() || { visits: [], watchEvents: [] };
+        if (!Array.isArray(analytics.visits)) analytics.visits = [];
         
         // Deduplicate unique visitors per IP on the same day
         const existingVisit = analytics.visits.find(v => v.ip === ip && v.date === today);
@@ -899,14 +901,33 @@ app.use((req, res, next) => {
                 os, 
                 browser, 
                 date: today, 
+                path: pagePath || '/',
                 timestamp: Date.now() 
             });
-            if (analytics.visits.length > 20000) analytics.visits = analytics.visits.slice(-20000);
+            if (analytics.visits.length > 25000) analytics.visits = analytics.visits.slice(-25000);
             writeAnalytics(analytics);
         }
     } catch (err) {
-        // Silent fail for analytics middleware
+        // Silent fail for analytics
     }
+}
+
+// Dedicated Client Beacon Endpoint for SPA Route Visits
+app.post('/api/analytics/visit', (req, res) => {
+    const pagePath = req.body?.path || '/';
+    trackVisitor(req, pagePath);
+    res.status(200).json({ success: true });
+});
+
+// Passive Visitor Middleware on core public endpoints
+app.use((req, res, next) => {
+    try {
+        if (req.method === 'GET' && !IGNORED_STATIC.test(req.path)) {
+            if (req.path === '/api/movies' || req.path.startsWith('/api/movies/') || req.path === '/api/featured') {
+                trackVisitor(req, req.path);
+            }
+        }
+    } catch (e) {}
     next();
 });
 
@@ -6605,11 +6626,22 @@ app.get('/api/admin/analytics', requireAuth, requireAdmin, (req, res) => {
         const now = new Date();
         const todayStr = now.toISOString().split('T')[0];
 
-        const startOfWeek = new Date(now);
-        startOfWeek.setDate(now.getDate() - now.getDay());
+        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+        const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay()).getTime();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+        const startOfYear = new Date(now.getFullYear(), 0, 1).getTime();
 
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const startOfYear = new Date(now.getFullYear(), 0, 1);
+        const getVisitTime = (v) => {
+            if (!v) return 0;
+            if (v.timestamp && !isNaN(Number(v.timestamp))) return Number(v.timestamp);
+            if (v.date && typeof v.date === 'string') {
+                const parts = v.date.split('-');
+                if (parts.length === 3) {
+                    return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10)).getTime();
+                }
+            }
+            return 0;
+        };
 
         const visits = Array.isArray(analytics.visits) ? analytics.visits : [];
         const totalVisitsCount = visits.length;
@@ -6826,10 +6858,10 @@ app.get('/api/admin/analytics', requireAuth, requireAdmin, (req, res) => {
             },
             locationStats: locationStats,
             visitors: {
-                daily: visits.filter(v => v && v.date === todayStr).length,
-                weekly: visits.filter(v => v && v.date && new Date(v.date) >= startOfWeek).length,
-                monthly: visits.filter(v => v && v.date && new Date(v.date) >= startOfMonth).length,
-                yearly: visits.filter(v => v && v.date && new Date(v.date) >= startOfYear).length,
+                daily: visits.filter(v => v && (v.date === todayStr || getVisitTime(v) >= startOfDay)).length,
+                weekly: visits.filter(v => v && getVisitTime(v) >= startOfWeek).length,
+                monthly: visits.filter(v => v && getVisitTime(v) >= startOfMonth).length,
+                yearly: visits.filter(v => v && getVisitTime(v) >= startOfYear).length,
             },
             topWatched,
             genreStats: sortedGenres,

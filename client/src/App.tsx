@@ -128,6 +128,24 @@ function AppRoutes() {
         return () => window.removeEventListener('aiCreditsUpdated', handleAiCreditsUpdated);
     }, [updateCredits]);
 
+    // Track visitor analytics safely & asynchronously on route changes
+    useEffect(() => {
+        if (location.pathname.startsWith('/admin')) return;
+        try {
+            const payload = JSON.stringify({ path: location.pathname });
+            if (navigator.sendBeacon) {
+                navigator.sendBeacon('/api/analytics/visit', new Blob([payload], { type: 'application/json' }));
+            } else {
+                fetch('/api/analytics/visit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: payload,
+                    keepalive: true
+                }).catch(() => {});
+            }
+        } catch (e) {}
+    }, [location.pathname]);
+
     return (
         <div className="app-container">
             <Navbar />
