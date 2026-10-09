@@ -29,7 +29,7 @@ export default function AchievementsGrid({ streakDays = 0 }: { streakDays?: numb
     const { lang } = useLanguage();
     const [selectedBadge, setSelectedBadge] = useState<AchievementBadge | null>(null);
 
-    const xp = calculateUserXP(user);
+    const xp = calculateUserXP(user, streakDays);
     const rank = getUserRank(xp);
     const badges = calculateAchievements(user, streakDays);
 

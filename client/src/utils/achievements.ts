@@ -25,25 +25,24 @@ export interface UserRankInfo {
     progressPercent: number;
 }
 
-export function calculateUserXP(user: User | null): number {
+export function calculateUserXP(user: User | null, streakDays: number = 0): number {
     if (!user) return 0;
     let xp = 0;
 
-    // Points from activities
+    // Direct Activity Points (quizzes, interactive tasks)
     xp += (user.points || 0) * 10;
 
     // Flashcards created
     xp += (user.flashcards?.length || 0) * 15;
 
-    // Watch stats
-    const totalMinutes = Object.values(user.dailyStats || {}).reduce((acc, curr) => acc + (curr.watchMinutes || 0), 0);
+    // Watch stats (2 XP per watch minute)
+    const totalMinutes = Object.values(user.dailyStats || {}).reduce((acc, curr) => acc + (curr.watchMinutes || ((curr.watchSeconds || 0) / 60) || 0), 0);
     xp += Math.floor(totalMinutes * 2);
 
-    // CEFR test completed bonus
-    if (user.level) xp += 100;
-
-    // Credits bonus
-    if ((user.credits || 0) > 0) xp += 50;
+    // Sum all unlocked achievement badge rewards (e.g. +200 XP for KST Supporter, +80 XP for 50 sentences, etc.)
+    const badges = calculateAchievements(user, streakDays);
+    const badgeXP = badges.filter(b => b.isUnlocked).reduce((sum, b) => sum + b.xpReward, 0);
+    xp += badgeXP;
 
     return Math.max(0, xp);
 }

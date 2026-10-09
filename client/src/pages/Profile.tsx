@@ -235,7 +235,7 @@ export default function Profile() {
     };
 
     // XP and Rank calculations
-    const xp = calculateUserXP(user);
+    const xp = calculateUserXP(user, streak);
     const rank = getUserRank(xp);
     const currentLevel = user?.level || localStorage.getItem('kurdish_stream_user_level') || null;
 

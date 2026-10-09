@@ -151,7 +151,7 @@ export interface User {
     watchLater: string[];
     watched: string[];
     token?: string;
-    dailyStats?: Record<string, { watchMinutes: number; sentencesSeen: number }>;
+    dailyStats?: Record<string, { watchMinutes: number; sentencesSeen: number; watchSeconds?: number }>;
     dailyGoal?: number;
     level?: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2' | string;
     assessmentResult?: {
