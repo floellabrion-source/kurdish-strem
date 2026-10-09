@@ -385,6 +385,25 @@ export default function Watch() {
     const lastSyncedTimeRef = useRef<number>(-1);
     const [sessionSentences, setSessionSentences] = useState(0);
 
+    const flushWatchTime = useCallback(() => {
+        if (accumulatedSecondsRef.current >= 2 && user) {
+            const secs = Math.floor(accumulatedSecondsRef.current);
+            accumulatedSecondsRef.current -= secs;
+            syncProgress({ watchSeconds: secs }).catch(() => {});
+        }
+    }, [user, syncProgress]);
+
+    useEffect(() => {
+        const handleBeforeUnload = () => {
+            flushWatchTime();
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+            flushWatchTime();
+        };
+    }, [flushWatchTime]);
+
     // HLS & Video Quality State
     const hlsRef = useRef<Hls | null>(null);
     const [autoDetectedHeight, setAutoDetectedHeight] = useState<number | null>(null);
@@ -1927,14 +1946,16 @@ CRITICAL RULES:
         const diff = currentT - lastVideoTimeRef.current;
         
         // Track watch time based on normal playback (not seeking)
-        if (diff > 0 && diff < 1.5) { // 1.5 allows for normal fast playback
+        if (diff > 0 && diff < 2.0) { // 2.0 allows for normal fast playback
             accumulatedSecondsRef.current += diff;
             totalAccumulatedSecondsRef.current += diff;
             
-            if (accumulatedSecondsRef.current >= 60) {
-                accumulatedSecondsRef.current -= 60; // Keep the remainder
+            // Sync every 10 seconds of active playback so time updates in real-time
+            if (accumulatedSecondsRef.current >= 10) {
+                const secsToSync = Math.floor(accumulatedSecondsRef.current);
+                accumulatedSecondsRef.current -= secsToSync; // Keep the remainder
                 if (user) {
-                    syncProgress({ watchMinutes: 1 }).catch(() => {});
+                    syncProgress({ watchSeconds: secsToSync }).catch(() => {});
                 }
             }
             
@@ -2327,6 +2348,7 @@ CRITICAL RULES:
                 onPlay={() => { setIsPlaying(true); resetControlsTimer(); }}
                 onPause={() => {
                     setIsPlaying(false);
+                    flushWatchTime();
                     const v = videoRef.current;
                     if (v) {
                         const currentT = isAnyTranscoding ? ((streamStartTime || 0) + v.currentTime) : v.currentTime;

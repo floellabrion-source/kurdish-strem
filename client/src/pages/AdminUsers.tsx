@@ -55,7 +55,7 @@ const DEFAULT_PERMISSIONS: AdminPermissions = {
 };
 
 // Helper to calculate stats
-const getStats = (dailyStats: Record<string, { watchMinutes: number; sentencesSeen: number }> | undefined, period: 'day' | 'week' | 'month') => {
+const getStats = (dailyStats: Record<string, { watchMinutes: number; sentencesSeen: number; watchSeconds?: number }> | undefined, period: 'day' | 'week' | 'month') => {
     if (!dailyStats) return { watchMinutes: 0, sentencesSeen: 0 };
     
     const now = new Date();
@@ -81,7 +81,8 @@ const getStats = (dailyStats: Record<string, { watchMinutes: number; sentencesSe
         }
 
         if (isIncluded) {
-            minutes += stats.watchMinutes || 0;
+            const statMins = stats.watchMinutes || (stats.watchSeconds ? stats.watchSeconds / 60 : 0) || 0;
+            minutes += statMins;
             sentences += stats.sentencesSeen || 0;
         }
     });
@@ -734,12 +735,12 @@ export default function AdminUsers() {
                                 <div className="user-watch-stats">
                                     <div className="u-watch-stat">
                                         <span className="u-ws-label">{lang === 'en' ? 'Watched this week:' : 'سەیرکردنی ئەم هەفتەیە:'}</span>
-                                        <span className="u-ws-val"><Clock size={13}/> {weeklyStats.watchMinutes} {lang === 'en' ? 'mins' : 'خولەک'}</span>
+                                        <span className="u-ws-val"><Clock size={13}/> {weeklyStats.watchMinutes > 0 && weeklyStats.watchMinutes < 1 ? '< 1' : Math.round(weeklyStats.watchMinutes)} {lang === 'en' ? 'mins' : 'خولەک'}</span>
                                         <span className="u-ws-val"><MessageSquare size={13}/> {weeklyStats.sentencesSeen} {lang === 'en' ? 'sentences' : 'ڕستە'}</span>
                                     </div>
                                     <div className="u-watch-stat">
                                         <span className="u-ws-label">{lang === 'en' ? 'Watched this month:' : 'سەیرکردنی ئەم مانگە:'}</span>
-                                        <span className="u-ws-val"><Clock size={13}/> {monthlyStats.watchMinutes} {lang === 'en' ? 'mins' : 'خولەک'}</span>
+                                        <span className="u-ws-val"><Clock size={13}/> {monthlyStats.watchMinutes > 0 && monthlyStats.watchMinutes < 1 ? '< 1' : Math.round(monthlyStats.watchMinutes)} {lang === 'en' ? 'mins' : 'خولەک'}</span>
                                         <span className="u-ws-val"><MessageSquare size={13}/> {monthlyStats.sentencesSeen} {lang === 'en' ? 'sentences' : 'ڕستە'}</span>
                                     </div>
                                 </div>

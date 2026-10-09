@@ -32,7 +32,7 @@ interface MediaItem {
 }
 
 // Helper to calculate stats
-const getStats = (dailyStats: Record<string, { watchMinutes: number; sentencesSeen: number }> | undefined, period: 'day' | 'week' | 'month') => {
+const getStats = (dailyStats: Record<string, { watchMinutes: number; sentencesSeen: number; watchSeconds?: number }> | undefined, period: 'day' | 'week' | 'month') => {
     if (!dailyStats) return { watchMinutes: 0, sentencesSeen: 0 };
     
     const now = new Date();
@@ -60,7 +60,8 @@ const getStats = (dailyStats: Record<string, { watchMinutes: number; sentencesSe
         }
 
         if (isIncluded) {
-            minutes += stats.watchMinutes || 0;
+            const statMins = stats.watchMinutes || (stats.watchSeconds ? stats.watchSeconds / 60 : 0) || 0;
+            minutes += statMins;
             sentences += stats.sentencesSeen || 0;
         }
     });
@@ -483,7 +484,7 @@ export default function Profile() {
                         <span className="metric-subtext">
                             {goalProgress >= 100 
                                 ? (lang === 'en' ? 'Goal Achieved Today! 🎉' : 'ئامانجی ئەمڕۆ بەدیهات! 🎉') 
-                                : `${dailyStats.watchMinutes} / ${dailyGoal} ${lang === 'en' ? 'mins watched today' : 'خولەک سەیرکراوە'}`}
+                                : `${dailyStats.watchMinutes > 0 && dailyStats.watchMinutes < 1 ? '< 1' : Math.round(dailyStats.watchMinutes)} / ${dailyGoal} ${lang === 'en' ? 'mins watched today' : 'خولەک سەیرکراوە'}`}
                         </span>
                     </div>
                 </div>

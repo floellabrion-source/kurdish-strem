@@ -2247,7 +2247,7 @@ app.post('/api/user/sync', requireAuth, (req, res) => {
         const idx = users.findIndex((u) => u.id === req.user.id);
         if (idx === -1) return res.status(404).json({ error: 'User not found' });
 
-        const { points, history, flashcards, watchMinutes, sentencesSeen, dailyGoal, level, assessmentResult, dualSubWatchSeconds } = req.body;
+        const { points, history, flashcards, watchMinutes, watchSeconds, sentencesSeen, dailyGoal, level, assessmentResult, dualSubWatchSeconds } = req.body;
         if (points !== undefined) {
             const pts = Number(points || 0);
             if (!isNaN(pts) && pts > 0) {
@@ -2273,16 +2273,22 @@ app.post('/api/user/sync', requireAuth, (req, res) => {
         const today = new Date().toISOString().split('T')[0];
         if (!users[idx].dailyStats) users[idx].dailyStats = {};
         if (!users[idx].dailyStats[today]) {
-            users[idx].dailyStats[today] = { watchMinutes: 0, sentencesSeen: 0 };
+            users[idx].dailyStats[today] = { watchMinutes: 0, watchSeconds: 0, sentencesSeen: 0 };
         }
         
-        if (watchMinutes) {
+        if (watchSeconds !== undefined && Number(watchSeconds) > 0) {
+            const safeSecs = Math.min(Math.max(0, Number(watchSeconds) || 0), 7200);
+            users[idx].dailyStats[today].watchSeconds = (users[idx].dailyStats[today].watchSeconds || 0) + safeSecs;
+            users[idx].dailyStats[today].watchMinutes = Math.round(((users[idx].dailyStats[today].watchSeconds) / 60) * 10) / 10;
+        } else if (watchMinutes !== undefined && Number(watchMinutes) > 0) {
             const safeMinutes = Math.min(Math.max(0, Number(watchMinutes) || 0), 120);
-            users[idx].dailyStats[today].watchMinutes += safeMinutes;
+            users[idx].dailyStats[today].watchMinutes = Math.round(((users[idx].dailyStats[today].watchMinutes || 0) + safeMinutes) * 10) / 10;
+            users[idx].dailyStats[today].watchSeconds = (users[idx].dailyStats[today].watchSeconds || 0) + Math.round(safeMinutes * 60);
         }
+
         if (sentencesSeen) {
             const safeSentences = Math.min(Math.max(0, Number(sentencesSeen) || 0), 200);
-            users[idx].dailyStats[today].sentencesSeen += safeSentences;
+            users[idx].dailyStats[today].sentencesSeen = (users[idx].dailyStats[today].sentencesSeen || 0) + safeSentences;
         }
 
         writeUsers(users);

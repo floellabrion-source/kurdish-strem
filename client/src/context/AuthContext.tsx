@@ -11,7 +11,7 @@ interface AuthContextType {
     login: (username: string, pass: string) => Promise<User>;
     register: (username: string, pass: string) => Promise<void>;
     logout: () => void;
-    syncProgress: (data: { points?: number; history?: any; flashcards?: any[]; watchMinutes?: number; sentencesSeen?: number; dailyGoal?: number; level?: string; assessmentResult?: any; dualSubWatchSeconds?: number; dualSubCycleStartTime?: number | null }) => Promise<void>;
+    syncProgress: (data: { points?: number; history?: any; flashcards?: any[]; watchMinutes?: number; watchSeconds?: number; sentencesSeen?: number; dailyGoal?: number; level?: string; assessmentResult?: any; dualSubWatchSeconds?: number; dualSubCycleStartTime?: number | null }) => Promise<void>;
     toggleList: (listName: 'favorites' | 'watchLater' | 'watched', movieId: string) => Promise<void>;
     updateCredits: (credits: number) => void;
     refreshUser: () => Promise<void>;
@@ -99,7 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem('ks_token', newToken);
     }, []);
 
-    const syncProgress = async (data: { points?: number; history?: any; flashcards?: any[]; watchMinutes?: number; sentencesSeen?: number; dailyGoal?: number; level?: string; assessmentResult?: any }) => {
+    const syncProgress = async (data: { points?: number; history?: any; flashcards?: any[]; watchMinutes?: number; watchSeconds?: number; sentencesSeen?: number; dailyGoal?: number; level?: string; assessmentResult?: any; dualSubWatchSeconds?: number; dualSubCycleStartTime?: number | null }) => {
         if (!user) return; // Silent fail if not logged in
 
         if (data.dailyGoal !== undefined) {
