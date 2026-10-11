@@ -6,7 +6,7 @@ import {
     X, Plus, Trash2, Edit3, BarChart2, Video, Upload, Link as LinkIcon,
     FileText, Languages, Shield, ChevronDown, ChevronUp, PlusCircle, Loader2, Play,
     Download, Sparkles, CheckCircle2, AlertCircle, Pause, RefreshCw, Zap, BookOpen, Brain, DollarSign, Clock, Layers, Film,
-    Minimize2, Maximize2, Wrench, Globe, Lock, Unlock
+    Minimize2, Maximize2, Wrench, Globe, Lock, Unlock, Cloud, Search
 } from 'lucide-react';
 import { Movie, Season, Episode, LanguageMetrics } from '../types';
 import { 
@@ -116,6 +116,80 @@ export default function EpisodeManagerModal({
             if (onReloadMovie) onReloadMovie();
         } catch (err: any) {
             showToast(err.response?.data?.error || 'کێشەیەک ڕووی دا');
+        }
+    };
+
+    // ─── CLOUDFLARE R2 BULK AUTO-LINK STATE ───
+    const [r2Target, setR2Target] = useState<{
+        season: Season;
+        keyword: string;
+        loading: boolean;
+        saving: boolean;
+        data: {
+            totalEpisodes: number;
+            readyCount: number;
+            alreadyLinkedCount: number;
+            missingCount: number;
+            episodes: Array<{
+                id: string;
+                number: number;
+                title: string;
+                currentVideoUrl: string;
+                matchedVideoUrl: string | null;
+                folder: string | null;
+                status: 'ready' | 'already_linked' | 'missing';
+            }>;
+            extraInR2: any[];
+        } | null;
+        error: string | null;
+    } | null>(null);
+
+    const scanR2ForSeason = async (season: Season, keyword: string) => {
+        try {
+            setR2Target(prev => prev ? { ...prev, loading: true, error: null } : null);
+            const res = await axios.get(`/api/admin/movies/${movie.id}/r2-scan`, {
+                params: {
+                    seasonNum: season.number,
+                    keyword: keyword.trim()
+                }
+            });
+            setR2Target(prev => prev ? { ...prev, loading: false, data: res.data, error: null } : null);
+        } catch (err: any) {
+            setR2Target(prev => prev ? {
+                ...prev,
+                loading: false,
+                error: err.response?.data?.error || 'هەڵەیەک لە پشکنینی Cloudflare R2 ڕوویدا'
+            } : null);
+        }
+    };
+
+    const openR2AutoLink = (season: Season) => {
+        const initialKeyword = movie.title || '';
+        setR2Target({
+            season,
+            keyword: initialKeyword,
+            loading: true,
+            saving: false,
+            data: null,
+            error: null
+        });
+        scanR2ForSeason(season, initialKeyword);
+    };
+
+    const handleApplyR2Links = async () => {
+        if (!r2Target || !r2Target.data) return;
+        try {
+            setR2Target(prev => prev ? { ...prev, saving: true } : null);
+            const res = await axios.post(`/api/admin/movies/${movie.id}/auto-link-r2`, {
+                seasonNum: r2Target.season.number,
+                keyword: r2Target.keyword
+            });
+            showToast(res.data.message || 'ئەڵقەکان بە سەرکەوتوویی بەسترانەوە ⚡');
+            setR2Target(null);
+            if (onReloadMovie) onReloadMovie();
+        } catch (err: any) {
+            setR2Target(prev => prev ? { ...prev, saving: false } : null);
+            showToast(err.response?.data?.error || 'کێشەیەک لە بەستنەوە ڕوویدا');
         }
     };
 
@@ -737,6 +811,16 @@ export default function EpisodeManagerModal({
                                                 ) : (
                                                     <Sparkles size={15} />
                                                 )}
+                                            </button>
+
+                                            {/* BULK R2 AUTO-LINK BUTTON */}
+                                            <button
+                                                className="season-action-btn auto-r2-btn"
+                                                title={lang === 'en' ? 'Auto-Link Episodes from Cloudflare R2 ⚡' : 'بەستنەوەی خودکاری ئەڵقەکان لە Cloudflare R2 ⚡'}
+                                                onClick={() => openR2AutoLink(season)}
+                                            >
+                                                <Zap size={14} />
+                                                <span>{lang === 'en' ? 'Auto-Link R2 ⚡' : 'بەستنەوە لە R2 ⚡'}</span>
                                             </button>
 
                                             <button
@@ -1566,6 +1650,231 @@ export default function EpisodeManagerModal({
                                     </div>
                                 </div>
                             )}
+                        </div>
+                    </div>
+                )}
+
+                {/* ─── CLOUDFLARE R2 AUTO-LINK MODAL ─── */}
+                {r2Target && (
+                    <div className="ep-modal-backdrop r2-link-backdrop" onClick={() => !r2Target.saving && setR2Target(null)}>
+                        <div className="r2-link-modal-card" onClick={e => e.stopPropagation()}>
+                            {/* Modal Header */}
+                            <div className="r2-link-modal-header">
+                                <div className="r2-link-header-left">
+                                    <div className="r2-link-icon-bubble">
+                                        <Zap size={22} className="r2-bolt-icon" />
+                                    </div>
+                                    <div>
+                                        <h3 className="r2-link-modal-title">
+                                            {lang === 'en' 
+                                                ? `Auto-Link Episodes from Cloudflare R2 (Season ${r2Target.season.number})` 
+                                                : `بەستنەوەی خودکاری ئەڵقەکان لە Cloudflare R2 (سیزنی ${r2Target.season.number}) ⚡`}
+                                        </h3>
+                                        <p className="r2-link-modal-subtitle">
+                                            {lang === 'en' 
+                                                ? 'Scans your R2 bucket for HLS master.m3u8 playlists and matches each episode accurately by number.' 
+                                                : 'پشکنینی فۆڵدەرەکانی ناو Cloudflare بە دوای فایلی master.m3u8 و بەستنەوەی ئەڵقەکان بە پێی ژمارە.'}
+                                        </p>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    className="ep-modal-close-btn"
+                                    disabled={r2Target.saving}
+                                    onClick={() => setR2Target(null)}
+                                >
+                                    <X size={18} />
+                                </button>
+                            </div>
+
+                            {/* Keyword Search / Refine Bar */}
+                            <div className="r2-link-search-bar">
+                                <div className="r2-search-input-wrap">
+                                    <Search size={16} className="r2-search-icon" />
+                                    <input
+                                        type="text"
+                                        placeholder={lang === 'en' ? 'Search keyword in R2 folders (e.g. wayward pines)...' : 'ناوی زنجیرە لەناو Cloudflare (نموونە: wayward pines)...'}
+                                        value={r2Target.keyword}
+                                        onChange={e => setR2Target({ ...r2Target, keyword: e.target.value })}
+                                        onKeyDown={e => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                scanR2ForSeason(r2Target.season, r2Target.keyword);
+                                            }
+                                        }}
+                                        className="r2-search-input"
+                                    />
+                                </div>
+                                <button
+                                    type="button"
+                                    className="r2-search-refresh-btn"
+                                    disabled={r2Target.loading || r2Target.saving}
+                                    onClick={() => scanR2ForSeason(r2Target.season, r2Target.keyword)}
+                                >
+                                    {r2Target.loading ? <Loader2 size={15} className="spinning" /> : <RefreshCw size={15} />}
+                                    <span>{lang === 'en' ? 'Scan R2' : 'پشکنینەوە'}</span>
+                                </button>
+                            </div>
+
+                            {/* Modal Body / Status */}
+                            <div className="r2-link-modal-body">
+                                {r2Target.loading && (
+                                    <div className="r2-link-loading-state">
+                                        <Loader2 size={36} className="spinning r2-spinner" />
+                                        <p>{lang === 'en' ? 'Scanning Cloudflare R2 bucket...' : 'پشکنینی فۆڵدەرەکانی Cloudflare R2 دەکرێت...'}</p>
+                                        <span>{lang === 'en' ? 'Connecting to storage and analyzing master.m3u8 files' : 'پەیوەندی لەگەڵ کلاودفلێر دەبەسترێت و فایلەکانی master.m3u8 شیدەکرێنەوە'}</span>
+                                    </div>
+                                )}
+
+                                {r2Target.error && !r2Target.loading && (
+                                    <div className="r2-link-error-state">
+                                        <AlertCircle size={28} color="#ef4444" />
+                                        <p>{r2Target.error}</p>
+                                        <button
+                                            type="button"
+                                            className="btn-r2-retry"
+                                            onClick={() => scanR2ForSeason(r2Target.season, r2Target.keyword)}
+                                        >
+                                            <RefreshCw size={14} /> دووبارە هەوڵبدەوە
+                                        </button>
+                                    </div>
+                                )}
+
+                                {r2Target.data && !r2Target.loading && (
+                                    <>
+                                        {/* Stats Bar */}
+                                        <div className="r2-link-stats-row">
+                                            <div className="r2-stat-pill total">
+                                                <span>کۆی ئەڵقەکان:</span>
+                                                <strong>{r2Target.data.totalEpisodes}</strong>
+                                            </div>
+                                            <div className="r2-stat-pill ready">
+                                                <span>ئامادەیە بۆ بەستنەوە:</span>
+                                                <strong>{r2Target.data.readyCount}</strong>
+                                            </div>
+                                            <div className="r2-stat-pill already">
+                                                <span>پێشتر بەستراوەتەوە:</span>
+                                                <strong>{r2Target.data.alreadyLinkedCount}</strong>
+                                            </div>
+                                            <div className={`r2-stat-pill missing ${r2Target.data.missingCount > 0 ? 'has-missing' : ''}`}>
+                                                <span>لە R2 نەدۆزرایەوە (بەتاڵ دەمێنێتەوە):</span>
+                                                <strong>{r2Target.data.missingCount}</strong>
+                                            </div>
+                                        </div>
+
+                                        {/* Notice banner if some episodes missing */}
+                                        {r2Target.data.missingCount > 0 && (
+                                            <div className="r2-missing-alert-box">
+                                                <AlertCircle size={18} color="#f59e0b" />
+                                                <span>
+                                                    ئاگاداری: {r2Target.data.missingCount} ئەڵقە لەناو Cloudflare فایلیان نەدۆزرایەوە. 
+                                                    ئەم ئەڵقانە وەک خۆیان بە بەتاڵی دەمێننەوە و هیچ ئەڵقەیەکی تریان ناخرێتە شوێن.
+                                                </span>
+                                            </div>
+                                        )}
+
+                                        {/* Episodes Table / List */}
+                                        <div className="r2-episodes-list-wrap">
+                                            <table className="r2-episodes-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th style={{ width: '80px' }}>ئەڵقە</th>
+                                                        <th>ناونیشان</th>
+                                                        <th>دۆخی پشکنین لە R2</th>
+                                                        <th>لینکی بەستراوە / فۆڵدەری دۆزراوە</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {r2Target.data.episodes.map(ep => {
+                                                        const isReady = ep.status === 'ready';
+                                                        const isAlready = ep.status === 'already_linked';
+                                                        const isMissing = ep.status === 'missing';
+
+                                                        return (
+                                                            <tr key={ep.id} className={`r2-row-${ep.status}`}>
+                                                                <td>
+                                                                    <span className="r2-ep-badge">{ep.number}</span>
+                                                                </td>
+                                                                <td>
+                                                                    <div className="r2-ep-title-cell">
+                                                                        <strong>{ep.title || `ئەڵقەی ${ep.number}`}</strong>
+                                                                    </div>
+                                                                </td>
+                                                                <td>
+                                                                    {isReady && (
+                                                                        <span className="r2-status-tag ready">
+                                                                            <CheckCircle2 size={13} /> ئامادەیە بۆ بەستنەوە ⚡
+                                                                        </span>
+                                                                    )}
+                                                                    {isAlready && (
+                                                                        <span className="r2-status-tag already">
+                                                                            <CheckCircle2 size={13} /> پێشتر بەستراوەتەوە ✓
+                                                                        </span>
+                                                                    )}
+                                                                    {isMissing && (
+                                                                        <span className="r2-status-tag missing">
+                                                                            <AlertCircle size={13} /> نەدۆزرایەوە (بەتاڵ دەبێت)
+                                                                        </span>
+                                                                    )}
+                                                                </td>
+                                                                <td>
+                                                                    {ep.matchedVideoUrl ? (
+                                                                        <div className="r2-url-preview-cell" title={ep.matchedVideoUrl}>
+                                                                            <code>{ep.matchedVideoUrl}</code>
+                                                                        </div>
+                                                                    ) : (
+                                                                        <span className="r2-no-url-text">هیچ فایلێک نییە</span>
+                                                                    )}
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    })}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+
+                            {/* Modal Footer Actions */}
+                            <div className="r2-link-modal-footer">
+                                <button
+                                    type="button"
+                                    className="btn-reserve-cancel"
+                                    disabled={r2Target.saving}
+                                    onClick={() => setR2Target(null)}
+                                >
+                                    {lang === 'en' ? 'Cancel' : 'داخستن'}
+                                </button>
+
+                                <button
+                                    type="button"
+                                    className="btn-r2-apply-primary"
+                                    disabled={
+                                        r2Target.loading || 
+                                        r2Target.saving || 
+                                        !r2Target.data || 
+                                        (r2Target.data.readyCount === 0 && r2Target.data.alreadyLinkedCount === 0)
+                                    }
+                                    onClick={handleApplyR2Links}
+                                >
+                                    {r2Target.saving ? (
+                                        <>
+                                            <Loader2 size={16} className="spinning" />
+                                            <span>{lang === 'en' ? 'Linking in Progress...' : 'لە بەستنەوەدایە...'}</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Zap size={16} />
+                                            <span>
+                                                {lang === 'en'
+                                                    ? `Auto-Link ${r2Target.data?.readyCount || 0} Episodes Now ⚡`
+                                                    : `بەستنەوەی ${r2Target.data ? (r2Target.data.readyCount > 0 ? r2Target.data.readyCount : r2Target.data.alreadyLinkedCount) : 0} ئەڵقە ئێستا ⚡`}
+                                            </span>
+                                        </>
+                                    )}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}

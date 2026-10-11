@@ -59,7 +59,7 @@ const cleanupFfmpegProcess = (clientId) => {
     activeFfmpegProcesses.delete(clientId);
     console.log(`[FFmpeg Manager] Cleaned up process for client: ${clientId}`);
 };
-const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
+const { S3Client, PutObjectCommand, DeleteObjectCommand, ListObjectsV2Command } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const axios = require('axios');
 const dotenv = require('dotenv');
@@ -4618,6 +4618,7 @@ app.post('/api/admin/movies', requireAuth, requirePermission('canAddMovies'), as
         },
         approvedBy: initialStatus === 'published' ? req.user.username : undefined,
         approvedAt: initialStatus === 'published' ? new Date().toISOString() : undefined
+    };
     movies.unshift(newItem);
     writeMovies(movies);
     res.json(newItem);
@@ -6405,6 +6406,211 @@ app.post(['/api/admin/movies/:id/seasons/:seasonNum/episodes/:epId/metrics', '/a
     } catch (err) {
         console.error('Error saving episode language metrics:', err);
         return res.status(500).json({ error: 'هەڵە لە پاشەکەوتکردنی ئامارەکان' });
+    }
+});
+
+// Helper: Scan Cloudflare R2 for HLS folders matching TV Series episodes
+async function scanR2Episodes(seriesTitle, targetSeasonNum = null, customKeyword = '') {
+    if (!hasR2Config()) {
+        throw new Error('ڕێکخستنەکانی Cloudflare R2 لە سێرڤەر ڕێکنەخراون');
+    }
+    const client = getR2Client();
+
+    // 1. Fetch all top-level folders under videos/ with delimiter '/'
+    let allFolders = [];
+    let continuationToken = null;
+    do {
+        const cmd = new ListObjectsV2Command({
+            Bucket: R2_CONFIG.bucket,
+            Prefix: 'videos/',
+            Delimiter: '/',
+            ContinuationToken: continuationToken
+        });
+        const res = await client.send(cmd);
+        if (Array.isArray(res.CommonPrefixes)) {
+            res.CommonPrefixes.forEach(cp => {
+                if (cp.Prefix) allFolders.push(cp.Prefix);
+            });
+        }
+        continuationToken = res.NextContinuationToken;
+    } while (continuationToken);
+
+    // 2. Build search keywords from customKeyword or seriesTitle
+    let keywords = [];
+    if (customKeyword && String(customKeyword).trim()) {
+        keywords = String(customKeyword).trim().toLowerCase().split(/[\s_.-]+/).filter(Boolean);
+    } else if (seriesTitle && String(seriesTitle).trim()) {
+        const clean = String(seriesTitle).replace(/\(\d{4}\)/g, '').replace(/[^a-zA-Z0-9\s_.-]/g, ' ').trim();
+        keywords = clean.toLowerCase().split(/[\s_.-]+/).filter(w => w.length >= 2);
+    }
+
+    // 3. Filter folders that match all keywords
+    const candidateFolders = allFolders.filter(folder => {
+        const lower = folder.toLowerCase();
+        if (keywords.length === 0) return true;
+        return keywords.every(kw => lower.includes(kw));
+    });
+
+    const publicBase = (R2_CONFIG.publicUrl || '').replace(/\/+$/, '');
+    const candidates = [];
+    const targetSeason = targetSeasonNum !== null && targetSeasonNum !== undefined ? parseInt(targetSeasonNum, 10) : null;
+
+    for (const folder of candidateFolders) {
+        const rawName = folder.replace(/^videos\//, '').replace(/\/$/, '');
+
+        // Regex 1: s01e02 / S01E02 / s1e2
+        const seMatch = rawName.match(/[sS](\d{1,2})[._ -]*[eE](\d{1,3})/i);
+        // Regex 2: 1x02 / 01x02
+        const xMatch = !seMatch ? rawName.match(/(\d{1,2})[xX](\d{1,3})/i) : null;
+        // Regex 3: ep02 / e02 / episode2
+        const epOnlyMatch = (!seMatch && !xMatch) ? rawName.match(/[eE][pP]?[._ -]*(\d{1,3})/i) : null;
+
+        let detectedSeason = null;
+        let detectedEpisode = null;
+
+        if (seMatch) {
+            detectedSeason = parseInt(seMatch[1], 10);
+            detectedEpisode = parseInt(seMatch[2], 10);
+        } else if (xMatch) {
+            detectedSeason = parseInt(xMatch[1], 10);
+            detectedEpisode = parseInt(xMatch[2], 10);
+        } else if (epOnlyMatch) {
+            detectedSeason = targetSeason !== null ? targetSeason : 1;
+            detectedEpisode = parseInt(epOnlyMatch[1], 10);
+        }
+
+        if (detectedEpisode !== null) {
+            if (targetSeason === null || detectedSeason === targetSeason) {
+                const cleanFolder = folder.replace(/^\/+/, '').replace(/\/+$/, '');
+                const m3u8Url = `${publicBase}/${cleanFolder}/master.m3u8`;
+                candidates.push({
+                    folder,
+                    rawName,
+                    season: detectedSeason,
+                    episode: detectedEpisode,
+                    m3u8Url
+                });
+            }
+        }
+    }
+
+    candidates.sort((a, b) => a.episode - b.episode);
+    return {
+        allFoldersCount: allFolders.length,
+        candidateFoldersCount: candidateFolders.length,
+        candidates,
+        keywords
+    };
+}
+
+// 1. Scan Cloudflare R2 for a Season's episodes
+app.get('/api/admin/movies/:id/r2-scan', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const seasonNum = req.query.seasonNum ? parseInt(req.query.seasonNum, 10) : 1;
+        const customKeyword = req.query.keyword || '';
+
+        const movies = readMovies();
+        const movie = movies.find(m => m.id === id);
+        if (!movie) return res.status(404).json({ error: 'فیلم یان زنجیرە نەدۆزرایەوە' });
+
+        const season = (movie.seasons || []).find(s => s.number === seasonNum);
+        if (!season) return res.status(404).json({ error: `سیزنی ${seasonNum} نەدۆزرایەوە` });
+
+        const searchKeyword = customKeyword.trim() || movie.title || '';
+        const scanResult = await scanR2Episodes(movie.title, seasonNum, customKeyword.trim());
+
+        const currentEpisodes = season.episodes || [];
+        const matched = currentEpisodes.map(ep => {
+            const found = scanResult.candidates.find(c => c.episode === ep.number);
+            const isAlreadyLinked = Boolean(found && ep.videoUrl && ep.videoUrl.trim() === found.m3u8Url.trim());
+            return {
+                id: ep.id,
+                number: ep.number,
+                title: ep.title,
+                currentVideoUrl: ep.videoUrl || '',
+                matchedVideoUrl: found ? found.m3u8Url : null,
+                folder: found ? found.folder : null,
+                status: !found ? 'missing' : (isAlreadyLinked ? 'already_linked' : 'ready')
+            };
+        });
+
+        const existingNumbers = new Set(currentEpisodes.map(e => e.number));
+        const extraInR2 = scanResult.candidates.filter(c => !existingNumbers.has(c.episode));
+
+        return res.json({
+            success: true,
+            seasonNum,
+            keywordUsed: searchKeyword,
+            totalEpisodes: currentEpisodes.length,
+            readyCount: matched.filter(m => m.status === 'ready').length,
+            alreadyLinkedCount: matched.filter(m => m.status === 'already_linked').length,
+            missingCount: matched.filter(m => m.status === 'missing').length,
+            episodes: matched,
+            extraInR2
+        });
+    } catch (err) {
+        console.error('Error in r2-scan:', err);
+        return res.status(500).json({ error: err.message || 'هەڵە لە پشکنینی Cloudflare R2' });
+    }
+});
+
+// 2. Bulk link Cloudflare R2 episode URLs atomically
+app.post('/api/admin/movies/:id/auto-link-r2', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const seasonNum = req.body.seasonNum ? parseInt(req.body.seasonNum, 10) : 1;
+        const customLinks = req.body.links;
+        const customKeyword = req.body.keyword || '';
+
+        const movies = readMovies();
+        const mIdx = movies.findIndex(m => m.id === id);
+        if (mIdx === -1) return res.status(404).json({ error: 'فیلم یان زنجیرە نەدۆزرایەوە' });
+
+        const sIdx = (movies[mIdx].seasons || []).findIndex(s => s.number === seasonNum);
+        if (sIdx === -1) return res.status(404).json({ error: `سیزنی ${seasonNum} نەدۆزرایەوە` });
+
+        let linksToApply = [];
+        if (Array.isArray(customLinks) && customLinks.length > 0) {
+            linksToApply = customLinks;
+        } else {
+            const scanResult = await scanR2Episodes(movies[mIdx].title, seasonNum, customKeyword.trim());
+            const eps = movies[mIdx].seasons[sIdx].episodes || [];
+            eps.forEach(ep => {
+                const found = scanResult.candidates.find(c => c.episode === ep.number);
+                if (found) {
+                    linksToApply.push({
+                        episodeId: ep.id,
+                        episodeNumber: ep.number,
+                        videoUrl: found.m3u8Url
+                    });
+                }
+            });
+        }
+
+        let updatedCount = 0;
+        const targetEpisodes = movies[mIdx].seasons[sIdx].episodes || [];
+        for (const item of linksToApply) {
+            if (!item.videoUrl) continue;
+            const ep = targetEpisodes.find(e => (item.episodeId && e.id === item.episodeId) || e.number === item.episodeNumber);
+            if (ep) {
+                ep.videoUrl = item.videoUrl.trim();
+                ep.videoUpdatedAt = Date.now();
+                updatedCount++;
+            }
+        }
+
+        writeMovies(movies);
+
+        return res.json({
+            success: true,
+            updatedCount,
+            message: `بە سەرکەوتوویی ${updatedCount} ئەڵقە لە Cloudflare R2 بەسترانەوە ⚡`,
+            movie: movies[mIdx]
+        });
+    } catch (err) {
+        console.error('Error in auto-link-r2:', err);
+        return res.status(500).json({ error: err.message || 'هەڵە لە بەستنەوەی ئەڵقەکان لە Cloudflare R2' });
     }
 });
 
