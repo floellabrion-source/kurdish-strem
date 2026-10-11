@@ -6511,10 +6511,10 @@ app.get('/api/admin/movies/:id/r2-scan', requireAuth, requireAdmin, async (req, 
         const customKeyword = req.query.keyword || '';
 
         const movies = readMovies();
-        const movie = movies.find(m => m.id === id);
+        const movie = movies.find(m => String(m.id) === String(id));
         if (!movie) return res.status(404).json({ error: 'فیلم یان زنجیرە نەدۆزرایەوە' });
 
-        const season = (movie.seasons || []).find(s => s.number === seasonNum);
+        const season = (movie.seasons || []).find(s => parseInt(s.number, 10) === seasonNum);
         if (!season) return res.status(404).json({ error: `سیزنی ${seasonNum} نەدۆزرایەوە` });
 
         const searchKeyword = customKeyword.trim() || movie.title || '';
@@ -6522,7 +6522,7 @@ app.get('/api/admin/movies/:id/r2-scan', requireAuth, requireAdmin, async (req, 
 
         const currentEpisodes = season.episodes || [];
         const matched = currentEpisodes.map(ep => {
-            const found = scanResult.candidates.find(c => c.episode === ep.number);
+            const found = scanResult.candidates.find(c => parseInt(c.episode, 10) === parseInt(ep.number, 10));
             const isAlreadyLinked = Boolean(found && ep.videoUrl && ep.videoUrl.trim() === found.m3u8Url.trim());
             return {
                 id: ep.id,
@@ -6535,8 +6535,8 @@ app.get('/api/admin/movies/:id/r2-scan', requireAuth, requireAdmin, async (req, 
             };
         });
 
-        const existingNumbers = new Set(currentEpisodes.map(e => e.number));
-        const extraInR2 = scanResult.candidates.filter(c => !existingNumbers.has(c.episode));
+        const existingNumbers = new Set(currentEpisodes.map(e => parseInt(e.number, 10)));
+        const extraInR2 = scanResult.candidates.filter(c => !existingNumbers.has(parseInt(c.episode, 10)));
 
         return res.json({
             success: true,
@@ -6564,10 +6564,10 @@ app.post('/api/admin/movies/:id/auto-link-r2', requireAuth, requireAdmin, async 
         const customKeyword = req.body.keyword || '';
 
         const movies = readMovies();
-        const mIdx = movies.findIndex(m => m.id === id);
+        const mIdx = movies.findIndex(m => String(m.id) === String(id));
         if (mIdx === -1) return res.status(404).json({ error: 'فیلم یان زنجیرە نەدۆزرایەوە' });
 
-        const sIdx = (movies[mIdx].seasons || []).findIndex(s => s.number === seasonNum);
+        const sIdx = (movies[mIdx].seasons || []).findIndex(s => parseInt(s.number, 10) === seasonNum);
         if (sIdx === -1) return res.status(404).json({ error: `سیزنی ${seasonNum} نەدۆزرایەوە` });
 
         let linksToApply = [];
@@ -6577,7 +6577,7 @@ app.post('/api/admin/movies/:id/auto-link-r2', requireAuth, requireAdmin, async 
             const scanResult = await scanR2Episodes(movies[mIdx].title, seasonNum, customKeyword.trim());
             const eps = movies[mIdx].seasons[sIdx].episodes || [];
             eps.forEach(ep => {
-                const found = scanResult.candidates.find(c => c.episode === ep.number);
+                const found = scanResult.candidates.find(c => parseInt(c.episode, 10) === parseInt(ep.number, 10));
                 if (found) {
                     linksToApply.push({
                         episodeId: ep.id,
@@ -6592,7 +6592,7 @@ app.post('/api/admin/movies/:id/auto-link-r2', requireAuth, requireAdmin, async 
         const targetEpisodes = movies[mIdx].seasons[sIdx].episodes || [];
         for (const item of linksToApply) {
             if (!item.videoUrl) continue;
-            const ep = targetEpisodes.find(e => (item.episodeId && e.id === item.episodeId) || e.number === item.episodeNumber);
+            const ep = targetEpisodes.find(e => (item.episodeId && e.id === item.episodeId) || parseInt(e.number, 10) === parseInt(item.episodeNumber, 10));
             if (ep) {
                 ep.videoUrl = item.videoUrl.trim();
                 ep.videoUpdatedAt = Date.now();

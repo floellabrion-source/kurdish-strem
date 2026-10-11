@@ -155,10 +155,26 @@ export default function EpisodeManagerModal({
             });
             setR2Target(prev => prev ? { ...prev, loading: false, data: res.data, error: null } : null);
         } catch (err: any) {
+            console.error('R2 scan error:', err);
+            const status = err.response?.status;
+            let errMsg = err.response?.data?.error;
+            if (!errMsg) {
+                if (status === 404) {
+                    errMsg = 'ڕێگای پشکنین لە سێرڤەر نەدۆزرایەوە (404) — تکایە لە تێرمیناڵی سێرڤەر (VPS) ئەم فەرمانە لێبدە: pm2 restart kurdish-stream-api تا سێرڤەرەکە نوێ ببێتەوە.';
+                } else if (status === 500) {
+                    errMsg = 'هەڵەی ناوخۆیی سێرڤەر (500) لە کاتی پشکنینی Cloudflare R2';
+                } else if (status === 403) {
+                    errMsg = 'مۆڵەتی ئەدمین پێویستە بۆ پشکنینی Cloudflare R2 (403)';
+                } else if (err.message) {
+                    errMsg = err.message;
+                } else {
+                    errMsg = 'هەڵەیەک لە پشکنینی Cloudflare R2 ڕوویدا';
+                }
+            }
             setR2Target(prev => prev ? {
                 ...prev,
                 loading: false,
-                error: err.response?.data?.error || 'هەڵەیەک لە پشکنینی Cloudflare R2 ڕوویدا'
+                error: errMsg
             } : null);
         }
     };
