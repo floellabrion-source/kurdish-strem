@@ -815,6 +815,7 @@ ${GOLDEN_TRANSLATION_RULES_PROMPT}
 
 PART 1: COMPLETE SEMANTIC MEANING (NO OMITTED CLAUSES)
 - FULL SENTENCE COVERAGE: Translate the COMPLETE meaning of all clauses and details naturally into Kurdish. Do NOT drop, omit, or over-summarize any part of what the speaker said, but ALWAYS express it in fluent, idiomatic Kurdish (NEVER word-for-word robotic translation).
+- CRITICAL - NEVER OMIT SOUND EFFECTS OR CLOSED CAPTIONS: Do NOT drop, skip, or omit audio descriptions, speaker cues, or sound effects in parentheses or brackets (e.g. "(exhales)", "(growling)", "(laughter)", "(screaming)", "(crying)", "[music playing]"). Always translate them faithfully into Kurdish in parentheses or brackets (e.g. "(هەناسەدان)", "(غڕاندن)", "(پێکەنین)", "(قیژاندن)"). Every single subtitle block in the input MUST have a corresponding block in the output!
 - ACTIVE VOICE OVER PASSIVE: Transform awkward English passives ("It was decided that...") into natural Kurdish active structures ("بڕیاریان دا کە...").
 - DUAL-SPEAKER HYPHENS: If a subtitle block has multiple speakers marked with hyphens (-), strictly keep both lines with their hyphens (-) and translate each speaker separately.
 
@@ -859,16 +860,25 @@ ${srtBatch}`;
         const parsedReturned = parseSRT(raw);
         if (parsedReturned.length > 0) {
             targetBlocks.forEach((tb, i) => {
-                const matchedById = parsedReturned.find(b => String(b.id).trim() === String(tb.id).trim());
-                const translatedBlock = matchedById || parsedReturned[i];
-                if (translatedBlock && translatedBlock.text && translatedBlock.text.trim()) {
-                    result[i] = translatedBlock.text.trim();
+                // Priority 1: Match by ID
+                let matchedBlock = parsedReturned.find(b => String(b.id).trim() === String(tb.id).trim());
+                // Priority 2: Match by exact timestamp if ID failed or was renumbered by AI
+                if (!matchedBlock && tb.time) {
+                    matchedBlock = parsedReturned.find(b => b.time && b.time.trim() === tb.time.trim());
+                }
+                // Priority 3: Only fallback to index i if lengths match perfectly (prevents off-by-one sliding)
+                if (!matchedBlock && parsedReturned.length === targetBlocks.length) {
+                    matchedBlock = parsedReturned[i];
+                }
+
+                if (matchedBlock && matchedBlock.text && matchedBlock.text.trim()) {
+                    result[i] = matchedBlock.text.trim();
                 }
             });
         } else {
             // Strategy 2: Line by line / block split fallback
             const rawLines = raw.split(/\n\s*\n/).map(s => s.trim()).filter(Boolean);
-            if (rawLines.length >= targetBlocks.length) {
+            if (rawLines.length === targetBlocks.length) {
                 targetBlocks.forEach((_, i) => {
                     const blockLines = rawLines[i].split('\n').filter(l => !l.includes('-->') && !/^\d+$/.test(l.trim()));
                     if (blockLines.length > 0) {

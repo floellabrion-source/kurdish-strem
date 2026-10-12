@@ -5,7 +5,8 @@ import {
     Sparkles, Loader2, Languages, Video, FileText, CheckCircle, Clock,
     FastForward, Rewind, SlidersHorizontal, ArrowDownCircle, Check, Search,
     AlertTriangle, ArrowRight, ListFilter, Sliders, Upload, Eye, EyeOff, Link as LinkIcon,
-    History, ShieldAlert, MessageSquare, Unlock, BookOpen, ShieldCheck, Shield
+    History, ShieldAlert, MessageSquare, Unlock, BookOpen, ShieldCheck, Shield,
+    ArrowUpDown, Undo2, ArrowDown, ArrowUp
 } from 'lucide-react';
 import SubtitleDiffViewer from './SubtitleDiffViewer';
 import InternalNotesModal from './InternalNotesModal';
@@ -247,6 +248,74 @@ export default function DualSrtVideoEditor({
     const linesHistoryRef = useRef<SubtitleLine[][]>([]);
     const [canUndoSync, setCanUndoSync] = useState<boolean>(false);
     const [showUnsavedExitModal, setShowUnsavedExitModal] = useState<boolean>(false);
+
+    // ─── SHIFT KURDISH LINES STATE & HANDLERS ───
+    const [showShiftKurdishModal, setShowShiftKurdishModal] = useState<boolean>(false);
+    const [shiftStartLine, setShiftStartLine] = useState<number>(1);
+    const [shiftEndMode, setShiftEndMode] = useState<'end' | 'custom'>('end');
+    const [shiftEndLine, setShiftEndLine] = useState<number>(1);
+    const [shiftDirection, setShiftDirection] = useState<'down' | 'up'>('down');
+    const [shiftCount, setShiftCount] = useState<number>(1);
+    const [shiftUndoStack, setShiftUndoStack] = useState<SubtitleLine[][]>([]);
+
+    const openShiftModalWithLine = (targetLineNum?: number) => {
+        const lineNum = targetLineNum || selectedLineId || 1;
+        setShiftStartLine(lineNum);
+        setShiftEndMode('end');
+        setShiftEndLine(lines.length || 1);
+        setShiftDirection('down');
+        setShiftCount(1);
+        setShowShiftKurdishModal(true);
+    };
+
+    const handleApplyShiftKurdish = () => {
+        if (lines.length === 0) return;
+        const totalLines = lines.length;
+        const startNum = Math.max(1, Math.min(totalLines, Number(shiftStartLine) || 1));
+        const endNum = shiftEndMode === 'end' 
+            ? totalLines 
+            : Math.max(startNum, Math.min(totalLines, Number(shiftEndLine) || totalLines));
+
+        const startIdx = startNum - 1;
+        const endIdx = endNum - 1;
+        const count = Math.max(1, Math.min(totalLines, Number(shiftCount) || 1));
+
+        setShiftUndoStack(prev => [...prev, lines.map(l => ({ ...l }))]);
+
+        const newLines = lines.map(l => ({ ...l }));
+
+        if (shiftDirection === 'down') {
+            for (let i = endIdx; i >= startIdx; i--) {
+                const srcIdx = i - count;
+                if (srcIdx >= startIdx) {
+                    newLines[i].kurdish = lines[srcIdx].kurdish;
+                } else {
+                    newLines[i].kurdish = '';
+                }
+            }
+        } else {
+            for (let i = startIdx; i <= endIdx; i++) {
+                const srcIdx = i + count;
+                if (srcIdx <= endIdx) {
+                    newLines[i].kurdish = lines[srcIdx].kurdish;
+                } else {
+                    newLines[i].kurdish = '';
+                }
+            }
+        }
+
+        setLines(newLines);
+        showToast(`دەقی کوردی لە دێڕی #${startNum} تا #${endNum} بە ئەندازەی (${shiftDirection === 'down' ? '+' : '-'}${count}) جێگۆڕکێی پێکرا 🔄`);
+        setShowShiftKurdishModal(false);
+    };
+
+    const handleUndoShiftKurdish = () => {
+        if (shiftUndoStack.length === 0) return;
+        const prevLines = shiftUndoStack[shiftUndoStack.length - 1];
+        setLines(prevLines);
+        setShiftUndoStack(prev => prev.slice(0, -1));
+        showToast('جێگۆڕکێی دێڕەکان گەڕێنرایەوە دۆخی پێشوو (Undo) ↩️');
+    };
     const [lockState, setLockState] = useState<{
         locked: boolean;
         isSelf: boolean;
@@ -1632,6 +1701,16 @@ Format your output EXACTLY as follows using delimiter tags:
 
                         <button
                             className="btn-dual-toolbar-file"
+                            style={{ background: 'rgba(168, 85, 247, 0.15)', borderColor: 'rgba(168, 85, 247, 0.4)', color: '#d8b4fe' }}
+                            onClick={() => openShiftModalWithLine(selectedLineId)}
+                            title={lang === 'en' ? "Shift / Realign Kurdish Subtitle Lines (Fix AI Skipped Lines)" : "ڕێکخستنەوە و گواستنەوەی دێڕە کوردییەکان (Shift Lines 🔄)"}
+                        >
+                            <ArrowUpDown size={16} />
+                            <span className="btn-label-text">{lang === 'en' ? 'Shift Lines 🔄' : 'ڕێکخستنی دێڕەکان 🔄'}</span>
+                        </button>
+
+                        <button
+                            className="btn-dual-toolbar-file"
                             style={{ background: 'rgba(56, 189, 248, 0.15)', borderColor: 'rgba(56, 189, 248, 0.4)', color: '#7dd3fc' }}
                             onClick={() => setShowDiffViewer(true)}
                             title={lang === 'en' ? "View translation diff and revision history" : "مێژووی دەستکاری و گۆڕانکارییەکان (Diff History)"}
@@ -1831,6 +1910,16 @@ Format your output EXACTLY as follows using delimiter tags:
                                 </button>
                                 <button className="btn-jump-empty-line" onClick={navigateToNextEmpty}>
                                     {lang === 'en' ? 'Jump to Empty ⏩' : 'بڕۆ بۆ دێڕی بەتاڵ ⏩'} ({emptyNavIndex + 1}/{emptyKurdishLines.length})
+                                </button>
+                                <button
+                                    type="button"
+                                    className="btn-jump-empty-line"
+                                    style={{ background: 'linear-gradient(135deg, #9333ea, #7c3aed)', color: '#ffffff', fontWeight: '800' }}
+                                    onClick={() => openShiftModalWithLine(emptyKurdishLines[0]?.id || selectedLineId || 1)}
+                                    title={lang === 'en' ? 'Shift / Realign Kurdish Subtitle Lines' : 'ڕێکخستنەوەی شوێنی دێڕە کوردییەکان بەهۆی لەبیرچوونی دێڕێک'}
+                                >
+                                    <ArrowUpDown size={13} />
+                                    <span>{lang === 'en' ? 'Shift Lines 🔄' : 'ڕێکخستنەوەی دێڕەکان 🔄'}</span>
                                 </button>
                             </div>
                         </div>
@@ -2833,6 +2922,253 @@ Format your output EXACTLY as follows using delimiter tags:
                                     onClick={() => setShowUnsavedExitModal(false)}
                                 >
                                     {lang === 'en' ? 'Stay in Editor (Cancel)' : 'مانەوە لە ئیدیتۆر / پاشگەزبوونەوە ↩️'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Shift Kurdish Subtitle Lines Modal */}
+            {showShiftKurdishModal && (
+                <div className="shift-kurdish-modal-backdrop" onClick={() => setShowShiftKurdishModal(false)}>
+                    <div className="shift-kurdish-modal-card" onClick={e => e.stopPropagation()} dir={lang === 'en' ? 'ltr' : 'rtl'}>
+                        {/* Header */}
+                        <div className="shift-kurdish-header">
+                            <div className="shift-header-title-box">
+                                <div className="shift-header-icon-wrap">
+                                    <ArrowUpDown size={22} color="#c084fc" />
+                                </div>
+                                <div>
+                                    <h3>{lang === 'en' ? 'Shift Kurdish Lines' : 'ڕێکخستنەوە و گواستنەوەی دێڕە کوردییەکان'}</h3>
+                                    <p className="shift-header-subtitle">
+                                        {lang === 'en' 
+                                            ? 'Realign Kurdish subtitles when an AI skipped a line (prevents off-by-one errors)' 
+                                            : 'چارەسەری هەڵەی لەبیرچوونی دێڕێک لەلایەن AI و هاوتەریبکردنەوەی ژێرنووسەکان'}
+                                    </p>
+                                </div>
+                            </div>
+                            <button type="button" className="btn-modal-close" onClick={() => setShowShiftKurdishModal(false)}>
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        {/* Body */}
+                        <div className="shift-kurdish-body">
+                            {/* Explanatory Info Box */}
+                            <div className="shift-kurdish-info-box">
+                                <AlertTriangle size={18} color="#f59e0b" style={{ flexShrink: 0, marginTop: '2px' }} />
+                                <div>
+                                    <strong>{lang === 'en' ? 'How this works:' : 'چۆنیەتی کارکردن:'}</strong>
+                                    <p>
+                                        {lang === 'en'
+                                            ? 'This tool moves ONLY the Kurdish translation text without touching timestamps, line IDs, or English dialog. Any lines outside the selected range will stay 100% intact.'
+                                            : 'ئەم ئامرازە تەنها دەقی کوردی دەگوازێتەوە بەبێ ئەوەی کاتەکان (Timestamps) یان دەقە ئینگلیزییەکان دەستکاری بکات. دێڕەکانی دەرەوەی ئەم مەودایە پارێزراون و دەستکاری ناکرێن.'}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Section 1: Range */}
+                            <div className="shift-kurdish-section">
+                                <label className="shift-section-title">
+                                    {lang === 'en' ? '1. Select Affected Line Range:' : '١. دیاریکردنی مەودای دێڕەکان:'}
+                                </label>
+                                
+                                <div className="shift-range-grid">
+                                    {/* Start Line */}
+                                    <div className="shift-field-group">
+                                        <label>{lang === 'en' ? 'From Line (Start):' : 'لە دێڕی (دەستپێک):'}</label>
+                                        <div className="shift-input-with-btns">
+                                            <input 
+                                                type="number"
+                                                min={1}
+                                                max={lines.length}
+                                                value={shiftStartLine}
+                                                onChange={e => setShiftStartLine(Math.max(1, Math.min(lines.length, parseInt(e.target.value) || 1)))}
+                                                className="shift-input-number"
+                                            />
+                                            {selectedLineId && (
+                                                <button 
+                                                    type="button" 
+                                                    className="btn-shift-tag"
+                                                    onClick={() => setShiftStartLine(selectedLineId)}
+                                                >
+                                                    #{selectedLineId} {lang === 'en' ? 'Selected' : 'دێڕی دیاریکراو'}
+                                                </button>
+                                            )}
+                                            {emptyKurdishLines.length > 0 && (
+                                                <button 
+                                                    type="button" 
+                                                    className="btn-shift-tag empty"
+                                                    onClick={() => setShiftStartLine(emptyKurdishLines[0]?.id || 1)}
+                                                >
+                                                    #{emptyKurdishLines[0]?.id} {lang === 'en' ? '1st Empty' : 'یەکەم بەتاڵ'}
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* End Line Mode */}
+                                    <div className="shift-field-group">
+                                        <label>{lang === 'en' ? 'To Line (End):' : 'تاوەکو دێڕی (کۆتایی مەودا):'}</label>
+                                        <div className="shift-end-options">
+                                            <label className={`shift-radio-card ${shiftEndMode === 'end' ? 'active' : ''}`}>
+                                                <input 
+                                                    type="radio" 
+                                                    name="shiftEndMode" 
+                                                    checked={shiftEndMode === 'end'} 
+                                                    onChange={() => setShiftEndMode('end')} 
+                                                />
+                                                <span>{lang === 'en' ? `To the End of Subtitle (Line #${lines.length})` : `تاوەکو کۆتایی هەموو دێڕەکان (دێڕی #${lines.length})`}</span>
+                                            </label>
+
+                                            <label className={`shift-radio-card ${shiftEndMode === 'custom' ? 'active' : ''}`}>
+                                                <input 
+                                                    type="radio" 
+                                                    name="shiftEndMode" 
+                                                    checked={shiftEndMode === 'custom'} 
+                                                    onChange={() => setShiftEndMode('custom')} 
+                                                />
+                                                <span>{lang === 'en' ? 'To Specific Line:' : 'تاوەکو دێڕێکی دیاریکراو:'}</span>
+                                                {shiftEndMode === 'custom' && (
+                                                    <input 
+                                                        type="number" 
+                                                        min={shiftStartLine}
+                                                        max={lines.length}
+                                                        value={shiftEndLine} 
+                                                        onChange={e => setShiftEndLine(Math.max(shiftStartLine, Math.min(lines.length, parseInt(e.target.value) || lines.length)))}
+                                                        className="shift-input-number inline"
+                                                        onClick={e => e.stopPropagation()}
+                                                    />
+                                                )}
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Section 2: Direction & Step Count */}
+                            <div className="shift-kurdish-section">
+                                <label className="shift-section-title">
+                                    {lang === 'en' ? '2. Shift Direction & Steps:' : '٢. ئاراستەی جوڵە و ژمارەی دێڕەکان:'}
+                                </label>
+                                
+                                <div className="shift-direction-grid">
+                                    <button 
+                                        type="button"
+                                        className={`shift-dir-card ${shiftDirection === 'down' ? 'active' : ''}`}
+                                        onClick={() => setShiftDirection('down')}
+                                    >
+                                        <div className="shift-dir-icon">
+                                            <ArrowDown size={22} />
+                                        </div>
+                                        <div className="shift-dir-text">
+                                            <strong>{lang === 'en' ? 'Shift Down (+)' : 'بۆ خوارەوە (Shift Down +)'}</strong>
+                                            <span>
+                                                {lang === 'en' 
+                                                    ? 'Moves Kurdish lines down. Leaves an empty spot at the start line for manual entry or retranslation.' 
+                                                    : 'دەقە کوردییەکان دەباتە خوارەوە. دێڕێکی بەتاڵ لە دەستپێکدا دروست دەکات بۆ دەقە لەبیرچووەکە.'}
+                                            </span>
+                                        </div>
+                                    </button>
+
+                                    <button 
+                                        type="button"
+                                        className={`shift-dir-card ${shiftDirection === 'up' ? 'active' : ''}`}
+                                        onClick={() => setShiftDirection('up')}
+                                    >
+                                        <div className="shift-dir-icon">
+                                            <ArrowUp size={22} />
+                                        </div>
+                                        <div className="shift-dir-text">
+                                            <strong>{lang === 'en' ? 'Shift Up (-)' : 'بۆ سەرەوە (Shift Up -)'}</strong>
+                                            <span>
+                                                {lang === 'en' 
+                                                    ? 'Moves Kurdish lines up by step count.' 
+                                                    : 'دەقە کوردییەکان بەرەو سەرەوە دەگوازێتەوە.'}
+                                            </span>
+                                        </div>
+                                    </button>
+                                </div>
+
+                                <div className="shift-count-row">
+                                    <span className="shift-count-label">{lang === 'en' ? 'Shift Steps (Number of lines):' : 'ژمارەی دێڕەکانی جێگۆڕکێ:'}</span>
+                                    <div className="shift-count-selector">
+                                        {[1, 2, 3, 4, 5].map(cnt => (
+                                            <button 
+                                                key={cnt}
+                                                type="button"
+                                                className={`btn-shift-count ${shiftCount === cnt ? 'active' : ''}`}
+                                                onClick={() => setShiftCount(cnt)}
+                                            >
+                                                {cnt} {lang === 'en' ? 'Line' : 'دێڕ'}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Section 3: Live Preview / Action Summary */}
+                            <div className="shift-preview-card">
+                                <div className="shift-preview-header">
+                                    <CheckCircle size={16} color="#10b981" />
+                                    <span>{lang === 'en' ? 'Operation Summary Preview:' : 'پوختەی کارەکە پێش جێبەجێکردن:'}</span>
+                                </div>
+                                <ul className="shift-preview-list">
+                                    {shiftStartLine > 1 && (
+                                        <li className="safe">
+                                            ✅ <strong>{lang === 'en' ? `Lines #1 to #${shiftStartLine - 1}:` : `دێڕەکانی #١ تا #${shiftStartLine - 1}:`}</strong> {lang === 'en' ? 'Will remain 100% UNTOUCHED (safe).' : 'وەک خۆیان دەمێننەوە و دەستکاری ناکرێن (پارێزراون).'}
+                                        </li>
+                                    )}
+                                    {shiftDirection === 'down' ? (
+                                        <>
+                                            <li className="cleared">
+                                                ✏️ <strong>{lang === 'en' ? `Line #${shiftStartLine}${shiftCount > 1 ? ` to #${shiftStartLine + shiftCount - 1}` : ''}:` : `دێڕی #${shiftStartLine}${shiftCount > 1 ? ` تا #${shiftStartLine + shiftCount - 1}` : ''}:`}</strong> {lang === 'en' ? 'Will become empty, ready for missing text.' : 'دەبێتە بەتاڵ تا دەقە کوردییە لەبیرچووەکەی لێ بنووسیت.'}
+                                            </li>
+                                            <li className="shifted">
+                                                🔄 <strong>{lang === 'en' ? `Lines #${shiftStartLine} to #${shiftEndMode === 'end' ? lines.length : shiftEndLine}:` : `دەقەکانی #${shiftStartLine} تا #${shiftEndMode === 'end' ? lines.length : shiftEndLine}:`}</strong> {lang === 'en' ? `Shifted down by +${shiftCount} positions.` : `بە ئەندازەی (+${shiftCount}) دێڕ دەبرێنە خوارەوە.`}
+                                            </li>
+                                        </>
+                                    ) : (
+                                        <li className="shifted">
+                                            🔄 <strong>{lang === 'en' ? `Lines #${shiftStartLine} to #${shiftEndMode === 'end' ? lines.length : shiftEndLine}:` : `دەقەکانی #${shiftStartLine} تا #${shiftEndMode === 'end' ? lines.length : shiftEndLine}:`}</strong> {lang === 'en' ? `Shifted up by -${shiftCount} positions.` : `بە ئەندازەی (-${shiftCount}) دێڕ دەبرێنە سەرەوە.`}
+                                        </li>
+                                    )}
+                                </ul>
+                            </div>
+                        </div>
+
+                        {/* Footer Actions */}
+                        <div className="shift-kurdish-footer">
+                            <div className="shift-footer-left">
+                                {shiftUndoStack.length > 0 && (
+                                    <button 
+                                        type="button" 
+                                        className="btn-shift-undo"
+                                        onClick={handleUndoShiftKurdish}
+                                        title={lang === 'en' ? 'Undo previous shift' : 'پاشگەزبوونەوە لە دوایین جێگۆڕکێ'}
+                                    >
+                                        <Undo2 size={16} />
+                                        <span>{lang === 'en' ? `Undo (${shiftUndoStack.length})` : `پاشگەزبوونەوە (${shiftUndoStack.length}) ↩️`}</span>
+                                    </button>
+                                )}
+                            </div>
+
+                            <div className="shift-footer-right">
+                                <button 
+                                    type="button" 
+                                    className="btn-shift-cancel"
+                                    onClick={() => setShowShiftKurdishModal(false)}
+                                >
+                                    {lang === 'en' ? 'Cancel' : 'داخستن'}
+                                </button>
+                                <button 
+                                    type="button" 
+                                    className="btn-shift-apply"
+                                    onClick={handleApplyShiftKurdish}
+                                >
+                                    <ArrowUpDown size={16} />
+                                    <span>{lang === 'en' ? 'Apply Shift 🔄' : 'جێبەجێکردنی جێگۆڕکێ 🔄'}</span>
                                 </button>
                             </div>
                         </div>
