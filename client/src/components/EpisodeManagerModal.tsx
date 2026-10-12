@@ -259,6 +259,7 @@ export default function EpisodeManagerModal({
     const [aiStoryContext, setAiStoryContext] = useState<string>(movie.descriptionKu || movie.description || '');
     const [aiAllGlossary, setAiAllGlossary] = useState<any[]>([]);
     const [aiRunning, setAiRunning] = useState(false);
+    const [runningTargetKey, setRunningTargetKey] = useState<string | null>(null);
     const [aiProgressText, setAiProgressText] = useState('');
     const [aiPercent, setAiPercent] = useState(0);
     const [aiStats, setAiStats] = useState({
@@ -416,8 +417,14 @@ export default function EpisodeManagerModal({
             showToast('تکایە سەرەتا فایلی ئۆرجیناڵی ئینگلیزی (Original) دابنێ');
             return;
         }
-        if (!runningTaskForMovie || runningTaskForMovie.status !== 'running') {
-            setAiRunning(false);
+        const thisEpRunning = activeAiTasks.some(t =>
+            t.status === 'running' &&
+            t.movieId === movie.id &&
+            t.type === 'single' &&
+            Number(t.seasonNum) === Number(seasonNum) &&
+            Number(t.episodeNum) === Number(ep.number)
+        );
+        if (!thisEpRunning) {
             setAiPercent(0);
             setAiProgressText('');
         }
@@ -475,8 +482,13 @@ export default function EpisodeManagerModal({
             showToast('هیچ ئەڵقەیەک فایلی ئۆرجیناڵی (Original) نییە بۆ وەرگێڕان');
             return;
         }
-        if (!runningTaskForMovie || runningTaskForMovie.status !== 'running') {
-            setAiRunning(false);
+        const bulkRunning = activeAiTasks.some(t =>
+            t.status === 'running' &&
+            t.movieId === movie.id &&
+            t.type === 'bulk' &&
+            Number(t.seasonNum) === Number(season.number)
+        );
+        if (!bulkRunning) {
             setAiPercent(0);
             setAiProgressText('');
         }
@@ -513,6 +525,7 @@ export default function EpisodeManagerModal({
         const initialStats = { totalInTok: 0, totalOutTok: 0, costUsd: 0, speedTokSec: 0, startTime: startTimestamp, elapsedSec: 0 };
         setAiStats(initialStats);
         setAiRunning(true);
+        setRunningTargetKey(`single-${seasonNum}-${ep.number}`);
 
         registerAiTask({
             taskId,
@@ -626,6 +639,7 @@ export default function EpisodeManagerModal({
         } finally {
             clearInterval(timerInterval);
             setAiRunning(false);
+            setRunningTargetKey(null);
             if (onReloadMovie) onReloadMovie();
         }
     };
@@ -633,7 +647,7 @@ export default function EpisodeManagerModal({
     // ─── CHECK & TRIGGER NEXT QUEUED JOB ───
     const checkAndProcessNextQueueJob = async () => {
         if (isQueueProcessingRef.current) return;
-        const isBusy = activeAiTasks.some(t => t.status === 'running') || aiRunning;
+        const isBusy = activeAiTasks.some(t => t.status === 'running') || aiRunning || Boolean(runningTargetKey);
         if (isBusy) return;
 
         const queue = getTranslationQueue();
@@ -699,6 +713,7 @@ export default function EpisodeManagerModal({
         const initialStats = { totalInTok: 0, totalOutTok: 0, costUsd: 0, speedTokSec: 0, startTime: startTimestamp, elapsedSec: 0 };
         setAiStats(initialStats);
         setAiRunning(true);
+        setRunningTargetKey(`bulk-${targetSeasonNum}`);
 
         registerAiTask({
             taskId,
@@ -820,6 +835,7 @@ export default function EpisodeManagerModal({
         } finally {
             clearInterval(timerInterval);
             setAiRunning(false);
+            setRunningTargetKey(null);
             if (onReloadMovie) onReloadMovie();
         }
     };
@@ -873,13 +889,16 @@ export default function EpisodeManagerModal({
 
     // ─── 7. STOP AI HUB PROCESSING ───
     const stopAiHubProcessing = () => {
+        if (runningTaskForCurrentTarget) {
+            stopAiTask(runningTaskForCurrentTarget.taskId);
+        } else if (runningTaskForMovie) {
+            stopAiTask(runningTaskForMovie.taskId);
+        }
         if (aiAbortControllerRef.current) {
             aiAbortControllerRef.current.abort();
         }
-        if (runningTaskForMovie) {
-            stopAiTask(runningTaskForMovie.taskId);
-        }
         setAiRunning(false);
+        setRunningTargetKey(null);
         setEpTransProgress(prev => {
             const next = { ...prev };
             Object.keys(next).forEach(k => {
@@ -949,20 +968,6 @@ export default function EpisodeManagerModal({
     };
 
     // ─── TASK AND QUEUE RESOLUTION FOR CURRENT TARGET ───
-    const isThisTargetRunning = useMemo(() => {
-        if (!aiHubTarget) return false;
-        if (aiRunning) return true;
-        return activeAiTasks.some(t => {
-            if (t.status !== 'running') return false;
-            if (t.movieId !== movie.id) return false;
-            if (aiHubTarget.type === 'single') {
-                return t.type === 'single' && Number(t.seasonNum) === Number(aiHubTarget.seasonNum) && Number(t.episodeNum) === Number(aiHubTarget.episode?.number);
-            } else {
-                return t.type === 'bulk' && Number(t.seasonNum) === Number(aiHubTarget.seasonNum);
-            }
-        });
-    }, [aiHubTarget, aiRunning, activeAiTasks, movie.id]);
-
     const runningTaskForCurrentTarget = useMemo(() => {
         if (!aiHubTarget) return null;
         return activeAiTasks.find(t => {
@@ -976,12 +981,25 @@ export default function EpisodeManagerModal({
         }) || null;
     }, [aiHubTarget, activeAiTasks, movie.id]);
 
+    const isThisTargetRunning = useMemo(() => {
+        if (!aiHubTarget) return false;
+        if (runningTaskForCurrentTarget) return true;
+        if (!runningTargetKey) return false;
+        const currentKey = aiHubTarget.type === 'single'
+            ? `single-${aiHubTarget.seasonNum}-${aiHubTarget.episode?.number}`
+            : `bulk-${aiHubTarget.seasonNum}`;
+        return runningTargetKey === currentKey;
+    }, [aiHubTarget, runningTaskForCurrentTarget, runningTargetKey]);
+
     // Is any other task running in background?
     const anyActiveRunningTask = useMemo(() => {
         return activeAiTasks.find(t => t.status === 'running') || null;
     }, [activeAiTasks]);
 
-    const isOtherTaskRunning = Boolean(anyActiveRunningTask && !isThisTargetRunning);
+    const isOtherTaskRunning = Boolean(
+        (anyActiveRunningTask && (!aiHubTarget || !runningTaskForCurrentTarget)) ||
+        (runningTargetKey && (!aiHubTarget || runningTargetKey !== (aiHubTarget.type === 'single' ? `single-${aiHubTarget.seasonNum}-${aiHubTarget.episode?.number}` : `bulk-${aiHubTarget.seasonNum}`)))
+    );
 
     // Is current target queued?
     const currentTargetQueuedJob = useMemo(() => {
@@ -997,9 +1015,9 @@ export default function EpisodeManagerModal({
 
     const isTaskRunning = isThisTargetRunning;
     const currentRunningTask = runningTaskForCurrentTarget;
-    const displayStats = isThisTargetRunning && currentRunningTask?.stats ? currentRunningTask.stats : aiStats;
+    const displayStats = isThisTargetRunning && currentRunningTask?.stats ? currentRunningTask.stats : (isThisTargetRunning ? aiStats : { totalInTok: 0, totalOutTok: 0, costUsd: 0, speedTokSec: 0, startTime: 0, elapsedSec: 0 });
     const displayPercent = isThisTargetRunning && currentRunningTask ? currentRunningTask.percent : (isThisTargetRunning ? aiPercent : 0);
-    const displayProgressText = isThisTargetRunning && currentRunningTask ? currentRunningTask.statusText : aiProgressText;
+    const displayProgressText = isThisTargetRunning && currentRunningTask ? currentRunningTask.statusText : (isThisTargetRunning ? aiProgressText : '');
 
 
 
@@ -1775,8 +1793,8 @@ export default function EpisodeManagerModal({
                                     </div>
                                 </div>
 
-                                {/* 4. Live Progress & Stats Bar (when active or running) */}
-                                {(isTaskRunning || displayPercent > 0) && (
+                                {/* 4. Live Progress & Stats Bar (ONLY when THIS target is actively running) */}
+                                {isThisTargetRunning && (
                                     <div className="ep-ai-hub-stats-card">
                                         <div className="stats-meter-row">
                                             <div className="stat-pill cost">
@@ -1808,7 +1826,7 @@ export default function EpisodeManagerModal({
                                                 </div>
                                                 <div className="ep-progress-info-right">
                                                     <span className="percent-text">{displayPercent}%</span>
-                                                    {isTaskRunning && (
+                                                    {isThisTargetRunning && (
                                                         <button
                                                             type="button"
                                                             className="btn-meter-stop-inline"
