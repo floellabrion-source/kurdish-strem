@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import axios from '../api/client';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
@@ -22,7 +22,15 @@ import {
     updateAiTask,
     removeAiTask,
     stopAiTask,
-    ActiveAiTask
+    ActiveAiTask,
+    QueuedTranslationJob,
+    subscribeToTranslationQueue,
+    addToTranslationQueue,
+    removeFromTranslationQueue,
+    isEpisodeQueued,
+    getQueuedJob,
+    getQueuePosition,
+    getTranslationQueue
 } from '../utils/aiTranslator';
 import './EpisodeManagerModal.css';
 
@@ -214,6 +222,14 @@ export default function EpisodeManagerModal({
     useEffect(() => {
         return subscribeToAiTasks(tasks => {
             setActiveAiTasks(tasks);
+        });
+    }, []);
+
+    // ─── TRANSLATION QUEUE SUBSCRIPTION ───
+    const [queueList, setQueueList] = useState<QueuedTranslationJob[]>([]);
+    useEffect(() => {
+        return subscribeToTranslationQueue(q => {
+            setQueueList(q);
         });
     }, []);
 
@@ -412,9 +428,17 @@ export default function EpisodeManagerModal({
             seasonNum,
             episode: ep
         });
-        // Always reset context for the active episode so previous episode's text doesn't persist
-        const initialContext = ep.description || movie.descriptionKu || movie.description || '';
-        setAiStoryContext(initialContext);
+        // If this episode is already queued, restore its queued settings
+        const queuedJob = getQueuedJob(movie.id, seasonNum, ep.number);
+        if (queuedJob) {
+            setAiStoryContext(queuedJob.storyContext || '');
+            if (queuedJob.model) setAiSelectedModel(queuedJob.model);
+            if (queuedJob.tone) setAiSelectedTone(queuedJob.tone);
+        } else {
+            // Always reset context for the active episode so previous episode's text doesn't persist
+            const initialContext = ep.description || movie.descriptionKu || movie.description || '';
+            setAiStoryContext(initialContext);
+        }
 
         // Check if there is already partial translation
         axios.get(`/api/admin/movies/${movie.id}/srt-content`, {
@@ -466,17 +490,20 @@ export default function EpisodeManagerModal({
         setAiStoryContext(movie.descriptionKu || movie.description || '');
     };
 
-    // ─── 6. START PROCESSING FROM AI MASTER HUB ───
-    const startAiHubProcessing = async (mode: 'all' | 'translate_only' | 'analyze_only') => {
-        if (!aiHubTarget) return;
-        const targetType = aiHubTarget.type;
-        const targetSeasonNum = aiHubTarget.seasonNum;
-        const targetEpisode = aiHubTarget.episode;
-        const targetSeason = aiHubTarget.season;
+    const isQueueProcessingRef = useRef(false);
 
-        const taskId = targetType === 'single'
-            ? `${movie.id}-${targetSeasonNum}-${targetEpisode?.number}`
-            : `${movie.id}-${targetSeasonNum}-bulk`;
+    // ─── EXECUTE SINGLE EPISODE TRANSLATION ───
+    const executeSingleEpisodeTranslation = async (
+        targetSeasonNum: number,
+        targetEpisode: Episode,
+        mode: 'all' | 'translate_only' | 'analyze_only',
+        storyContext: string,
+        model: string,
+        tone: string
+    ) => {
+        const ep = targetEpisode;
+        const seasonNum = targetSeasonNum;
+        const taskId = `${movie.id}-${seasonNum}-${ep.number}`;
 
         const abortController = new AbortController();
         aiAbortControllerRef.current = abortController;
@@ -491,16 +518,200 @@ export default function EpisodeManagerModal({
             taskId,
             movieId: movie.id,
             movieTitle: movie.title,
+            seasonNum,
+            episodeNum: ep.number,
+            episodeId: ep.id,
+            type: 'single',
+            model,
+            tone,
+            mode,
+            status: 'running',
+            percent: 5,
+            statusText: `دەستپێکردنی ئەڵقەی ${ep.number}...`,
+            abortController,
+            stats: initialStats,
+            storyContext
+        });
+
+        const timerInterval = setInterval(() => {
+            const now = Date.now();
+            const elapsed = Math.max(1, Math.round((now - startTimestamp) / 1000));
+            setAiStats(prev => ({ ...prev, elapsedSec: elapsed }));
+        }, 1000);
+
+        const updateAiStats = (inT: number, outT: number) => {
+            setAiStats(prev => {
+                const nextIn = prev.totalInTok + inT;
+                const nextOut = prev.totalOutTok + outT;
+                const pricing = MODEL_PRICING[model] || { inPricePerM: 3.0, outPricePerM: 15.0 };
+                const cost = (nextIn / 1_000_000) * pricing.inPricePerM + (nextOut / 1_000_000) * pricing.outPricePerM;
+                const now = Date.now();
+                const elapsed = Math.max(1, Math.round((now - startTimestamp) / 1000));
+                const speed = Math.round(nextOut / elapsed);
+                const stats = {
+                    totalInTok: nextIn,
+                    totalOutTok: nextOut,
+                    costUsd: cost,
+                    speedTokSec: speed,
+                    startTime: startTimestamp,
+                    elapsedSec: elapsed
+                };
+                updateAiTask(taskId, { stats });
+                return stats;
+            });
+        };
+
+        const epKey = `${seasonNum}-${ep.id}`;
+        setAiProgressText(`دەستپێکردنی ئەڵقەی ${ep.number}...`);
+        setAiPercent(5);
+        setEpTransProgress(prev => ({
+            ...prev,
+            [epKey]: { status: 'running', statusText: 'وەرگێڕان بە AI...', percent: 5 }
+        }));
+
+        try {
+            const epSpecific = ep.description ? ` | Episode Synopsis: "${ep.description}"` : '';
+            const contextStr = `Show Title: "${movie.title}" | Season ${seasonNum}, Episode ${ep.number}: "${ep.title}"${epSpecific} | Genre: ${movie.genre || 'Drama'} | Main Story Arc: ${storyContext}`;
+
+            const result = await runAiTranslationAndAnalysis(
+                movie.id,
+                seasonNum,
+                ep.number,
+                (statusText, percent, status) => {
+                    setAiProgressText(statusText);
+                    setAiPercent(percent);
+                    updateAiTask(taskId, { statusText, percent, status });
+                    setEpTransProgress(prev => ({
+                        ...prev,
+                        [epKey]: { status, statusText, percent }
+                    }));
+                },
+                {
+                    model,
+                    tone,
+                    mode,
+                    contextStr,
+                    glossaryTerms: activeGlossaryTerms,
+                    signal,
+                    onStatsUpdate: updateAiStats
+                }
+            );
+
+            if (result.status === 'paused') {
+                showToast(`وەرگێڕانی ئەڵقەی ${ep.number} ڕاگیرا ⏸️`);
+                updateAiTask(taskId, { status: 'paused', statusText: 'وەرگێڕان ڕاگیرا' });
+            } else {
+                await axios.post(`/api/admin/movies/${movie.id}/seasons/${seasonNum}/episodes/${ep.id}/metrics`, {
+                    languageMetrics: result.metrics || ep.languageMetrics,
+                    translatedSrt: mode === 'analyze_only' ? (ep.translatedSrt || null) : 'translated.srt'
+                });
+                if (onReloadMovie) onReloadMovie();
+                showToast(`ئەڵقەی ${ep.number} بە سەرکەوتوویی تەواو بوو! ✓`);
+                removeAiTask(taskId);
+                setEpTransProgress(prev => {
+                    const next = { ...prev };
+                    delete next[epKey];
+                    return next;
+                });
+            }
+        } catch (err: any) {
+            if (!signal.aborted) {
+                console.error('AI Hub Error:', err);
+                const msg = err.response?.data?.error?.message || err.message || 'هەڵەیەک ڕوویدا';
+                setAiProgressText(`❌ کێشە: ${msg}`);
+                setAiPercent(0);
+                showToast(`❌ ${msg}`);
+                updateAiTask(taskId, { status: 'error', error: msg, statusText: `❌ ${msg}` });
+            }
+        } finally {
+            clearInterval(timerInterval);
+            setAiRunning(false);
+            if (onReloadMovie) onReloadMovie();
+        }
+    };
+
+    // ─── CHECK & TRIGGER NEXT QUEUED JOB ───
+    const checkAndProcessNextQueueJob = async () => {
+        if (isQueueProcessingRef.current) return;
+        const isBusy = activeAiTasks.some(t => t.status === 'running') || aiRunning;
+        if (isBusy) return;
+
+        const queue = getTranslationQueue();
+        const nextJob = queue.find(j => j.movieId === movie.id);
+        if (!nextJob) return;
+
+        isQueueProcessingRef.current = true;
+        try {
+            removeFromTranslationQueue(nextJob.queueId);
+            showToast(`دەستپێکردنی خۆکاری ئەڵقەی ${nextJob.episodeNum} لە ڕیزبەندی 🚀`);
+            const targetSeason = seasons.find(s => s.number === nextJob.seasonNum);
+            const epObj = targetSeason?.episodes?.find(e => e.number === nextJob.episodeNum);
+            if (epObj) {
+                await executeSingleEpisodeTranslation(
+                    nextJob.seasonNum,
+                    epObj,
+                    nextJob.mode,
+                    nextJob.storyContext,
+                    nextJob.model,
+                    nextJob.tone
+                );
+            }
+        } finally {
+            isQueueProcessingRef.current = false;
+        }
+    };
+
+    // Auto-run next job in queue whenever a task finishes
+    useEffect(() => {
+        const isBusy = activeAiTasks.some(t => t.status === 'running') || aiRunning;
+        if (!isBusy && queueList.some(j => j.movieId === movie.id)) {
+            checkAndProcessNextQueueJob();
+        }
+    }, [activeAiTasks, queueList, aiRunning]);
+
+    // ─── 6. START PROCESSING FROM AI MASTER HUB ───
+    const startAiHubProcessing = async (mode: 'all' | 'translate_only' | 'analyze_only') => {
+        if (!aiHubTarget) return;
+        const targetType = aiHubTarget.type;
+        const targetSeasonNum = aiHubTarget.seasonNum;
+        const targetEpisode = aiHubTarget.episode;
+        const targetSeason = aiHubTarget.season;
+
+        if (targetType === 'single' && targetEpisode) {
+            await executeSingleEpisodeTranslation(
+                targetSeasonNum,
+                targetEpisode,
+                mode,
+                aiStoryContext,
+                aiSelectedModel,
+                aiSelectedTone
+            );
+            return;
+        }
+
+        // Bulk season mode
+        const taskId = `${movie.id}-${targetSeasonNum}-bulk`;
+        const abortController = new AbortController();
+        aiAbortControllerRef.current = abortController;
+        const signal = abortController.signal;
+
+        const startTimestamp = Date.now();
+        const initialStats = { totalInTok: 0, totalOutTok: 0, costUsd: 0, speedTokSec: 0, startTime: startTimestamp, elapsedSec: 0 };
+        setAiStats(initialStats);
+        setAiRunning(true);
+
+        registerAiTask({
+            taskId,
+            movieId: movie.id,
+            movieTitle: movie.title,
             seasonNum: targetSeasonNum,
-            episodeNum: targetEpisode?.number,
-            episodeId: targetEpisode?.id,
-            type: targetType,
+            type: 'bulk',
             model: aiSelectedModel,
             tone: aiSelectedTone,
             mode,
             status: 'running',
             percent: 5,
-            statusText: 'دەستپێکردنی وەرگێڕان...',
+            statusText: 'دەستپێکردنی وەرگێڕانی بەکۆمەڵ...',
             abortController,
             stats: initialStats,
             storyContext: aiStoryContext
@@ -535,63 +746,7 @@ export default function EpisodeManagerModal({
         };
 
         try {
-            if (targetType === 'single' && targetEpisode) {
-                const ep = targetEpisode;
-                const seasonNum = targetSeasonNum;
-                const epKey = `${seasonNum}-${ep.id}`;
-                const epSpecific = ep.description ? ` | Episode Synopsis: "${ep.description}"` : '';
-                const contextStr = `Show Title: "${movie.title}" | Season ${seasonNum}, Episode ${ep.number}: "${ep.title}"${epSpecific} | Genre: ${movie.genre || 'Drama'} | Main Story Arc: ${aiStoryContext}`;
-
-                setAiProgressText(`دەستپێکردنی ئەڵقەی ${ep.number}...`);
-                setAiPercent(5);
-                setEpTransProgress(prev => ({
-                    ...prev,
-                    [epKey]: { status: 'running', statusText: 'وەرگێڕان بە AI...', percent: 5 }
-                }));
-
-                const result = await runAiTranslationAndAnalysis(
-                    movie.id,
-                    seasonNum,
-                    ep.number,
-                    (statusText, percent, status) => {
-                        setAiProgressText(statusText);
-                        setAiPercent(percent);
-                        updateAiTask(taskId, { statusText, percent, status });
-                        setEpTransProgress(prev => ({
-                            ...prev,
-                            [epKey]: { status, statusText, percent }
-                        }));
-                    },
-                    {
-                        model: aiSelectedModel,
-                        tone: aiSelectedTone,
-                        mode,
-                        contextStr,
-                        glossaryTerms: activeGlossaryTerms,
-                        signal,
-                        onStatsUpdate: updateAiStats
-                    }
-                );
-
-                if (result.status === 'paused') {
-                    showToast(`وەرگێڕانی ئەڵقەی ${ep.number} ڕاگیرا ⏸️`);
-                    updateAiTask(taskId, { status: 'paused', statusText: 'وەرگێڕان ڕاگیرا' });
-                } else {
-                    // Call atomic endpoint to guarantee this episode's metrics are saved without wiping others
-                    await axios.post(`/api/admin/movies/${movie.id}/seasons/${seasonNum}/episodes/${ep.id}/metrics`, {
-                        languageMetrics: result.metrics || ep.languageMetrics,
-                        translatedSrt: mode === 'analyze_only' ? (ep.translatedSrt || null) : 'translated.srt'
-                    });
-                    if (onReloadMovie) onReloadMovie();
-                    showToast(`ئەڵقەی ${ep.number} بە سەرکەوتوویی تەواو بوو! ✓`);
-                    removeAiTask(taskId);
-                    setEpTransProgress(prev => {
-                        const next = { ...prev };
-                        delete next[epKey];
-                        return next;
-                    });
-                }
-            } else if (targetType === 'bulk' && targetSeason) {
+            if (targetSeason) {
                 const season = targetSeason;
                 const eps = season.episodes.filter(e => e.originalSrt);
                 if (eps.length === 0) {
@@ -643,7 +798,6 @@ export default function EpisodeManagerModal({
 
                     if (result.status === 'done') {
                         doneCount++;
-                        // Atomic save for each completed episode in bulk mode
                         await axios.post(`/api/admin/movies/${movie.id}/seasons/${season.number}/episodes/${ep.id}/metrics`, {
                             languageMetrics: result.metrics || ep.languageMetrics,
                             translatedSrt: mode === 'analyze_only' ? (ep.translatedSrt || null) : 'translated.srt'
@@ -668,6 +822,53 @@ export default function EpisodeManagerModal({
             setAiRunning(false);
             if (onReloadMovie) onReloadMovie();
         }
+    };
+
+    // ─── HANDLE START OR QUEUE ───
+    const handleStartOrQueue = (mode: 'all' | 'translate_only' | 'analyze_only') => {
+        if (!aiHubTarget) return;
+
+        // If current target is ALREADY queued, update its settings
+        if (isThisTargetQueued && currentTargetQueuedJob) {
+            addToTranslationQueue({
+                ...currentTargetQueuedJob,
+                model: aiSelectedModel,
+                tone: aiSelectedTone,
+                mode,
+                storyContext: aiStoryContext
+            });
+            showToast(`تێبینی و ڕێکخستنەکانی ئەڵقەی ${aiHubTarget.episode?.number} لە ڕیزبەندیدا نوێکرانەوە ✓`);
+            setAiHubTarget(null);
+            return;
+        }
+
+        // If another task is currently running and this is a single episode, queue it!
+        if (aiHubTarget.type === 'single' && aiHubTarget.episode && isOtherTaskRunning) {
+            const ep = aiHubTarget.episode;
+            const seasonNum = aiHubTarget.seasonNum;
+            const queueJob: QueuedTranslationJob = {
+                queueId: `${movie.id}-${seasonNum}-${ep.number}`,
+                movieId: movie.id,
+                movieTitle: movie.title,
+                seasonNum,
+                episodeNum: ep.number,
+                episodeId: ep.id,
+                episodeTitle: ep.title,
+                type: 'single',
+                model: aiSelectedModel,
+                tone: aiSelectedTone,
+                mode,
+                storyContext: aiStoryContext,
+                addedAt: Date.now()
+            };
+            addToTranslationQueue(queueJob);
+            showToast(`ئەڵقەی ${ep.number} خرایە ڕیزبەندی وەرگێڕان ⏳ - دوای ئەڵقەی پێشوو، خۆکارانە دەست پێدەکات!`);
+            setAiHubTarget(null);
+            return;
+        }
+
+        // Otherwise, start immediately
+        startAiHubProcessing(mode);
     };
 
     // ─── 7. STOP AI HUB PROCESSING ───
@@ -747,13 +948,58 @@ export default function EpisodeManagerModal({
         }
     };
 
-    // A task is running ONLY when locally running OR running in global background task registry
-    const isTaskRunning = Boolean(aiRunning || (runningTaskForMovie && runningTaskForMovie.status === 'running'));
+    // ─── TASK AND QUEUE RESOLUTION FOR CURRENT TARGET ───
+    const isThisTargetRunning = useMemo(() => {
+        if (!aiHubTarget) return false;
+        if (aiRunning) return true;
+        return activeAiTasks.some(t => {
+            if (t.status !== 'running') return false;
+            if (t.movieId !== movie.id) return false;
+            if (aiHubTarget.type === 'single') {
+                return t.type === 'single' && Number(t.seasonNum) === Number(aiHubTarget.seasonNum) && Number(t.episodeNum) === Number(aiHubTarget.episode?.number);
+            } else {
+                return t.type === 'bulk' && Number(t.seasonNum) === Number(aiHubTarget.seasonNum);
+            }
+        });
+    }, [aiHubTarget, aiRunning, activeAiTasks, movie.id]);
 
-    const currentRunningTask = runningTaskForMovie && runningTaskForMovie.status === 'running' ? runningTaskForMovie : null;
-    const displayStats = isTaskRunning && currentRunningTask?.stats ? currentRunningTask.stats : aiStats;
-    const displayPercent = isTaskRunning && currentRunningTask ? currentRunningTask.percent : (isTaskRunning ? aiPercent : 0);
-    const displayProgressText = isTaskRunning && currentRunningTask ? currentRunningTask.statusText : aiProgressText;
+    const runningTaskForCurrentTarget = useMemo(() => {
+        if (!aiHubTarget) return null;
+        return activeAiTasks.find(t => {
+            if (t.status !== 'running') return false;
+            if (t.movieId !== movie.id) return false;
+            if (aiHubTarget.type === 'single') {
+                return t.type === 'single' && Number(t.seasonNum) === Number(aiHubTarget.seasonNum) && Number(t.episodeNum) === Number(aiHubTarget.episode?.number);
+            } else {
+                return t.type === 'bulk' && Number(t.seasonNum) === Number(aiHubTarget.seasonNum);
+            }
+        }) || null;
+    }, [aiHubTarget, activeAiTasks, movie.id]);
+
+    // Is any other task running in background?
+    const anyActiveRunningTask = useMemo(() => {
+        return activeAiTasks.find(t => t.status === 'running') || null;
+    }, [activeAiTasks]);
+
+    const isOtherTaskRunning = Boolean(anyActiveRunningTask && !isThisTargetRunning);
+
+    // Is current target queued?
+    const currentTargetQueuedJob = useMemo(() => {
+        if (!aiHubTarget || aiHubTarget.type !== 'single' || !aiHubTarget.episode) return null;
+        return getQueuedJob(movie.id, aiHubTarget.seasonNum, aiHubTarget.episode.number);
+    }, [aiHubTarget, queueList, movie.id]);
+
+    const isThisTargetQueued = Boolean(currentTargetQueuedJob);
+    const currentTargetQueuePos = useMemo(() => {
+        if (!aiHubTarget || aiHubTarget.type !== 'single' || !aiHubTarget.episode) return 0;
+        return getQueuePosition(movie.id, aiHubTarget.seasonNum, aiHubTarget.episode.number);
+    }, [aiHubTarget, queueList, movie.id]);
+
+    const isTaskRunning = isThisTargetRunning;
+    const currentRunningTask = runningTaskForCurrentTarget;
+    const displayStats = isThisTargetRunning && currentRunningTask?.stats ? currentRunningTask.stats : aiStats;
+    const displayPercent = isThisTargetRunning && currentRunningTask ? currentRunningTask.percent : (isThisTargetRunning ? aiPercent : 0);
+    const displayProgressText = isThisTargetRunning && currentRunningTask ? currentRunningTask.statusText : aiProgressText;
 
 
 
@@ -1071,10 +1317,12 @@ export default function EpisodeManagerModal({
                                                                         const epProg = epTransProgress[`${season.number}-${ep.id}`];
                                                                         const isEpRunning = epProg?.status === 'running';
                                                                         const isEpPaused = epProg?.status === 'paused';
+                                                                        const isEpQueued = isEpisodeQueued(movie.id, season.number, ep.number);
+                                                                        const queuePos = getQueuePosition(movie.id, season.number, ep.number);
 
                                                                         return (
                                                                             <button
-                                                                                className={`ep-srt-action-chip btn-chip-ai ${isEpRunning ? 'running' : ''} ${isEpPaused ? 'paused' : ''}`}
+                                                                                className={`ep-srt-action-chip btn-chip-ai ${isEpRunning ? 'running' : ''} ${isEpPaused ? 'paused' : ''} ${isEpQueued ? 'queued' : ''}`}
                                                                                 onClick={() => openAiHubSingle(season.number, ep)}
                                                                                 title={lang === 'en' ? "Open AI Master Hub for this episode" : "کردنەوەی AI Master Hub بۆ ئەم ئەڵقەیە"}
                                                                             >
@@ -1087,6 +1335,11 @@ export default function EpisodeManagerModal({
                                                                                     <>
                                                                                         <Play size={10} fill="#fbbf24" color="#fbbf24" />
                                                                                         <span>{lang === 'en' ? 'Resume' : 'دەستپێکردنەوە'} ({epProg.percent}%)</span>
+                                                                                    </>
+                                                                                ) : isEpQueued ? (
+                                                                                    <>
+                                                                                        <Clock size={10} />
+                                                                                        <span>{lang === 'en' ? `Queued (#${queuePos})` : `لە ڕیزبەندی (#${queuePos})`}</span>
                                                                                     </>
                                                                                 ) : (
                                                                                     <>
@@ -1252,6 +1505,11 @@ export default function EpisodeManagerModal({
                                             : `وەرگێڕانی بەکۆمەڵ: تەواوی وەرزی ${runningTaskForMovie.seasonNum}`}
                                     </strong>
                                     <span className="tracker-pct-pill">{runningTaskForMovie.percent}%</span>
+                                    {queueList.filter(j => j.movieId === movie.id).length > 0 && (
+                                        <span className="tracker-queue-pill" title="ژمارەی ئەڵقەکانی چاوەڕوان لە ڕیزبەندی">
+                                            ⏳ {queueList.filter(j => j.movieId === movie.id).length} لە ڕیزبەندی
+                                        </span>
+                                    )}
                                 </div>
                                 <div className="tracker-subtext">
                                     <span>{runningTaskForMovie.statusText}</span>
@@ -1318,7 +1576,7 @@ export default function EpisodeManagerModal({
                                     </h3>
                                 </div>
                                 <div className="ep-ai-hub-header-left">
-                                    {isTaskRunning && (
+                                    {isThisTargetRunning && (
                                         <button
                                             type="button"
                                             className="btn-header-stop-chip"
@@ -1328,6 +1586,12 @@ export default function EpisodeManagerModal({
                                             <X size={14} />
                                             <span>🛑 ڕاگرتن</span>
                                         </button>
+                                    )}
+                                    {isThisTargetQueued && (
+                                        <div className="btn-header-queued-chip">
+                                            <Clock size={13} />
+                                            <span>⏳ لە ڕیزبەندییە (#{currentTargetQueuePos})</span>
+                                        </div>
                                     )}
                                     <button
                                         className="ep-modal-close-btn"
@@ -1340,6 +1604,54 @@ export default function EpisodeManagerModal({
                             </div>
 
                             <div className="ep-ai-hub-body">
+                                {/* Notice Banner if Target is already Queued */}
+                                {isThisTargetQueued && (
+                                    <div className="ep-ai-queue-status-banner">
+                                        <div className="queue-status-banner-left">
+                                            <div className="queue-icon-badge">
+                                                <Clock size={18} color="#a855f7" />
+                                            </div>
+                                            <div className="queue-banner-texts">
+                                                <strong>ئەم ئەڵقەیە لە ڕیزبەندی وەرگێڕاندایە (نۆرەی #{currentTargetQueuePos}) ⏳</strong>
+                                                <span>پاش تەواوبوونی کارەکانی پێش خۆی، سیستەمەکە بە شێوەیەکی ئۆتۆماتیکی بەم کورتە و تێبینییانە دەست پێدەکات. دەتوانیت تێبینییەکان نوێ بکەیتەوە یان لە ڕیزبەندی لایبەیت.</span>
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            className="btn-cancel-from-queue"
+                                            onClick={() => {
+                                                if (currentTargetQueuedJob) {
+                                                    removeFromTranslationQueue(currentTargetQueuedJob.queueId);
+                                                    showToast(`ئەڵقەی ${aiHubTarget.episode?.number} لە ڕیزبەندی لابرا 🗑️`);
+                                                }
+                                            }}
+                                            title="سڕینەوە لە ڕیزبەندی چاوەڕوانی"
+                                        >
+                                            <Trash2 size={13} />
+                                            <span>سڕینەوە لە ڕیزبەندی</span>
+                                        </button>
+                                    </div>
+                                )}
+
+                                {/* Notice Banner if Another Episode/Task is currently Running */}
+                                {isOtherTaskRunning && !isThisTargetRunning && !isThisTargetQueued && (
+                                    <div className="ep-ai-other-running-notice">
+                                        <div className="other-running-icon">
+                                            <Sparkles size={16} color="#a855f7" className="spinning" />
+                                        </div>
+                                        <div className="other-running-text">
+                                            <strong>
+                                                {anyActiveRunningTask?.episodeNum
+                                                    ? `ئەڵقەی ${anyActiveRunningTask.episodeNum} ئێستا خەریکی وەرگێڕانە (${anyActiveRunningTask.percent || 0}%)...`
+                                                    : `کارێکی تری وەرگێڕان ئێستا لە پاشبنەما خەریکی کارە...`}
+                                            </strong>
+                                            <span>
+                                                تێبینی و کورتەی چیرۆک بۆ ئەم ئەڵقەیە بنووسە و لە خوارەوە مۆدەکەی هەڵبژێرە؛ ڕاستەوخۆ دەخرێتە ڕیزبەندی (Queue) و هەر کە ئەڵقەی پێشوو تەواو بوو، بێ ئەوەی دەستی لێبدەیتەوە خۆکارانە دەست پێدەکات!
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* 0. Resume Notice Banner (if partially translated) */}
                                 {partialSrtInfo && (
                                     <div className="ep-ai-resume-banner">
@@ -1353,15 +1665,15 @@ export default function EpisodeManagerModal({
                                             </div>
                                         </div>
                                         <div className="resume-banner-actions">
-                                            {!isTaskRunning && (
+                                            {!isThisTargetRunning && (
                                                 <button
                                                     type="button"
                                                     className="btn-resume-direct"
-                                                    onClick={() => startAiHubProcessing('translate_only')}
+                                                    onClick={() => handleStartOrQueue('translate_only')}
                                                     title="دەستپێکردنەوەی خێرا لەو شوێنەی وەستاوە"
                                                 >
                                                     <Play size={13} fill="#000" color="#000" />
-                                                    <span>دەستپێکردنەوە لە دێڕی {partialSrtInfo.translatedLines + 1}</span>
+                                                    <span>{isOtherTaskRunning ? `خستنە ڕیزبەندی لە دێڕی ${partialSrtInfo.translatedLines + 1} ⏳` : `دەستپێکردنەوە لە دێڕی ${partialSrtInfo.translatedLines + 1}`}</span>
                                                 </button>
                                             )}
                                             <span className="resume-pct-pill">{partialSrtInfo.percent}% ئامادەیە</span>
@@ -1513,9 +1825,9 @@ export default function EpisodeManagerModal({
                                 )}
                             </div>
 
-                            {/* 5. Footer Actions (3 Modes or Background Minimize + Stop) */}
+                            {/* 5. Footer Actions (3 Modes, Queued State, or Background Minimize + Stop) */}
                             <div className="ep-ai-hub-footer">
-                                {isTaskRunning ? (
+                                {isThisTargetRunning ? (
                                     <div className="ep-ai-running-footer-row">
                                         <button
                                             type="button"
@@ -1535,45 +1847,92 @@ export default function EpisodeManagerModal({
                                             <span>🛑 ڕاگرتنی دەستبەجێ (Stop / Pause)</span>
                                         </button>
                                     </div>
+                                ) : isThisTargetQueued ? (
+                                    <div className="ep-ai-queued-footer-row">
+                                        <button
+                                            type="button"
+                                            className="btn-ai-queue-update"
+                                            onClick={() => handleStartOrQueue(currentTargetQueuedJob?.mode || 'translate_only')}
+                                            title="پاشەکەوتکردنی کورتە و مۆدێلی نوێ لەناو ڕیزبەندی"
+                                        >
+                                            <CheckCircle2 size={16} />
+                                            <span>💾 نوێکردنەوەی تێبینییەکان لە ڕیزبەندی (Update Queued Job)</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="btn-ai-queue-remove"
+                                            onClick={() => {
+                                                if (currentTargetQueuedJob) {
+                                                    removeFromTranslationQueue(currentTargetQueuedJob.queueId);
+                                                    showToast(`ئەڵقەی ${aiHubTarget.episode?.number} لە ڕیزبەندی لابرا 🗑️`);
+                                                    setAiHubTarget(null);
+                                                }
+                                            }}
+                                            title="لابردنی ئەم ئەڵقەیە لە ڕیزبەندی چاوەڕوانی"
+                                        >
+                                            <Trash2 size={16} />
+                                            <span>سڕینەوە لە ڕیزبەندی</span>
+                                        </button>
+                                    </div>
                                 ) : (
                                     <div className="ep-ai-modes-grid">
                                         <button
                                             type="button"
                                             className="btn-ai-mode-action btn-translate-only"
-                                            onClick={() => startAiHubProcessing('translate_only')}
+                                            onClick={() => handleStartOrQueue('translate_only')}
                                         >
                                             <Languages size={17} />
                                             <div className="mode-btn-text">
                                                 <strong>
-                                                    {partialSrtInfo ? `🔤 بەردەوامبوون (لە دێڕی ${partialSrtInfo.translatedLines + 1})` : '🔤 تەنها وەرگێڕانی سەبتایتڵ'}
+                                                    {isOtherTaskRunning 
+                                                        ? `🔤 خستنە ڕیزبەندی (تەنها وەرگێڕان ⏳)`
+                                                        : (partialSrtInfo ? `🔤 بەردەوامبوون (لە دێڕی ${partialSrtInfo.translatedLines + 1})` : '🔤 تەنها وەرگێڕانی سەبتایتڵ')}
                                                 </strong>
-                                                <span>وەرگێڕانی خێرا و ئابووری بۆ ناو ئەڵقەکە</span>
+                                                <span>
+                                                    {isOtherTaskRunning 
+                                                        ? `دوای ئەڵقەی ${anyActiveRunningTask?.episodeNum || 'پێشوو'} خۆکارانە دەست پێدەکات` 
+                                                        : 'وەرگێڕانی خێرا و ئابووری بۆ ناو ئەڵقەکە'}
+                                                </span>
                                             </div>
                                         </button>
 
                                         <button
                                             type="button"
                                             className="btn-ai-mode-action btn-analyze-only"
-                                            onClick={() => startAiHubProcessing('analyze_only')}
+                                            onClick={() => handleStartOrQueue('analyze_only')}
                                         >
                                             <BarChart2 size={17} />
                                             <div className="mode-btn-text">
-                                                <strong>📊 تەنها شیکاریی زمانی CEFR</strong>
-                                                <span>ئامادەکردنی ئاستەکانی زمان و وشە قورسەکان</span>
+                                                <strong>
+                                                    {isOtherTaskRunning 
+                                                        ? `📊 خستنە ڕیزبەندی (تەنها شیکاری ⏳)` 
+                                                        : '📊 تەنها شیکاریی زمانی CEFR'}
+                                                </strong>
+                                                <span>
+                                                    {isOtherTaskRunning 
+                                                        ? `دوای ئەڵقەی ${anyActiveRunningTask?.episodeNum || 'پێشوو'} خۆکارانە دەست پێدەکات` 
+                                                        : 'ئامادەکردنی ئاستەکانی زمان و وشە قورسەکان'}
+                                                </span>
                                             </div>
                                         </button>
 
                                         <button
                                             type="button"
                                             className="btn-ai-mode-action btn-all-modes"
-                                            onClick={() => startAiHubProcessing('all')}
+                                            onClick={() => handleStartOrQueue('all')}
                                         >
                                             <Sparkles size={17} />
                                             <div className="mode-btn-text">
                                                 <strong>
-                                                    {partialSrtInfo ? `✨ بەردەوامبوونی گشتی (Resume لە ${partialSrtInfo.percent}%)` : '✨ هەردووکی پێکەوە (شیکاری + وەرگێڕان)'}
+                                                    {isOtherTaskRunning 
+                                                        ? `✨ خستنە ڕیزبەندی (شیکاری + وەرگێڕان ⏳)`
+                                                        : (partialSrtInfo ? `✨ بەردەوامبوونی گشتی (Resume لە ${partialSrtInfo.percent}%)` : '✨ هەردووکی پێکەوە (شیکاری + وەرگێڕان)')}
                                                 </strong>
-                                                <span>ئامادەکردنی تەواوی ژێرنووس و ئامارەکان</span>
+                                                <span>
+                                                    {isOtherTaskRunning 
+                                                        ? `دوای ئەڵقەی ${anyActiveRunningTask?.episodeNum || 'پێشوو'} خۆکارانە دەست پێدەکات` 
+                                                        : 'ئامادەکردنی تەواوی ژێرنووس و ئامارەکان'}
+                                                </span>
                                             </div>
                                         </button>
                                     </div>

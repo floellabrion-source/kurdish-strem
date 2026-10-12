@@ -234,6 +234,83 @@ export const isTaskPaused = (taskId: string): boolean => {
     return pauseSignals.has(taskId);
 };
 
+// ─── TRANSLATION QUEUE REGISTRY ───
+export interface QueuedTranslationJob {
+    queueId: string; // `${movieId}-${seasonNum}-${episodeNum}`
+    movieId: string;
+    movieTitle?: string;
+    seasonNum: number;
+    episodeNum?: number;
+    episodeId?: string;
+    episodeTitle?: string;
+    type: 'single' | 'bulk';
+    model: string;
+    tone: string;
+    mode: 'all' | 'translate_only' | 'analyze_only';
+    storyContext: string;
+    addedAt: number;
+}
+
+const translationQueue: QueuedTranslationJob[] = [];
+const queueListeners = new Set<(queue: QueuedTranslationJob[]) => void>();
+
+export const notifyQueueListeners = () => {
+    const list = [...translationQueue];
+    queueListeners.forEach(fn => fn(list));
+};
+
+export const subscribeToTranslationQueue = (fn: (queue: QueuedTranslationJob[]) => void) => {
+    queueListeners.add(fn);
+    fn([...translationQueue]);
+    return () => {
+        queueListeners.delete(fn);
+    };
+};
+
+export const getTranslationQueue = (): QueuedTranslationJob[] => [...translationQueue];
+
+export const isEpisodeQueued = (movieId: string, seasonNum: number, episodeNum?: number): boolean => {
+    return translationQueue.some(
+        j => j.movieId === movieId && Number(j.seasonNum) === Number(seasonNum) && (episodeNum === undefined || Number(j.episodeNum) === Number(episodeNum))
+    );
+};
+
+export const getQueuedJob = (movieId: string, seasonNum: number, episodeNum?: number): QueuedTranslationJob | undefined => {
+    return translationQueue.find(
+        j => j.movieId === movieId && Number(j.seasonNum) === Number(seasonNum) && (episodeNum === undefined || Number(j.episodeNum) === Number(episodeNum))
+    );
+};
+
+export const getQueuePosition = (movieId: string, seasonNum: number, episodeNum?: number): number => {
+    const idx = translationQueue.findIndex(
+        j => j.movieId === movieId && Number(j.seasonNum) === Number(seasonNum) && (episodeNum === undefined || Number(j.episodeNum) === Number(episodeNum))
+    );
+    return idx >= 0 ? idx + 1 : 0;
+};
+
+export const addToTranslationQueue = (job: QueuedTranslationJob) => {
+    const existingIdx = translationQueue.findIndex(j => j.queueId === job.queueId);
+    if (existingIdx >= 0) {
+        translationQueue[existingIdx] = job;
+    } else {
+        translationQueue.push(job);
+    }
+    notifyQueueListeners();
+};
+
+export const removeFromTranslationQueue = (queueId: string) => {
+    const idx = translationQueue.findIndex(j => j.queueId === queueId);
+    if (idx >= 0) {
+        translationQueue.splice(idx, 1);
+        notifyQueueListeners();
+    }
+};
+
+export const clearTranslationQueue = () => {
+    translationQueue.length = 0;
+    notifyQueueListeners();
+};
+
 // ─── PART 1: DETERMINISTIC STATISTICAL & LINGUISTIC ANALYSIS ───
 export interface DeterministicSubtitleStats {
     totalWords: number;
