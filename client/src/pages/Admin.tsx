@@ -11,7 +11,7 @@ import {
     Wallet
 } from 'lucide-react';
 import { Movie, Season, Episode, LanguageMetrics, getCefrDisplayLevel, getCefrColor, ACCENT_OPTIONS } from '../types';
-import { runAiTranslationAndAnalysis, triggerFileDownload, pauseTranslationTask, AI_TRANSLATION_MODELS, TRANSLATION_TONES, MODEL_PRICING } from '../utils/aiTranslator';
+import { runAiTranslationAndAnalysis, triggerFileDownload, pauseTranslationTask, parseSRT, AI_TRANSLATION_MODELS, TRANSLATION_TONES, MODEL_PRICING } from '../utils/aiTranslator';
 import SrtTranslator from './SrtTranslator';
 import AdminUsers from './AdminUsers';
 import AdminAnalytics from './AdminAnalytics';
@@ -305,7 +305,8 @@ const handleOpenMovieAiModal = async (movie: Movie) => {
     }
 
     setAiMovieTarget(movie);
-    setAiStoryContext(movie.descriptionKu || movie.description || '');
+    const savedCustomContext = localStorage.getItem(`ks_movie_context_${movie.id}`);
+    setAiStoryContext(savedCustomContext !== null ? savedCustomContext : (movie.descriptionKu || movie.description || ''));
     setAiMovieRunning(false);
     setAiMoviePartialSrt(null);
 
@@ -315,19 +316,13 @@ const handleOpenMovieAiModal = async (movie: Movie) => {
         const orig = (res.data.originalSrtText || '').trim();
         const trans = (res.data.translatedSrtText || '').trim();
         if (orig && trans) {
-            const origBlocks = orig.split(/\n\s*\n/).filter((b: string) => b.trim());
-            const transBlocks = trans.split(/\n\s*\n/).filter((b: string) => b.trim());
-            const transMap = new Map();
-            transBlocks.forEach((b: string) => {
-                const lines = b.trim().split('\n');
-                const idx = parseInt(lines[0]?.trim(), 10);
-                if (!isNaN(idx)) transMap.set(idx, true);
-            });
+            const origBlocks = parseSRT(orig);
+            const transBlocks = parseSRT(trans);
+            const transMap = new Map<string, string>();
+            transBlocks.forEach(b => b.text.trim() && transMap.set(b.id, b.text));
             let done = 0;
-            origBlocks.forEach((b: string) => {
-                const lines = b.trim().split('\n');
-                const idx = parseInt(lines[0]?.trim(), 10);
-                if (!isNaN(idx) && transMap.has(idx)) done++;
+            origBlocks.forEach(b => {
+                if (transMap.has(b.id)) done++;
             });
             if (done > 0 && done < origBlocks.length) {
                 setAiMoviePartialSrt({
@@ -2895,6 +2890,25 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
 
                             {/* Body */}
                             <div className="ep-ai-hub-body">
+                                {/* Resume / Paused Notice Banner */}
+                                {(p?.status === 'paused' || aiMoviePartialSrt) && !isTaskRunning && (
+                                    <div className="ep-ai-resume-banner" style={{ margin: '0 0 16px 0' }}>
+                                        <div className="resume-banner-right">
+                                            <div className="resume-icon-badge">
+                                                <RefreshCw size={16} className="spinning-slow" />
+                                            </div>
+                                            <div className="resume-banner-texts">
+                                                <strong>
+                                                    {aiMoviePartialSrt
+                                                        ? `ئەم فیلمە پێشتر ${aiMoviePartialSrt.translatedLines} لە ${aiMoviePartialSrt.totalLines} دێڕی وەرگێڕدراوە (${aiMoviePartialSrt.percent}%).`
+                                                        : `وەرگێڕانی ئەم فیلمە پێشتر ڕاگیراوە (Paused).`}
+                                                </strong>
+                                                <span>دەتوانیت کورتە و تێبینییەکان دەستکاری بکەیت و لە خوارەوە بەردەوامی پێ بدەیت (Resume) بەبێ بەفیڕۆدانی تۆکن یان خەرجی دووبارە.</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* 1. Context Box */}
                                 <div className="ep-ai-hub-section context-section">
                                     <div className="ep-ai-hub-meta-row">
@@ -2936,7 +2950,12 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                                         </div>
                                         <textarea
                                             value={aiStoryContext}
-                                            onChange={e => setAiStoryContext(e.target.value)}
+                                            onChange={e => {
+                                                setAiStoryContext(e.target.value);
+                                                if (aiMovieTarget) {
+                                                    localStorage.setItem(`ks_movie_context_${aiMovieTarget.id}`, e.target.value);
+                                                }
+                                            }}
                                             placeholder="کورتەیەکی گشتی لەسەر چیرۆک و ڕووداوەکان بنووسە بۆ بەرزکردنەوەی کوالێتی وەرگێڕان..."
                                             disabled={isTaskRunning}
                                             rows={2}
@@ -3072,7 +3091,9 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                                             <Languages size={17} />
                                             <div className="mode-btn-text">
                                                 <strong>
-                                                    {aiMoviePartialSrt ? `🔤 بەردەوامبوون (لە دێڕی ${aiMoviePartialSrt.translatedLines + 1})` : '🔤 تەنها وەرگێڕانی سەبتایتڵ'}
+                                                    {aiMoviePartialSrt
+                                                        ? `🔤 بەردەوامبوون (لە دێڕی ${aiMoviePartialSrt.translatedLines + 1})`
+                                                        : (p?.status === 'paused' ? '🔤 دەستپێکردنەوە (تەنها وەرگێڕان)' : '🔤 تەنها وەرگێڕانی سەبتایتڵ')}
                                                 </strong>
                                                 <span>وەرگێڕانی خێرا و ئابووری بۆ ناو فیلمەکە</span>
                                             </div>
@@ -3098,7 +3119,9 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                                             <Sparkles size={17} />
                                             <div className="mode-btn-text">
                                                 <strong>
-                                                    {aiMoviePartialSrt ? `✨ بەردەوامبوونی گشتی (Resume لە ${aiMoviePartialSrt.percent}%)` : '✨ وەرگێڕانی فایل لەگەڵ CEFR'}
+                                                    {aiMoviePartialSrt
+                                                        ? `✨ بەردەوامبوونی گشتی (Resume لە ${aiMoviePartialSrt.percent}%)`
+                                                        : (p?.status === 'paused' ? '✨ دەستپێکردنەوە (شیکاری + وەرگێڕان)' : '✨ وەرگێڕانی فایل لەگەڵ CEFR')}
                                                 </strong>
                                                 <span>ئامادەکردنی تەواوی ژێرنووس و ئامارەکان</span>
                                             </div>
