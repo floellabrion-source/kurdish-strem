@@ -556,84 +556,112 @@ const { seoPrerender } = require('./middleware/seoPrerender');
 app.use(seoPrerender(db));
 
 // ─── Dynamic Sitemap for Google Search Console & SEO ───
-app.get('/sitemap.xml', (req, res) => {
-    try {
-        const movies = db.getMovies() || [];
-        const baseUrl = 'https://kstfilm.com';
-        const now = new Date().toISOString().split('T')[0];
+const generateSitemapXml = () => {
+    const movies = db.getMovies() || [];
+    const baseUrl = 'https://kstfilm.com';
+    const now = new Date().toISOString().split('T')[0];
 
-        const escapeXml = (unsafe) => {
-            return String(unsafe || '').replace(/[<>&'"]/g, (c) => {
-                switch (c) {
-                    case '<': return '&lt;';
-                    case '>': return '&gt;';
-                    case '&': return '&amp;';
-                    case '\'': return '&apos;';
-                    case '"': return '&quot;';
-                    default: return c;
-                }
-            });
-        };
-
-        let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
-        xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n`;
-
-        // 1. Core Platform Pages
-        xml += `  <url>\n    <loc>${baseUrl}/</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>1.0</priority>\n  </url>\n`;
-        xml += `  <url>\n    <loc>${baseUrl}/movies</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>0.95</priority>\n  </url>\n`;
-        xml += `  <url>\n    <loc>${baseUrl}/series</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>0.95</priority>\n  </url>\n`;
-        xml += `  <url>\n    <loc>${baseUrl}/flashcards</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
-
-        // 2. All Movies & Series Pages
-        movies.forEach(m => {
-            if (!m || !m.id) return;
-            const isSeries = m.type === 'series';
-            const pagePath = isSeries ? `series/${m.id}` : `movie/${m.id}`;
-            const watchPath = `watch/${m.id}`;
-            const priority = isSeries ? '0.9' : '0.85';
-            const posterUrl = m.posterCloudUrl || (m.posterUrl ? (m.posterUrl.startsWith('http') ? m.posterUrl : `${baseUrl}${m.posterUrl}`) : '');
-
-            // Main Detail Page
-            xml += `  <url>\n`;
-            xml += `    <loc>${baseUrl}/${pagePath}</loc>\n`;
-            xml += `    <lastmod>${now}</lastmod>\n`;
-            xml += `    <changefreq>weekly</changefreq>\n`;
-            xml += `    <priority>${priority}</priority>\n`;
-            if (posterUrl) {
-                xml += `    <image:image>\n`;
-                xml += `      <image:loc>${escapeXml(posterUrl)}</image:loc>\n`;
-                xml += `      <image:title>${escapeXml(m.title + (m.kurdishTitle ? ' - ' + m.kurdishTitle : ''))}</image:title>\n`;
-                xml += `    </image:image>\n`;
-            }
-            xml += `  </url>\n`;
-
-            // Watch Page
-            xml += `  <url>\n`;
-            xml += `    <loc>${baseUrl}/${watchPath}</loc>\n`;
-            xml += `    <lastmod>${now}</lastmod>\n`;
-            xml += `    <changefreq>weekly</changefreq>\n`;
-            xml += `    <priority>0.8</priority>\n`;
-            xml += `  </url>\n`;
-
-            // TV Series Episodes
-            if (isSeries && Array.isArray(m.seasons)) {
-                m.seasons.forEach(s => {
-                    if (Array.isArray(s.episodes)) {
-                        s.episodes.forEach(ep => {
-                            xml += `  <url>\n`;
-                            xml += `    <loc>${baseUrl}/watch/${m.id}?s=${s.number}&amp;e=${ep.number}</loc>\n`;
-                            xml += `    <lastmod>${now}</lastmod>\n`;
-                            xml += `    <changefreq>monthly</changefreq>\n`;
-                            xml += `    <priority>0.75</priority>\n`;
-                            xml += `  </url>\n`;
-                        });
-                    }
-                });
+    const escapeXml = (unsafe) => {
+        return String(unsafe || '').replace(/[<>&'"]/g, (c) => {
+            switch (c) {
+                case '<': return '&lt;';
+                case '>': return '&gt;';
+                case '&': return '&amp;';
+                case '\'': return '&apos;';
+                case '"': return '&quot;';
+                default: return c;
             }
         });
+    };
 
-        xml += `</urlset>`;
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+    xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n`;
 
+    // 1. Core Platform Pages
+    xml += `  <url>\n    <loc>${baseUrl}/</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>1.0</priority>\n  </url>\n`;
+    xml += `  <url>\n    <loc>${baseUrl}/movies</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>0.95</priority>\n  </url>\n`;
+    xml += `  <url>\n    <loc>${baseUrl}/series</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>0.95</priority>\n  </url>\n`;
+    xml += `  <url>\n    <loc>${baseUrl}/animations</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>0.95</priority>\n  </url>\n`;
+    xml += `  <url>\n    <loc>${baseUrl}/flashcards</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
+
+    // 2. All Movies & Series Pages
+    movies.forEach(m => {
+        if (!m || !m.id) return;
+        const isSeries = m.type === 'series';
+        const pagePath = isSeries ? `series/${m.id}` : `movie/${m.id}`;
+        const watchPath = `watch/${m.id}`;
+        const priority = isSeries ? '0.9' : '0.85';
+        const posterUrl = m.posterCloudUrl || (m.posterUrl ? (m.posterUrl.startsWith('http') ? m.posterUrl : `${baseUrl}${m.posterUrl}`) : '');
+
+        // Main Detail Page
+        xml += `  <url>\n`;
+        xml += `    <loc>${baseUrl}/${pagePath}</loc>\n`;
+        xml += `    <lastmod>${now}</lastmod>\n`;
+        xml += `    <changefreq>weekly</changefreq>\n`;
+        xml += `    <priority>${priority}</priority>\n`;
+        if (posterUrl) {
+            xml += `    <image:image>\n`;
+            xml += `      <image:loc>${escapeXml(posterUrl)}</image:loc>\n`;
+            xml += `      <image:title>${escapeXml(m.title + (m.kurdishTitle ? ' - ' + m.kurdishTitle : ''))}</image:title>\n`;
+            xml += `    </image:image>\n`;
+        }
+        xml += `  </url>\n`;
+
+        // Watch Page
+        xml += `  <url>\n`;
+        xml += `    <loc>${baseUrl}/${watchPath}</loc>\n`;
+        xml += `    <lastmod>${now}</lastmod>\n`;
+        xml += `    <changefreq>weekly</changefreq>\n`;
+        xml += `    <priority>0.8</priority>\n`;
+        xml += `  </url>\n`;
+
+        // TV Series Episodes
+        if (isSeries && Array.isArray(m.seasons)) {
+            m.seasons.forEach(s => {
+                if (Array.isArray(s.episodes)) {
+                    s.episodes.forEach(ep => {
+                        xml += `  <url>\n`;
+                        xml += `    <loc>${baseUrl}/watch/${m.id}?s=${s.number}&amp;e=${ep.number}</loc>\n`;
+                        xml += `    <lastmod>${now}</lastmod>\n`;
+                        xml += `    <changefreq>monthly</changefreq>\n`;
+                        xml += `    <priority>0.75</priority>\n`;
+                        xml += `  </url>\n`;
+                    });
+                }
+            });
+        }
+    });
+
+    xml += `</urlset>`;
+    return xml;
+};
+
+// Auto-sync sitemap to client/dist & client/public on startup & updates
+const syncSitemapToDisk = () => {
+    try {
+        const xml = generateSitemapXml();
+        const targets = [
+            path.join(__dirname, '../client/dist/sitemap.xml'),
+            path.join(__dirname, '../client/public/sitemap.xml'),
+            path.join(__dirname, 'public/sitemap.xml')
+        ];
+        targets.forEach(targetFile => {
+            const dir = path.dirname(targetFile);
+            if (fs.existsSync(dir)) {
+                fs.writeFileSync(targetFile, xml, 'utf8');
+            }
+        });
+        console.log('[Sitemap] Auto-synced dynamic sitemap.xml to disk successfully.');
+    } catch (err) {
+        console.error('[Sitemap] Failed to sync sitemap to disk:', err.message);
+    }
+};
+
+setTimeout(syncSitemapToDisk, 2000);
+
+app.get('/sitemap.xml', (req, res) => {
+    try {
+        const xml = generateSitemapXml();
         res.header('Content-Type', 'application/xml; charset=utf-8');
         res.header('Cache-Control', 'public, max-age=3600');
         return res.send(xml);
