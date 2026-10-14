@@ -11,7 +11,7 @@ import {
     Wallet
 } from 'lucide-react';
 import { Movie, Season, Episode, LanguageMetrics, getCefrDisplayLevel, getCefrColor, ACCENT_OPTIONS } from '../types';
-import { runAiTranslationAndAnalysis, triggerFileDownload, pauseTranslationTask, parseSRT, AI_TRANSLATION_MODELS, TRANSLATION_TONES, MODEL_PRICING } from '../utils/aiTranslator';
+import { runAiTranslationAndAnalysis, triggerFileDownload, pauseTranslationTask, isTaskPaused, parseSRT, AI_TRANSLATION_MODELS, TRANSLATION_TONES, MODEL_PRICING } from '../utils/aiTranslator';
 import SrtTranslator from './SrtTranslator';
 import AdminUsers from './AdminUsers';
 import AdminAnalytics from './AdminAnalytics';
@@ -229,7 +229,24 @@ export default function Admin() {
         }
     };
 
-const [movieTransProgress, setMovieTransProgress] = useState<Record<string, { status: 'running' | 'paused' | 'done', statusText: string, percent: number }>>({});
+const [movieTransProgress, setMovieTransProgress] = useState<Record<string, { status: 'running' | 'paused' | 'done', statusText: string, percent: number }>>(() => {
+    try {
+        const initial: Record<string, any> = {};
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('ks_movie_paused_')) {
+                const mId = key.replace('ks_movie_paused_', '');
+                const val = JSON.parse(localStorage.getItem(key) || '{}');
+                if (val && val.status === 'paused') {
+                    initial[mId] = val;
+                }
+            }
+        }
+        return initial;
+    } catch {
+        return {};
+    }
+});
 const [aiMovieTarget, setAiMovieTarget] = useState<Movie | null>(null);
 const [aiSelectedModel, setAiSelectedModel] = useState<string>('google/gemini-3.8-flash');
 const [aiSelectedTone, setAiSelectedTone] = useState<string>('casual');
@@ -290,12 +307,17 @@ const handleOpenMovieAiModal = async (movie: Movie) => {
         // If already running, pause it directly or open modal to monitor
         pauseTranslationTask(`${movie.id}-m-m`);
         aiMovieAbortRef.current?.abort();
+        const currentPct = p.percent || 0;
+        const pausedObj = { status: 'paused' as const, statusText: `وەرگێڕان ڕاگیرا (${currentPct}%)`, percent: currentPct };
         setMovieTransProgress(prev => ({
             ...prev,
-            [movie.id]: { ...prev[movie.id], status: 'paused', statusText: 'وەرگێڕان ڕاگیرا' }
+            [movie.id]: pausedObj
         }));
+        try {
+            localStorage.setItem(`ks_movie_paused_${movie.id}`, JSON.stringify(pausedObj));
+        } catch {}
         setAiMovieRunning(false);
-        toast('وەرگێڕان ڕاگیرا ⏸️');
+        toast(`وەرگێڕان ڕاگیرا لە (${currentPct}%) ⏸️`);
         return;
     }
 
@@ -325,11 +347,20 @@ const handleOpenMovieAiModal = async (movie: Movie) => {
                 if (transMap.has(b.id)) done++;
             });
             if (done > 0 && done < origBlocks.length) {
+                const pct = Math.round((done / origBlocks.length) * 100);
                 setAiMoviePartialSrt({
                     totalLines: origBlocks.length,
                     translatedLines: done,
-                    percent: Math.round((done / origBlocks.length) * 100)
+                    percent: pct
                 });
+                const pausedObj = { status: 'paused' as const, statusText: `دەستپێکردنەوە لە (${pct}%)`, percent: pct };
+                setMovieTransProgress(prev => ({
+                    ...prev,
+                    [movie.id]: pausedObj
+                }));
+                try {
+                    localStorage.setItem(`ks_movie_paused_${movie.id}`, JSON.stringify(pausedObj));
+                } catch {}
             }
         }
     } catch {}
@@ -375,6 +406,7 @@ const handleStartMovieAi = async (mode: 'all' | 'translate_only' | 'analyze_only
     const abortController = new AbortController();
     aiMovieAbortRef.current = abortController;
     const signal = abortController.signal;
+    try { localStorage.removeItem(`ks_movie_paused_${movie.id}`); } catch {}
 
     const startTimestamp = Date.now();
     const initialStats = { totalInTok: 0, totalOutTok: 0, costUsd: 0, speedTokSec: 0, elapsedSec: 0 };
@@ -438,7 +470,16 @@ const handleStartMovieAi = async (mode: 'all' | 'translate_only' | 'analyze_only
         setAiMovieRunning(false);
 
         if (result.status === 'paused') {
-            toast(`وەرگێڕان ڕاگیرا لە (${result.translatedCount}/${result.totalCount} دێڕ) ⏸️`);
+            const pct = Math.round((result.translatedCount / (result.totalCount || 1)) * 100);
+            const pausedObj = { status: 'paused' as const, statusText: `وەرگێڕان ڕاگیرا (${pct}%)`, percent: pct };
+            setMovieTransProgress(prev => ({
+                ...prev,
+                [movie.id]: pausedObj
+            }));
+            try {
+                localStorage.setItem(`ks_movie_paused_${movie.id}`, JSON.stringify(pausedObj));
+            } catch {}
+            toast(`وەرگێڕان ڕاگیرا لە (${result.translatedCount}/${result.totalCount} دێڕ - ${pct}%) ⏸️`);
             load(true);
             return;
         }
@@ -479,11 +520,16 @@ const handleStartMovieAi = async (mode: 'all' | 'translate_only' | 'analyze_only
             delete next[movie.id];
             return next;
         });
+        try { localStorage.removeItem(`ks_movie_paused_${movie.id}`); } catch {}
         setAiMovieTarget(null);
         load(true);
     } catch (err: any) {
         clearInterval(timerInterval);
         setAiMovieRunning(false);
+        if (signal?.aborted || err?.code === 'ERR_CANCELED' || err?.name === 'CanceledError' || err?.message?.includes('canceled') || err?.message?.includes('aborted') || isTaskPaused(taskId)) {
+            // Intentionally paused by user - preserve paused progress in state and localStorage
+            return;
+        }
         console.error(err);
         const msg = err.response?.data?.error?.message || err.message || 'هەڵەیەک لە پرۆسەی AI ڕوویدا';
         toast(msg, 'error');
@@ -492,6 +538,7 @@ const handleStartMovieAi = async (mode: 'all' | 'translate_only' | 'analyze_only
             delete next[movie.id];
             return next;
         });
+        try { localStorage.removeItem(`ks_movie_paused_${movie.id}`); } catch {}
     }
 };
 
@@ -500,10 +547,16 @@ const stopAiMovieProcessing = () => {
     pauseTranslationTask(`${aiMovieTarget.id}-m-m`);
     aiMovieAbortRef.current?.abort();
     setAiMovieRunning(false);
+    const p = movieTransProgress[aiMovieTarget.id];
+    const pct = p?.percent || 0;
+    const pausedObj = { status: 'paused' as const, statusText: `وەرگێڕان ڕاگیرا (${pct}%)`, percent: pct };
     setMovieTransProgress(prev => ({
         ...prev,
-        [aiMovieTarget.id]: { ...prev[aiMovieTarget.id], status: 'paused', statusText: 'وەرگێڕان ڕاگیرا' }
+        [aiMovieTarget.id]: pausedObj
     }));
+    try {
+        localStorage.setItem(`ks_movie_paused_${aiMovieTarget.id}`, JSON.stringify(pausedObj));
+    } catch {}
     toast('پرۆسەی AI ڕاگیرا ⏸️');
 };
 

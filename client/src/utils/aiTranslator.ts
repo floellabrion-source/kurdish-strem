@@ -1515,16 +1515,33 @@ export async function runAiTranslationAndAnalysis(
         const prevBlocks = parsedOrigBlocks.slice(prevStart, firstIdx);
         const prevContextStr = prevBlocks.map(b => `[ID ${b.id}]: "${b.text.replace(/\n/g, ' ')}"`).join('\n');
 
-        const batchRes = await translateBatch(
-            batchBlocks, 
-            prevContextStr, 
-            selectedModel,
-            contextStr,
-            toneRuleStr,
-            glossaryTerms,
-            characterBible,
-            signal
-        );
+        let batchRes;
+        try {
+            batchRes = await translateBatch(
+                batchBlocks, 
+                prevContextStr, 
+                selectedModel,
+                contextStr,
+                toneRuleStr,
+                glossaryTerms,
+                characterBible,
+                signal
+            );
+        } catch (bErr: any) {
+            if (signal?.aborted || isTaskPaused(taskId) || bErr?.code === 'ERR_CANCELED' || bErr?.name === 'CanceledError' || bErr?.message?.includes('canceled') || bErr?.message?.includes('aborted')) {
+                const pausedPct = Math.round((completedCount / totalBlocks) * 100);
+                onProgress?.(`ڕاگیرا لە ${completedCount}/${totalBlocks} دێڕ (${pausedPct}%)`, pausedPct, 'paused');
+                return {
+                    status: 'paused',
+                    metrics: parsedMetrics,
+                    analysisReport,
+                    kurdishSrt: toSrtString(translatedBlocks),
+                    translatedCount: completedCount,
+                    totalCount: totalBlocks
+                };
+            }
+            throw bErr;
+        }
 
         onStatsUpdate?.(batchRes.inTok, batchRes.outTok);
 
@@ -1536,7 +1553,7 @@ export async function runAiTranslationAndAnalysis(
         completedCount += batchTargetIndices.length;
         const currentPct = Math.min(95, Math.round((completedCount / totalBlocks) * 100));
 
-        // Auto-save batch progress directly to server after every batch
+        // Auto-save batch progress directly to server after every batch (unattached to abort signal so save completes safely)
         const currentSrtString = toSrtString(translatedBlocks);
         await axios.post(`/api/admin/movies/${movieId}/srt-content`, {
             seasonNum,
@@ -1545,7 +1562,7 @@ export async function runAiTranslationAndAnalysis(
             isAi: true,
             aiModel: selectedModel,
             note: `وەرگێڕانی دەستەیی بە AI (${selectedModel})`
-        }, { signal }).catch(err => console.warn('Incremental SRT save warning:', err));
+        }).catch(err => console.warn('Incremental SRT save warning:', err));
 
         if (isTaskPaused(taskId) || signal?.aborted) {
             onProgress?.(`ڕاگیرا لە ${completedCount}/${totalBlocks} دێڕ (${currentPct}%)`, currentPct, 'paused');
