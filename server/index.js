@@ -106,6 +106,17 @@ const writeTranslatorPayroll = (data) => {
     db.saveTranslatorPayroll(data);
 };
 
+// Kurdistan Timezone Helpers (Asia/Baghdad, UTC+3)
+// Ensures daily statistics and visitors reset precisely at 00:00:00 (12:00 AM Midnight) Kurdistan time!
+const getKurdistanDate = (date = new Date()) => {
+    return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Baghdad' }).format(date); // YYYY-MM-DD
+};
+
+const getKurdistanStartOfDay = (date = new Date()) => {
+    const dateStr = getKurdistanDate(date);
+    return new Date(`${dateStr}T00:00:00+03:00`).getTime(); // 12:00:00 AM Midnight Kurdistan timestamp
+};
+
 // Anti-Cheat & 5-character Kurdish line edit validator
 const validateKurdishLineEdit = (oldText = '', newText = '') => {
     const cleanOld = String(oldText || '').trim();
@@ -722,7 +733,7 @@ const processInactivityPenalty = () => {
         const users = readUsers();
         let changed = false;
         const now = new Date();
-        const todayStr = now.toISOString().split('T')[0];
+        const todayStr = getKurdistanDate(now);
 
         users.forEach(u => {
             if (!u.dailyStats) return;
@@ -880,7 +891,8 @@ function trackVisitor(req, pagePath = '/') {
         }
 
         const now = new Date();
-        const today = now.toISOString().split('T')[0]; // YYYY-MM-DD
+        const today = getKurdistanDate(now); // YYYY-MM-DD in Kurdistan Time (Asia/Baghdad, UTC+3)
+        const startOfDay = getKurdistanStartOfDay(now);
         
         const rawCountry = req.headers['cf-ipcountry'] || 'IQ';
         const countryInfo = getCountryInfo(rawCountry);
@@ -916,8 +928,8 @@ function trackVisitor(req, pagePath = '/') {
         const analytics = readAnalytics() || { visits: [], watchEvents: [] };
         if (!Array.isArray(analytics.visits)) analytics.visits = [];
         
-        // Deduplicate unique visitors per IP on the same day
-        const existingVisit = analytics.visits.find(v => v.ip === ip && v.date === today);
+        // Deduplicate unique visitors per IP on the same day (resets at 12:00 AM Midnight Kurdistan time)
+        const existingVisit = analytics.visits.find(v => v.ip === ip && (v.date === today || (v.timestamp && Number(v.timestamp) >= startOfDay)));
         if (!existingVisit) {
             analytics.visits.push({ 
                 ip, 
@@ -2298,7 +2310,7 @@ app.post('/api/user/sync', requireAuth, (req, res) => {
             users[idx].dualSubCycleStartTime = req.body.dualSubCycleStartTime ? Number(req.body.dualSubCycleStartTime) : null;
         }
 
-        const today = new Date().toISOString().split('T')[0];
+        const today = getKurdistanDate();
         if (!users[idx].dailyStats) users[idx].dailyStats = {};
         if (!users[idx].dailyStats[today]) {
             users[idx].dailyStats[today] = { watchMinutes: 0, watchSeconds: 0, sentencesSeen: 0 };
@@ -7161,12 +7173,21 @@ app.get('/api/admin/analytics', requireAuth, requireAdmin, (req, res) => {
         const movies = readMovies() || [];
 
         const now = new Date();
-        const todayStr = now.toISOString().split('T')[0];
+        const todayStr = getKurdistanDate(now);
+        const startOfDay = getKurdistanStartOfDay(now);
 
-        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-        const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay()).getTime();
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-        const startOfYear = new Date(now.getFullYear(), 0, 1).getTime();
+        const kurdParts = todayStr.split('-').map(Number); // [YYYY, MM, DD]
+        const kurdYear = kurdParts[0];
+        const kurdMonth = kurdParts[1];
+
+        // Start of Week (Sunday 00:00 Kurdistan time)
+        const kurdDayOfWeek = new Date(`${todayStr}T12:00:00+03:00`).getDay();
+        const weekDate = new Date(startOfDay - kurdDayOfWeek * 86400000);
+        const startOfWeek = new Date(`${getKurdistanDate(weekDate)}T00:00:00+03:00`).getTime();
+
+        // Start of Month & Year in Kurdistan Time
+        const startOfMonth = new Date(`${kurdYear}-${String(kurdMonth).padStart(2, '0')}-01T00:00:00+03:00`).getTime();
+        const startOfYear = new Date(`${kurdYear}-01-01T00:00:00+03:00`).getTime();
 
         const getVisitTime = (v) => {
             if (!v) return 0;
@@ -7174,10 +7195,18 @@ app.get('/api/admin/analytics', requireAuth, requireAdmin, (req, res) => {
             if (v.date && typeof v.date === 'string') {
                 const parts = v.date.split('-');
                 if (parts.length === 3) {
-                    return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10)).getTime();
+                    return new Date(`${v.date}T00:00:00+03:00`).getTime();
                 }
             }
             return 0;
+        };
+
+        const isVisitToday = (v) => {
+            if (!v) return false;
+            if (v.timestamp && !isNaN(Number(v.timestamp))) {
+                return Number(v.timestamp) >= startOfDay;
+            }
+            return v.date === todayStr;
         };
 
         const visits = Array.isArray(analytics.visits) ? analytics.visits : [];
@@ -7395,7 +7424,7 @@ app.get('/api/admin/analytics', requireAuth, requireAdmin, (req, res) => {
             },
             locationStats: locationStats,
             visitors: {
-                daily: visits.filter(v => v && (v.date === todayStr || getVisitTime(v) >= startOfDay)).length,
+                daily: visits.filter(isVisitToday).length,
                 weekly: visits.filter(v => v && getVisitTime(v) >= startOfWeek).length,
                 monthly: visits.filter(v => v && getVisitTime(v) >= startOfMonth).length,
                 yearly: visits.filter(v => v && getVisitTime(v) >= startOfYear).length,
