@@ -8,7 +8,7 @@ import {
     PlusCircle, ListVideo, Upload, Languages, Shield, ShieldCheck, Link as LinkIcon, Star, Play, Search,
     Users, BarChart2, CreditCard, Sparkles, Filter, Download, Pause, History, Trophy, BookOpen,
     HardDrive, Bell, Wrench, Globe, Eye, EyeOff, Zap, DollarSign, Brain, Clock, RefreshCw, Minimize2,
-    Wallet
+    Wallet, Folder, ExternalLink
 } from 'lucide-react';
 import { Movie, Season, Episode, LanguageMetrics, getCefrDisplayLevel, getCefrColor, ACCENT_OPTIONS } from '../types';
 import { runAiTranslationAndAnalysis, triggerFileDownload, pauseTranslationTask, isTaskPaused, parseSRT, AI_TRANSLATION_MODELS, TRANSLATION_TONES, MODEL_PRICING } from '../utils/aiTranslator';
@@ -153,6 +153,31 @@ export default function Admin() {
     const [uploadDetail, setUploadDetail] = useState<Record<string, { loadedMb: string; totalMb: string }>>({});
     const [expandedSeries, setExpandedSeries] = useState<Record<string, boolean>>({});
     const [expandedMovies, setExpandedMovies] = useState<Record<string, boolean>>({});
+
+    // Cloudflare R2 Movie Linker Modal State
+    const [r2MovieModal, setR2MovieModal] = useState<{
+        movie: Movie;
+        keyword: string;
+        loading: boolean;
+        saving: boolean;
+        data: {
+            allFoldersCount: number;
+            candidateFoldersCount: number;
+            candidates: Array<{
+                folder: string;
+                rawName: string;
+                m3u8Url: string;
+                score: number;
+                isEpisodeLike: boolean;
+                matchedCount: number;
+                isAlreadyLinked?: boolean;
+            }>;
+            keywords: string[];
+            keywordUsed?: string;
+        } | null;
+        manualUrl: string;
+        error: string | null;
+    } | null>(null);
 
     const toggleMovieExpand = (movieId: string) => {
         setExpandedMovies(prev => ({ ...prev, [movieId]: !prev[movieId] }));
@@ -1112,19 +1137,111 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
         });
     };
 
+    const scanR2ForMovie = async (movieId: string, keyword: string) => {
+        try {
+            setR2MovieModal(prev => prev ? { ...prev, loading: true, error: null } : null);
+            const res = await axios.get(`/api/admin/movies/${movieId}/r2-movie-scan`, {
+                params: { keyword: keyword.trim() }
+            });
+            setR2MovieModal(prev => prev ? { ...prev, loading: false, data: res.data, error: null } : null);
+        } catch (err: any) {
+            console.error('R2 movie scan error:', err);
+            const status = err.response?.status;
+            let errMsg = err.response?.data?.error;
+            if (!errMsg) {
+                if (status === 404) {
+                    errMsg = 'ڕێگای پشکنین لە سێرڤەر نەدۆزرایەوە (404) — تکایە لە تێرمیناڵی سێرڤەر (VPS) فەرمانی pm2 restart بدە تاوەکو سێرڤەرەکە نوێ ببێتەوە.';
+                } else if (status === 500) {
+                    errMsg = 'هەڵەی ناوخۆیی سێرڤەر (500) لە کاتی پشکنینی Cloudflare R2 بۆ فیلم';
+                } else {
+                    errMsg = 'هەڵەیەک لە پشکنینی Cloudflare R2 ڕوویدا';
+                }
+            }
+            setR2MovieModal(prev => prev ? { ...prev, loading: false, error: errMsg } : null);
+        }
+    };
+
+    const openR2MovieModal = (movie: Movie) => {
+        const initialKeyword = movie.title || '';
+        setR2MovieModal({
+            movie,
+            keyword: initialKeyword,
+            loading: true,
+            saving: false,
+            data: null,
+            manualUrl: movie.videoUrl || '',
+            error: null
+        });
+        scanR2ForMovie(movie.id, initialKeyword);
+    };
+
+    const handleLinkR2MovieCandidate = async (candidateUrl: string) => {
+        if (!r2MovieModal) return;
+        try {
+            setR2MovieModal(prev => prev ? { ...prev, saving: true } : null);
+            await axios.post(`/api/admin/movies/${r2MovieModal.movie.id}/link-r2-video`, {
+                videoUrl: candidateUrl
+            });
+            setMovies(prev => prev.map(m => m.id === r2MovieModal.movie.id ? { ...m, videoUrl: candidateUrl } : m));
+            toast('لینکی ڤیدیۆی فیلم لە Cloudflare R2 بە سەرکەوتوویی بەستراوە ⚡');
+            setR2MovieModal(null);
+        } catch (err: any) {
+            setR2MovieModal(prev => prev ? { ...prev, saving: false } : null);
+            toast(err.response?.data?.error || 'کێشەیەک لە بەستنەوە ڕوویدا', 'error');
+        }
+    };
+
+    const handleSaveManualMovieUrl = async () => {
+        if (!r2MovieModal) return;
+        const clean = (r2MovieModal.manualUrl || '').trim();
+        try {
+            setR2MovieModal(prev => prev ? { ...prev, saving: true } : null);
+            await axios.post(`/api/admin/movies/${r2MovieModal.movie.id}/link-r2-video`, {
+                videoUrl: clean
+            });
+            setMovies(prev => prev.map(m => m.id === r2MovieModal.movie.id ? { ...m, videoUrl: clean } : m));
+            toast(clean ? 'لینکی ڤیدیۆ پاشەکەوت کرا ✓' : 'لینکی ڤیدیۆ سڕایەوە');
+            setR2MovieModal(null);
+        } catch (err: any) {
+            setR2MovieModal(prev => prev ? { ...prev, saving: false } : null);
+            toast(err.response?.data?.error || 'کێشەیەک لە پاشەکەوتکردن ڕوویدا', 'error');
+        }
+    };
+
+    const handleUnlinkMovieVideo = async () => {
+        if (!r2MovieModal) return;
+        try {
+            setR2MovieModal(prev => prev ? { ...prev, saving: true } : null);
+            await axios.post(`/api/admin/movies/${r2MovieModal.movie.id}/link-r2-video`, {
+                videoUrl: ''
+            });
+            setMovies(prev => prev.map(m => m.id === r2MovieModal.movie.id ? { ...m, videoUrl: '' } : m));
+            setR2MovieModal(prev => prev ? {
+                ...prev,
+                saving: false,
+                manualUrl: '',
+                movie: { ...prev.movie, videoUrl: '' },
+                data: prev.data ? {
+                    ...prev.data,
+                    candidates: prev.data.candidates.map(c => ({ ...c, isAlreadyLinked: false }))
+                } : null
+            } : null);
+            toast('لینکی ڤیدیۆی فیلم سڕایەوە ✓');
+        } catch (err: any) {
+            setR2MovieModal(prev => prev ? { ...prev, saving: false } : null);
+            toast(err.response?.data?.error || 'کێشەیەک لە سڕینەوە ڕوویدا', 'error');
+        }
+    };
+
     const saveMovieVideoUrl = async (movieId: string, url: string) => {
         const cleanUrl = (url || '').trim();
         setMovies(prev => prev.map(m => m.id === movieId ? { ...m, videoUrl: cleanUrl } : m));
         try {
-            await axios.put(`/api/admin/movies/${movieId}`, { videoUrl: cleanUrl });
+            await axios.post(`/api/admin/movies/${movieId}/link-r2-video`, { videoUrl: cleanUrl });
             toast('لینکی ڤیدیۆ پاشەکەوت کرا ✓');
         } catch {
-            const m = movies.find(x => x.id === movieId);
-            if (!m) return;
-            const updated = JSON.parse(JSON.stringify(m));
-            updated.videoUrl = cleanUrl;
             try {
-                await axios.put(`/api/admin/movies/${movieId}`, updated);
+                await axios.put(`/api/admin/movies/${movieId}`, { videoUrl: cleanUrl });
                 toast('لینکی ڤیدیۆ پاشەکەوت کرا ✓');
             } catch { toast('کێشەیەک ڕووی دا', 'error'); }
         }
@@ -1708,7 +1825,7 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                                             )}
                                         </div>
                                         <div className="ac-video-grid">
-                                            <div className={`ac-upload-card cloud-upload ${movie.videoUrl && movie.videoUrl.includes('r2') ? 'done' : ''}`} onClick={() => refs.r2Video.current[movie.id]?.click()}>
+                                            <div className={`ac-upload-card cloud-upload ${movie.videoUrl && movie.videoUrl.includes('r2') ? 'done' : ''}`} onClick={() => openR2MovieModal(movie)} title="بەستنەوەی خودکاری ڤیدیۆ لە Cloudflare R2">
                                                 <input type="file" className="hidden-input" ref={el => { refs.r2Video.current[movie.id] = el; }} onChange={e => e.target.files?.[0] && doR2Upload(movie.id, e.target.files[0], 'video')} />
                                                 <div className="ac-upload-icon-wrap">
                                                     {uploading[`${movie.id}-video-main`] ? 
@@ -1721,16 +1838,16 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                                                                 </span>
                                                             )}
                                                         </div>
-                                                        : <Upload size={20} />}
+                                                        : <Zap size={20} className={movie.videoUrl ? 'text-amber-400' : ''} />}
                                                 </div>
-                                                <div className="ac-upload-label">Cloud R2</div>
+                                                <div className="ac-upload-label">Cloud R2 ⚡</div>
                                             </div>
 
-                                            <div className={`ac-upload-card ${movie.videoUrl ? 'done' : ''}`} onClick={() => { const u = window.prompt('URL:', movie.videoUrl || ''); if(u) saveMovieVideoUrl(movie.id, u); }}>
+                                            <div className={`ac-upload-card ${movie.videoUrl ? 'done' : ''}`} onClick={() => openR2MovieModal(movie)} title="بەستنەوە یان پشکنینی خودکاری لینک لە Cloudflare R2">
                                                 <div className="ac-upload-icon-wrap">
                                                     <LinkIcon size={20} />
                                                 </div>
-                                                <div className="ac-upload-label">Link 🔗</div>
+                                                <div className="ac-upload-label">{movie.videoUrl ? 'بەستراوە ✓' : 'Link 🔗'}</div>
                                             </div>
                                         </div>
                                     </div>
@@ -2181,6 +2298,251 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
             {activeTab === 'notifications_manager' && isSuperAdmin && <AdminNotificationManager />}
             {activeTab === 'activities' && isSuperAdmin && <AdminActivityLog />}
             {activeTab === 'glossary' && <AdminGlossary />}
+
+            {/* CLOUDFLARE R2 MOVIE AUTO-LINK MODAL */}
+            {r2MovieModal && (
+                <div className="ep-modal-backdrop r2-link-backdrop" onClick={() => !r2MovieModal.saving && setR2MovieModal(null)}>
+                    <div className="r2-link-modal-card r2-movie-modal-card" onClick={e => e.stopPropagation()}>
+                        {/* Modal Header */}
+                        <div className="r2-link-modal-header">
+                            <div className="r2-link-header-left">
+                                <div className="r2-link-icon-bubble">
+                                    <Zap size={22} className="r2-bolt-icon" />
+                                </div>
+                                <div>
+                                    <h3 className="r2-link-modal-title">
+                                        {lang === 'en'
+                                            ? `Auto-Link Movie from Cloudflare R2 ⚡: ${r2MovieModal.movie.title}`
+                                            : `بەستنەوەی خودکاری فیلم لە Cloudflare R2 ⚡: ${r2MovieModal.movie.title}`}
+                                    </h3>
+                                    <p className="r2-link-modal-subtitle">
+                                        {lang === 'en'
+                                            ? 'Scans your R2 bucket for HLS master.m3u8 playlists and links the movie video with 1 click.'
+                                            : 'پشکنینی فۆڵدەرەکانی ناو Cloudflare R2 بە دوای فایلی master.m3u8 و بەستنەوە بە یەک کلیک.'}
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                className="ep-modal-close-btn"
+                                disabled={r2MovieModal.saving}
+                                onClick={() => setR2MovieModal(null)}
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        {/* Keyword Search / Refine Bar */}
+                        <div className="r2-link-search-bar">
+                            <div className="r2-search-input-wrap">
+                                <Search size={16} className="r2-search-icon" />
+                                <input
+                                    type="text"
+                                    placeholder={lang === 'en' ? 'Search keyword in R2 folders (e.g. planet of the apes)...' : 'ناوی فیلم لەناو Cloudflare R2 (نموونە: planet of the apes)...'}
+                                    value={r2MovieModal.keyword}
+                                    onChange={e => setR2MovieModal({ ...r2MovieModal, keyword: e.target.value })}
+                                    onKeyDown={e => {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            scanR2ForMovie(r2MovieModal.movie.id, r2MovieModal.keyword);
+                                        }
+                                    }}
+                                    className="r2-search-input"
+                                />
+                            </div>
+                            <button
+                                type="button"
+                                className="r2-search-refresh-btn"
+                                disabled={r2MovieModal.loading || r2MovieModal.saving}
+                                onClick={() => scanR2ForMovie(r2MovieModal.movie.id, r2MovieModal.keyword)}
+                            >
+                                {r2MovieModal.loading ? <Loader2 size={15} className="spinning" /> : <RefreshCw size={15} />}
+                                <span>{lang === 'en' ? 'Scan R2' : 'پشکنینەوە'}</span>
+                            </button>
+                        </div>
+
+                        {/* Modal Body / Status */}
+                        <div className="r2-link-modal-body">
+                            {r2MovieModal.loading && (
+                                <div className="r2-link-loading-state">
+                                    <Loader2 size={36} className="spinning r2-spinner" />
+                                    <p>{lang === 'en' ? 'Scanning Cloudflare R2 bucket...' : 'پشکنینی فۆڵدەرەکانی Cloudflare R2 دەکرێت...'}</p>
+                                    <span>{lang === 'en' ? 'Connecting to storage and searching for master.m3u8 files' : 'پەیوەندی لەگەڵ کلاودفلێر دەبەسترێت و فۆڵدەری ئەم فیلمە دەدۆزرێتەوە'}</span>
+                                </div>
+                            )}
+
+                            {r2MovieModal.error && !r2MovieModal.loading && (
+                                <div className="r2-link-error-state">
+                                    <AlertCircle size={28} color="#ef4444" />
+                                    <p>{r2MovieModal.error}</p>
+                                    <button
+                                        type="button"
+                                        className="btn-r2-retry"
+                                        onClick={() => scanR2ForMovie(r2MovieModal.movie.id, r2MovieModal.keyword)}
+                                    >
+                                        <RefreshCw size={14} /> دووبارە هەوڵبدەوە
+                                    </button>
+                                </div>
+                            )}
+
+                            {r2MovieModal.data && !r2MovieModal.loading && (
+                                <>
+                                    {/* Stats Row */}
+                                    <div className="r2-link-stats-row">
+                                        <div className="r2-stat-pill total">
+                                            <span>کۆی فۆڵدەرەکان لە R2:</span>
+                                            <strong>{r2MovieModal.data.allFoldersCount}</strong>
+                                        </div>
+                                        <div className="r2-stat-pill ready">
+                                            <span>فۆڵدەری گونجاو:</span>
+                                            <strong>{r2MovieModal.data.candidateFoldersCount}</strong>
+                                        </div>
+                                        <div className={`r2-stat-pill ${r2MovieModal.movie.videoUrl ? 'already' : 'missing has-missing'}`}>
+                                            <span>دۆخی ڤیدیۆی فیلم:</span>
+                                            <strong>{r2MovieModal.movie.videoUrl ? 'لینک کراوە ✓' : 'لینک نەکراوە'}</strong>
+                                        </div>
+                                    </div>
+
+                                    {/* Currently linked URL banner */}
+                                    {r2MovieModal.movie.videoUrl && (
+                                        <div className="r2-current-video-banner">
+                                            <div className="r2-current-video-info">
+                                                <span className="r2-current-label">ڤیدیۆی بەستراوەی ئێستا:</span>
+                                                <code className="r2-current-url" title={r2MovieModal.movie.videoUrl}>{r2MovieModal.movie.videoUrl}</code>
+                                            </div>
+                                            <div className="r2-current-video-actions">
+                                                <a
+                                                    href={r2MovieModal.movie.videoUrl}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="r2-btn-preview"
+                                                    title="تاقیکردنەوە لە پەڕەیەکی نوێ"
+                                                >
+                                                    <ExternalLink size={13} />
+                                                    <span>تاقیکردنەوە</span>
+                                                </a>
+                                                <button
+                                                    type="button"
+                                                    className="r2-btn-unlink"
+                                                    onClick={handleUnlinkMovieVideo}
+                                                    disabled={r2MovieModal.saving}
+                                                    title="سڕینەوەی بەستنەوەی ڤیدیۆ"
+                                                >
+                                                    <Trash2 size={13} />
+                                                    <span>سڕینەوەی بەستنەوە</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Candidates List */}
+                                    <div className="r2-movie-candidates-container">
+                                        <h4 className="r2-candidates-header-title">
+                                            <Folder size={16} />
+                                            <span>فۆڵدەرە دۆزراوەکانی Cloudflare R2 ({r2MovieModal.data.candidates.length}):</span>
+                                        </h4>
+
+                                        {r2MovieModal.data.candidates.length === 0 ? (
+                                            <div className="r2-no-candidates-box">
+                                                <AlertCircle size={22} color="#fbbf24" />
+                                                <div>
+                                                    <strong>هیچ فۆڵدەرێک لە R2 نەدۆزرایەوە کە ناوی لەگەڵ ئەم فیلمە بگونجێت.</strong>
+                                                    <p>تکایە لە بۆکسی سەرەوە کلیلەوشەیەک بە ئینگلیزی بنووسە (وەک بەشێک لە ناوی فۆڵدەر لە Cloudflare) و کلیک لە (پشکنینەوە) بکە، یان لە خوارەوە لینکەکە بە دەستی دابنێ.</p>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="r2-movie-candidates-list">
+                                                {r2MovieModal.data.candidates.map((cand, idx) => {
+                                                    const isLinked = cand.isAlreadyLinked;
+                                                    return (
+                                                        <div key={idx} className={`r2-movie-candidate-card ${isLinked ? 'is-linked' : ''}`}>
+                                                            <div className="r2-cand-main">
+                                                                <div className="r2-cand-title-row">
+                                                                    <Film size={16} className="r2-cand-film-icon" />
+                                                                    <strong className="r2-cand-name" title={cand.rawName}>{cand.rawName}</strong>
+                                                                    {cand.score >= 100 && (
+                                                                        <span className="r2-cand-badge best-match">گونجانی بەرز 🌟</span>
+                                                                    )}
+                                                                    {cand.score < 100 && cand.score >= 50 && (
+                                                                        <span className="r2-cand-badge good-match">گونجاو ✓</span>
+                                                                    )}
+                                                                    {cand.isEpisodeLike && (
+                                                                        <span className="r2-cand-badge ep-warning">شێوەی ئەڵقە (Series)</span>
+                                                                    )}
+                                                                </div>
+                                                                <div className="r2-cand-url-row">
+                                                                    <code>{cand.m3u8Url}</code>
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="r2-cand-action">
+                                                                {isLinked ? (
+                                                                    <span className="r2-cand-linked-badge">
+                                                                        <CheckCircle size={15} /> بەستراوەتەوە
+                                                                    </span>
+                                                                ) : (
+                                                                    <button
+                                                                        type="button"
+                                                                        className="r2-btn-link-movie"
+                                                                        disabled={r2MovieModal.saving}
+                                                                        onClick={() => handleLinkR2MovieCandidate(cand.m3u8Url)}
+                                                                    >
+                                                                        {r2MovieModal.saving ? <Loader2 size={14} className="spinning" /> : <Zap size={14} />}
+                                                                        <span>بەستنەوە بەم فیلمە ⚡</span>
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Manual URL Input Bar */}
+                                    <div className="r2-movie-manual-box">
+                                        <label className="r2-manual-label">
+                                            <LinkIcon size={14} />
+                                            <span>یان لینکی ڤیدیۆ بە دەستی دابنێ (HLS master.m3u8 یان لینکی دەرەکی):</span>
+                                        </label>
+                                        <div className="r2-manual-input-row">
+                                            <input
+                                                type="text"
+                                                placeholder="https://pub-xxxx.r2.dev/videos/.../master.m3u8"
+                                                value={r2MovieModal.manualUrl}
+                                                onChange={e => setR2MovieModal({ ...r2MovieModal, manualUrl: e.target.value })}
+                                                className="r2-manual-input"
+                                                dir="ltr"
+                                            />
+                                            <button
+                                                type="button"
+                                                className="r2-manual-save-btn"
+                                                disabled={r2MovieModal.saving}
+                                                onClick={handleSaveManualMovieUrl}
+                                            >
+                                                {r2MovieModal.saving ? <Loader2 size={14} className="spinning" /> : <Save size={14} />}
+                                                <span>پاشەکەوتکردن</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="r2-link-modal-footer">
+                            <button
+                                type="button"
+                                className="ep-modal-btn ep-modal-btn-cancel"
+                                disabled={r2MovieModal.saving}
+                                onClick={() => setR2MovieModal(null)}
+                            >
+                                داخستن
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* EPISODE MANAGER MODAL */}
             {episodesModalMovie && (
