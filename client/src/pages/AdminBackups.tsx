@@ -67,7 +67,7 @@ export default function AdminBackups() {
             setSuccessMsg(null);
             const res = await axios.post('/api/admin/backups/create', { reason: 'باکئەپی دەستی بە کلیکی ئەدمین' });
             if (res.data.success) {
-                setSuccessMsg(lang === 'en' ? 'Backup created successfully!' : 'باکئەپ بە سەرکەوتوویی دروستکرا و پاشەکەوتکرا ✓');
+                setSuccessMsg(lang === 'en' ? 'Backup created and dispatched to Telegram! ✓' : 'باکئەپ بە سەرکەوتوویی دروستکرا و کۆپییەکی بۆ تێلیگرامیش نێردرا ✓');
                 await fetchBackups();
             }
         } catch (err: any) {

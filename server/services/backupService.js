@@ -101,18 +101,24 @@ function createBackup(triggerType = 'auto', reason = '') {
         };
 
         // Dispatch copy to Telegram in background
-        const telegramCaption = `📦 *باکئەپی پارێزراوی Kurdish Stream*\n\n` +
-            `🗓️ بەروار: \`${new Date().toLocaleString('ckb-IQ')}\`\n` +
-            `📂 فایل: \`${targetFilename}\`\n` +
-            `💾 قەبارە: *${backupResult.sizeFormatted}*\n` +
-            `👥 بەکارهێنەران: *${snapshotData.stats.usersCount}*\n` +
-            `🎬 فیلم و دراما: *${snapshotData.stats.moviesCount}*\n` +
-            `💳 پلانەکان: *${snapshotData.stats.plansCount}*\n` +
-            `⚙️ شێواز: *${triggerType === 'auto' ? 'ئۆتۆماتیکی ڕۆژانە 🤖' : 'دەستی بەڕێوەبەر 👤'}*\n\n` +
-            `🔒 _داتاکانت لە تێلیگرام بە تەواوی پارێزراون._`;
+        const dateKurdStr = new Intl.DateTimeFormat('en-US', {
+            timeZone: 'Asia/Baghdad',
+            dateStyle: 'medium',
+            timeStyle: 'short'
+        }).format(new Date());
+
+        const telegramCaption = `📦 <b>باکئەپی پارێزراوی Kurdish Stream</b>\n\n` +
+            `🗓️ بەروار: <code>${dateKurdStr}</code> (کاتی کوردستان)\n` +
+            `📂 فایل: <code>${targetFilename}</code>\n` +
+            `💾 قەبارە: <b>${backupResult.sizeFormatted}</b>\n` +
+            `👥 بەکارهێنەران: <b>${snapshotData.stats.usersCount}</b>\n` +
+            `🎬 فیلم و دراما: <b>${snapshotData.stats.moviesCount}</b>\n` +
+            `💳 پلانەکان: <b>${snapshotData.stats.plansCount}</b>\n` +
+            `⚙️ شێواز: <b>${triggerType === 'auto' ? 'ئۆتۆماتیکی ڕۆژانەی کاتژمێر ١٢ی شەو 🤖' : 'دەستی بەڕێوەبەر 👤'}</b>\n\n` +
+            `🔒 <i>داتاکانت لە تێلیگرام بە تەواوی پارێزراون.</i>`;
 
         sendBackupToTelegram(targetPath, targetFilename, telegramCaption).catch(err => {
-            console.error('Background telegram backup failed:', err);
+            console.error('[BackupService] Background telegram backup failed:', err);
         });
 
         return {
@@ -128,11 +134,12 @@ function createBackup(triggerType = 'auto', reason = '') {
 /**
  * Sends a backup archive file to Telegram Chat
  */
-async function sendBackupToTelegram(filePath, filename, caption) {
+async function sendBackupToTelegram(filePath, filename, caption, specificChatId = null) {
     const token = process.env.TELEGRAM_BOT_TOKEN;
-    const chatId = process.env.TELEGRAM_CHAT_ID;
+    const chatId = specificChatId || process.env.TELEGRAM_CHAT_ID;
 
     if (!token || !chatId || !fs.existsSync(filePath)) {
+        console.warn('[Telegram Backup] Missing credentials or file:', { hasToken: !!token, hasChatId: !!chatId, fileExists: fs.existsSync(filePath) });
         return { success: false, error: 'Telegram credentials or file missing' };
     }
 
@@ -143,18 +150,42 @@ async function sendBackupToTelegram(filePath, filename, caption) {
         const form = new FormData();
         form.append('chat_id', chatId);
         form.append('caption', caption || '📦 باکئەپی پارێزراوی Kurdish Stream');
-        form.append('parse_mode', 'Markdown');
+        form.append('parse_mode', 'HTML');
         form.append('document', blob, filename);
 
-        const res = await fetch(`https://api.telegram.org/bot${token}/sendDocument`, {
+        let res = await fetch(`https://api.telegram.org/bot${token}/sendDocument`, {
             method: 'POST',
             body: form
         });
 
-        const data = await res.json();
-        return { success: data.ok, result: data };
+        let data = await res.json();
+        if (data.ok) {
+            console.log(`[Telegram Backup] ✅ Backup successfully delivered to Telegram chat ${chatId}: ${filename}`);
+            return { success: true, result: data };
+        }
+
+        console.error('[Telegram Backup] First dispatch failed:', data);
+
+        // Fallback retry with simple plain caption without formatting in case HTML was rejected
+        const fallbackForm = new FormData();
+        fallbackForm.append('chat_id', chatId);
+        fallbackForm.append('caption', `📦 باکئەپی Kurdish Stream: ${filename}`);
+        fallbackForm.append('document', blob, filename);
+
+        res = await fetch(`https://api.telegram.org/bot${token}/sendDocument`, {
+            method: 'POST',
+            body: fallbackForm
+        });
+        data = await res.json();
+        if (data.ok) {
+            console.log(`[Telegram Backup] ✅ Backup delivered via fallback to Telegram chat ${chatId}`);
+            return { success: true, result: data };
+        }
+
+        console.error('[Telegram Backup] Fallback dispatch also failed:', data);
+        return { success: false, error: data.description || 'Telegram API error' };
     } catch (e) {
-        console.error('Telegram backup dispatch failed:', e);
+        console.error('[Telegram Backup] Dispatch exception:', e);
         return { success: false, error: e.message };
     }
 }
@@ -291,27 +322,126 @@ function restoreBackup(filename) {
 }
 
 let lastMidnightBackupDate = '';
+let isTelegramPollingActive = false;
+
+/**
+ * Starts interactive Telegram bot polling so users can talk to the bot,
+ * send /start or /backup, and get instant database backups directly on their phone!
+ */
+function startTelegramBotListener() {
+    const token = process.env.TELEGRAM_BOT_TOKEN;
+    if (!token || isTelegramPollingActive) return;
+    isTelegramPollingActive = true;
+
+    console.log('[Telegram Bot] 🤖 Telegram bot interactive listener started...');
+    let offset = 0;
+
+    const poll = async () => {
+        try {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 35000);
+
+            const res = await fetch(`https://api.telegram.org/bot${token}/getUpdates?offset=${offset}&timeout=25`, {
+                signal: controller.signal
+            });
+            clearTimeout(timer);
+
+            const data = await res.json();
+            if (data.ok && Array.isArray(data.result)) {
+                for (const update of data.result) {
+                    offset = update.update_id + 1;
+                    const msg = update.message;
+                    if (!msg || !msg.text) continue;
+
+                    const chatId = msg.chat.id;
+                    const text = msg.text.trim();
+                    const fromName = msg.from?.first_name || 'بەڕێز';
+
+                    // Dynamically update process.env.TELEGRAM_CHAT_ID to this user
+                    process.env.TELEGRAM_CHAT_ID = String(chatId);
+
+                    if (text === '/start') {
+                        const welcomeMsg = `🌸 <b>سڵاو ${fromName}!</b>\n\n` +
+                            `🤖 <b>بۆتی فەرمیی باکئەپی پارێزراوی Kurdish Stream</b> بە سەرکەوتوویی بەسترایەوە.\n\n` +
+                            `⏰ <b>کاتی ناردنی باکئەپ:</b> هەموو شەوێک ڕێک کاتژمێر <b>١٢:٠٠ی شەو</b> (بە کاتی کوردستان) نوێترین کۆپیی داتابەیس بە ئۆتۆماتیکی دەنێردرێتە ئەم چاتە.\n\n` +
+                            `⚡ <b>بۆ داواکردنی باکئەپ هەر ئێستا:</b>\n` +
+                            `دەتوانیت کلیک لە /backup بکەیت یان بنووسیت: <code>/backup</code>`;
+
+                        await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                chat_id: chatId,
+                                text: welcomeMsg,
+                                parse_mode: 'HTML'
+                            })
+                        }).catch(e => console.error('[Telegram Bot] Send welcome error:', e));
+                    } else if (text === '/backup' || text.toLowerCase() === 'backup' || text === 'باکئەپ') {
+                        await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                chat_id: chatId,
+                                text: '⏳ خەریکی ئامادەکردن و کۆمپرێسکردنی داتابەیسی Kurdish Streamم... کەمێکی تر فایلەکە دەگات!',
+                                parse_mode: 'HTML'
+                            })
+                        }).catch(() => {});
+
+                        // Create snapshot and send to Telegram chat
+                        createBackup('manual', `داواکرا لە ڕێگەی تێلیگرامەوە (${fromName})`);
+                    } else {
+                        await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                chat_id: chatId,
+                                text: `سڵاو ${fromName}! 🎬\nئەم بۆتە تایبەتە بە باکئەپی پارێزراوی Kurdish Stream.\n\n👉 بۆ داگرتنی نوێترین فایلی باکئەپ بنووسە: /backup\n\nوە هەموو شەوێک کاتژمێر ١٢:٠٠ی شەو (کاتی کوردستان) ئۆتۆماتیکی باکئەپ دەنێرێت.`,
+                                parse_mode: 'HTML'
+                            })
+                        }).catch(() => {});
+                    }
+                }
+            }
+        } catch (err) {
+            // Temporary timeout or network glitch - backoff 5 seconds
+            await new Promise(r => setTimeout(r, 5000));
+        }
+
+        setTimeout(poll, 1500);
+    };
+
+    poll();
+}
 
 /**
  * Initializes automatic daily backup scheduler
- * Strictly triggers at 12:00 AM (00:00) midnight every night
+ * Strictly triggers at 12:00 AM (00:00) midnight Kurdistan Time every night
  */
 function initAutoBackupSchedule() {
-    console.log('[BackupService] 🌙 Midnight auto-backup scheduler active. Will send to Telegram strictly at 12:00 AM (00:00).');
+    console.log('[BackupService] 🌙 Midnight auto-backup scheduler active. Will send to Telegram strictly at 12:00 AM (00:00) Kurdistan Time.');
+
+    // Start interactive Telegram bot listener
+    startTelegramBotListener();
 
     const checkMidnight = () => {
         try {
             const now = new Date();
-            const hours = now.getHours();
-            const minutes = now.getMinutes();
-            const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            // Get current time in Kurdistan Timezone (Asia/Baghdad, UTC+3)
+            const kurdTimeStr = new Intl.DateTimeFormat('en-US', {
+                timeZone: 'Asia/Baghdad',
+                hour: 'numeric',
+                minute: 'numeric',
+                hour12: false
+            }).format(now);
+            const [hours, minutes] = kurdTimeStr.split(':').map(Number);
+            const todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Baghdad' }).format(now); // YYYY-MM-DD
 
-            // Trigger strictly at 00:00 (12:00 AM midnight)
-            if (hours === 0 && minutes === 0) {
+            // Trigger at 00:00 (12:00 AM midnight Kurdistan time)
+            if (hours === 0 && (minutes === 0 || minutes === 1)) {
                 if (lastMidnightBackupDate !== todayStr) {
                     lastMidnightBackupDate = todayStr;
-                    console.log(`[BackupService] ⏰ 12:00 AM reached! Sending daily backup to Telegram for ${todayStr}...`);
-                    createBackup('auto', 'باکئەپی ئۆتۆماتیکی ڕۆژانەی کاتژمێر ١٢ی شەو');
+                    console.log(`[BackupService] ⏰ 12:00 AM Kurdistan Time reached! Sending daily backup to Telegram for ${todayStr}...`);
+                    createBackup('auto', 'باکئەپی ئۆتۆماتیکی ڕۆژانەی کاتژمێر ١٢ی شەو (کاتی کوردستان)');
                 }
             }
         } catch (e) {
