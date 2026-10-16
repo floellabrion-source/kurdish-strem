@@ -66,8 +66,8 @@ const seoPrerender = (db) => {
 
             const isSeries = movie.type === 'series';
             const typeLabel = isSeries ? 'زنجیرەی' : 'فیلمی';
-            const pageTitle = `${movie.title} ${movie.kurdishTitle ? '(' + movie.kurdishTitle + ')' : ''} بە ژێرنووسی کوردی | KST Film`;
-            const metaDescription = `سەیرکردنی ${typeLabel} ${movie.title} (${movie.year || ''}) بە ژێرنووسی کوردی و ئینگلیزی دووانە بە بەرزترین کوالیتی لە کەی ئێس تی فیلم (kstfilm.com). ${movie.description || movie.kurdishDescription || 'بینینی بێبەرامبەر بە باشترین سێرڤەر و کوالیتی بەرز.'}`;
+            const pageTitle = `${movie.title} ${movie.kurdishTitle ? '(' + movie.kurdishTitle + ')' : ''} بە ژێرنووسی کوردی | KSTFilm (KST Film)`;
+            const metaDescription = `سەیرکردنی ${typeLabel} ${movie.title} (${movie.year || ''}) بە ژێرنووسی کوردی و ئینگلیزی دووانە بە بەرزترین کوالیتی لە کەی ئێس تی فیلم KSTFilm (kstfilm.com). ${movie.description || movie.kurdishDescription || 'بینینی بێبەرامبەر بە باشترین سێرڤەر و کوالیتی بەرز.'}`;
             const canonicalUrl = `https://kstfilm.com/${isSeries ? 'series' : 'movie'}/${movie.id}`;
             const posterUrl = movie.posterCloudUrl || (movie.posterUrl ? (movie.posterUrl.startsWith('http') ? movie.posterUrl : `https://kstfilm.com${movie.posterUrl}`) : 'https://kstfilm.com/kst-logo.png');
 
