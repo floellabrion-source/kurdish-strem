@@ -3555,6 +3555,32 @@ const sanitizeMovieForPublic = (m) => {
     return m;
 };
 
+// Image Proxy endpoint to avoid CORS issues when generating social media banners and canvas exports
+app.get('/api/proxy-image', async (req, res) => {
+    try {
+        const { url } = req.query;
+        if (!url || typeof url !== 'string') return res.status(400).send('No URL provided');
+        
+        if (!/^https?:\/\//i.test(url)) return res.status(400).send('Invalid URL protocol');
+
+        const response = await axios.get(url, { 
+            responseType: 'arraybuffer',
+            timeout: 10000,
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+        });
+        const contentType = response.headers['content-type'] || 'image/jpeg';
+        res.setHeader('Content-Type', contentType);
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.send(response.data);
+    } catch (err) {
+        console.error('Error proxying image:', err.message);
+        res.status(500).send('Error proxying image');
+    }
+});
+
 app.get('/api/movies', (req, res) => {
     const isAdmin = isUserAdmin(req);
     if (isAdmin) {

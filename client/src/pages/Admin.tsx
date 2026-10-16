@@ -8,7 +8,7 @@ import {
     PlusCircle, ListVideo, Upload, Languages, Shield, ShieldCheck, Link as LinkIcon, Star, Play, Search,
     Users, BarChart2, CreditCard, Sparkles, Filter, Download, Pause, History, Trophy, BookOpen,
     HardDrive, Bell, Wrench, Globe, Eye, EyeOff, Zap, DollarSign, Brain, Clock, RefreshCw, Minimize2,
-    Wallet, Folder, ExternalLink
+    Wallet, Folder, ExternalLink, Share2
 } from 'lucide-react';
 import { Movie, Season, Episode, LanguageMetrics, getCefrDisplayLevel, getCefrColor, ACCENT_OPTIONS } from '../types';
 import { runAiTranslationAndAnalysis, triggerFileDownload, pauseTranslationTask, isTaskPaused, parseSRT, AI_TRANSLATION_MODELS, TRANSLATION_TONES, MODEL_PRICING } from '../utils/aiTranslator';
@@ -23,6 +23,7 @@ import DualSrtVideoEditor from '../components/DualSrtVideoEditor';
 import EpisodeManagerModal from '../components/EpisodeManagerModal';
 import LanguageMetricsModal from '../components/LanguageMetricsModal';
 import SubtitleDiffViewer from '../components/SubtitleDiffViewer';
+import SocialMediaPostModal from '../components/SocialMediaPostModal';
 import AdminGlossary from './AdminGlossary';
 import AdminCredits from './AdminCredits';
 import AdminPlans from './AdminPlans';
@@ -178,6 +179,9 @@ export default function Admin() {
         manualUrl: string;
         error: string | null;
     } | null>(null);
+
+    // Social Media Post & Story Generator Modal
+    const [socialModalMovie, setSocialModalMovie] = useState<Movie | null>(null);
 
     const toggleMovieExpand = (movieId: string) => {
         setExpandedMovies(prev => ({ ...prev, [movieId]: !prev[movieId] }));
@@ -1785,6 +1789,14 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                                         <BarChart2 size={16} />
                                     </button>
                                     <button className="ac-btn" title="دەستکاریکردن" onClick={() => setEditMovie(movie)}><Edit3 size={16} /></button>
+                                    <button 
+                                        className="ac-btn" 
+                                        title="پۆستی سۆشیال میدیا (Instagram / Facebook / Telegram) 📱" 
+                                        onClick={() => setSocialModalMovie(movie)}
+                                        style={{ color: '#10b981', borderColor: 'rgba(16, 185, 129, 0.4)' }}
+                                    >
+                                        <Share2 size={16} />
+                                    </button>
                                     <button className="ac-btn ac-delete" title="سڕینەوەی یەکجاریی فیلم" onClick={() => handleDelete(movie)}><Trash2 size={16} /></button>
                                     {movie.type === ('series' as any) ? (
                                         <button 
@@ -2542,6 +2554,14 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* SOCIAL MEDIA POST & STORY GENERATOR MODAL */}
+            {socialModalMovie && (
+                <SocialMediaPostModal
+                    movie={socialModalMovie}
+                    onClose={() => setSocialModalMovie(null)}
+                />
             )}
 
             {/* EPISODE MANAGER MODAL */}
