@@ -21,6 +21,7 @@ export interface ShowcaseItem {
 export const SocialMediaPostModal: React.FC<SocialMediaPostModalProps> = ({ movie, onClose }) => {
     const [ratio, setRatio] = useState<'post' | 'story'>('post');
     const [theme, setTheme] = useState<'emerald' | 'cyan' | 'amber' | 'crimson'>('emerald');
+    const [mobileTab, setMobileTab] = useState<'controls' | 'preview'>('controls');
     
     // Auto-detect item type: movie vs series
     const isInitialSeries = movie.type === 'series';
@@ -947,29 +948,47 @@ ${synopsis}
                 <div className="social-modal-header">
                     <div className="social-modal-header-left">
                         <div className="social-icon-bubble">
-                            <Share2 size={22} />
+                            <Share2 size={20} />
                         </div>
-                        <div>
+                        <div className="social-modal-header-text">
                             <h3 className="social-modal-title">
-                                دیزاینەری پۆست و ستۆری سۆشیال میدیا 📱
-                                <span style={{ fontSize: '11px', background: 'rgba(16, 185, 129, 0.2)', color: '#34d399', padding: '2px 8px', borderRadius: '999px', border: '1px solid rgba(16, 185, 129, 0.4)' }}>
-                                    KST Edition
-                                </span>
+                                <span>دیزاینەری سۆشیال میدیا</span>
+                                <span className="social-kst-badge">KST Edition</span>
                             </h3>
                             <p className="social-modal-subtitle">
-                                دروستکردنی پۆست و گرافیکی تایبەت بە پەیجەکانی ئینستاگرام، فەیسبووک و تیلیگرام بە یەک کلیک
+                                دروستکردنی پۆست و ستۆری بەرزترین کوالیتی بە یەک کلیک
                             </p>
                         </div>
                     </div>
-                    <button type="button" className="social-modal-close-btn" onClick={onClose}>
+                    <button type="button" className="social-modal-close-btn" onClick={onClose} title="داخستن">
                         <X size={18} />
+                    </button>
+                </div>
+
+                {/* Mobile View Switcher Tab Bar */}
+                <div className="social-mobile-tabs">
+                    <button
+                        type="button"
+                        className={`social-mobile-tab-btn ${mobileTab === 'controls' ? 'active' : ''}`}
+                        onClick={() => setMobileTab('controls')}
+                    >
+                        <Sliders size={14} />
+                        <span>دەستکاریکردنی زانیارییەکان</span>
+                    </button>
+                    <button
+                        type="button"
+                        className={`social-mobile-tab-btn ${mobileTab === 'preview' ? 'active' : ''}`}
+                        onClick={() => setMobileTab('preview')}
+                    >
+                        <Sparkles size={14} />
+                        <span>بینینی وێنەکە ({ratio === 'post' ? 'پۆست 4:5' : 'ستۆری 9:16'})</span>
                     </button>
                 </div>
 
                 {/* Body: Controls (Right in RTL) & Preview (Left in RTL) */}
                 <div className="social-modal-body">
                     {/* Controls Column */}
-                    <div className="social-controls-col">
+                    <div className={`social-controls-col ${mobileTab === 'controls' ? 'mobile-visible' : ''}`}>
                         {/* Aspect Ratio */}
                         <div>
                             <div className="social-section-title">قەبارەی وێنە (Aspect Ratio):</div>
@@ -1050,7 +1069,7 @@ ${synopsis}
                         </div>
 
                         {itemType === 'movie' ? (
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '8px' }}>
+                            <div className="social-grid-4">
                                 <div className="social-input-group">
                                     <label>ساڵ:</label>
                                     <input type="text" value={year} onChange={e => setYear(e.target.value)} style={{ textAlign: 'center' }} />
@@ -1070,7 +1089,7 @@ ${synopsis}
                             </div>
                         ) : (
                             <>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+                                <div className="social-grid-4" style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}>
                                     <div className="social-input-group">
                                         <label>ساڵ:</label>
                                         <input type="text" value={year} onChange={e => setYear(e.target.value)} style={{ textAlign: 'center' }} />
@@ -1085,7 +1104,7 @@ ${synopsis}
                                     </div>
                                 </div>
 
-                                <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1.1fr 1fr', gap: '8px', background: 'rgba(56, 189, 248, 0.08)', padding: '10px', borderRadius: '12px', border: '1px solid rgba(56, 189, 248, 0.25)' }}>
+                                <div className="social-grid-series">
                                     <div className="social-input-group">
                                         <label style={{ color: '#38bdf8' }}>وەرزەکان (Seasons):</label>
                                         <input
@@ -1120,7 +1139,7 @@ ${synopsis}
                             </>
                         )}
 
-                        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '8px' }}>
+                        <div className="social-grid-2">
                             <div className="social-input-group">
                                 <label>ناوی وەرگێڕ / دەستە:</label>
                                 <input type="text" value={translator} onChange={e => setTranslator(e.target.value)} placeholder="ناوی وەرگێڕ بنووسە" />
@@ -1274,7 +1293,7 @@ ${synopsis}
                     </div>
 
                     {/* Preview Column */}
-                    <div className="social-preview-col">
+                    <div className={`social-preview-col ${mobileTab === 'preview' ? 'mobile-visible' : ''}`}>
                         <div style={{ fontSize: '11.5px', fontWeight: 'bold', color: '#94a3b8', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: currentThemeData.primary }} />
                             <span>پێشبینینی ڕاستەوخۆ ({ratio === 'post' ? '1080 × 1350' : '1080 × 1920'}):</span>

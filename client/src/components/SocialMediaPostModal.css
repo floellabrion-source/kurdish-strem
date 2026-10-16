@@ -1,7 +1,9 @@
 /* ==========================================================================
    Social Media Post & Story Generator Modal (KST Film)
+   Ultra Responsive Mobile & Desktop Layout
    ========================================================================== */
 
+/* Universal Box-Sizing & Modal Backdrop */
 .social-modal-backdrop {
     position: fixed;
     inset: 0;
@@ -13,12 +15,14 @@
     justify-content: center;
     padding: 16px;
     direction: rtl;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 .social-modal-card {
     background: #090d16;
     border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 24px;
+    border-radius: 22px;
     width: 100%;
     max-width: 1100px;
     max-height: 92vh;
@@ -27,6 +31,11 @@
     box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.9), 0 0 40px rgba(16, 185, 129, 0.15);
     overflow: hidden;
     animation: socialModalIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    box-sizing: border-box;
+}
+
+.social-modal-card * {
+    box-sizing: border-box;
 }
 
 @keyframes socialModalIn {
@@ -40,47 +49,77 @@
     }
 }
 
+/* Modal Header */
 .social-modal-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 20px 24px;
+    padding: 16px 22px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     background: rgba(15, 23, 42, 0.6);
+    flex-shrink: 0;
+    gap: 10px;
 }
 
 .social-modal-header-left {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 12px;
+    min-width: 0;
+    flex: 1;
 }
 
 .social-icon-bubble {
-    width: 44px;
-    height: 44px;
-    border-radius: 14px;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
     background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
     display: flex;
     align-items: center;
     justify-content: center;
     color: #ffffff;
     box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    flex-shrink: 0;
+}
+
+.social-modal-header-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
 }
 
 .social-modal-title {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 800;
     color: #ffffff;
     margin: 0;
     display: flex;
     align-items: center;
     gap: 8px;
+    flex-wrap: wrap;
+    line-height: 1.3;
+}
+
+.social-kst-badge {
+    font-size: 10px;
+    font-weight: 700;
+    background: rgba(16, 185, 129, 0.2);
+    color: #34d399;
+    padding: 2px 7px;
+    border-radius: 999px;
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
 }
 
 .social-modal-subtitle {
-    font-size: 12.5px;
+    font-size: 12px;
     color: #94a3b8;
-    margin: 3px 0 0 0;
+    margin: 2px 0 0 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .social-modal-close-btn {
@@ -95,6 +134,7 @@
     justify-content: center;
     cursor: pointer;
     transition: all 0.2s;
+    flex-shrink: 0;
 }
 
 .social-modal-close-btn:hover {
@@ -103,26 +143,64 @@
     color: #f87171;
 }
 
+/* Mobile View Switcher Tab Bar (Hidden on desktop) */
+.social-mobile-tabs {
+    display: none;
+    padding: 10px 14px 0 14px;
+    background: rgba(15, 23, 42, 0.5);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.social-mobile-tab-btn {
+    flex: 1;
+    padding: 9px 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(15, 23, 42, 0.6);
+    color: #94a3b8;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.social-mobile-tab-btn.active {
+    background: rgba(16, 185, 129, 0.18);
+    border-color: #10b981;
+    color: #34d399;
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.2);
+}
+
+/* Body: 2 Columns on Desktop, Tabs on Mobile */
 .social-modal-body {
     display: grid;
     grid-template-columns: 1fr 1.15fr;
-    gap: 24px;
-    padding: 24px;
+    gap: 22px;
+    padding: 20px 22px;
     overflow-y: auto;
+    overflow-x: hidden;
     flex: 1;
-}
-
-@media (max-width: 900px) {
-    .social-modal-body {
-        grid-template-columns: 1fr;
-    }
+    min-width: 0;
+    width: 100%;
 }
 
 /* Controls Column */
 .social-controls-col {
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 16px;
+    min-width: 0;
+    width: 100%;
+    overflow-x: hidden;
 }
 
 .social-section-title {
@@ -131,79 +209,21 @@
     text-transform: uppercase;
     letter-spacing: 0.5px;
     color: #94a3b8;
-    margin-bottom: 8px;
+    margin-bottom: 7px;
 }
 
-.social-ratio-toggle {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-}
-
-.social-ratio-btn {
-    padding: 10px 14px;
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(15, 23, 42, 0.6);
-    color: #cbd5e1;
-    font-size: 12.5px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-}
-
-.social-ratio-btn.active {
-    background: rgba(16, 185, 129, 0.15);
-    border-color: #10b981;
-    color: #34d399;
-    box-shadow: 0 0 12px rgba(16, 185, 129, 0.2);
-}
-
+/* Aspect Ratio & Type Toggles */
+.social-ratio-toggle,
 .social-type-toggle {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 8px;
+    width: 100%;
+    min-width: 0;
 }
 
+.social-ratio-btn,
 .social-type-btn {
-    padding: 10px 14px;
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(15, 23, 42, 0.6);
-    color: #cbd5e1;
-    font-size: 12.5px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-}
-
-.social-type-btn:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.2);
-}
-
-.social-type-btn.active {
-    background: rgba(6, 182, 212, 0.18);
-    border-color: #06b6d4;
-    color: #22d3ee;
-    box-shadow: 0 0 12px rgba(6, 182, 212, 0.25);
-}
-
-.social-theme-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-}
-
-.social-theme-btn {
     padding: 9px 12px;
     border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -215,7 +235,62 @@
     transition: all 0.2s;
     display: flex;
     align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.social-ratio-btn:hover,
+.social-type-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.social-ratio-btn.active {
+    background: rgba(16, 185, 129, 0.16);
+    border-color: #10b981;
+    color: #34d399;
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.2);
+}
+
+.social-type-btn.active {
+    background: rgba(6, 182, 212, 0.18);
+    border-color: #06b6d4;
+    color: #22d3ee;
+    box-shadow: 0 0 12px rgba(6, 182, 212, 0.25);
+}
+
+/* Themes Grid */
+.social-theme-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 8px;
+    width: 100%;
+    min-width: 0;
+}
+
+.social-theme-btn {
+    padding: 8px 10px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(15, 23, 42, 0.6);
+    color: #cbd5e1;
+    font-size: 11.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    width: 100%;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .social-theme-btn.active {
@@ -226,22 +301,54 @@
 }
 
 .social-theme-dot {
-    width: 12px;
-    height: 12px;
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
     flex-shrink: 0;
 }
 
+/* Responsive Grid Form Layouts */
+.social-grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+}
+
+.social-grid-series {
+    display: grid;
+    grid-template-columns: 1.1fr 1.1fr 1fr;
+    gap: 8px;
+    background: rgba(56, 189, 248, 0.08);
+    padding: 10px;
+    border-radius: 12px;
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    width: 100%;
+}
+
+.social-grid-2 {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 8px;
+    width: 100%;
+}
+
+/* Input Fields */
 .social-input-group {
     display: flex;
     flex-direction: column;
     gap: 5px;
+    width: 100%;
+    min-width: 0;
 }
 
 .social-input-group label {
     font-size: 11.5px;
     font-weight: 700;
     color: #cbd5e1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .social-input-group input,
@@ -250,11 +357,14 @@
     background: #040813;
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 10px;
-    padding: 8px 12px;
+    padding: 8px 10px;
     color: #ffffff;
     font-size: 13px;
     outline: none;
     transition: all 0.2s;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
 }
 
 .social-input-group input:focus,
@@ -264,38 +374,40 @@
     box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
 }
 
-/* ==========================================================================
-   Showcase Items Manager (Sleek Dark Theme)
-   ========================================================================== */
+/* Showcase Items Manager (Sleek Dark Theme) */
 .social-showcase-box {
     background: #060b17;
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 16px;
-    padding: 14px;
+    padding: 12px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
+    width: 100%;
+    min-width: 0;
 }
 
 .social-showcase-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 8px;
 }
 
 .social-showcase-add-btn {
     background: rgba(16, 185, 129, 0.15);
     border: 1px solid #10b981;
     color: #34d399;
-    font-size: 11.5px;
+    font-size: 11px;
     font-weight: 700;
     border-radius: 999px;
-    padding: 4px 12px;
+    padding: 4px 10px;
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
     cursor: pointer;
     transition: all 0.2s;
+    flex-shrink: 0;
 }
 
 .social-showcase-add-btn:hover {
@@ -308,11 +420,13 @@
     background: #0a1122;
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 12px;
-    padding: 10px 12px;
+    padding: 8px 10px;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     transition: all 0.2s;
+    width: 100%;
+    min-width: 0;
 }
 
 .social-showcase-card:hover {
@@ -321,13 +435,13 @@
 }
 
 .social-showcase-icon-input {
-    width: 44px;
-    height: 44px;
-    border-radius: 10px;
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
     background: #03060f;
     border: 1px solid rgba(255, 255, 255, 0.14);
     color: #ffffff;
-    font-size: 18px;
+    font-size: 16px;
     text-align: center;
     outline: none;
     flex-shrink: 0;
@@ -344,18 +458,21 @@
     flex-direction: column;
     gap: 4px;
     flex: 1;
+    min-width: 0;
 }
 
 .social-showcase-title-input {
     background: #03060f;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    padding: 6px 10px;
+    border-radius: 6px;
+    padding: 5px 8px;
     color: #ffffff;
-    font-size: 12.5px;
+    font-size: 12px;
     font-weight: 700;
     outline: none;
     transition: all 0.2s;
+    width: 100%;
+    min-width: 0;
 }
 
 .social-showcase-title-input:focus {
@@ -366,12 +483,14 @@
 .social-showcase-sub-input {
     background: transparent;
     border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 8px;
-    padding: 4px 10px;
+    border-radius: 6px;
+    padding: 4px 8px;
     color: #94a3b8;
     font-size: 11px;
     outline: none;
     transition: all 0.2s;
+    width: 100%;
+    min-width: 0;
 }
 
 .social-showcase-sub-input:focus {
@@ -381,8 +500,8 @@
 }
 
 .social-showcase-del-btn {
-    width: 32px;
-    height: 32px;
+    width: 30px;
+    height: 30px;
     border-radius: 8px;
     background: rgba(239, 68, 68, 0.1);
     border: 1px solid rgba(239, 68, 68, 0.25);
@@ -407,18 +526,21 @@
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
+    min-width: 0;
+    width: 100%;
 }
 
 .social-preview-wrapper {
     width: 100%;
     max-width: 440px;
-    border-radius: 22px;
+    border-radius: 20px;
     overflow: hidden;
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
     border: 1px solid rgba(255, 255, 255, 0.15);
     position: relative;
     user-select: none;
     transition: all 0.3s ease;
+    margin: 0 auto;
 }
 
 .social-preview-wrapper.aspect-post {
@@ -434,23 +556,24 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16px 24px;
+    padding: 14px 22px;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     background: rgba(15, 23, 42, 0.6);
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 10px;
+    flex-shrink: 0;
 }
 
 .social-btn-download {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 10px 20px;
+    padding: 10px 18px;
     background: linear-gradient(135deg, #10b981 0%, #059669 100%);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 12px;
     color: #ffffff;
-    font-size: 13.5px;
+    font-size: 13px;
     font-weight: 800;
     cursor: pointer;
     box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35);
@@ -467,12 +590,12 @@
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    padding: 10px 18px;
+    padding: 10px 16px;
     background: #1e293b;
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 12px;
     color: #f1f5f9;
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.2s;
@@ -482,4 +605,110 @@
     background: #334155;
     border-color: #38bdf8;
     color: #38bdf8;
+}
+
+/* ==========================================================================
+   Responsive Breakpoints: Tablets & Mobile
+   ========================================================================== */
+@media (max-width: 900px) {
+    .social-modal-body {
+        display: block;
+        padding: 14px;
+        gap: 0;
+    }
+
+    .social-mobile-tabs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .social-controls-col {
+        display: none;
+    }
+
+    .social-preview-col {
+        display: none;
+    }
+
+    .social-controls-col.mobile-visible {
+        display: flex;
+    }
+
+    .social-preview-col.mobile-visible {
+        display: flex;
+    }
+}
+
+@media (max-width: 600px) {
+    .social-modal-backdrop {
+        padding: 6px;
+    }
+
+    .social-modal-card {
+        border-radius: 16px;
+        max-height: 98vh;
+        height: 98vh;
+    }
+
+    .social-modal-header {
+        padding: 10px 12px;
+    }
+
+    .social-icon-bubble {
+        width: 32px;
+        height: 32px;
+        border-radius: 9px;
+    }
+
+    .social-modal-title {
+        font-size: 13.5px;
+        gap: 6px;
+    }
+
+    .social-modal-subtitle {
+        display: none;
+    }
+
+    .social-grid-4 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .social-grid-series {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        padding: 8px;
+    }
+
+    .social-grid-series > :last-child {
+        grid-column: span 2;
+    }
+
+    .social-grid-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .social-modal-footer {
+        padding: 10px 12px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .social-btn-download,
+    .social-btn-caption {
+        width: 100%;
+        justify-content: center;
+        padding: 9px 6px;
+        font-size: 11.5px;
+        gap: 4px;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+    }
+
+    .social-preview-wrapper {
+        max-width: 100%;
+    }
 }
