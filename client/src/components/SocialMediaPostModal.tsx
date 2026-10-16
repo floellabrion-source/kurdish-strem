@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import {
     X, Download, Copy, Check, Sparkles, Star, Calendar,
     Film, Smartphone, Palette, ShieldCheck, Share2, Globe, Loader2,
-    Type, Award, Sliders, ChevronDown
+    Type, Award, Sliders, ChevronDown, Plus, Trash2
 } from 'lucide-react';
 import { Movie } from '../types';
 import './SocialMediaPostModal.css';
@@ -10,6 +10,12 @@ import './SocialMediaPostModal.css';
 interface SocialMediaPostModalProps {
     movie: Movie;
     onClose: () => void;
+}
+
+export interface ShowcaseItem {
+    icon: string;
+    title: string;
+    sub: string;
 }
 
 export const SocialMediaPostModal: React.FC<SocialMediaPostModalProps> = ({ movie, onClose }) => {
@@ -32,9 +38,18 @@ export const SocialMediaPostModal: React.FC<SocialMediaPostModalProps> = ({ movi
     const [feat2Text, setFeat2Text] = useState('سەبتایتڵی دووانەی هاوکات (ئینگلیزی + کوردی)');
     const [feat3Text, setFeat3Text] = useState('فەرهەنگی زیرەک بە یەک کلیک لەسەر وشە');
     
+    // Story Showcase Card (Dynamic Items: 3, 4, 5, 6 sentences)
+    const defaultShowcasePills: ShowcaseItem[] = [
+        { icon: '🚀', title: 'بینینی بەرزترین کوالیتی (4K UHD & 1080p)', sub: 'پەخشی خێرا و بەبێ پچڕان بە سێرڤەری تایبەت' },
+        { icon: '🔤', title: 'سەبتایتڵی دووانەی هاوکات لەگەڵ فەرهەنگ', sub: 'فێربوونی ئینگلیزی بە کلیک لەسەر هەر وشەیەک' },
+        { icon: '📱', title: 'گونجاو بۆ مۆبایل، کۆمپیوتەر و تەلەفزیۆن', sub: 'بە بێ هیچ ڕیکلامێکی بێزارکەر بە خۆڕایی' },
+    ];
+    const [showcaseItems, setShowcaseItems] = useState<ShowcaseItem[]>(defaultShowcasePills);
+    const [showcaseTitle, setShowcaseTitle] = useState('⭐ تایبەتمەندییە ناوازەکانی ماڵپەڕی KST FILM:');
+
     // Slogan / Ribbon text
     const [ribbonText, setRibbonText] = useState('🔥 تەواوی ئەم فیلمە بە کوالیتی بەرز و بێ ڕیکلام لە ماڵپەڕی کوردیش ستریم بەردەستە');
-    const [storyCtaText, setStoryCtaText] = useState('🍿 ئێستا بینەری بە لە ماڵپەڕی فەرمی: kstfilm.com 🌐');
+    const [storyCtaText, setStoryCtaText] = useState('👉 بۆ بینینی ئەم فیلمە سەردانی ماڵپەڕی kstfilm.com بکەن');
 
     const [synopsis, setSynopsis] = useState(
         movie.description ||
@@ -93,7 +108,25 @@ export const SocialMediaPostModal: React.FC<SocialMediaPostModalProps> = ({ movi
 
     const currentThemeData = themeStyles[theme];
 
-    // Auto-update feat1Text if user changes CEFR level
+    // Helper functions for showcase items
+    const updateShowcaseItem = (index: number, field: keyof ShowcaseItem, value: string) => {
+        const updated = [...showcaseItems];
+        updated[index] = { ...updated[index], [field]: value };
+        setShowcaseItems(updated);
+    };
+
+    const addShowcaseItem = () => {
+        setShowcaseItems([
+            ...showcaseItems,
+            { icon: '✨', title: 'خاڵێکی نوێ', sub: 'ڕوونکردنەوەی کورت لێرە بنووسە' }
+        ]);
+    };
+
+    const removeShowcaseItem = (index: number) => {
+        if (showcaseItems.length <= 1) return;
+        setShowcaseItems(showcaseItems.filter((_, i) => i !== index));
+    };
+
     const handleCefrChange = (newCefr: string) => {
         setCefr(newCefr);
         setFeat1Text(`ئاستی زمان: ${newCefr} (شیکاری وردی وشەسازی)`);
@@ -483,47 +516,83 @@ ${synopsis}
         });
         ctx.restore();
 
-        // 6. Middle Content: CLEAN & BEAUTIFUL FOR BOTH POST & STORY!
-        // No ugly complex cards with empty voids! Exactly matching Image 2 style!
+        // 6. Middle Content:
+        // In Story (9:16): DYNAMIC Showcase Box whose background strictly fits the number of items!
+        // No giant void! If 3 items -> ~270px; if 6 items -> ~480px!
         if (isStory) {
-            // Story (9:16) - Clean Ribbon + Story CTA Pill with ample breathing room
-            const ribbonY = synBoxY + synBoxH + 35;
-            const ribbonH = 75;
+            const featCardY = synBoxY + synBoxH + 24;
+            const featCardW = synBoxW;
 
-            // 1. The Glowing Ribbon (matching Image 2)
+            const itemH = 62;
+            const itemGap = 8;
+            const headerH = 46;
+            const bottomPad = 14;
+            // DYNAMIC HEIGHT: EXACTLY fits the number of items!
+            const featCardH = headerH + (showcaseItems.length * (itemH + itemGap)) + bottomPad;
+
+            // 1. Dynamic Card Background (Strictly hugs content)
             ctx.save();
-            ctx.fillStyle = 'rgba(2, 6, 23, 0.7)';
-            roundRect(ctx, 60, ribbonY, synBoxW, ribbonH, 18);
+            ctx.fillStyle = 'rgba(2, 6, 23, 0.78)';
+            roundRect(ctx, 60, featCardY, featCardW, featCardH, 20);
             ctx.fill();
             ctx.strokeStyle = `${primary}55`;
             ctx.lineWidth = 1.5;
             ctx.stroke();
 
-            ctx.textAlign = 'center';
-            ctx.font = 'bold 20px "Noto Sans Arabic", sans-serif';
-            ctx.fillStyle = '#e2e8f0';
-            ctx.fillText(ribbonText, width / 2, ribbonY + 44);
+            // Card Header
+            ctx.textAlign = 'right';
+            ctx.font = '900 20px "Noto Sans Arabic", sans-serif';
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText(showcaseTitle, width - 95, featCardY + 34);
+
+            // Draw each item inside the card
+            let pillTop = featCardY + 48;
+            showcaseItems.forEach(p => {
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.7)';
+                roundRect(ctx, 80, pillTop, featCardW - 40, itemH, 12);
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+
+                // Icon (right side in RTL)
+                ctx.font = '22px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(p.icon, width - 118, pillTop + (itemH / 2) + 8);
+
+                // Title
+                ctx.textAlign = 'right';
+                ctx.font = 'bold 16px "Noto Sans Arabic", sans-serif';
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText(p.title, width - 150, pillTop + 24);
+
+                // Subtitle
+                ctx.font = '500 13px "Noto Sans Arabic", sans-serif';
+                ctx.fillStyle = '#94a3b8';
+                ctx.fillText(p.sub, width - 150, pillTop + 47);
+
+                pillTop += itemH + itemGap;
+            });
             ctx.restore();
 
-            // 2. Story Call-To-Action Pill
-            const ctaY = ribbonY + ribbonH + 25;
-            const ctaH = 80;
+            // 2. Below the dynamic box: Story CTA Button
+            const ctaY = featCardY + featCardH + 18;
+            const ctaH = 68;
             ctx.save();
             ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-            roundRect(ctx, 120, ctaY, width - 240, ctaH, 40);
+            roundRect(ctx, 100, ctaY, width - 200, ctaH, 34);
             ctx.fill();
             ctx.strokeStyle = primary;
             ctx.lineWidth = 2;
             ctx.stroke();
 
-            // Subtle glow effect
             ctx.shadowColor = primary;
-            ctx.shadowBlur = 15;
+            ctx.shadowBlur = 12;
 
             ctx.textAlign = 'center';
-            ctx.font = '900 22px "Noto Sans Arabic", sans-serif';
+            ctx.font = '900 21px "Noto Sans Arabic", sans-serif';
             ctx.fillStyle = '#ffffff';
-            ctx.fillText(storyCtaText, width / 2, ctaY + 48);
+            ctx.fillText(storyCtaText, width / 2, ctaY + 42);
             ctx.restore();
 
         } else {
@@ -721,7 +790,7 @@ ${synopsis}
                         <hr style={{ borderColor: 'rgba(255, 255, 255, 0.08)' }} />
 
                         {/* Editable Fields: Section 1 - Main Info */}
-                        <div className="social-section-title">زانیارییە سەرەکییەکان (دەتوانیت دەستکارییان بکەیت):</div>
+                        <div className="social-section-title">زانیارییە سەرەکییەکان:</div>
 
                         <div className="social-input-group">
                             <label>ناوی ئینگلیزی:</label>
@@ -809,10 +878,70 @@ ${synopsis}
                             <input type="text" value={ribbonText} onChange={e => setRibbonText(e.target.value)} />
                         </div>
 
+                        {/* Story Mode: Dynamic Showcase Items Manager */}
                         {ratio === 'story' && (
-                            <div className="social-input-group">
-                                <label>دەقی بانگەوازی ستۆری (Story CTA Button):</label>
-                                <input type="text" value={storyCtaText} onChange={e => setStoryCtaText(e.target.value)} />
+                            <div style={{ background: 'rgba(2, 6, 23, 0.6)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '14px', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                    <div className="social-section-title" style={{ margin: 0 }}>کارتی تایبەتمەندییەکانی ستۆری (Showcase):</div>
+                                    <button
+                                        type="button"
+                                        onClick={addShowcaseItem}
+                                        style={{ background: 'rgba(16, 185, 129, 0.2)', border: '1px solid #10b981', color: '#34d399', fontSize: '11px', fontWeight: 'bold', borderRadius: '8px', padding: '4px 9px', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}
+                                    >
+                                        <Plus size={13} />
+                                        <span>+ زیادکردنی خاڵ</span>
+                                    </button>
+                                </div>
+
+                                <div className="social-input-group">
+                                    <label>سەردێڕی کارتەکە:</label>
+                                    <input type="text" value={showcaseTitle} onChange={e => setShowcaseTitle(e.target.value)} />
+                                </div>
+
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    {showcaseItems.map((item, idx) => (
+                                        <div key={idx} style={{ background: 'rgba(15, 23, 42, 0.7)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '10px', padding: '8px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                <input
+                                                    type="text"
+                                                    value={item.icon}
+                                                    onChange={e => updateShowcaseItem(idx, 'icon', e.target.value)}
+                                                    style={{ width: '42px', textAlign: 'center', fontSize: '14px', padding: '4px' }}
+                                                    title="ئایکۆن"
+                                                />
+                                                <input
+                                                    type="text"
+                                                    value={item.title}
+                                                    onChange={e => updateShowcaseItem(idx, 'title', e.target.value)}
+                                                    placeholder="سەردێڕی خاڵەکە"
+                                                    style={{ flex: 1, fontSize: '12px', padding: '5px 8px' }}
+                                                />
+                                                {showcaseItems.length > 1 && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeShowcaseItem(idx)}
+                                                        style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#f87171', borderRadius: '6px', padding: '5px', cursor: 'pointer' }}
+                                                        title="سڕینەوەی ئەم خاڵە"
+                                                    >
+                                                        <Trash2 size={13} />
+                                                    </button>
+                                                )}
+                                            </div>
+                                            <input
+                                                type="text"
+                                                value={item.sub}
+                                                onChange={e => updateShowcaseItem(idx, 'sub', e.target.value)}
+                                                placeholder="ڕوونکردنەوەی کورت"
+                                                style={{ fontSize: '11px', padding: '4px 8px', color: '#94a3b8' }}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="social-input-group">
+                                    <label>دەقی دوگمەی خوارەوە (Story CTA):</label>
+                                    <input type="text" value={storyCtaText} onChange={e => setStoryCtaText(e.target.value)} />
+                                </div>
                             </div>
                         )}
 
@@ -949,15 +1078,37 @@ ${synopsis}
                                     </div>
                                 </div>
 
-                                {/* Clean Ribbon (Shown in both Post and Story, matching Image 2!) */}
-                                <div style={{ background: 'rgba(2, 6, 23, 0.7)', border: `1px solid ${currentThemeData.primary}55`, borderRadius: '10px', padding: '6px 10px', textAlign: 'center', fontSize: '9px', color: '#e2e8f0', fontWeight: 'bold' }}>
-                                    {ribbonText}
-                                </div>
+                                {/* In Story Mode: Dynamic Showcase Box (Strictly fits items) */}
+                                {ratio === 'story' && (
+                                    <div style={{ background: 'rgba(2, 6, 23, 0.78)', border: `1.5px solid ${currentThemeData.primary}55`, borderRadius: '12px', padding: '8px 10px', fontSize: '9px', color: '#cbd5e1' }}>
+                                        <div style={{ color: '#ffffff', fontWeight: 'bold', marginBottom: '6px', fontSize: '9.5px', textAlign: 'right' }}>
+                                            {showcaseTitle}
+                                        </div>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                                            {showcaseItems.map((item, idx) => (
+                                                <div key={idx} style={{ background: 'rgba(15, 23, 42, 0.7)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '7px', padding: '4px 7px', display: 'flex', alignItems: 'center', gap: '6px', direction: 'rtl' }}>
+                                                    <span style={{ fontSize: '12px' }}>{item.icon}</span>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'right', flex: 1 }}>
+                                                        <span style={{ color: '#ffffff', fontWeight: 'bold', fontSize: '8.5px' }}>{item.title}</span>
+                                                        <span style={{ color: '#94a3b8', fontSize: '7.5px' }}>{item.sub}</span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
 
-                                {/* In Story Mode: Sleek Story CTA Button (Clean & elegant) */}
+                                {/* In Story Mode: Story CTA Button */}
                                 {ratio === 'story' && (
                                     <div style={{ background: 'rgba(15, 23, 42, 0.85)', border: `1.5px solid ${currentThemeData.primary}`, borderRadius: '999px', padding: '6px 12px', textAlign: 'center', fontSize: '9.5px', color: '#ffffff', fontWeight: '900', boxShadow: `0 0 10px ${currentThemeData.primary}40` }}>
                                         {storyCtaText}
+                                    </div>
+                                )}
+
+                                {/* In Post Mode: Clean Ribbon */}
+                                {ratio === 'post' && (
+                                    <div style={{ background: 'rgba(2, 6, 23, 0.7)', border: `1px solid ${currentThemeData.primary}55`, borderRadius: '10px', padding: '6px 10px', textAlign: 'center', fontSize: '9px', color: '#e2e8f0', fontWeight: 'bold' }}>
+                                        {ribbonText}
                                     </div>
                                 )}
 
