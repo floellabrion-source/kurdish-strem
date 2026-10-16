@@ -1,9 +1,10 @@
 import React, { useState, useRef } from 'react';
 import {
     X, Download, Copy, Check, Sparkles, Star, Calendar,
-    Film, Smartphone, Palette, ShieldCheck, Share2, Globe, Loader2
+    Film, Smartphone, Palette, ShieldCheck, Share2, Globe, Loader2,
+    Type, Award, Sliders, ChevronDown
 } from 'lucide-react';
-import { Movie, getCefrDisplayLevel } from '../types';
+import { Movie } from '../types';
 import './SocialMediaPostModal.css';
 
 interface SocialMediaPostModalProps {
@@ -23,6 +24,18 @@ export const SocialMediaPostModal: React.FC<SocialMediaPostModalProps> = ({ movi
     const [cefr, setCefr] = useState(movie.level || movie.languageMetrics?.cefrLevel || 'B1');
     const [genre, setGenre] = useState(movie.genre || 'ئاکشن، سەرکێشی، دراما');
     const [duration, setDuration] = useState(movie.duration || 'min 145');
+    const [quality, setQuality] = useState('4K UHD');
+    const [translator, setTranslator] = useState('تیمی کوردیش ستریم');
+    
+    // Custom feature textboxes
+    const [feat1Text, setFeat1Text] = useState(`ئاستی زمان: ${cefr} (شیکاری وردی وشەسازی)`);
+    const [feat2Text, setFeat2Text] = useState('سەبتایتڵی دووانەی هاوکات (ئینگلیزی + کوردی)');
+    const [feat3Text, setFeat3Text] = useState('فەرهەنگی زیرەک بە یەک کلیک لەسەر وشە');
+    
+    // Slogan / Ribbon text
+    const [ribbonText, setRibbonText] = useState('🔥 تەواوی ئەم فیلمە بە کوالیتی بەرز و بێ ڕیکلام لە ماڵپەڕی کوردیش ستریم بەردەستە');
+    const [storyCtaText, setStoryCtaText] = useState('🍿 ئێستا بینەری بە لە ماڵپەڕی فەرمی: kstfilm.com 🌐');
+
     const [synopsis, setSynopsis] = useState(
         movie.description ||
         'ساڵانێکی زۆر دوای سەردەمی قەیسەر، مەیموونێکی گەنج دەچێتە گەشتێکەوە کە دەبێتە هۆی ئەوەی هەموو ئەو شتانەی کە فێری کراون دەربارەی ڕابردوو بخاتە ژێر پرسیارەوە و هەڵبژاردنێک بکات کە داهاتوویەک بۆ مەیموون و مرۆڤەکان دیاری بکات.'
@@ -31,6 +44,7 @@ export const SocialMediaPostModal: React.FC<SocialMediaPostModalProps> = ({ movi
     const [hasDualSrt, setHasDualSrt] = useState(true);
     const [hasDict, setHasDict] = useState(true);
     const [hasCefr, setHasCefr] = useState(true);
+    const [hasTranslator, setHasTranslator] = useState(true);
     const [isExporting, setIsExporting] = useState(false);
     const [copiedCaption, setCopiedCaption] = useState(false);
 
@@ -79,6 +93,12 @@ export const SocialMediaPostModal: React.FC<SocialMediaPostModalProps> = ({ movi
 
     const currentThemeData = themeStyles[theme];
 
+    // Auto-update feat1Text if user changes CEFR level
+    const handleCefrChange = (newCefr: string) => {
+        setCefr(newCefr);
+        setFeat1Text(`ئاستی زمان: ${newCefr} (شیکاری وردی وشەسازی)`);
+    };
+
     const copyPostCaption = () => {
         const caption = `🔥 فیلمی نوێ بە سەبتایتڵی کوردی و فێربوونی ئینگلیزی لە کوردیش ستریم:
 
@@ -86,9 +106,8 @@ export const SocialMediaPostModal: React.FC<SocialMediaPostModalProps> = ({ movi
 📅 ساڵی دەرچوون: ${year}
 ⭐ نمرەی IMDb: ${imdb}/10
 🎓 ئاستی زمانی ئینگلیزی: ${cefr}
-🔤 خاوەنی سەبتایتڵی دووانەی هاوکات (ئینگلیزی + کوردی)
-📖 کلیک لەسەر وشەکان بکە لە کاتی سەیرکردندا بۆ فەرهەنگ و مانای وشەکان!
-
+📀 کوالیتی: ${quality}
+${hasTranslator && translator ? `✍️ وەرگێڕان: ${translator}\n` : ''}${hasDualSrt ? `🔤 ${feat2Text}\n` : ''}${hasDict ? `📖 ${feat3Text}\n` : ''}
 📝 کورتەی چیرۆک:
 ${synopsis}
 
@@ -111,7 +130,6 @@ ${synopsis}
             return;
         }
 
-        // Wait for Arabic fonts to be ready
         try {
             await document.fonts.ready;
         } catch (e) {
@@ -131,7 +149,6 @@ ${synopsis}
         const img = new Image();
         img.crossOrigin = 'anonymous';
 
-        // Proxy external image to prevent CORS taint
         const safePosterSrc = posterUrl.startsWith('http')
             ? `/api/proxy-image?url=${encodeURIComponent(posterUrl)}`
             : posterUrl;
@@ -149,7 +166,6 @@ ${synopsis}
         };
 
         img.onerror = () => {
-            // Draw without image fallback
             renderCanvas(ctx, null, width, height);
             setTimeout(() => {
                 const link = document.createElement('a');
@@ -184,7 +200,7 @@ ${synopsis}
         // Backdrop blurred poster overlay
         if (posterImg) {
             ctx.save();
-            ctx.globalAlpha = 0.22;
+            ctx.globalAlpha = 0.25;
             ctx.drawImage(posterImg, 0, 0, width, height);
             ctx.restore();
         }
@@ -192,8 +208,8 @@ ${synopsis}
         // Vignette Overlay
         const vigGrad = ctx.createLinearGradient(0, 0, 0, height);
         vigGrad.addColorStop(0, 'rgba(0,0,0,0.65)');
-        vigGrad.addColorStop(0.3, 'rgba(0,0,0,0.25)');
-        vigGrad.addColorStop(0.8, 'rgba(0,0,0,0.75)');
+        vigGrad.addColorStop(0.25, 'rgba(0,0,0,0.22)');
+        vigGrad.addColorStop(0.7, 'rgba(0,0,0,0.65)');
         vigGrad.addColorStop(1, 'rgba(0,0,0,0.96)');
         ctx.fillStyle = vigGrad;
         ctx.fillRect(0, 0, width, height);
@@ -203,7 +219,7 @@ ${synopsis}
 
         // Right side: Logo + Platform Name
         const logoBoxX = width - 120;
-        const logoBoxY = isStory ? 60 : 50;
+        const logoBoxY = isStory ? 65 : 50;
         ctx.fillStyle = primary;
         roundRect(ctx, logoBoxX, logoBoxY, 60, 60, 16);
         ctx.fill();
@@ -224,7 +240,7 @@ ${synopsis}
 
         // Left side: Website Pill
         const pillX = 60;
-        const pillY = isStory ? 65 : 55;
+        const pillY = isStory ? 70 : 55;
         const pillW = 230;
         const pillH = 50;
         ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
@@ -241,16 +257,16 @@ ${synopsis}
         ctx.restore();
 
         // Header Divider
-        const dividerY = isStory ? 145 : 135;
+        const dividerY = isStory ? 150 : 135;
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
         ctx.beginPath();
         ctx.moveTo(60, dividerY);
         ctx.lineTo(width - 60, dividerY);
         ctx.stroke();
 
-        // 3. Poster Card (Left side, matching Awena Film style)
+        // 3. Poster Card (Left side)
         const posterX = 60;
-        const posterY = isStory ? 190 : 170;
+        const posterY = isStory ? 195 : 170;
         const posterW = isStory ? 430 : 390;
         const posterH = isStory ? 645 : 585;
 
@@ -274,7 +290,6 @@ ${synopsis}
         posterGrad.addColorStop(1, 'rgba(0,0,0,0.88)');
         ctx.fillStyle = posterGrad;
         ctx.fillRect(posterX, posterY + posterH - 120, posterW, 120);
-
         ctx.restore();
 
         // Poster Border
@@ -285,19 +300,21 @@ ${synopsis}
         ctx.stroke();
         ctx.restore();
 
-        // 4K Badge (top right of poster)
-        ctx.save();
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
-        roundRect(ctx, posterX + posterW - 96, posterY + 16, 80, 32, 8);
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '900 14px "Plus Jakarta Sans", sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('4K UHD', posterX + posterW - 56, posterY + 38);
-        ctx.restore();
+        // Quality Badge (top right of poster)
+        if (quality) {
+            ctx.save();
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+            roundRect(ctx, posterX + posterW - 105, posterY + 16, 90, 32, 8);
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '900 14px "Plus Jakarta Sans", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(quality, posterX + posterW - 60, posterY + 38);
+            ctx.restore();
+        }
 
         // CEFR Level Badge bottom of poster
         if (hasCefr) {
@@ -332,7 +349,7 @@ ${synopsis}
         const kuLines = wrapText(ctx, kuTitle, detailX, curY, detailW, isStory ? 48 : 44);
         curY += (kuLines * (isStory ? 48 : 44)) + 20;
 
-        // Metadata Pills Row (IMDb, Year, Duration) - ALL FIXED!
+        // Metadata Pills Row (IMDb, Year, Duration)
         const imdbW = 150;
         const imdbX = detailX - imdbW;
         ctx.fillStyle = 'rgba(245, 158, 11, 0.16)';
@@ -365,10 +382,10 @@ ${synopsis}
         ctx.font = '800 19px "Plus Jakarta Sans", sans-serif';
         ctx.fillText(year, yearX + (yearW / 2), curY + 30);
 
-        // Duration Pill (FIXED: Solid white box removed, styled properly)
+        // Duration Pill
         const durW = 120;
         const durX = yearX - 14 - durW;
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)'; // explicit fillStyle!
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
         roundRect(ctx, durX, curY, durW, 46, 12);
         ctx.fill();
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
@@ -390,11 +407,11 @@ ${synopsis}
 
         curY += 36;
 
-        // Feature Superpower Badges (Clean RTL alignment without emoji collision)
+        // Feature Superpower Badges (Custom user editable texts)
         const features = [];
-        if (hasCefr) features.push({ icon: '🎓', text: `ئاستی زمان: ${cefr} (شیکاری وردی وشەسازی)` });
-        if (hasDualSrt) features.push({ icon: '🔤', text: 'سەبتایتڵی دووانەی هاوکات (ئینگلیزی + کوردی)' });
-        if (hasDict) features.push({ icon: '📖', text: 'فەرهەنگی زیرەک بە یەک کلیک لەسەر وشە' });
+        if (hasCefr && feat1Text) features.push({ icon: '🎓', text: feat1Text });
+        if (hasDualSrt && feat2Text) features.push({ icon: '🔤', text: feat2Text });
+        if (hasDict && feat3Text) features.push({ icon: '📖', text: feat3Text });
 
         const badgeH = isStory ? 50 : 44;
         features.forEach(f => {
@@ -424,15 +441,22 @@ ${synopsis}
             curY += badgeH + 10;
         });
 
+        // Translator info line if provided
+        if (hasTranslator && translator) {
+            ctx.fillStyle = '#38bdf8';
+            ctx.font = 'bold 16px "Noto Sans Arabic", sans-serif';
+            ctx.textAlign = 'right';
+            ctx.fillText(`✍️ وەرگێڕان: ${translator}`, detailX, curY + 14);
+        }
+
         ctx.restore();
 
-        // 5. Synopsis Box (Dynamically sized, no massive void)
+        // 5. Synopsis Box (Dynamically sized, clean & comfortable)
         const synBoxY = posterY + posterH + 25;
         const synBoxW = width - 120;
         
         ctx.save();
         ctx.font = '500 20px "Noto Sans Arabic", sans-serif';
-        // Measure synopsis height
         const synLines = getWrappedLines(ctx, synopsis, synBoxW - 60);
         const maxSynLines = isStory ? 5 : 4;
         const visibleLines = synLines.slice(0, maxSynLines);
@@ -459,75 +483,56 @@ ${synopsis}
         });
         ctx.restore();
 
-        // 6. Format-Specific Middle Content (Story gets Feature Showcase, Post gets Feature Ribbon)
+        // 6. Middle Content: CLEAN & BEAUTIFUL FOR BOTH POST & STORY!
+        // No ugly complex cards with empty voids! Exactly matching Image 2 style!
         if (isStory) {
-            // Story (9:16) gets an elite Feature Showcase card filling the tall space gracefully
-            const featCardY = synBoxY + synBoxH + 25;
-            const featCardH = (height - 110) - featCardY - 20;
+            // Story (9:16) - Clean Ribbon + Story CTA Pill with ample breathing room
+            const ribbonY = synBoxY + synBoxH + 35;
+            const ribbonH = 75;
 
-            if (featCardH > 180) {
-                ctx.save();
-                ctx.fillStyle = 'rgba(2, 6, 23, 0.75)';
-                roundRect(ctx, 60, featCardY, synBoxW, featCardH, 22);
-                ctx.fill();
-                ctx.strokeStyle = `${primary}55`;
-                ctx.lineWidth = 1.5;
-                ctx.stroke();
+            // 1. The Glowing Ribbon (matching Image 2)
+            ctx.save();
+            ctx.fillStyle = 'rgba(2, 6, 23, 0.7)';
+            roundRect(ctx, 60, ribbonY, synBoxW, ribbonH, 18);
+            ctx.fill();
+            ctx.strokeStyle = `${primary}55`;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
 
-                ctx.textAlign = 'right';
-                ctx.font = '900 22px "Noto Sans Arabic", sans-serif';
-                ctx.fillStyle = '#ffffff';
-                ctx.fillText('⭐  تایبەتمەندییە ناوازەکانی ماڵپەڕی KST FILM:', width - 95, featCardY + 45);
+            ctx.textAlign = 'center';
+            ctx.font = 'bold 20px "Noto Sans Arabic", sans-serif';
+            ctx.fillStyle = '#e2e8f0';
+            ctx.fillText(ribbonText, width / 2, ribbonY + 44);
+            ctx.restore();
 
-                const storyPills = [
-                    { icon: '🚀', title: 'بینینی بەرزترین کوالیتی (4K UHD & 1080p)', sub: 'پەخشی خێرا و بەبێ پچڕان بە سێرڤەری تایبەت' },
-                    { icon: '🔤', title: 'سەبتایتڵی دووانەی هاوکات لەگەڵ فەرهەنگ', sub: 'فێربوونی ئینگلیزی بە کلیک لەسەر هەر وشەیەک' },
-                    { icon: '📱', title: 'گونجاو بۆ مۆبایل، کۆمپیوتەر و تەلەفزیۆن', sub: 'بە بێ هیچ ڕیکلامێکی بێزارکەر بە خۆڕایی' },
-                ];
+            // 2. Story Call-To-Action Pill
+            const ctaY = ribbonY + ribbonH + 25;
+            const ctaH = 80;
+            ctx.save();
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+            roundRect(ctx, 120, ctaY, width - 240, ctaH, 40);
+            ctx.fill();
+            ctx.strokeStyle = primary;
+            ctx.lineWidth = 2;
+            ctx.stroke();
 
-                let pillTop = featCardY + 75;
-                const pillItemH = Math.min(68, (featCardH - 145) / 3);
+            // Subtle glow effect
+            ctx.shadowColor = primary;
+            ctx.shadowBlur = 15;
 
-                storyPills.forEach(p => {
-                    ctx.fillStyle = 'rgba(15, 23, 42, 0.6)';
-                    roundRect(ctx, 80, pillTop, synBoxW - 40, pillItemH, 14);
-                    ctx.fill();
-                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
-                    ctx.stroke();
+            ctx.textAlign = 'center';
+            ctx.font = '900 22px "Noto Sans Arabic", sans-serif';
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText(storyCtaText, width / 2, ctaY + 48);
+            ctx.restore();
 
-                    // Icon
-                    ctx.font = '22px sans-serif';
-                    ctx.textAlign = 'center';
-                    ctx.fillText(p.icon, width - 115, pillTop + (pillItemH / 2) + 8);
-
-                    // Text
-                    ctx.textAlign = 'right';
-                    ctx.font = 'bold 17px "Noto Sans Arabic", sans-serif';
-                    ctx.fillStyle = '#ffffff';
-                    ctx.fillText(p.title, width - 150, pillTop + 26);
-
-                    ctx.font = '500 14px "Noto Sans Arabic", sans-serif';
-                    ctx.fillStyle = '#94a3b8';
-                    ctx.fillText(p.sub, width - 150, pillTop + 48);
-
-                    pillTop += pillItemH + 10;
-                });
-
-                // Bottom CTA inside card
-                ctx.textAlign = 'center';
-                ctx.font = 'bold 18px "Noto Sans Arabic", sans-serif';
-                ctx.fillStyle = primary;
-                ctx.fillText('👉 بۆ بینینی ئەم فیلمە سەردانی ماڵپەڕی kstfilm.com بکەن', width / 2, featCardY + featCardH - 22);
-
-                ctx.restore();
-            }
         } else {
-            // Post (4:5) format gets a sleek platform ribbon if space permits
+            // Post (4:5) format - Sleek glowing ribbon as seen in Image 2
             const ribbonY = synBoxY + synBoxH + 20;
             const ribbonH = (height - 95) - ribbonY;
-            if (ribbonH >= 60) {
+            if (ribbonH >= 55) {
                 ctx.save();
-                ctx.fillStyle = 'rgba(2, 6, 23, 0.6)';
+                ctx.fillStyle = 'rgba(2, 6, 23, 0.65)';
                 roundRect(ctx, 60, ribbonY, synBoxW, Math.min(75, ribbonH), 16);
                 ctx.fill();
                 ctx.strokeStyle = `${primary}44`;
@@ -537,7 +542,7 @@ ${synopsis}
                 ctx.textAlign = 'center';
                 ctx.font = 'bold 18px "Noto Sans Arabic", sans-serif';
                 ctx.fillStyle = '#cbd5e1';
-                ctx.fillText('🔥 تەواوی ئەم فیلمە بە کوالیتی بەرز و بێ ڕیکلام لە ماڵپەڕی کوردیش ستریم بەردەستە', width / 2, ribbonY + (Math.min(75, ribbonH) / 2) + 6);
+                ctx.fillText(ribbonText, width / 2, ribbonY + (Math.min(75, ribbonH) / 2) + 6);
                 ctx.restore();
             }
         }
@@ -715,7 +720,9 @@ ${synopsis}
 
                         <hr style={{ borderColor: 'rgba(255, 255, 255, 0.08)' }} />
 
-                        {/* Editable Fields */}
+                        {/* Editable Fields: Section 1 - Main Info */}
+                        <div className="social-section-title">زانیارییە سەرەکییەکان (دەتوانیت دەستکارییان بکەیت):</div>
+
                         <div className="social-input-group">
                             <label>ناوی ئینگلیزی:</label>
                             <input type="text" value={enTitle} onChange={e => setEnTitle(e.target.value)} dir="ltr" />
@@ -736,12 +743,23 @@ ${synopsis}
                                 <input type="text" value={imdb} onChange={e => setImdb(e.target.value)} style={{ textAlign: 'center', color: '#fbbf24', fontWeight: 'bold' }} />
                             </div>
                             <div className="social-input-group">
-                                <label>ماوە (Duration):</label>
+                                <label>ماوە:</label>
                                 <input type="text" value={duration} onChange={e => setDuration(e.target.value)} style={{ textAlign: 'center' }} />
                             </div>
                             <div className="social-input-group">
+                                <label>کوالیتی:</label>
+                                <input type="text" value={quality} onChange={e => setQuality(e.target.value)} style={{ textAlign: 'center', color: '#38bdf8', fontWeight: 'bold' }} />
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '8px' }}>
+                            <div className="social-input-group">
+                                <label>ناوی وەرگێڕ / دەستە:</label>
+                                <input type="text" value={translator} onChange={e => setTranslator(e.target.value)} placeholder="ناوی وەرگێڕ بنووسە" />
+                            </div>
+                            <div className="social-input-group">
                                 <label>ئاستی CEFR:</label>
-                                <select value={cefr} onChange={e => setCefr(e.target.value)} style={{ textAlign: 'center', color: '#38bdf8', fontWeight: 'bold' }}>
+                                <select value={cefr} onChange={e => handleCefrChange(e.target.value)} style={{ textAlign: 'center', color: '#38bdf8', fontWeight: 'bold' }}>
                                     <option value="A1">A1</option>
                                     <option value="A2">A2</option>
                                     <option value="B1">B1</option>
@@ -757,22 +775,46 @@ ${synopsis}
                             <input type="text" value={genre} onChange={e => setGenre(e.target.value)} />
                         </div>
 
-                        {/* Special features checkboxes */}
-                        <div style={{ background: 'rgba(2, 6, 23, 0.5)', padding: '10px 14px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                            <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#94a3b8', marginBottom: '2px' }}>تایبەتمەندییەکانی ماڵپەڕ لەسەر پۆست:</div>
-                            <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: '#e2e8f0' }}>
-                                <input type="checkbox" checked={hasDualSrt} onChange={e => setHasDualSrt(e.target.checked)} />
-                                <span>سەبتایتڵی دووانەی هاوکات (ئینگلیزی + کوردی)</span>
-                            </label>
-                            <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: '#e2e8f0' }}>
-                                <input type="checkbox" checked={hasDict} onChange={e => setHasDict(e.target.checked)} />
-                                <span>فەرهەنگی دەستبەجێ بە یەک کلیک</span>
-                            </label>
-                            <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: '#e2e8f0' }}>
+                        <hr style={{ borderColor: 'rgba(255, 255, 255, 0.08)' }} />
+
+                        {/* Section 2: Custom Feature Texts & Toggles */}
+                        <div className="social-section-title">دەستکاریکردنی تایبەتمەندییەکان (Features):</div>
+
+                        <div className="social-input-group">
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                 <input type="checkbox" checked={hasCefr} onChange={e => setHasCefr(e.target.checked)} />
-                                <span>ئاستی زمانی ئینگلیزی (CEFR {cefr})</span>
+                                <span>دەقی تایبەتمەندی ١ (ئاستی زمان):</span>
                             </label>
+                            <input type="text" value={feat1Text} onChange={e => setFeat1Text(e.target.value)} disabled={!hasCefr} />
                         </div>
+
+                        <div className="social-input-group">
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <input type="checkbox" checked={hasDualSrt} onChange={e => setHasDualSrt(e.target.checked)} />
+                                <span>دەقی تایبەتمەندی ٢ (سەبتایتڵ):</span>
+                            </label>
+                            <input type="text" value={feat2Text} onChange={e => setFeat2Text(e.target.value)} disabled={!hasDualSrt} />
+                        </div>
+
+                        <div className="social-input-group">
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <input type="checkbox" checked={hasDict} onChange={e => setHasDict(e.target.checked)} />
+                                <span>دەقی تایبەتمەندی ٣ (فەرهەنگ):</span>
+                            </label>
+                            <input type="text" value={feat3Text} onChange={e => setFeat3Text(e.target.value)} disabled={!hasDict} />
+                        </div>
+
+                        <div className="social-input-group">
+                            <label>دەقی دروشمی خوارەوە (Ribbon Text):</label>
+                            <input type="text" value={ribbonText} onChange={e => setRibbonText(e.target.value)} />
+                        </div>
+
+                        {ratio === 'story' && (
+                            <div className="social-input-group">
+                                <label>دەقی بانگەوازی ستۆری (Story CTA Button):</label>
+                                <input type="text" value={storyCtaText} onChange={e => setStoryCtaText(e.target.value)} />
+                            </div>
+                        )}
 
                         <div className="social-input-group">
                             <label>کورتەی چیرۆک:</label>
@@ -830,14 +872,16 @@ ${synopsis}
                                     </div>
                                 </div>
 
-                                {/* Main Row: Poster on LEFT, Info on RIGHT (LTR grid container to match Canvas) */}
+                                {/* Main Row: Poster on LEFT, Info on RIGHT */}
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.35fr', gap: '12px', alignItems: 'center', direction: 'ltr' }}>
                                     {/* Poster Card (Left) */}
                                     <div style={{ position: 'relative', borderRadius: '14px', overflow: 'hidden', border: '1.5px solid rgba(255, 255, 255, 0.25)', boxShadow: '0 10px 25px rgba(0,0,0,0.8)' }}>
                                         <img src={posterUrl} alt="Poster" style={{ width: '100%', aspectRatio: '2/3', objectFit: 'cover', display: 'block' }} />
-                                        <div style={{ position: 'absolute', top: '6px', right: '6px', background: 'rgba(0,0,0,0.85)', fontSize: '8px', color: '#ffffff', padding: '2px 5px', borderRadius: '4px', fontWeight: '900', border: '1px solid rgba(255,255,255,0.2)' }}>
-                                            4K UHD
-                                        </div>
+                                        {quality && (
+                                            <div style={{ position: 'absolute', top: '6px', right: '6px', background: 'rgba(0,0,0,0.85)', fontSize: '8px', color: '#ffffff', padding: '2px 5px', borderRadius: '4px', fontWeight: '900', border: '1px solid rgba(255,255,255,0.2)' }}>
+                                                {quality}
+                                            </div>
+                                        )}
                                         {hasCefr && (
                                             <div style={{ position: 'absolute', bottom: '6px', left: '6px', right: '6px', background: '#f59e0b', color: '#0f172a', fontSize: '9px', fontWeight: '900', textAlign: 'center', padding: '2px 0', borderRadius: '6px' }}>
                                                 ئاستی زمان: {cefr}
@@ -867,25 +911,31 @@ ${synopsis}
                                         </div>
 
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '3px' }}>
-                                            {hasCefr && (
+                                            {hasCefr && feat1Text && (
                                                 <div style={{ background: 'rgba(15, 23, 42, 0.75)', borderRight: `3px solid ${currentThemeData.primary}`, padding: '2px 6px', borderRadius: '4px', fontSize: '8.5px', color: '#f1f5f9', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
                                                     <span>🎓</span>
-                                                    <span>ئاستی زمان: {cefr}</span>
+                                                    <span>{feat1Text}</span>
                                                 </div>
                                             )}
-                                            {hasDualSrt && (
+                                            {hasDualSrt && feat2Text && (
                                                 <div style={{ background: 'rgba(15, 23, 42, 0.75)', borderRight: `3px solid ${currentThemeData.primary}`, padding: '2px 6px', borderRadius: '4px', fontSize: '8.5px', color: '#f1f5f9', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
                                                     <span>🔤</span>
-                                                    <span>سەبتایتڵی دووانەی هاوکات</span>
+                                                    <span>{feat2Text}</span>
                                                 </div>
                                             )}
-                                            {hasDict && (
+                                            {hasDict && feat3Text && (
                                                 <div style={{ background: 'rgba(15, 23, 42, 0.75)', borderRight: `3px solid ${currentThemeData.primary}`, padding: '2px 6px', borderRadius: '4px', fontSize: '8.5px', color: '#f1f5f9', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
                                                     <span>📖</span>
-                                                    <span>فەرهەنگی زیرەک بە یەک کلیک</span>
+                                                    <span>{feat3Text}</span>
                                                 </div>
                                             )}
                                         </div>
+
+                                        {hasTranslator && translator && (
+                                            <div style={{ fontSize: '9px', color: '#38bdf8', fontWeight: 'bold', marginTop: '2px' }}>
+                                                ✍️ وەرگێڕان: {translator}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 
@@ -899,15 +949,15 @@ ${synopsis}
                                     </div>
                                 </div>
 
-                                {/* In Story Mode: Extra showcase box */}
+                                {/* Clean Ribbon (Shown in both Post and Story, matching Image 2!) */}
+                                <div style={{ background: 'rgba(2, 6, 23, 0.7)', border: `1px solid ${currentThemeData.primary}55`, borderRadius: '10px', padding: '6px 10px', textAlign: 'center', fontSize: '9px', color: '#e2e8f0', fontWeight: 'bold' }}>
+                                    {ribbonText}
+                                </div>
+
+                                {/* In Story Mode: Sleek Story CTA Button (Clean & elegant) */}
                                 {ratio === 'story' && (
-                                    <div style={{ background: 'rgba(2, 6, 23, 0.75)', border: `1px solid ${currentThemeData.primary}55`, borderRadius: '12px', padding: '8px 10px', fontSize: '9px', color: '#cbd5e1' }}>
-                                        <div style={{ color: '#ffffff', fontWeight: 'bold', marginBottom: '4px' }}>⭐ تایبەتمەندییە ناوازەکانی ماڵپەڕ:</div>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                            <div>🚀 بینین بە کوالیتی 4K UHD بەبێ پچڕان</div>
-                                            <div>🔤 سەبتایتڵی هاوکات و فێربوونی زمان</div>
-                                            <div>📱 بە بێ ڕیکلام لە kstfilm.com</div>
-                                        </div>
+                                    <div style={{ background: 'rgba(15, 23, 42, 0.85)', border: `1.5px solid ${currentThemeData.primary}`, borderRadius: '999px', padding: '6px 12px', textAlign: 'center', fontSize: '9.5px', color: '#ffffff', fontWeight: '900', boxShadow: `0 0 10px ${currentThemeData.primary}40` }}>
+                                        {storyCtaText}
                                     </div>
                                 )}
 
