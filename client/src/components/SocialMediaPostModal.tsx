@@ -17,15 +17,15 @@ export const SocialMediaPostModal: React.FC<SocialMediaPostModalProps> = ({ movi
     
     // Editable state pre-filled from movie
     const [enTitle, setEnTitle] = useState(movie.title || 'Kingdom of the Planet of the Apes');
-    const [kuTitle, setKuTitle] = useState(movie.kurdishTitle || (movie.title === 'Kingdom of the Planet of the Apes' ? 'شانشینی هەسارەی مەيموونەکان' : movie.title));
+    const [kuTitle, setKuTitle] = useState(movie.kurdishTitle || (movie.title === 'Kingdom of the Planet of the Apes' ? 'شانشینی هەسارەی مەیموونەکان' : movie.title));
     const [year, setYear] = useState(String(movie.year || '2024'));
     const [imdb, setImdb] = useState(String(movie.imdbRating || '7.0'));
     const [cefr, setCefr] = useState(movie.level || movie.languageMetrics?.cefrLevel || 'B1');
-    const [genre, setGenre] = useState(movie.genre || 'ئاکشن - زانستی خەیاڵی');
-    const [duration, setDuration] = useState(movie.duration || '2h 25m');
+    const [genre, setGenre] = useState(movie.genre || 'ئاکشن، سەرکێشی، دراما');
+    const [duration, setDuration] = useState(movie.duration || 'min 145');
     const [synopsis, setSynopsis] = useState(
         movie.description ||
-        'ساڵانێکی زۆر دوای سەردەمی قەیسەر، مەيموونێکی گەنج دەچێتە گەشتێکەوە کە دەبێتە هۆی ئەوەی هەموو ئەو شتانەی کە فێری کراون دەربارەی ڕابردوو بخاتە ژێر پرسیارەوە و هەڵبژاردنێک بکات کە داهاتوویەک بۆ مەيموون و مرۆڤەکان دیاری بکات.'
+        'ساڵانێکی زۆر دوای سەردەمی قەیسەر، مەیموونێکی گەنج دەچێتە گەشتێکەوە کە دەبێتە هۆی ئەوەی هەموو ئەو شتانەی کە فێری کراون دەربارەی ڕابردوو بخاتە ژێر پرسیارەوە و هەڵبژاردنێک بکات کە داهاتوویەک بۆ مەیموون و مرۆڤەکان دیاری بکات.'
     );
 
     const [hasDualSrt, setHasDualSrt] = useState(true);
@@ -95,7 +95,7 @@ ${synopsis}
 🍿 ئێستا بینەری بە بە کوالیتی بەرز و بێ ڕیکلام لە ڕێگەی ماڵپەڕی فەرمی:
 🌐 https://kstfilm.com
 
-#فیلمی_کوردی #ژێرنووسی_کوردی #فێربوونی_ئینگلیزی #KSTFilm #KurdishStream #${enTitle.replace(/\\s+/g, '_')}`;
+#فیلمی_کوردی #ژێرنووسی_کوردی #فێربوونی_ئینگلیزی #KSTFilm #KurdishStream #${enTitle.replace(/\s+/g, '_')}`;
 
         navigator.clipboard.writeText(caption).then(() => {
             setCopiedCaption(true);
@@ -103,12 +103,19 @@ ${synopsis}
         });
     };
 
-    const handleDownload = () => {
+    const handleDownload = async () => {
         setIsExporting(true);
         const canvas = canvasRef.current;
         if (!canvas) {
             setIsExporting(false);
             return;
+        }
+
+        // Wait for Arabic fonts to be ready
+        try {
+            await document.fonts.ready;
+        } catch (e) {
+            // ignore
         }
 
         const width = 1080;
@@ -164,6 +171,7 @@ ${synopsis}
         height: number
     ) => {
         const { primary, darkTop, darkBottom } = currentThemeData;
+        const isStory = ratio === 'story';
 
         // 1. Radial Background
         const bgGrad = ctx.createRadialGradient(width * 0.8, height * 0.2, 50, width * 0.5, height * 0.5, width);
@@ -183,35 +191,44 @@ ${synopsis}
 
         // Vignette Overlay
         const vigGrad = ctx.createLinearGradient(0, 0, 0, height);
-        vigGrad.addColorStop(0, 'rgba(0,0,0,0.6)');
-        vigGrad.addColorStop(0.3, 'rgba(0,0,0,0.2)');
-        vigGrad.addColorStop(0.8, 'rgba(0,0,0,0.7)');
-        vigGrad.addColorStop(1, 'rgba(0,0,0,0.95)');
+        vigGrad.addColorStop(0, 'rgba(0,0,0,0.65)');
+        vigGrad.addColorStop(0.3, 'rgba(0,0,0,0.25)');
+        vigGrad.addColorStop(0.8, 'rgba(0,0,0,0.75)');
+        vigGrad.addColorStop(1, 'rgba(0,0,0,0.96)');
         ctx.fillStyle = vigGrad;
         ctx.fillRect(0, 0, width, height);
 
-        // 2. Header Bar
+        // 2. Header Bar (RTL Balanced Layout)
         ctx.save();
+
+        // Right side: Logo + Platform Name
+        const logoBoxX = width - 120;
+        const logoBoxY = isStory ? 60 : 50;
         ctx.fillStyle = primary;
-        roundRect(ctx, 60, 50, 60, 60, 16);
+        roundRect(ctx, logoBoxX, logoBoxY, 60, 60, 16);
         ctx.fill();
         ctx.fillStyle = '#ffffff';
         ctx.font = '900 32px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('⚡', 90, 92);
+        ctx.fillText('⚡', logoBoxX + 30, logoBoxY + 42);
 
+        // Platform Name & Subtitle right next to the logo
         ctx.textAlign = 'right';
         ctx.font = '900 30px "Plus Jakarta Sans", sans-serif';
         ctx.fillStyle = '#ffffff';
-        ctx.fillText('KST FILM', 420, 80);
+        ctx.fillText('KST FILM', logoBoxX - 16, logoBoxY + 30);
 
-        ctx.font = 'bold 20px "Noto Sans Arabic", sans-serif';
+        ctx.font = 'bold 18px "Noto Sans Arabic", sans-serif';
         ctx.fillStyle = primary;
-        ctx.fillText('ئێستا بەردەستە لە وێبسایت بە کوالیتی بەرز', 420, 110);
+        ctx.fillText('ئێستا بەردەستە لە وێبسایت بە کوالیتی بەرز', logoBoxX - 16, logoBoxY + 54);
 
-        // Website Pill
+        // Left side: Website Pill
+        const pillX = 60;
+        const pillY = isStory ? 65 : 55;
+        const pillW = 230;
+        const pillH = 50;
         ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
-        roundRect(ctx, width - 340, 55, 280, 50, 25);
+        roundRect(ctx, pillX, pillY, pillW, pillH, 25);
         ctx.fill();
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
         ctx.lineWidth = 1.5;
@@ -219,22 +236,23 @@ ${synopsis}
 
         ctx.textAlign = 'center';
         ctx.fillStyle = '#ffffff';
-        ctx.font = '800 22px "Plus Jakarta Sans", sans-serif';
-        ctx.fillText('🌐 kstfilm.com', width - 200, 88);
+        ctx.font = '800 20px "Plus Jakarta Sans", sans-serif';
+        ctx.fillText('🌐 kstfilm.com', pillX + (pillW / 2), pillY + 32);
         ctx.restore();
 
-        // Divider
+        // Header Divider
+        const dividerY = isStory ? 145 : 135;
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
         ctx.beginPath();
-        ctx.moveTo(60, 140);
-        ctx.lineTo(width - 60, 140);
+        ctx.moveTo(60, dividerY);
+        ctx.lineTo(width - 60, dividerY);
         ctx.stroke();
 
-        // 3. Poster Card (Right side in RTL)
+        // 3. Poster Card (Left side, matching Awena Film style)
         const posterX = 60;
-        const posterY = 180;
-        const posterW = 380;
-        const posterH = 560;
+        const posterY = isStory ? 190 : 170;
+        const posterW = isStory ? 430 : 390;
+        const posterH = isStory ? 645 : 585;
 
         ctx.save();
         ctx.shadowColor = 'rgba(0,0,0,0.85)';
@@ -249,6 +267,14 @@ ${synopsis}
             ctx.fillStyle = '#1e293b';
             ctx.fillRect(posterX, posterY, posterW, posterH);
         }
+
+        // Gradient at the bottom of the poster for clean badge contrast
+        const posterGrad = ctx.createLinearGradient(0, posterY + posterH - 120, 0, posterY + posterH);
+        posterGrad.addColorStop(0, 'rgba(0,0,0,0)');
+        posterGrad.addColorStop(1, 'rgba(0,0,0,0.88)');
+        ctx.fillStyle = posterGrad;
+        ctx.fillRect(posterX, posterY + posterH - 120, posterW, 120);
+
         ctx.restore();
 
         // Poster Border
@@ -259,116 +285,161 @@ ${synopsis}
         ctx.stroke();
         ctx.restore();
 
-        // 4K Badge
+        // 4K Badge (top right of poster)
         ctx.save();
         ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
-        roundRect(ctx, posterX + posterW - 100, posterY + 16, 84, 34, 8);
+        roundRect(ctx, posterX + posterW - 96, posterY + 16, 80, 32, 8);
         ctx.fill();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
         ctx.fillStyle = '#ffffff';
-        ctx.font = '900 15px sans-serif';
+        ctx.font = '900 14px "Plus Jakarta Sans", sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('4K UHD', posterX + posterW - 58, posterY + 39);
+        ctx.fillText('4K UHD', posterX + posterW - 56, posterY + 38);
         ctx.restore();
 
-        // Level Badge bottom of poster
-        ctx.save();
-        ctx.fillStyle = '#f59e0b';
-        roundRect(ctx, posterX + 16, posterY + posterH - 56, posterW - 32, 42, 12);
-        ctx.fill();
-        ctx.fillStyle = '#0f172a';
-        ctx.font = '900 18px "Noto Sans Arabic", sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(`ئاستی زمانی ئینگلیزی: ${cefr}`, posterX + (posterW / 2), posterY + posterH - 28);
-        ctx.restore();
+        // CEFR Level Badge bottom of poster
+        if (hasCefr) {
+            ctx.save();
+            ctx.fillStyle = '#f59e0b';
+            roundRect(ctx, posterX + 16, posterY + posterH - 52, posterW - 32, 40, 10);
+            ctx.fill();
+            ctx.fillStyle = '#0f172a';
+            ctx.font = '900 17px "Noto Sans Arabic", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(`ئاستی زمانی ئینگلیزی: ${cefr}`, posterX + (posterW / 2), posterY + posterH - 26);
+            ctx.restore();
+        }
 
-        // 4. Details Section (Left side in RTL)
+        // 4. Details Section (Right side in RTL)
         const detailX = width - 60;
-        let curY = 220;
+        const detailW = (width - posterX - posterW - 90);
+        let curY = isStory ? 220 : 195;
 
         ctx.save();
         ctx.textAlign = 'right';
 
         // English Title
-        ctx.font = '900 42px "Plus Jakarta Sans", sans-serif';
+        ctx.font = isStory ? '900 44px "Plus Jakarta Sans", sans-serif' : '900 38px "Plus Jakarta Sans", sans-serif';
         ctx.fillStyle = '#ffffff';
-        wrapText(ctx, enTitle, detailX, curY, 520, 50);
-
-        curY += 105;
+        const enLines = wrapText(ctx, enTitle, detailX, curY, detailW, isStory ? 52 : 46);
+        curY += (enLines * (isStory ? 52 : 46)) + 12;
 
         // Kurdish Title
-        ctx.font = '900 36px "Noto Sans Arabic", sans-serif';
+        ctx.font = isStory ? '900 36px "Noto Sans Arabic", sans-serif' : '900 32px "Noto Sans Arabic", sans-serif';
         ctx.fillStyle = primary;
-        wrapText(ctx, kuTitle, detailX, curY, 520, 48);
+        const kuLines = wrapText(ctx, kuTitle, detailX, curY, detailW, isStory ? 48 : 44);
+        curY += (kuLines * (isStory ? 48 : 44)) + 20;
 
-        curY += 80;
-
-        // Metadata Pills
-        ctx.fillStyle = 'rgba(245, 158, 11, 0.18)';
-        roundRect(ctx, detailX - 160, curY, 160, 48, 12);
+        // Metadata Pills Row (IMDb, Year, Duration) - ALL FIXED!
+        const imdbW = 150;
+        const imdbX = detailX - imdbW;
+        ctx.fillStyle = 'rgba(245, 158, 11, 0.16)';
+        roundRect(ctx, imdbX, curY, imdbW, 46, 12);
         ctx.fill();
         ctx.strokeStyle = '#f59e0b';
         ctx.lineWidth = 1.5;
         ctx.stroke();
 
+        ctx.textAlign = 'center';
         ctx.fillStyle = '#f59e0b';
-        ctx.font = '900 22px sans-serif';
-        ctx.fillText(`★ ${imdb}`, detailX - 45, curY + 32);
-        ctx.font = 'bold 13px sans-serif';
+        ctx.font = '900 20px "Plus Jakarta Sans", sans-serif';
+        ctx.fillText(`★ ${imdb}`, imdbX + 48, curY + 30);
         ctx.fillStyle = '#cbd5e1';
-        ctx.fillText('IMDb', detailX - 120, curY + 32);
+        ctx.font = 'bold 13px "Plus Jakarta Sans", sans-serif';
+        ctx.fillText('IMDb', imdbX + 115, curY + 30);
 
         // Year Pill
+        const yearW = 110;
+        const yearX = imdbX - 14 - yearW;
         ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-        roundRect(ctx, detailX - 300, curY, 120, 48, 12);
+        roundRect(ctx, yearX, curY, yearW, 46, 12);
         ctx.fill();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        ctx.textAlign = 'center';
         ctx.fillStyle = '#ffffff';
-        ctx.font = '800 20px "Plus Jakarta Sans", sans-serif';
-        ctx.fillText(year, detailX - 225, curY + 32);
+        ctx.font = '800 19px "Plus Jakarta Sans", sans-serif';
+        ctx.fillText(year, yearX + (yearW / 2), curY + 30);
 
-        // Duration Pill
-        roundRect(ctx, detailX - 440, curY, 120, 48, 12);
+        // Duration Pill (FIXED: Solid white box removed, styled properly)
+        const durW = 120;
+        const durX = yearX - 14 - durW;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)'; // explicit fillStyle!
+        roundRect(ctx, durX, curY, durW, 46, 12);
         ctx.fill();
-        ctx.font = '800 18px "Plus Jakarta Sans", sans-serif';
-        ctx.fillText(duration, detailX - 365, curY + 32);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
 
-        curY += 85;
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '800 17px "Plus Jakarta Sans", sans-serif';
+        ctx.fillText(duration, durX + (durW / 2), curY + 30);
+
+        curY += 72;
 
         // Genre Line
-        ctx.font = 'bold 22px "Noto Sans Arabic", sans-serif';
+        ctx.textAlign = 'right';
+        ctx.font = 'bold 20px "Noto Sans Arabic", sans-serif';
         ctx.fillStyle = '#94a3b8';
         ctx.fillText(`ژانەر: ${genre}`, detailX, curY);
 
-        curY += 45;
+        curY += 36;
 
-        // Feature Superpower Badges
+        // Feature Superpower Badges (Clean RTL alignment without emoji collision)
         const features = [];
         if (hasCefr) features.push({ icon: '🎓', text: `ئاستی زمان: ${cefr} (شیکاری وردی وشەسازی)` });
         if (hasDualSrt) features.push({ icon: '🔤', text: 'سەبتایتڵی دووانەی هاوکات (ئینگلیزی + کوردی)' });
         if (hasDict) features.push({ icon: '📖', text: 'فەرهەنگی زیرەک بە یەک کلیک لەسەر وشە' });
 
+        const badgeH = isStory ? 50 : 44;
         features.forEach(f => {
-            ctx.fillStyle = 'rgba(15, 23, 42, 0.7)';
-            roundRect(ctx, detailX - 520, curY, 520, 46, 12);
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
+            roundRect(ctx, detailX - detailW, curY, detailW, badgeH, 12);
             ctx.fill();
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // Right accent strip
             ctx.fillStyle = primary;
-            roundRect(ctx, detailX - 6, curY, 6, 46, 3);
+            roundRect(ctx, detailX - 6, curY, 6, badgeH, 3);
             ctx.fill();
 
+            // Icon
+            ctx.font = '20px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(f.icon, detailX - 28, curY + (badgeH / 2) + 7);
+
+            // Kurdish Text
             ctx.fillStyle = '#f1f5f9';
-            ctx.font = 'bold 18px "Noto Sans Arabic", sans-serif';
-            ctx.fillText(`${f.icon}  ${f.text}`, detailX - 25, curY + 30);
-            curY += 56;
+            ctx.font = 'bold 17px "Noto Sans Arabic", sans-serif';
+            ctx.textAlign = 'right';
+            ctx.fillText(f.text, detailX - 54, curY + (badgeH / 2) + 6);
+
+            curY += badgeH + 10;
         });
 
         ctx.restore();
 
-        // 5. Synopsis Box at bottom
-        const synBoxY = posterY + posterH + 30;
-        const synBoxH = (height - synBoxY) - 130;
-
+        // 5. Synopsis Box (Dynamically sized, no massive void)
+        const synBoxY = posterY + posterH + 25;
+        const synBoxW = width - 120;
+        
         ctx.save();
+        ctx.font = '500 20px "Noto Sans Arabic", sans-serif';
+        // Measure synopsis height
+        const synLines = getWrappedLines(ctx, synopsis, synBoxW - 60);
+        const maxSynLines = isStory ? 5 : 4;
+        const visibleLines = synLines.slice(0, maxSynLines);
+        const synBoxH = 65 + (visibleLines.length * 36) + 20;
+
         ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-        roundRect(ctx, 60, synBoxY, width - 120, synBoxH, 20);
+        roundRect(ctx, 60, synBoxY, synBoxW, synBoxH, 20);
         ctx.fill();
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
         ctx.lineWidth = 1.5;
@@ -377,37 +448,124 @@ ${synopsis}
         ctx.textAlign = 'right';
         ctx.font = '900 22px "Noto Sans Arabic", sans-serif';
         ctx.fillStyle = primary;
-        ctx.fillText('🎬  کورتەی چیرۆک:', width - 90, synBoxY + 45);
+        ctx.fillText('🎬  کورتەی چیرۆک:', width - 90, synBoxY + 42);
 
         ctx.font = '500 20px "Noto Sans Arabic", sans-serif';
         ctx.fillStyle = '#e2e8f0';
-        wrapText(ctx, synopsis, width - 90, synBoxY + 90, width - 180, 36);
+        let lineY = synBoxY + 82;
+        visibleLines.forEach(l => {
+            ctx.fillText(l, width - 90, lineY);
+            lineY += 36;
+        });
         ctx.restore();
 
-        // 6. Bottom Brand & Social Media Bar
-        const footY = height - 85;
+        // 6. Format-Specific Middle Content (Story gets Feature Showcase, Post gets Feature Ribbon)
+        if (isStory) {
+            // Story (9:16) gets an elite Feature Showcase card filling the tall space gracefully
+            const featCardY = synBoxY + synBoxH + 25;
+            const featCardH = (height - 110) - featCardY - 20;
+
+            if (featCardH > 180) {
+                ctx.save();
+                ctx.fillStyle = 'rgba(2, 6, 23, 0.75)';
+                roundRect(ctx, 60, featCardY, synBoxW, featCardH, 22);
+                ctx.fill();
+                ctx.strokeStyle = `${primary}55`;
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                ctx.textAlign = 'right';
+                ctx.font = '900 22px "Noto Sans Arabic", sans-serif';
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText('⭐  تایبەتمەندییە ناوازەکانی ماڵپەڕی KST FILM:', width - 95, featCardY + 45);
+
+                const storyPills = [
+                    { icon: '🚀', title: 'بینینی بەرزترین کوالیتی (4K UHD & 1080p)', sub: 'پەخشی خێرا و بەبێ پچڕان بە سێرڤەری تایبەت' },
+                    { icon: '🔤', title: 'سەبتایتڵی دووانەی هاوکات لەگەڵ فەرهەنگ', sub: 'فێربوونی ئینگلیزی بە کلیک لەسەر هەر وشەیەک' },
+                    { icon: '📱', title: 'گونجاو بۆ مۆبایل، کۆمپیوتەر و تەلەفزیۆن', sub: 'بە بێ هیچ ڕیکلامێکی بێزارکەر بە خۆڕایی' },
+                ];
+
+                let pillTop = featCardY + 75;
+                const pillItemH = Math.min(68, (featCardH - 145) / 3);
+
+                storyPills.forEach(p => {
+                    ctx.fillStyle = 'rgba(15, 23, 42, 0.6)';
+                    roundRect(ctx, 80, pillTop, synBoxW - 40, pillItemH, 14);
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+                    ctx.stroke();
+
+                    // Icon
+                    ctx.font = '22px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(p.icon, width - 115, pillTop + (pillItemH / 2) + 8);
+
+                    // Text
+                    ctx.textAlign = 'right';
+                    ctx.font = 'bold 17px "Noto Sans Arabic", sans-serif';
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillText(p.title, width - 150, pillTop + 26);
+
+                    ctx.font = '500 14px "Noto Sans Arabic", sans-serif';
+                    ctx.fillStyle = '#94a3b8';
+                    ctx.fillText(p.sub, width - 150, pillTop + 48);
+
+                    pillTop += pillItemH + 10;
+                });
+
+                // Bottom CTA inside card
+                ctx.textAlign = 'center';
+                ctx.font = 'bold 18px "Noto Sans Arabic", sans-serif';
+                ctx.fillStyle = primary;
+                ctx.fillText('👉 بۆ بینینی ئەم فیلمە سەردانی ماڵپەڕی kstfilm.com بکەن', width / 2, featCardY + featCardH - 22);
+
+                ctx.restore();
+            }
+        } else {
+            // Post (4:5) format gets a sleek platform ribbon if space permits
+            const ribbonY = synBoxY + synBoxH + 20;
+            const ribbonH = (height - 95) - ribbonY;
+            if (ribbonH >= 60) {
+                ctx.save();
+                ctx.fillStyle = 'rgba(2, 6, 23, 0.6)';
+                roundRect(ctx, 60, ribbonY, synBoxW, Math.min(75, ribbonH), 16);
+                ctx.fill();
+                ctx.strokeStyle = `${primary}44`;
+                ctx.lineWidth = 1;
+                ctx.stroke();
+
+                ctx.textAlign = 'center';
+                ctx.font = 'bold 18px "Noto Sans Arabic", sans-serif';
+                ctx.fillStyle = '#cbd5e1';
+                ctx.fillText('🔥 تەواوی ئەم فیلمە بە کوالیتی بەرز و بێ ڕیکلام لە ماڵپەڕی کوردیش ستریم بەردەستە', width / 2, ribbonY + (Math.min(75, ribbonH) / 2) + 6);
+                ctx.restore();
+            }
+        }
+
+        // 7. Bottom Brand & Social Media Bar
+        const footY = height - (isStory ? 80 : 75);
         ctx.save();
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
-        roundRect(ctx, 60, footY, width - 120, 60, 20);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+        roundRect(ctx, 60, footY, width - 120, 54, 18);
         ctx.fill();
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
         ctx.lineWidth = 1;
         ctx.stroke();
 
         ctx.textAlign = 'right';
-        ctx.font = '900 24px "Plus Jakarta Sans", sans-serif';
+        ctx.font = '900 22px "Plus Jakarta Sans", sans-serif';
         ctx.fillStyle = '#ffffff';
-        ctx.fillText('🌐 kstfilm.com', width - 90, footY + 40);
+        ctx.fillText('🌐 kstfilm.com', width - 90, footY + 35);
 
         ctx.textAlign = 'center';
-        ctx.font = 'bold 18px "Noto Sans Arabic", sans-serif';
+        ctx.font = 'bold 17px "Noto Sans Arabic", sans-serif';
         ctx.fillStyle = '#94a3b8';
-        ctx.fillText('سەیری باشترین فیلمەکان بکە و ئینگلیزیەکەت بەهێز بکە', width / 2, footY + 38);
+        ctx.fillText('سەیری باشترین فیلمەکان بکە و ئینگلیزیەکەت بەهێز بکە', width / 2, footY + 34);
 
         ctx.textAlign = 'left';
-        ctx.font = 'bold 20px "Plus Jakarta Sans", sans-serif';
+        ctx.font = 'bold 19px "Plus Jakarta Sans", sans-serif';
         ctx.fillStyle = primary;
-        ctx.fillText('@kstfilm  📱 ✈️ 📷', 90, footY + 40);
+        ctx.fillText('@kstfilm  📱 ✈️ 📷', 90, footY + 35);
         ctx.restore();
     };
 
@@ -428,7 +586,7 @@ ${synopsis}
         ctx.lineTo(x + radius, y + height);
         ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
         ctx.lineTo(x, y + radius);
-        ctx.quadraticCurveTo(x, y, x + radius, y);
+        ctx.quadraticCurveTo(x, y + radius, x + radius, y);
         ctx.closePath();
     }
 
@@ -439,9 +597,10 @@ ${synopsis}
         y: number,
         maxWidth: number,
         lineHeight: number
-    ) {
+    ): number {
         const words = text.split(' ');
         let line = '';
+        let lineCount = 1;
         for (let n = 0; n < words.length; n++) {
             const testLine = line + words[n] + ' ';
             const metrics = ctx.measureText(testLine);
@@ -450,11 +609,37 @@ ${synopsis}
                 ctx.fillText(line, x, y);
                 line = words[n] + ' ';
                 y += lineHeight;
+                lineCount++;
             } else {
                 line = testLine;
             }
         }
         ctx.fillText(line, x, y);
+        return lineCount;
+    }
+
+    function getWrappedLines(
+        ctx: CanvasRenderingContext2D,
+        text: string,
+        maxWidth: number
+    ): string[] {
+        const words = text.split(' ');
+        const lines: string[] = [];
+        let line = '';
+        for (let n = 0; n < words.length; n++) {
+            const testLine = line + words[n] + ' ';
+            const testWidth = ctx.measureText(testLine).width;
+            if (testWidth > maxWidth && n > 0) {
+                lines.push(line.trim());
+                line = words[n] + ' ';
+            } else {
+                line = testLine;
+            }
+        }
+        if (line.trim()) {
+            lines.push(line.trim());
+        }
+        return lines;
     }
 
     return (
@@ -541,7 +726,7 @@ ${synopsis}
                             <input type="text" value={kuTitle} onChange={e => setKuTitle(e.target.value)} />
                         </div>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '8px' }}>
                             <div className="social-input-group">
                                 <label>ساڵ:</label>
                                 <input type="text" value={year} onChange={e => setYear(e.target.value)} style={{ textAlign: 'center' }} />
@@ -549,6 +734,10 @@ ${synopsis}
                             <div className="social-input-group">
                                 <label>نمرەی IMDb:</label>
                                 <input type="text" value={imdb} onChange={e => setImdb(e.target.value)} style={{ textAlign: 'center', color: '#fbbf24', fontWeight: 'bold' }} />
+                            </div>
+                            <div className="social-input-group">
+                                <label>ماوە (Duration):</label>
+                                <input type="text" value={duration} onChange={e => setDuration(e.target.value)} style={{ textAlign: 'center' }} />
                             </div>
                             <div className="social-input-group">
                                 <label>ئاستی CEFR:</label>
@@ -598,7 +787,7 @@ ${synopsis}
                             <span>پێشبینینی ڕاستەوخۆ ({ratio === 'post' ? '1080 × 1350' : '1080 × 1920'}):</span>
                         </div>
 
-                        {/* Interactive Preview Container */}
+                        {/* Interactive Preview Container (Matching Canvas 1:1) */}
                         <div
                             className={`social-preview-wrapper ${ratio === 'post' ? 'aspect-post' : 'aspect-story'}`}
                             style={{
@@ -621,71 +810,79 @@ ${synopsis}
                             />
 
                             {/* Content */}
-                            <div style={{ position: 'relative', zIndex: 1, padding: '16px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%' }}>
-                                {/* Top Header */}
+                            <div style={{ position: 'relative', zIndex: 1, padding: '16px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%', gap: '8px' }}>
+                                {/* Top Header: Right side logo, Left side website */}
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.12)', paddingBottom: '10px' }}>
+                                    {/* Left: Website pill */}
+                                    <div style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.18)', padding: '3px 10px', borderRadius: '999px', fontSize: '10.5px', fontWeight: 'bold', color: '#e2e8f0' }}>
+                                        🌐 kstfilm.com
+                                    </div>
+
+                                    {/* Right: Logo + Platform title */}
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <div style={{ textAlign: 'right' }}>
+                                            <div style={{ fontSize: '13px', fontWeight: '900', color: '#ffffff', letterSpacing: '0.5px' }}>KST FILM</div>
+                                            <div style={{ fontSize: '9px', color: currentThemeData.primary, fontWeight: '700' }}>ئێستا بەردەستە بە کوالیتی بەرز</div>
+                                        </div>
                                         <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: currentThemeData.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff', fontWeight: '900', fontSize: '14px' }}>
                                             ⚡
                                         </div>
-                                        <div>
-                                            <div style={{ fontSize: '13px', fontWeight: '900', color: '#ffffff', letterSpacing: '0.5px' }}>KST FILM</div>
-                                            <div style={{ fontSize: '9.5px', color: currentThemeData.primary, fontWeight: '700' }}>ئێستا بەردەستە بە کوالیتی بەرز</div>
-                                        </div>
-                                    </div>
-                                    <div style={{ background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.15)', padding: '3px 10px', borderRadius: '999px', fontSize: '10.5px', fontWeight: 'bold', color: '#e2e8f0' }}>
-                                        kstfilm.com
                                     </div>
                                 </div>
 
-                                {/* Main Row: Poster + Info */}
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.3fr', gap: '12px', alignItems: 'center', margin: '10px 0' }}>
-                                    {/* Poster Card */}
+                                {/* Main Row: Poster on LEFT, Info on RIGHT (LTR grid container to match Canvas) */}
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.35fr', gap: '12px', alignItems: 'center', direction: 'ltr' }}>
+                                    {/* Poster Card (Left) */}
                                     <div style={{ position: 'relative', borderRadius: '14px', overflow: 'hidden', border: '1.5px solid rgba(255, 255, 255, 0.25)', boxShadow: '0 10px 25px rgba(0,0,0,0.8)' }}>
                                         <img src={posterUrl} alt="Poster" style={{ width: '100%', aspectRatio: '2/3', objectFit: 'cover', display: 'block' }} />
-                                        <div style={{ position: 'absolute', top: '6px', right: '6px', background: 'rgba(0,0,0,0.8)', fontSize: '8.5px', color: '#ffffff', padding: '2px 5px', borderRadius: '4px', fontWeight: '900' }}>
+                                        <div style={{ position: 'absolute', top: '6px', right: '6px', background: 'rgba(0,0,0,0.85)', fontSize: '8px', color: '#ffffff', padding: '2px 5px', borderRadius: '4px', fontWeight: '900', border: '1px solid rgba(255,255,255,0.2)' }}>
                                             4K UHD
                                         </div>
-                                        <div style={{ position: 'absolute', bottom: '6px', left: '6px', right: '6px', background: '#f59e0b', color: '#0f172a', fontSize: '9px', fontWeight: '900', textAlign: 'center', padding: '2px 0', borderRadius: '6px' }}>
-                                            ئاستی زمان: {cefr}
-                                        </div>
+                                        {hasCefr && (
+                                            <div style={{ position: 'absolute', bottom: '6px', left: '6px', right: '6px', background: '#f59e0b', color: '#0f172a', fontSize: '9px', fontWeight: '900', textAlign: 'center', padding: '2px 0', borderRadius: '6px' }}>
+                                                ئاستی زمان: {cefr}
+                                            </div>
+                                        )}
                                     </div>
 
-                                    {/* Info */}
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', textAlign: 'right' }}>
-                                        <div style={{ fontSize: '13px', fontWeight: '900', color: '#ffffff', lineHeight: '1.2' }}>{enTitle}</div>
+                                    {/* Info (Right, with RTL text) */}
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', textAlign: 'right', direction: 'rtl' }}>
+                                        <div style={{ fontSize: '13px', fontWeight: '900', color: '#ffffff', lineHeight: '1.2' }} dir="ltr">{enTitle}</div>
                                         <div style={{ fontSize: '12px', fontWeight: '900', color: currentThemeData.primary }}>{kuTitle}</div>
 
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', marginTop: '2px' }}>
-                                            <span style={{ background: 'rgba(245, 158, 11, 0.2)', border: '1px solid #f59e0b', color: '#fbbf24', fontSize: '9.5px', padding: '1px 6px', borderRadius: '6px', fontWeight: 'bold' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap', marginTop: '2px' }}>
+                                            <span style={{ background: 'rgba(245, 158, 11, 0.2)', border: '1px solid #f59e0b', color: '#fbbf24', fontSize: '9px', padding: '1px 5px', borderRadius: '5px', fontWeight: 'bold' }}>
                                                 ★ {imdb}
                                             </span>
-                                            <span style={{ background: 'rgba(255, 255, 255, 0.1)', color: '#ffffff', fontSize: '9.5px', padding: '1px 6px', borderRadius: '6px', fontWeight: 'bold' }}>
+                                            <span style={{ background: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255,255,255,0.15)', color: '#ffffff', fontSize: '9px', padding: '1px 5px', borderRadius: '5px', fontWeight: 'bold' }}>
                                                 {year}
                                             </span>
-                                            <span style={{ background: 'rgba(255, 255, 255, 0.1)', color: '#ffffff', fontSize: '9.5px', padding: '1px 6px', borderRadius: '6px', fontWeight: 'bold' }}>
+                                            <span style={{ background: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255,255,255,0.15)', color: '#ffffff', fontSize: '9px', padding: '1px 5px', borderRadius: '5px', fontWeight: 'bold' }}>
                                                 {duration}
                                             </span>
                                         </div>
 
-                                        <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: '600' }}>
+                                        <div style={{ fontSize: '9.5px', color: '#94a3b8', fontWeight: '600' }}>
                                             ژانەر: {genre}
                                         </div>
 
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '3px' }}>
                                             {hasCefr && (
-                                                <div style={{ background: 'rgba(245, 158, 11, 0.15)', borderRight: '2px solid #f59e0b', padding: '2px 6px', borderRadius: '4px', fontSize: '9.5px', color: '#fbbf24', fontWeight: 'bold' }}>
-                                                    🎓 ئاستی زمان: {cefr}
+                                                <div style={{ background: 'rgba(15, 23, 42, 0.75)', borderRight: `3px solid ${currentThemeData.primary}`, padding: '2px 6px', borderRadius: '4px', fontSize: '8.5px', color: '#f1f5f9', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                    <span>🎓</span>
+                                                    <span>ئاستی زمان: {cefr}</span>
                                                 </div>
                                             )}
                                             {hasDualSrt && (
-                                                <div style={{ background: 'rgba(16, 185, 129, 0.15)', borderRight: '2px solid #10b981', padding: '2px 6px', borderRadius: '4px', fontSize: '9.5px', color: '#34d399', fontWeight: 'bold' }}>
-                                                    🔤 سەبتایتڵی دووانەی هاوکات
+                                                <div style={{ background: 'rgba(15, 23, 42, 0.75)', borderRight: `3px solid ${currentThemeData.primary}`, padding: '2px 6px', borderRadius: '4px', fontSize: '8.5px', color: '#f1f5f9', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                    <span>🔤</span>
+                                                    <span>سەبتایتڵی دووانەی هاوکات</span>
                                                 </div>
                                             )}
                                             {hasDict && (
-                                                <div style={{ background: 'rgba(6, 182, 212, 0.15)', borderRight: '2px solid #06b6d4', padding: '2px 6px', borderRadius: '4px', fontSize: '9.5px', color: '#22d3ee', fontWeight: 'bold' }}>
-                                                    📖 فەرهەنگی زیرەکی وشەکان
+                                                <div style={{ background: 'rgba(15, 23, 42, 0.75)', borderRight: `3px solid ${currentThemeData.primary}`, padding: '2px 6px', borderRadius: '4px', fontSize: '8.5px', color: '#f1f5f9', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                    <span>📖</span>
+                                                    <span>فەرهەنگی زیرەک بە یەک کلیک</span>
                                                 </div>
                                             )}
                                         </div>
@@ -693,17 +890,29 @@ ${synopsis}
                                 </div>
 
                                 {/* Synopsis Card */}
-                                <div style={{ background: 'rgba(15, 23, 42, 0.75)', border: '1px solid rgba(255, 255, 255, 0.12)', borderRadius: '12px', padding: '8px 12px', fontSize: '10px', color: '#e2e8f0', lineHeight: '1.4' }}>
+                                <div style={{ background: 'rgba(15, 23, 42, 0.85)', border: '1px solid rgba(255, 255, 255, 0.12)', borderRadius: '12px', padding: '8px 12px', fontSize: '10px', color: '#e2e8f0', lineHeight: '1.4' }}>
                                     <div style={{ color: currentThemeData.primary, fontWeight: 'bold', marginBottom: '2px', fontSize: '10px' }}>
                                         🎬 کورتەی چیرۆک:
                                     </div>
-                                    <div style={{ overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>
+                                    <div style={{ overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: ratio === 'story' ? 4 : 3, WebkitBoxOrient: 'vertical' }}>
                                         {synopsis}
                                     </div>
                                 </div>
 
+                                {/* In Story Mode: Extra showcase box */}
+                                {ratio === 'story' && (
+                                    <div style={{ background: 'rgba(2, 6, 23, 0.75)', border: `1px solid ${currentThemeData.primary}55`, borderRadius: '12px', padding: '8px 10px', fontSize: '9px', color: '#cbd5e1' }}>
+                                        <div style={{ color: '#ffffff', fontWeight: 'bold', marginBottom: '4px' }}>⭐ تایبەتمەندییە ناوازەکانی ماڵپەڕ:</div>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                            <div>🚀 بینین بە کوالیتی 4K UHD بەبێ پچڕان</div>
+                                            <div>🔤 سەبتایتڵی هاوکات و فێربوونی زمان</div>
+                                            <div>📱 بە بێ ڕیکلام لە kstfilm.com</div>
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* Footer Bar */}
-                                <div style={{ background: 'rgba(0, 0, 0, 0.7)', border: '1px solid rgba(255, 255, 255, 0.12)', borderRadius: '12px', padding: '6px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '10px', marginTop: '6px' }}>
+                                <div style={{ background: 'rgba(0, 0, 0, 0.85)', border: '1px solid rgba(255, 255, 255, 0.12)', borderRadius: '12px', padding: '6px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '10px' }}>
                                     <span style={{ color: '#ffffff', fontWeight: 'bold' }}>🌐 kstfilm.com</span>
                                     <span style={{ color: currentThemeData.primary, fontWeight: 'bold' }}>@kstfilm 📱 ✈️ 📷</span>
                                 </div>
