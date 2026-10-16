@@ -230,6 +230,143 @@
     box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
 }
 
+/* ==========================================================================
+   Showcase Items Manager (Sleek Dark Theme)
+   ========================================================================== */
+.social-showcase-box {
+    background: #060b17;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.social-showcase-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.social-showcase-add-btn {
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid #10b981;
+    color: #34d399;
+    font-size: 11.5px;
+    font-weight: 700;
+    border-radius: 999px;
+    padding: 4px 12px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.social-showcase-add-btn:hover {
+    background: #10b981;
+    color: #ffffff;
+    box-shadow: 0 0 14px rgba(16, 185, 129, 0.4);
+}
+
+.social-showcase-card {
+    background: #0a1122;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s;
+}
+
+.social-showcase-card:hover {
+    border-color: rgba(255, 255, 255, 0.18);
+    background: #0e172e;
+}
+
+.social-showcase-icon-input {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: #03060f;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: #ffffff;
+    font-size: 18px;
+    text-align: center;
+    outline: none;
+    flex-shrink: 0;
+    transition: all 0.2s;
+}
+
+.social-showcase-icon-input:focus {
+    border-color: #10b981;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+.social-showcase-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+}
+
+.social-showcase-title-input {
+    background: #03060f;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 6px 10px;
+    color: #ffffff;
+    font-size: 12.5px;
+    font-weight: 700;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.social-showcase-title-input:focus {
+    border-color: #10b981;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+.social-showcase-sub-input {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+    padding: 4px 10px;
+    color: #94a3b8;
+    font-size: 11px;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.social-showcase-sub-input:focus {
+    border-color: #38bdf8;
+    color: #ffffff;
+    background: #03060f;
+}
+
+.social-showcase-del-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    color: #f87171;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s;
+}
+
+.social-showcase-del-btn:hover {
+    background: #ef4444;
+    color: #ffffff;
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+}
+
 /* Preview Column */
 .social-preview-col {
     display: flex;

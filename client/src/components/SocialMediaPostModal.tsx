@@ -38,7 +38,8 @@ export const SocialMediaPostModal: React.FC<SocialMediaPostModalProps> = ({ movi
     const [feat2Text, setFeat2Text] = useState('سەبتایتڵی دووانەی هاوکات (ئینگلیزی + کوردی)');
     const [feat3Text, setFeat3Text] = useState('فەرهەنگی زیرەک بە یەک کلیک لەسەر وشە');
     
-    // Story Showcase Card (Dynamic Items: 3, 4, 5, 6 sentences)
+    // Showcase Card (Dynamic Items: 2, 3, 4, 5, 6 sentences) - available for BOTH Post & Story!
+    const [showShowcase, setShowShowcase] = useState(true);
     const defaultShowcasePills: ShowcaseItem[] = [
         { icon: '🚀', title: 'بینینی بەرزترین کوالیتی (4K UHD & 1080p)', sub: 'پەخشی خێرا و بەبێ پچڕان بە سێرڤەری تایبەت' },
         { icon: '🔤', title: 'سەبتایتڵی دووانەی هاوکات لەگەڵ فەرهەنگ', sub: 'فێربوونی ئینگلیزی بە کلیک لەسەر هەر وشەیەک' },
@@ -299,9 +300,9 @@ ${synopsis}
 
         // 3. Poster Card (Left side)
         const posterX = 60;
-        const posterY = isStory ? 195 : 170;
-        const posterW = isStory ? 430 : 390;
-        const posterH = isStory ? 645 : 585;
+        const posterY = isStory ? 195 : 160;
+        const posterW = isStory ? 430 : 370;
+        const posterH = isStory ? 645 : 540;
 
         ctx.save();
         ctx.shadowColor = 'rgba(0,0,0,0.85)';
@@ -365,22 +366,22 @@ ${synopsis}
         // 4. Details Section (Right side in RTL)
         const detailX = width - 60;
         const detailW = (width - posterX - posterW - 90);
-        let curY = isStory ? 220 : 195;
+        let curY = isStory ? 220 : 185;
 
         ctx.save();
         ctx.textAlign = 'right';
 
         // English Title
-        ctx.font = isStory ? '900 44px "Plus Jakarta Sans", sans-serif' : '900 38px "Plus Jakarta Sans", sans-serif';
+        ctx.font = isStory ? '900 44px "Plus Jakarta Sans", sans-serif' : '900 36px "Plus Jakarta Sans", sans-serif';
         ctx.fillStyle = '#ffffff';
-        const enLines = wrapText(ctx, enTitle, detailX, curY, detailW, isStory ? 52 : 46);
-        curY += (enLines * (isStory ? 52 : 46)) + 12;
+        const enLines = wrapText(ctx, enTitle, detailX, curY, detailW, isStory ? 52 : 44);
+        curY += (enLines * (isStory ? 52 : 44)) + 10;
 
         // Kurdish Title
-        ctx.font = isStory ? '900 36px "Noto Sans Arabic", sans-serif' : '900 32px "Noto Sans Arabic", sans-serif';
+        ctx.font = isStory ? '900 36px "Noto Sans Arabic", sans-serif' : '900 30px "Noto Sans Arabic", sans-serif';
         ctx.fillStyle = primary;
-        const kuLines = wrapText(ctx, kuTitle, detailX, curY, detailW, isStory ? 48 : 44);
-        curY += (kuLines * (isStory ? 48 : 44)) + 20;
+        const kuLines = wrapText(ctx, kuTitle, detailX, curY, detailW, isStory ? 48 : 42);
+        curY += (kuLines * (isStory ? 48 : 42)) + 16;
 
         // Metadata Pills Row (IMDb, Year, Duration)
         const imdbW = 150;
@@ -430,15 +431,15 @@ ${synopsis}
         ctx.font = '800 17px "Plus Jakarta Sans", sans-serif';
         ctx.fillText(duration, durX + (durW / 2), curY + 30);
 
-        curY += 72;
+        curY += 68;
 
         // Genre Line
         ctx.textAlign = 'right';
-        ctx.font = 'bold 20px "Noto Sans Arabic", sans-serif';
+        ctx.font = 'bold 19px "Noto Sans Arabic", sans-serif';
         ctx.fillStyle = '#94a3b8';
         ctx.fillText(`ژانەر: ${genre}`, detailX, curY);
 
-        curY += 36;
+        curY += 34;
 
         // Feature Superpower Badges (Custom user editable texts)
         const features = [];
@@ -446,7 +447,7 @@ ${synopsis}
         if (hasDualSrt && feat2Text) features.push({ icon: '🔤', text: feat2Text });
         if (hasDict && feat3Text) features.push({ icon: '📖', text: feat3Text });
 
-        const badgeH = isStory ? 50 : 44;
+        const badgeH = isStory ? 50 : 42;
         features.forEach(f => {
             ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
             roundRect(ctx, detailX - detailW, curY, detailW, badgeH, 12);
@@ -467,11 +468,11 @@ ${synopsis}
 
             // Kurdish Text
             ctx.fillStyle = '#f1f5f9';
-            ctx.font = 'bold 17px "Noto Sans Arabic", sans-serif';
+            ctx.font = isStory ? 'bold 17px "Noto Sans Arabic", sans-serif' : 'bold 15px "Noto Sans Arabic", sans-serif';
             ctx.textAlign = 'right';
             ctx.fillText(f.text, detailX - 54, curY + (badgeH / 2) + 6);
 
-            curY += badgeH + 10;
+            curY += badgeH + 8;
         });
 
         // Translator info line if provided
@@ -479,21 +480,21 @@ ${synopsis}
             ctx.fillStyle = '#38bdf8';
             ctx.font = 'bold 16px "Noto Sans Arabic", sans-serif';
             ctx.textAlign = 'right';
-            ctx.fillText(`✍️ وەرگێڕان: ${translator}`, detailX, curY + 14);
+            ctx.fillText(`✍️ وەرگێڕان: ${translator}`, detailX, curY + 12);
         }
 
         ctx.restore();
 
         // 5. Synopsis Box (Dynamically sized, clean & comfortable)
-        const synBoxY = posterY + posterH + 25;
+        const synBoxY = posterY + posterH + 20;
         const synBoxW = width - 120;
         
         ctx.save();
         ctx.font = '500 20px "Noto Sans Arabic", sans-serif';
         const synLines = getWrappedLines(ctx, synopsis, synBoxW - 60);
-        const maxSynLines = isStory ? 5 : 4;
+        const maxSynLines = isStory ? 5 : 3;
         const visibleLines = synLines.slice(0, maxSynLines);
-        const synBoxH = 65 + (visibleLines.length * 36) + 20;
+        const synBoxH = 55 + (visibleLines.length * 34) + 16;
 
         ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
         roundRect(ctx, 60, synBoxY, synBoxW, synBoxH, 20);
@@ -503,116 +504,223 @@ ${synopsis}
         ctx.stroke();
 
         ctx.textAlign = 'right';
-        ctx.font = '900 22px "Noto Sans Arabic", sans-serif';
+        ctx.font = '900 21px "Noto Sans Arabic", sans-serif';
         ctx.fillStyle = primary;
-        ctx.fillText('🎬  کورتەی چیرۆک:', width - 90, synBoxY + 42);
+        ctx.fillText('🎬  کورتەی چیرۆک:', width - 90, synBoxY + 38);
 
-        ctx.font = '500 20px "Noto Sans Arabic", sans-serif';
+        ctx.font = '500 19px "Noto Sans Arabic", sans-serif';
         ctx.fillStyle = '#e2e8f0';
-        let lineY = synBoxY + 82;
+        let lineY = synBoxY + 74;
         visibleLines.forEach(l => {
             ctx.fillText(l, width - 90, lineY);
-            lineY += 36;
+            lineY += 34;
         });
         ctx.restore();
 
         // 6. Middle Content:
-        // In Story (9:16): DYNAMIC Showcase Box whose background strictly fits the number of items!
-        // No giant void! If 3 items -> ~270px; if 6 items -> ~480px!
+        // Available on BOTH Post & Story if showShowcase is enabled!
         if (isStory) {
-            const featCardY = synBoxY + synBoxH + 24;
-            const featCardW = synBoxW;
+            // Story (9:16)
+            if (showShowcase && showcaseItems.length > 0) {
+                const featCardY = synBoxY + synBoxH + 24;
+                const featCardW = synBoxW;
 
-            const itemH = 62;
-            const itemGap = 8;
-            const headerH = 46;
-            const bottomPad = 14;
-            // DYNAMIC HEIGHT: EXACTLY fits the number of items!
-            const featCardH = headerH + (showcaseItems.length * (itemH + itemGap)) + bottomPad;
+                const itemH = 62;
+                const itemGap = 8;
+                const headerH = 46;
+                const bottomPad = 14;
+                // DYNAMIC HEIGHT: EXACTLY fits the number of items!
+                const featCardH = headerH + (showcaseItems.length * (itemH + itemGap)) + bottomPad;
 
-            // 1. Dynamic Card Background (Strictly hugs content)
-            ctx.save();
-            ctx.fillStyle = 'rgba(2, 6, 23, 0.78)';
-            roundRect(ctx, 60, featCardY, featCardW, featCardH, 20);
-            ctx.fill();
-            ctx.strokeStyle = `${primary}55`;
-            ctx.lineWidth = 1.5;
-            ctx.stroke();
-
-            // Card Header
-            ctx.textAlign = 'right';
-            ctx.font = '900 20px "Noto Sans Arabic", sans-serif';
-            ctx.fillStyle = '#ffffff';
-            ctx.fillText(showcaseTitle, width - 95, featCardY + 34);
-
-            // Draw each item inside the card
-            let pillTop = featCardY + 48;
-            showcaseItems.forEach(p => {
-                ctx.fillStyle = 'rgba(15, 23, 42, 0.7)';
-                roundRect(ctx, 80, pillTop, featCardW - 40, itemH, 12);
+                // 1. Dynamic Card Background (Strictly hugs content)
+                ctx.save();
+                ctx.fillStyle = 'rgba(2, 6, 23, 0.78)';
+                roundRect(ctx, 60, featCardY, featCardW, featCardH, 20);
                 ctx.fill();
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
-                ctx.lineWidth = 1;
+                ctx.strokeStyle = `${primary}55`;
+                ctx.lineWidth = 1.5;
                 ctx.stroke();
 
-                // Icon (right side in RTL)
-                ctx.font = '22px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText(p.icon, width - 118, pillTop + (itemH / 2) + 8);
-
-                // Title
+                // Card Header
                 ctx.textAlign = 'right';
-                ctx.font = 'bold 16px "Noto Sans Arabic", sans-serif';
+                ctx.font = '900 20px "Noto Sans Arabic", sans-serif';
                 ctx.fillStyle = '#ffffff';
-                ctx.fillText(p.title, width - 150, pillTop + 24);
+                ctx.fillText(showcaseTitle, width - 95, featCardY + 34);
 
-                // Subtitle
-                ctx.font = '500 13px "Noto Sans Arabic", sans-serif';
-                ctx.fillStyle = '#94a3b8';
-                ctx.fillText(p.sub, width - 150, pillTop + 47);
+                // Draw each item inside the card
+                let pillTop = featCardY + 48;
+                showcaseItems.forEach(p => {
+                    ctx.fillStyle = 'rgba(15, 23, 42, 0.7)';
+                    roundRect(ctx, 80, pillTop, featCardW - 40, itemH, 12);
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
 
-                pillTop += itemH + itemGap;
-            });
-            ctx.restore();
+                    // Icon (right side in RTL)
+                    ctx.font = '22px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(p.icon, width - 118, pillTop + (itemH / 2) + 8);
 
-            // 2. Below the dynamic box: Story CTA Button
-            const ctaY = featCardY + featCardH + 18;
-            const ctaH = 68;
-            ctx.save();
-            ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-            roundRect(ctx, 100, ctaY, width - 200, ctaH, 34);
-            ctx.fill();
-            ctx.strokeStyle = primary;
-            ctx.lineWidth = 2;
-            ctx.stroke();
+                    // Title
+                    ctx.textAlign = 'right';
+                    ctx.font = 'bold 16px "Noto Sans Arabic", sans-serif';
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillText(p.title, width - 150, pillTop + 24);
 
-            ctx.shadowColor = primary;
-            ctx.shadowBlur = 12;
+                    // Subtitle
+                    ctx.font = '500 13px "Noto Sans Arabic", sans-serif';
+                    ctx.fillStyle = '#94a3b8';
+                    ctx.fillText(p.sub, width - 150, pillTop + 47);
 
-            ctx.textAlign = 'center';
-            ctx.font = '900 21px "Noto Sans Arabic", sans-serif';
-            ctx.fillStyle = '#ffffff';
-            ctx.fillText(storyCtaText, width / 2, ctaY + 42);
-            ctx.restore();
+                    pillTop += itemH + itemGap;
+                });
+                ctx.restore();
+
+                // 2. Below the dynamic box: Story CTA Button
+                const ctaY = featCardY + featCardH + 18;
+                const ctaH = 68;
+                ctx.save();
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+                roundRect(ctx, 100, ctaY, width - 200, ctaH, 34);
+                ctx.fill();
+                ctx.strokeStyle = primary;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                ctx.shadowColor = primary;
+                ctx.shadowBlur = 12;
+
+                ctx.textAlign = 'center';
+                ctx.font = '900 21px "Noto Sans Arabic", sans-serif';
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText(storyCtaText, width / 2, ctaY + 42);
+                ctx.restore();
+            } else {
+                // If showcase disabled, show sleek ribbon + CTA
+                const ribbonY = synBoxY + synBoxH + 35;
+                ctx.save();
+                ctx.fillStyle = 'rgba(2, 6, 23, 0.7)';
+                roundRect(ctx, 60, ribbonY, synBoxW, 75, 18);
+                ctx.fill();
+                ctx.strokeStyle = `${primary}55`;
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                ctx.textAlign = 'center';
+                ctx.font = 'bold 20px "Noto Sans Arabic", sans-serif';
+                ctx.fillStyle = '#e2e8f0';
+                ctx.fillText(ribbonText, width / 2, ribbonY + 44);
+                ctx.restore();
+
+                const ctaY = ribbonY + 75 + 25;
+                ctx.save();
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+                roundRect(ctx, 120, ctaY, width - 240, 75, 38);
+                ctx.fill();
+                ctx.strokeStyle = primary;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.textAlign = 'center';
+                ctx.font = '900 22px "Noto Sans Arabic", sans-serif';
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText(storyCtaText, width / 2, ctaY + 45);
+                ctx.restore();
+            }
 
         } else {
-            // Post (4:5) format - Sleek glowing ribbon as seen in Image 2
-            const ribbonY = synBoxY + synBoxH + 20;
-            const ribbonH = (height - 95) - ribbonY;
-            if (ribbonH >= 55) {
+            // Post (4:5) format - Now ALSO supports the exact same Showcase Card feature!
+            if (showShowcase && showcaseItems.length > 0) {
+                const featCardY = synBoxY + synBoxH + 16;
+                const featCardW = synBoxW;
+
+                const itemH = 46;
+                const itemGap = 6;
+                const headerH = 34;
+                const bottomPad = 10;
+                // Compact dynamic height for 4:5
+                const featCardH = headerH + (showcaseItems.length * (itemH + itemGap)) + bottomPad;
+
                 ctx.save();
-                ctx.fillStyle = 'rgba(2, 6, 23, 0.65)';
-                roundRect(ctx, 60, ribbonY, synBoxW, Math.min(75, ribbonH), 16);
+                ctx.fillStyle = 'rgba(2, 6, 23, 0.8)';
+                roundRect(ctx, 60, featCardY, featCardW, featCardH, 16);
                 ctx.fill();
-                ctx.strokeStyle = `${primary}44`;
-                ctx.lineWidth = 1;
+                ctx.strokeStyle = `${primary}55`;
+                ctx.lineWidth = 1.2;
                 ctx.stroke();
 
-                ctx.textAlign = 'center';
-                ctx.font = 'bold 18px "Noto Sans Arabic", sans-serif';
-                ctx.fillStyle = '#cbd5e1';
-                ctx.fillText(ribbonText, width / 2, ribbonY + (Math.min(75, ribbonH) / 2) + 6);
+                // Card Header
+                ctx.textAlign = 'right';
+                ctx.font = '900 17px "Noto Sans Arabic", sans-serif';
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText(showcaseTitle, width - 90, featCardY + 24);
+
+                let pillTop = featCardY + 36;
+                showcaseItems.forEach(p => {
+                    ctx.fillStyle = 'rgba(15, 23, 42, 0.7)';
+                    roundRect(ctx, 80, pillTop, featCardW - 40, itemH, 10);
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+
+                    // Icon
+                    ctx.font = '18px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(p.icon, width - 114, pillTop + (itemH / 2) + 6);
+
+                    // Title
+                    ctx.textAlign = 'right';
+                    ctx.font = 'bold 14px "Noto Sans Arabic", sans-serif';
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillText(p.title, width - 145, pillTop + 19);
+
+                    // Subtitle
+                    ctx.font = '500 11.5px "Noto Sans Arabic", sans-serif';
+                    ctx.fillStyle = '#94a3b8';
+                    ctx.fillText(p.sub, width - 145, pillTop + 37);
+
+                    pillTop += itemH + itemGap;
+                });
                 ctx.restore();
+
+                // Ribbon below it if space permits
+                const ribbonY = featCardY + featCardH + 12;
+                const ribbonH = (height - 85) - ribbonY;
+                if (ribbonH >= 42) {
+                    ctx.save();
+                    ctx.fillStyle = 'rgba(2, 6, 23, 0.65)';
+                    roundRect(ctx, 60, ribbonY, synBoxW, Math.min(52, ribbonH), 12);
+                    ctx.fill();
+                    ctx.strokeStyle = `${primary}44`;
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+
+                    ctx.textAlign = 'center';
+                    ctx.font = 'bold 16px "Noto Sans Arabic", sans-serif';
+                    ctx.fillStyle = '#cbd5e1';
+                    ctx.fillText(ribbonText, width / 2, ribbonY + (Math.min(52, ribbonH) / 2) + 5);
+                    ctx.restore();
+                }
+            } else {
+                // If showcase disabled, show standard ribbon
+                const ribbonY = synBoxY + synBoxH + 20;
+                const ribbonH = (height - 95) - ribbonY;
+                if (ribbonH >= 55) {
+                    ctx.save();
+                    ctx.fillStyle = 'rgba(2, 6, 23, 0.65)';
+                    roundRect(ctx, 60, ribbonY, synBoxW, Math.min(75, ribbonH), 16);
+                    ctx.fill();
+                    ctx.strokeStyle = `${primary}44`;
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+
+                    ctx.textAlign = 'center';
+                    ctx.font = 'bold 18px "Noto Sans Arabic", sans-serif';
+                    ctx.fillStyle = '#cbd5e1';
+                    ctx.fillText(ribbonText, width / 2, ribbonY + (Math.min(75, ribbonH) / 2) + 6);
+                    ctx.restore();
+                }
             }
         }
 
@@ -878,72 +986,95 @@ ${synopsis}
                             <input type="text" value={ribbonText} onChange={e => setRibbonText(e.target.value)} />
                         </div>
 
-                        {/* Story Mode: Dynamic Showcase Items Manager */}
-                        {ratio === 'story' && (
-                            <div style={{ background: 'rgba(2, 6, 23, 0.6)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '14px', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                    <div className="social-section-title" style={{ margin: 0 }}>کارتی تایبەتمەندییەکانی ستۆری (Showcase):</div>
+                        {/* Showcase Items Manager (Sleek Dark Theme) - Available for BOTH Post & Story! */}
+                        <div className="social-showcase-box">
+                            <div className="social-showcase-header">
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={showShowcase}
+                                        onChange={e => setShowShowcase(e.target.checked)}
+                                    />
+                                    <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#f1f5f9' }}>
+                                        کارتی تایبەتمەندییەکان (Showcase Card):
+                                    </span>
+                                </label>
+                                {showShowcase && (
                                     <button
                                         type="button"
                                         onClick={addShowcaseItem}
-                                        style={{ background: 'rgba(16, 185, 129, 0.2)', border: '1px solid #10b981', color: '#34d399', fontSize: '11px', fontWeight: 'bold', borderRadius: '8px', padding: '4px 9px', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}
+                                        className="social-showcase-add-btn"
                                     >
                                         <Plus size={13} />
                                         <span>+ زیادکردنی خاڵ</span>
                                     </button>
-                                </div>
+                                )}
+                            </div>
 
-                                <div className="social-input-group">
-                                    <label>سەردێڕی کارتەکە:</label>
-                                    <input type="text" value={showcaseTitle} onChange={e => setShowcaseTitle(e.target.value)} />
-                                </div>
+                            {showShowcase && (
+                                <>
+                                    <div className="social-input-group">
+                                        <label>سەردێڕی کارتەکە:</label>
+                                        <input
+                                            type="text"
+                                            value={showcaseTitle}
+                                            onChange={e => setShowcaseTitle(e.target.value)}
+                                        />
+                                    </div>
 
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                    {showcaseItems.map((item, idx) => (
-                                        <div key={idx} style={{ background: 'rgba(15, 23, 42, 0.7)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '10px', padding: '8px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        {showcaseItems.map((item, idx) => (
+                                            <div key={idx} className="social-showcase-card">
                                                 <input
                                                     type="text"
                                                     value={item.icon}
                                                     onChange={e => updateShowcaseItem(idx, 'icon', e.target.value)}
-                                                    style={{ width: '42px', textAlign: 'center', fontSize: '14px', padding: '4px' }}
+                                                    className="social-showcase-icon-input"
                                                     title="ئایکۆن"
                                                 />
-                                                <input
-                                                    type="text"
-                                                    value={item.title}
-                                                    onChange={e => updateShowcaseItem(idx, 'title', e.target.value)}
-                                                    placeholder="سەردێڕی خاڵەکە"
-                                                    style={{ flex: 1, fontSize: '12px', padding: '5px 8px' }}
-                                                />
+                                                <div className="social-showcase-inputs">
+                                                    <input
+                                                        type="text"
+                                                        value={item.title}
+                                                        onChange={e => updateShowcaseItem(idx, 'title', e.target.value)}
+                                                        placeholder="سەردێڕی خاڵەکە"
+                                                        className="social-showcase-title-input"
+                                                    />
+                                                    <input
+                                                        type="text"
+                                                        value={item.sub}
+                                                        onChange={e => updateShowcaseItem(idx, 'sub', e.target.value)}
+                                                        placeholder="ڕوونکردنەوەی کورت"
+                                                        className="social-showcase-sub-input"
+                                                    />
+                                                </div>
                                                 {showcaseItems.length > 1 && (
                                                     <button
                                                         type="button"
                                                         onClick={() => removeShowcaseItem(idx)}
-                                                        style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#f87171', borderRadius: '6px', padding: '5px', cursor: 'pointer' }}
+                                                        className="social-showcase-del-btn"
                                                         title="سڕینەوەی ئەم خاڵە"
                                                     >
-                                                        <Trash2 size={13} />
+                                                        <Trash2 size={14} />
                                                     </button>
                                                 )}
                                             </div>
+                                        ))}
+                                    </div>
+
+                                    {ratio === 'story' && (
+                                        <div className="social-input-group">
+                                            <label>دەقی دوگمەی بانگەواز (Story CTA):</label>
                                             <input
                                                 type="text"
-                                                value={item.sub}
-                                                onChange={e => updateShowcaseItem(idx, 'sub', e.target.value)}
-                                                placeholder="ڕوونکردنەوەی کورت"
-                                                style={{ fontSize: '11px', padding: '4px 8px', color: '#94a3b8' }}
+                                                value={storyCtaText}
+                                                onChange={e => setStoryCtaText(e.target.value)}
                                             />
                                         </div>
-                                    ))}
-                                </div>
-
-                                <div className="social-input-group">
-                                    <label>دەقی دوگمەی خوارەوە (Story CTA):</label>
-                                    <input type="text" value={storyCtaText} onChange={e => setStoryCtaText(e.target.value)} />
-                                </div>
-                            </div>
-                        )}
+                                    )}
+                                </>
+                            )}
+                        </div>
 
                         <div className="social-input-group">
                             <label>کورتەی چیرۆک:</label>
@@ -981,9 +1112,9 @@ ${synopsis}
                             />
 
                             {/* Content */}
-                            <div style={{ position: 'relative', zIndex: 1, padding: '16px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%', gap: '8px' }}>
+                            <div style={{ position: 'relative', zIndex: 1, padding: '16px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%', gap: '7px' }}>
                                 {/* Top Header: Right side logo, Left side website */}
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.12)', paddingBottom: '10px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.12)', paddingBottom: '8px' }}>
                                     {/* Left: Website pill */}
                                     <div style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.18)', padding: '3px 10px', borderRadius: '999px', fontSize: '10.5px', fontWeight: 'bold', color: '#e2e8f0' }}>
                                         🌐 kstfilm.com
@@ -1073,24 +1204,24 @@ ${synopsis}
                                     <div style={{ color: currentThemeData.primary, fontWeight: 'bold', marginBottom: '2px', fontSize: '10px' }}>
                                         🎬 کورتەی چیرۆک:
                                     </div>
-                                    <div style={{ overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: ratio === 'story' ? 4 : 3, WebkitBoxOrient: 'vertical' }}>
+                                    <div style={{ overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: ratio === 'story' ? 4 : 2, WebkitBoxOrient: 'vertical' }}>
                                         {synopsis}
                                     </div>
                                 </div>
 
-                                {/* In Story Mode: Dynamic Showcase Box (Strictly fits items) */}
-                                {ratio === 'story' && (
-                                    <div style={{ background: 'rgba(2, 6, 23, 0.78)', border: `1.5px solid ${currentThemeData.primary}55`, borderRadius: '12px', padding: '8px 10px', fontSize: '9px', color: '#cbd5e1' }}>
-                                        <div style={{ color: '#ffffff', fontWeight: 'bold', marginBottom: '6px', fontSize: '9.5px', textAlign: 'right' }}>
+                                {/* Showcase Box (Dynamic on BOTH Post & Story when enabled) */}
+                                {showShowcase && showcaseItems.length > 0 && (
+                                    <div style={{ background: 'rgba(2, 6, 23, 0.78)', border: `1.5px solid ${currentThemeData.primary}55`, borderRadius: '12px', padding: ratio === 'story' ? '8px 10px' : '5px 8px', fontSize: '9px', color: '#cbd5e1' }}>
+                                        <div style={{ color: '#ffffff', fontWeight: 'bold', marginBottom: '4px', fontSize: ratio === 'story' ? '9.5px' : '8.5px', textAlign: 'right' }}>
                                             {showcaseTitle}
                                         </div>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                                             {showcaseItems.map((item, idx) => (
-                                                <div key={idx} style={{ background: 'rgba(15, 23, 42, 0.7)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '7px', padding: '4px 7px', display: 'flex', alignItems: 'center', gap: '6px', direction: 'rtl' }}>
-                                                    <span style={{ fontSize: '12px' }}>{item.icon}</span>
+                                                <div key={idx} style={{ background: 'rgba(15, 23, 42, 0.7)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '7px', padding: '3px 6px', display: 'flex', alignItems: 'center', gap: '6px', direction: 'rtl' }}>
+                                                    <span style={{ fontSize: ratio === 'story' ? '12px' : '11px' }}>{item.icon}</span>
                                                     <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'right', flex: 1 }}>
-                                                        <span style={{ color: '#ffffff', fontWeight: 'bold', fontSize: '8.5px' }}>{item.title}</span>
-                                                        <span style={{ color: '#94a3b8', fontSize: '7.5px' }}>{item.sub}</span>
+                                                        <span style={{ color: '#ffffff', fontWeight: 'bold', fontSize: ratio === 'story' ? '8.5px' : '8px' }}>{item.title}</span>
+                                                        <span style={{ color: '#94a3b8', fontSize: '7px' }}>{item.sub}</span>
                                                     </div>
                                                 </div>
                                             ))}
@@ -1105,9 +1236,9 @@ ${synopsis}
                                     </div>
                                 )}
 
-                                {/* In Post Mode: Clean Ribbon */}
-                                {ratio === 'post' && (
-                                    <div style={{ background: 'rgba(2, 6, 23, 0.7)', border: `1px solid ${currentThemeData.primary}55`, borderRadius: '10px', padding: '6px 10px', textAlign: 'center', fontSize: '9px', color: '#e2e8f0', fontWeight: 'bold' }}>
+                                {/* Clean Ribbon (Available on both or fallback) */}
+                                {(!showShowcase || ratio === 'post') && (
+                                    <div style={{ background: 'rgba(2, 6, 23, 0.7)', border: `1px solid ${currentThemeData.primary}55`, borderRadius: '10px', padding: '5px 10px', textAlign: 'center', fontSize: '8.5px', color: '#e2e8f0', fontWeight: 'bold' }}>
                                         {ribbonText}
                                     </div>
                                 )}
