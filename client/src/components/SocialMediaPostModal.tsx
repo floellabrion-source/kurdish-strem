@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import {
     X, Download, Copy, Check, Sparkles, Star, Calendar,
     Film, Smartphone, Palette, ShieldCheck, Share2, Globe, Loader2,
-    Type, Award, Sliders, ChevronDown, Plus, Trash2
+    Type, Award, Sliders, ChevronDown, Plus, Trash2, Layers
 } from 'lucide-react';
 import { Movie } from '../types';
 import './SocialMediaPostModal.css';
@@ -22,6 +22,28 @@ export const SocialMediaPostModal: React.FC<SocialMediaPostModalProps> = ({ movi
     const [ratio, setRatio] = useState<'post' | 'story'>('post');
     const [theme, setTheme] = useState<'emerald' | 'cyan' | 'amber' | 'crimson'>('emerald');
     
+    // Auto-detect item type: movie vs series
+    const isInitialSeries = movie.type === 'series';
+    const anyMovie = movie as any;
+    const totalSeasonsCount = movie.seasons && movie.seasons.length > 0 
+        ? movie.seasons.length 
+        : (anyMovie.totalSeasons || 1);
+    const totalEpisodesCount = movie.seasons && movie.seasons.length > 0
+        ? movie.seasons.reduce((sum, s) => sum + (s.episodes?.length || 0), 0)
+        : (anyMovie.totalEpisodes || anyMovie.episodesCount || 0);
+
+    const defaultSeasonText = isInitialSeries
+        ? (totalSeasonsCount > 1 ? `${totalSeasonsCount} وەرز` : 'وەرزی ١')
+        : 'وەرزی ١';
+
+    const defaultEpisodesText = isInitialSeries
+        ? (totalEpisodesCount > 0 ? `${totalEpisodesCount} ئەڵقە` : '٨ ئەڵقە')
+        : '٨ ئەڵقە';
+
+    const [itemType, setItemType] = useState<'movie' | 'series'>(isInitialSeries ? 'series' : 'movie');
+    const [seasonText, setSeasonText] = useState(defaultSeasonText);
+    const [episodesText, setEpisodesText] = useState(defaultEpisodesText);
+
     // Editable state pre-filled from movie
     const [enTitle, setEnTitle] = useState(movie.title || 'Kingdom of the Planet of the Apes');
     const [kuTitle, setKuTitle] = useState(movie.kurdishTitle || (movie.title === 'Kingdom of the Planet of the Apes' ? 'شانشینی هەسارەی مەیموونەکان' : movie.title));
@@ -29,7 +51,7 @@ export const SocialMediaPostModal: React.FC<SocialMediaPostModalProps> = ({ movi
     const [imdb, setImdb] = useState(String(movie.imdbRating || '7.0'));
     const [cefr, setCefr] = useState(movie.level || movie.languageMetrics?.cefrLevel || 'B1');
     const [genre, setGenre] = useState(movie.genre || 'ئاکشن، سەرکێشی، دراما');
-    const [duration, setDuration] = useState(movie.duration || 'min 145');
+    const [duration, setDuration] = useState(movie.duration || (isInitialSeries ? 'min 45' : 'min 145'));
     const [quality, setQuality] = useState('4K UHD');
     const [translator, setTranslator] = useState('تیمی کوردیش ستریم');
     
@@ -49,8 +71,16 @@ export const SocialMediaPostModal: React.FC<SocialMediaPostModalProps> = ({ movi
     const [showcaseTitle, setShowcaseTitle] = useState('⭐ تایبەتمەندییە ناوازەکانی ماڵپەڕی KST FILM:');
 
     // Slogan / Ribbon text
-    const [ribbonText, setRibbonText] = useState('🔥 تەواوی ئەم فیلمە بە کوالیتی بەرز و بێ ڕیکلام لە ماڵپەڕی کوردیش ستریم بەردەستە');
-    const [storyCtaText, setStoryCtaText] = useState('👉 بۆ بینینی ئەم فیلمە سەردانی ماڵپەڕی kstfilm.com بکەن');
+    const [ribbonText, setRibbonText] = useState(
+        isInitialSeries
+            ? '🔥 هەموو وەرز و ئەڵقەکانی ئەم زنجیرەیە بە کوالیتی بەرز و بێ ڕیکلام لە کوردیش ستریم بەردەستە'
+            : '🔥 تەواوی ئەم فیلمە بە کوالیتی بەرز و بێ ڕیکلام لە ماڵپەڕی کوردیش ستریم بەردەستە'
+    );
+    const [storyCtaText, setStoryCtaText] = useState(
+        isInitialSeries
+            ? '👉 بۆ بینینی تەواوی ئەڵقەکانی ئەم زنجیرەیە سەردانی kstfilm.com بکەن'
+            : '👉 بۆ بینینی ئەم فیلمە سەردانی ماڵپەڕی kstfilm.com بکەن'
+    );
 
     const [synopsis, setSynopsis] = useState(
         movie.description ||
@@ -133,13 +163,35 @@ export const SocialMediaPostModal: React.FC<SocialMediaPostModalProps> = ({ movi
         setFeat1Text(`ئاستی زمان: ${newCefr} (شیکاری وردی وشەسازی)`);
     };
 
-    const copyPostCaption = () => {
-        const caption = `🔥 فیلمی نوێ بە سەبتایتڵی کوردی و فێربوونی ئینگلیزی لە کوردیش ستریم:
+    const handleItemTypeChange = (newType: 'movie' | 'series') => {
+        setItemType(newType);
+        if (newType === 'series') {
+            if (!seasonText) setSeasonText(defaultSeasonText);
+            if (!episodesText) setEpisodesText(defaultEpisodesText);
+            if (ribbonText === '🔥 تەواوی ئەم فیلمە بە کوالیتی بەرز و بێ ڕیکلام لە ماڵپەڕی کوردیش ستریم بەردەستە') {
+                setRibbonText('🔥 هەموو وەرز و ئەڵقەکانی ئەم زنجیرەیە بە کوالیتی بەرز و بێ ڕیکلام لە کوردیش ستریم بەردەستە');
+            }
+            if (storyCtaText === '👉 بۆ بینینی ئەم فیلمە سەردانی ماڵپەڕی kstfilm.com بکەن') {
+                setStoryCtaText('👉 بۆ بینینی تەواوی ئەڵقەکانی ئەم زنجیرەیە سەردانی kstfilm.com بکەن');
+            }
+        } else {
+            if (ribbonText === '🔥 هەموو وەرز و ئەڵقەکانی ئەم زنجیرەیە بە کوالیتی بەرز و بێ ڕیکلام لە کوردیش ستریم بەردەستە') {
+                setRibbonText('🔥 تەواوی ئەم فیلمە بە کوالیتی بەرز و بێ ڕیکلام لە ماڵپەڕی کوردیش ستریم بەردەستە');
+            }
+            if (storyCtaText === '👉 بۆ بینینی تەواوی ئەڵقەکانی ئەم زنجیرەیە سەردانی kstfilm.com بکەن') {
+                setStoryCtaText('👉 بۆ بینینی ئەم فیلمە سەردانی ماڵپەڕی kstfilm.com بکەن');
+            }
+        }
+    };
 
-🎬 ناوی فیلم: ${kuTitle} (${enTitle})
+    const copyPostCaption = () => {
+        const isSeries = itemType === 'series';
+        const caption = `🔥 ${isSeries ? 'زنجیرەی نوێ' : 'فیلمی نوێ'} بە سەبتایتڵی کوردی و فێربوونی ئینگلیزی لە کوردیش ستریم:
+
+${isSeries ? '📺 ناوی زنجیرە' : '🎬 ناوی فیلم'}: ${kuTitle} (${enTitle})
 📅 ساڵی دەرچوون: ${year}
 ⭐ نمرەی IMDb: ${imdb}/10
-🎓 ئاستی زمانی ئینگلیزی: ${cefr}
+${isSeries && seasonText ? `🔢 وەرزەکان: ${seasonText}\n` : ''}${isSeries && episodesText ? `🎞️ ژمارەی ئەڵقەکان: ${episodesText}\n` : ''}${duration ? `⏱️ ماوە${isSeries ? 'ی هەر ئەڵقەیەک' : ''}: ${duration}\n` : ''}🎓 ئاستی زمانی ئینگلیزی: ${cefr}
 📀 کوالیتی: ${quality}
 ${hasTranslator && translator ? `✍️ وەرگێڕان: ${translator}\n` : ''}${hasDualSrt ? `🔤 ${feat2Text}\n` : ''}${hasDict ? `📖 ${feat3Text}\n` : ''}
 📝 کورتەی چیرۆک:
@@ -148,7 +200,7 @@ ${synopsis}
 🍿 ئێستا بینەری بە بە کوالیتی بەرز و بێ ڕیکلام لە ڕێگەی ماڵپەڕی فەرمی:
 🌐 https://kstfilm.com
 
-#فیلمی_کوردی #ژێرنووسی_کوردی #فێربوونی_ئینگلیزی #KSTFilm #KurdishStream #${enTitle.replace(/\s+/g, '_')}`;
+#${isSeries ? 'زنجیرەی_کوردی' : 'فیلمی_کوردی'} #ژێرنووسی_کوردی #فێربوونی_ئینگلیزی #KSTFilm #KurdishStream #${enTitle.replace(/\s+/g, '_')}`;
 
         navigator.clipboard.writeText(caption).then(() => {
             setCopiedCaption(true);
@@ -270,7 +322,7 @@ ${synopsis}
 
         ctx.font = 'bold 18px "Noto Sans Arabic", sans-serif';
         ctx.fillStyle = primary;
-        ctx.fillText('ئێستا بەردەستە لە وێبسایت بە کوالیتی بەرز', logoBoxX - 16, logoBoxY + 54);
+        ctx.fillText(itemType === 'series' ? 'تەواوی وەرز و ئەڵقەکان بە کوالیتی بەرز' : 'ئێستا بەردەستە لە وێبسایت بە کوالیتی بەرز', logoBoxX - 16, logoBoxY + 54);
 
         // Left side: Website Pill
         const pillX = 60;
@@ -350,6 +402,22 @@ ${synopsis}
             ctx.restore();
         }
 
+        // Series Badge (top left of poster)
+        if (itemType === 'series') {
+            ctx.save();
+            ctx.fillStyle = 'rgba(16, 185, 129, 0.9)';
+            roundRect(ctx, posterX + 16, posterY + 16, 100, 32, 8);
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '900 15px "Noto Sans Arabic", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('📺 زنجیرە', posterX + 66, posterY + 38);
+            ctx.restore();
+        }
+
         // CEFR Level Badge bottom of poster
         if (hasCefr) {
             ctx.save();
@@ -383,55 +451,103 @@ ${synopsis}
         const kuLines = wrapText(ctx, kuTitle, detailX, curY, detailW, isStory ? 48 : 42);
         curY += (kuLines * (isStory ? 48 : 42)) + 16;
 
-        // Metadata Pills Row (IMDb, Year, Duration)
-        const imdbW = 150;
-        const imdbX = detailX - imdbW;
-        ctx.fillStyle = 'rgba(245, 158, 11, 0.16)';
-        roundRect(ctx, imdbX, curY, imdbW, 46, 12);
-        ctx.fill();
-        ctx.strokeStyle = '#f59e0b';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
+        // Metadata Pills Row (IMDb, Year, Season, Episodes, Duration)
+        interface MetaPill {
+            text: string;
+            bg: string;
+            border: string;
+            textColor: string;
+            font: string;
+        }
 
-        ctx.textAlign = 'center';
-        ctx.fillStyle = '#f59e0b';
-        ctx.font = '900 20px "Plus Jakarta Sans", sans-serif';
-        ctx.fillText(`★ ${imdb}`, imdbX + 48, curY + 30);
-        ctx.fillStyle = '#cbd5e1';
-        ctx.font = 'bold 13px "Plus Jakarta Sans", sans-serif';
-        ctx.fillText('IMDb', imdbX + 115, curY + 30);
+        const pills: MetaPill[] = [];
 
-        // Year Pill
-        const yearW = 110;
-        const yearX = imdbX - 14 - yearW;
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-        roundRect(ctx, yearX, curY, yearW, 46, 12);
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
-        ctx.lineWidth = 1;
-        ctx.stroke();
+        if (imdb) {
+            pills.push({
+                text: `★ ${imdb} IMDb`,
+                bg: 'rgba(245, 158, 11, 0.16)',
+                border: '#f59e0b',
+                textColor: '#f59e0b',
+                font: '900 18px "Plus Jakarta Sans", sans-serif'
+            });
+        }
 
-        ctx.textAlign = 'center';
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '800 19px "Plus Jakarta Sans", sans-serif';
-        ctx.fillText(year, yearX + (yearW / 2), curY + 30);
+        if (year) {
+            pills.push({
+                text: year,
+                bg: 'rgba(255, 255, 255, 0.1)',
+                border: 'rgba(255, 255, 255, 0.18)',
+                textColor: '#ffffff',
+                font: '800 18px "Plus Jakarta Sans", sans-serif'
+            });
+        }
 
-        // Duration Pill
-        const durW = 120;
-        const durX = yearX - 14 - durW;
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-        roundRect(ctx, durX, curY, durW, 46, 12);
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
-        ctx.lineWidth = 1;
-        ctx.stroke();
+        if (itemType === 'series') {
+            if (seasonText) {
+                pills.push({
+                    text: seasonText,
+                    bg: 'rgba(56, 189, 248, 0.18)',
+                    border: '#38bdf8',
+                    textColor: '#38bdf8',
+                    font: 'bold 17px "Noto Sans Arabic", sans-serif'
+                });
+            }
+            if (episodesText) {
+                pills.push({
+                    text: episodesText,
+                    bg: 'rgba(16, 185, 129, 0.2)',
+                    border: '#10b981',
+                    textColor: '#34d399',
+                    font: 'bold 17px "Noto Sans Arabic", sans-serif'
+                });
+            }
+        }
 
-        ctx.textAlign = 'center';
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '800 17px "Plus Jakarta Sans", sans-serif';
-        ctx.fillText(duration, durX + (durW / 2), curY + 30);
+        if (duration) {
+            pills.push({
+                text: duration,
+                bg: 'rgba(255, 255, 255, 0.1)',
+                border: 'rgba(255, 255, 255, 0.18)',
+                textColor: '#ffffff',
+                font: '800 16px "Plus Jakarta Sans", sans-serif'
+            });
+        }
 
-        curY += 68;
+        let pillCurX = detailX;
+        let pillCurY = curY;
+        const pillGap = 10;
+        const metaPillH = 44;
+
+        pills.forEach(p => {
+            ctx.font = p.font;
+            const textMetrics = ctx.measureText(p.text);
+            const pillW = Math.max(textMetrics.width + 30, 75);
+
+            // Wrap to next line if overflowing detail area
+            if (pillCurX - pillW < detailX - detailW) {
+                pillCurY += metaPillH + 8;
+                pillCurX = detailX;
+            }
+
+            const pillX = pillCurX - pillW;
+
+            ctx.fillStyle = p.bg;
+            roundRect(ctx, pillX, pillCurY, pillW, metaPillH, 12);
+            ctx.fill();
+
+            ctx.strokeStyle = p.border;
+            ctx.lineWidth = 1.3;
+            ctx.stroke();
+
+            ctx.textAlign = 'center';
+            ctx.fillStyle = p.textColor;
+            ctx.font = p.font;
+            ctx.fillText(p.text, pillX + (pillW / 2), pillCurY + 28);
+
+            pillCurX = pillX - pillGap;
+        });
+
+        curY = pillCurY + metaPillH + 18;
 
         // Genre Line
         ctx.textAlign = 'right';
@@ -742,7 +858,7 @@ ${synopsis}
         ctx.textAlign = 'center';
         ctx.font = 'bold 17px "Noto Sans Arabic", sans-serif';
         ctx.fillStyle = '#94a3b8';
-        ctx.fillText('سەیری باشترین فیلمەکان بکە و ئینگلیزیەکەت بەهێز بکە', width / 2, footY + 34);
+        ctx.fillText(itemType === 'series' ? 'سەیری باشترین زنجیرەکان بکە و ئینگلیزیەکەت بەهێز بکە' : 'سەیری باشترین فیلمەکان بکە و ئینگلیزیەکەت بەهێز بکە', width / 2, footY + 34);
 
         ctx.textAlign = 'left';
         ctx.font = 'bold 19px "Plus Jakarta Sans", sans-serif';
@@ -877,6 +993,29 @@ ${synopsis}
                             </div>
                         </div>
 
+                        {/* Item Type: Movie vs Series */}
+                        <div>
+                            <div className="social-section-title">جۆری بەرهەم (Item Type):</div>
+                            <div className="social-type-toggle">
+                                <button
+                                    type="button"
+                                    className={`social-type-btn ${itemType === 'movie' ? 'active' : ''}`}
+                                    onClick={() => handleItemTypeChange('movie')}
+                                >
+                                    <Film size={15} />
+                                    <span>🎬 فیلم (Movie)</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    className={`social-type-btn ${itemType === 'series' ? 'active' : ''}`}
+                                    onClick={() => handleItemTypeChange('series')}
+                                >
+                                    <Layers size={15} />
+                                    <span>📺 زنجیرە (Series)</span>
+                                </button>
+                            </div>
+                        </div>
+
                         {/* Theme Picker */}
                         <div>
                             <div className="social-section-title">تیمی ڕەنگەکان (Theme Preset):</div>
@@ -910,24 +1049,76 @@ ${synopsis}
                             <input type="text" value={kuTitle} onChange={e => setKuTitle(e.target.value)} />
                         </div>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '8px' }}>
-                            <div className="social-input-group">
-                                <label>ساڵ:</label>
-                                <input type="text" value={year} onChange={e => setYear(e.target.value)} style={{ textAlign: 'center' }} />
+                        {itemType === 'movie' ? (
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '8px' }}>
+                                <div className="social-input-group">
+                                    <label>ساڵ:</label>
+                                    <input type="text" value={year} onChange={e => setYear(e.target.value)} style={{ textAlign: 'center' }} />
+                                </div>
+                                <div className="social-input-group">
+                                    <label>نمرەی IMDb:</label>
+                                    <input type="text" value={imdb} onChange={e => setImdb(e.target.value)} style={{ textAlign: 'center', color: '#fbbf24', fontWeight: 'bold' }} />
+                                </div>
+                                <div className="social-input-group">
+                                    <label>ماوە:</label>
+                                    <input type="text" value={duration} onChange={e => setDuration(e.target.value)} style={{ textAlign: 'center' }} />
+                                </div>
+                                <div className="social-input-group">
+                                    <label>کوالیتی:</label>
+                                    <input type="text" value={quality} onChange={e => setQuality(e.target.value)} style={{ textAlign: 'center', color: '#38bdf8', fontWeight: 'bold' }} />
+                                </div>
                             </div>
-                            <div className="social-input-group">
-                                <label>نمرەی IMDb:</label>
-                                <input type="text" value={imdb} onChange={e => setImdb(e.target.value)} style={{ textAlign: 'center', color: '#fbbf24', fontWeight: 'bold' }} />
-                            </div>
-                            <div className="social-input-group">
-                                <label>ماوە:</label>
-                                <input type="text" value={duration} onChange={e => setDuration(e.target.value)} style={{ textAlign: 'center' }} />
-                            </div>
-                            <div className="social-input-group">
-                                <label>کوالیتی:</label>
-                                <input type="text" value={quality} onChange={e => setQuality(e.target.value)} style={{ textAlign: 'center', color: '#38bdf8', fontWeight: 'bold' }} />
-                            </div>
-                        </div>
+                        ) : (
+                            <>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+                                    <div className="social-input-group">
+                                        <label>ساڵ:</label>
+                                        <input type="text" value={year} onChange={e => setYear(e.target.value)} style={{ textAlign: 'center' }} />
+                                    </div>
+                                    <div className="social-input-group">
+                                        <label>نمرەی IMDb:</label>
+                                        <input type="text" value={imdb} onChange={e => setImdb(e.target.value)} style={{ textAlign: 'center', color: '#fbbf24', fontWeight: 'bold' }} />
+                                    </div>
+                                    <div className="social-input-group">
+                                        <label>کوالیتی:</label>
+                                        <input type="text" value={quality} onChange={e => setQuality(e.target.value)} style={{ textAlign: 'center', color: '#38bdf8', fontWeight: 'bold' }} />
+                                    </div>
+                                </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1.1fr 1fr', gap: '8px', background: 'rgba(56, 189, 248, 0.08)', padding: '10px', borderRadius: '12px', border: '1px solid rgba(56, 189, 248, 0.25)' }}>
+                                    <div className="social-input-group">
+                                        <label style={{ color: '#38bdf8' }}>وەرزەکان (Seasons):</label>
+                                        <input
+                                            type="text"
+                                            value={seasonText}
+                                            onChange={e => setSeasonText(e.target.value)}
+                                            placeholder="نموونە: ٤ وەرز"
+                                            style={{ textAlign: 'center', color: '#38bdf8', fontWeight: 'bold' }}
+                                        />
+                                    </div>
+                                    <div className="social-input-group">
+                                        <label style={{ color: '#34d399' }}>ژمارەی ئەڵقەکان (Episodes):</label>
+                                        <input
+                                            type="text"
+                                            value={episodesText}
+                                            onChange={e => setEpisodesText(e.target.value)}
+                                            placeholder="نموونە: ٣٢ ئەڵقە"
+                                            style={{ textAlign: 'center', color: '#34d399', fontWeight: 'bold' }}
+                                        />
+                                    </div>
+                                    <div className="social-input-group">
+                                        <label>ماوەی هەر ئەڵقەیەک:</label>
+                                        <input
+                                            type="text"
+                                            value={duration}
+                                            onChange={e => setDuration(e.target.value)}
+                                            placeholder="min 45"
+                                            style={{ textAlign: 'center' }}
+                                        />
+                                    </div>
+                                </div>
+                            </>
+                        )}
 
                         <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '8px' }}>
                             <div className="social-input-group">
@@ -1124,7 +1315,9 @@ ${synopsis}
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                         <div style={{ textAlign: 'right' }}>
                                             <div style={{ fontSize: '13px', fontWeight: '900', color: '#ffffff', letterSpacing: '0.5px' }}>KST FILM</div>
-                                            <div style={{ fontSize: '9px', color: currentThemeData.primary, fontWeight: '700' }}>ئێستا بەردەستە بە کوالیتی بەرز</div>
+                                            <div style={{ fontSize: '9px', color: currentThemeData.primary, fontWeight: '700' }}>
+                                                {itemType === 'series' ? 'تەواوی وەرز و ئەڵقەکان بە کوالیتی بەرز' : 'ئێستا بەردەستە بە کوالیتی بەرز'}
+                                            </div>
                                         </div>
                                         <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: currentThemeData.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff', fontWeight: '900', fontSize: '14px' }}>
                                             ⚡
@@ -1142,6 +1335,12 @@ ${synopsis}
                                                 {quality}
                                             </div>
                                         )}
+                                        {itemType === 'series' && (
+                                            <div style={{ position: 'absolute', top: '6px', left: '6px', background: 'rgba(16, 185, 129, 0.9)', fontSize: '8.5px', color: '#ffffff', padding: '2px 6px', borderRadius: '4px', fontWeight: '900', border: '1px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                                                <span>📺</span>
+                                                <span>زنجیرە</span>
+                                            </div>
+                                        )}
                                         {hasCefr && (
                                             <div style={{ position: 'absolute', bottom: '6px', left: '6px', right: '6px', background: '#f59e0b', color: '#0f172a', fontSize: '9px', fontWeight: '900', textAlign: 'center', padding: '2px 0', borderRadius: '6px' }}>
                                                 ئاستی زمان: {cefr}
@@ -1155,15 +1354,31 @@ ${synopsis}
                                         <div style={{ fontSize: '12px', fontWeight: '900', color: currentThemeData.primary }}>{kuTitle}</div>
 
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap', marginTop: '2px' }}>
-                                            <span style={{ background: 'rgba(245, 158, 11, 0.2)', border: '1px solid #f59e0b', color: '#fbbf24', fontSize: '9px', padding: '1px 5px', borderRadius: '5px', fontWeight: 'bold' }}>
-                                                ★ {imdb}
-                                            </span>
-                                            <span style={{ background: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255,255,255,0.15)', color: '#ffffff', fontSize: '9px', padding: '1px 5px', borderRadius: '5px', fontWeight: 'bold' }}>
-                                                {year}
-                                            </span>
-                                            <span style={{ background: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255,255,255,0.15)', color: '#ffffff', fontSize: '9px', padding: '1px 5px', borderRadius: '5px', fontWeight: 'bold' }}>
-                                                {duration}
-                                            </span>
+                                            {imdb && (
+                                                <span style={{ background: 'rgba(245, 158, 11, 0.2)', border: '1px solid #f59e0b', color: '#fbbf24', fontSize: '9px', padding: '1px 5px', borderRadius: '5px', fontWeight: 'bold' }}>
+                                                    ★ {imdb} IMDb
+                                                </span>
+                                            )}
+                                            {year && (
+                                                <span style={{ background: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255,255,255,0.15)', color: '#ffffff', fontSize: '9px', padding: '1px 5px', borderRadius: '5px', fontWeight: 'bold' }}>
+                                                    {year}
+                                                </span>
+                                            )}
+                                            {itemType === 'series' && seasonText && (
+                                                <span style={{ background: 'rgba(56, 189, 248, 0.18)', border: '1px solid #38bdf8', color: '#38bdf8', fontSize: '9px', padding: '1px 6px', borderRadius: '5px', fontWeight: 'bold' }}>
+                                                    {seasonText}
+                                                </span>
+                                            )}
+                                            {itemType === 'series' && episodesText && (
+                                                <span style={{ background: 'rgba(16, 185, 129, 0.2)', border: '1px solid #10b981', color: '#34d399', fontSize: '9px', padding: '1px 6px', borderRadius: '5px', fontWeight: 'bold' }}>
+                                                    {episodesText}
+                                                </span>
+                                            )}
+                                            {duration && (
+                                                <span style={{ background: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255,255,255,0.15)', color: '#ffffff', fontSize: '9px', padding: '1px 5px', borderRadius: '5px', fontWeight: 'bold' }}>
+                                                    {duration}
+                                                </span>
+                                            )}
                                         </div>
 
                                         <div style={{ fontSize: '9.5px', color: '#94a3b8', fontWeight: '600' }}>
