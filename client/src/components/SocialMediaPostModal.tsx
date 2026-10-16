@@ -54,7 +54,7 @@ export const SocialMediaPostModal: React.FC<SocialMediaPostModalProps> = ({ movi
     const [genre, setGenre] = useState(movie.genre || 'ئاکشن، سەرکێشی، دراما');
     const [duration, setDuration] = useState(movie.duration || (isInitialSeries ? 'min 45' : 'min 145'));
     const [quality, setQuality] = useState('4K UHD');
-    const [translator, setTranslator] = useState('تیمی کوردیش ستریم');
+    const [translator, setTranslator] = useState('تیمی KST FILM');
     
     // Custom feature textboxes
     const [feat1Text, setFeat1Text] = useState(`ئاستی زمان: ${cefr} (شیکاری وردی وشەسازی)`);
@@ -74,8 +74,8 @@ export const SocialMediaPostModal: React.FC<SocialMediaPostModalProps> = ({ movi
     // Slogan / Ribbon text
     const [ribbonText, setRibbonText] = useState(
         isInitialSeries
-            ? '🔥 هەموو وەرز و ئەڵقەکانی ئەم زنجیرەیە بە کوالیتی بەرز و بێ ڕیکلام لە کوردیش ستریم بەردەستە'
-            : '🔥 تەواوی ئەم فیلمە بە کوالیتی بەرز و بێ ڕیکلام لە ماڵپەڕی کوردیش ستریم بەردەستە'
+            ? '🔥 هەموو وەرز و ئەڵقەکانی ئەم زنجیرەیە بە کوالیتی بەرز و بێ ڕیکلام لە ماڵپەڕی KST FILM بەردەستە'
+            : '🔥 تەواوی ئەم فیلمە بە کوالیتی بەرز و بێ ڕیکلام لە ماڵپەڕی KST FILM بەردەستە'
     );
     const [storyCtaText, setStoryCtaText] = useState(
         isInitialSeries
@@ -169,15 +169,15 @@ export const SocialMediaPostModal: React.FC<SocialMediaPostModalProps> = ({ movi
         if (newType === 'series') {
             if (!seasonText) setSeasonText(defaultSeasonText);
             if (!episodesText) setEpisodesText(defaultEpisodesText);
-            if (ribbonText === '🔥 تەواوی ئەم فیلمە بە کوالیتی بەرز و بێ ڕیکلام لە ماڵپەڕی کوردیش ستریم بەردەستە') {
-                setRibbonText('🔥 هەموو وەرز و ئەڵقەکانی ئەم زنجیرەیە بە کوالیتی بەرز و بێ ڕیکلام لە کوردیش ستریم بەردەستە');
+            if (ribbonText === '🔥 تەواوی ئەم فیلمە بە کوالیتی بەرز و بێ ڕیکلام لە ماڵپەڕی KST FILM بەردەستە') {
+                setRibbonText('🔥 هەموو وەرز و ئەڵقەکانی ئەم زنجیرەیە بە کوالیتی بەرز و بێ ڕیکلام لە ماڵپەڕی KST FILM بەردەستە');
             }
             if (storyCtaText === '👉 بۆ بینینی ئەم فیلمە سەردانی ماڵپەڕی kstfilm.com بکەن') {
                 setStoryCtaText('👉 بۆ بینینی تەواوی ئەڵقەکانی ئەم زنجیرەیە سەردانی kstfilm.com بکەن');
             }
         } else {
-            if (ribbonText === '🔥 هەموو وەرز و ئەڵقەکانی ئەم زنجیرەیە بە کوالیتی بەرز و بێ ڕیکلام لە کوردیش ستریم بەردەستە') {
-                setRibbonText('🔥 تەواوی ئەم فیلمە بە کوالیتی بەرز و بێ ڕیکلام لە ماڵپەڕی کوردیش ستریم بەردەستە');
+            if (ribbonText === '🔥 هەموو وەرز و ئەڵقەکانی ئەم زنجیرەیە بە کوالیتی بەرز و بێ ڕیکلام لە ماڵپەڕی KST FILM بەردەستە') {
+                setRibbonText('🔥 تەواوی ئەم فیلمە بە کوالیتی بەرز و بێ ڕیکلام لە ماڵپەڕی KST FILM بەردەستە');
             }
             if (storyCtaText === '👉 بۆ بینینی تەواوی ئەڵقەکانی ئەم زنجیرەیە سەردانی kstfilm.com بکەن') {
                 setStoryCtaText('👉 بۆ بینینی ئەم فیلمە سەردانی ماڵپەڕی kstfilm.com بکەن');
@@ -187,7 +187,7 @@ export const SocialMediaPostModal: React.FC<SocialMediaPostModalProps> = ({ movi
 
     const copyPostCaption = () => {
         const isSeries = itemType === 'series';
-        const caption = `🔥 ${isSeries ? 'زنجیرەی نوێ' : 'فیلمی نوێ'} بە سەبتایتڵی کوردی و فێربوونی ئینگلیزی لە کوردیش ستریم:
+        const caption = `🔥 ${isSeries ? 'زنجیرەی نوێ' : 'فیلمی نوێ'} بە سەبتایتڵی کوردی و فێربوونی ئینگلیزی لە KST FILM:
 
 ${isSeries ? '📺 ناوی زنجیرە' : '🎬 ناوی فیلم'}: ${kuTitle} (${enTitle})
 📅 ساڵی دەرچوون: ${year}
@@ -201,7 +201,7 @@ ${synopsis}
 🍿 ئێستا بینەری بە بە کوالیتی بەرز و بێ ڕیکلام لە ڕێگەی ماڵپەڕی فەرمی:
 🌐 https://kstfilm.com
 
-#${isSeries ? 'زنجیرەی_کوردی' : 'فیلمی_کوردی'} #ژێرنووسی_کوردی #فێربوونی_ئینگلیزی #KSTFilm #KurdishStream #${enTitle.replace(/\s+/g, '_')}`;
+#${isSeries ? 'زنجیرەی_کوردی' : 'فیلمی_کوردی'} #ژێرنووسی_کوردی #فێربوونی_ئینگلیزی #KSTFilm #${enTitle.replace(/\s+/g, '_')}`;
 
         navigator.clipboard.writeText(caption).then(() => {
             setCopiedCaption(true);
