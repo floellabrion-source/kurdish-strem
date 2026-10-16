@@ -66,8 +66,8 @@ const seoPrerender = (db) => {
 
             const isSeries = movie.type === 'series';
             const typeLabel = isSeries ? 'زنجیرەی' : 'فیلمی';
-            const pageTitle = `${movie.title} ${movie.kurdishTitle ? '(' + movie.kurdishTitle + ')' : ''} بە ژێرنووسی کوردی | KSTFilm (KST Film)`;
-            const metaDescription = `سەیرکردنی ${typeLabel} ${movie.title} (${movie.year || ''}) بە ژێرنووسی کوردی و ئینگلیزی دووانە بە بەرزترین کوالیتی لە کەی ئێس تی فیلم KSTFilm (kstfilm.com). ${movie.description || movie.kurdishDescription || 'بینینی بێبەرامبەر بە باشترین سێرڤەر و کوالیتی بەرز.'}`;
+            const pageTitle = `${movie.title} ${movie.kurdishTitle ? '(' + movie.kurdishTitle + ')' : ''} بە ژێرنووسی کوردی | KST | KSTFilm`;
+            const metaDescription = `سەیرکردنی ${typeLabel} ${movie.title} (${movie.year || ''}) بە ژێرنووسی کوردی و ئینگلیزی دووانە بە بەرزترین کوالیتی لە پلاتفۆرمی KST (kstfilm.com). ${movie.description || movie.kurdishDescription || 'بینینی بێبەرامبەر بە باشترین سێرڤەر و کوالیتی بەرز.'}`;
             const canonicalUrl = `https://kstfilm.com/${isSeries ? 'series' : 'movie'}/${movie.id}`;
             const posterUrl = movie.posterCloudUrl || (movie.posterUrl ? (movie.posterUrl.startsWith('http') ? movie.posterUrl : `https://kstfilm.com${movie.posterUrl}`) : 'https://kstfilm.com/kst-logo.png');
 
@@ -82,6 +82,12 @@ const seoPrerender = (db) => {
                 "datePublished": String(movie.year || '2024'),
                 "genre": movie.genre || 'Action',
                 "inLanguage": ["ckb", "en"],
+                "publisher": {
+                    "@type": "Organization",
+                    "name": "KST",
+                    "url": "https://kstfilm.com",
+                    "logo": "https://kstfilm.com/kst-logo.png"
+                },
                 "aggregateRating": {
                     "@type": "AggregateRating",
                     "ratingValue": String(movie.imdbRating || '7.8'),
@@ -96,13 +102,13 @@ const seoPrerender = (db) => {
     <meta charset="UTF-8" />
     <title>${escapeHtml(pageTitle)}</title>
     <meta name="description" content="${escapeHtml(metaDescription)}" />
-    <meta name="keywords" content="${escapeHtml(movie.title)}, ${escapeHtml(movie.kurdishTitle || '')}, ژێرنووسی کوردی, فیلمی کوردی, kstfilm, kst film, ${escapeHtml(movie.genre || '')}" />
+    <meta name="keywords" content="${escapeHtml(movie.title)}, ${escapeHtml(movie.kurdishTitle || '')}, ژێرنووسی کوردی, فیلمی کوردی, kst, KST, kstfilm, kst film, کەی ئێس تی, ${escapeHtml(movie.genre || '')}" />
     <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
     <link rel="canonical" href="${escapeHtml(canonicalUrl)}" />
 
     <!-- OpenGraph -->
     <meta property="og:type" content="video.movie" />
-    <meta property="og:site_name" content="KST Film (کەی ئێس تی فیلم)" />
+    <meta property="og:site_name" content="KST (کەی ئێس تی)" />
     <meta property="og:title" content="${escapeHtml(pageTitle)}" />
     <meta property="og:description" content="${escapeHtml(metaDescription)}" />
     <meta property="og:image" content="${escapeHtml(posterUrl)}" />
