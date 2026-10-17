@@ -86,7 +86,10 @@ const seoPrerender = (db) => {
                     "@type": "Organization",
                     "name": "KST",
                     "url": "https://kstfilm.com",
-                    "logo": "https://kstfilm.com/kst-logo.png"
+                    "logo": "https://kstfilm.com/kst-logo.png",
+                    "sameAs": [
+                        "https://www.tiktok.com/@kstfilm3"
+                    ]
                 },
                 "aggregateRating": {
                     "@type": "AggregateRating",
