@@ -148,6 +148,31 @@ export default function Watch() {
     const [isMuted, setIsMuted] = useState(false);
     const [volume, setVolume] = useState(1);
     const [isFullscreen, setIsFullscreen] = useState(false);
+
+    const isIOSDevice = useMemo(() => {
+        if (typeof navigator === 'undefined') return false;
+        return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+               (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    }, []);
+
+    const [isPortrait, setIsPortrait] = useState(() => {
+        if (typeof window === 'undefined') return false;
+        return window.innerHeight > window.innerWidth;
+    });
+
+    useEffect(() => {
+        const updateOrientation = () => {
+            setIsPortrait(window.innerHeight > window.innerWidth);
+        };
+        window.addEventListener('resize', updateOrientation);
+        window.addEventListener('orientationchange', updateOrientation);
+        return () => {
+            window.removeEventListener('resize', updateOrientation);
+            window.removeEventListener('orientationchange', updateOrientation);
+        };
+    }, []);
+
+    const isRotatedFullscreen = isFullscreen && (isIOSDevice || isViewportFullscreenRef.current) && isPortrait;
     const [showControls, setShowControls] = useState(true);
     const [showSettings, setShowSettings] = useState(false);
     const [settingsTab, setSettingsTab] = useState<'main' | 'speed' | 'subtitles' | 'delay' | 'quality' | 'aspect'>('main');
@@ -1721,9 +1746,16 @@ CRITICAL RULES:
         }
 
         const rect = containerRef.current?.getBoundingClientRect();
-        const width = rect?.width || window.innerWidth;
-        const xOffset = e.clientX - (rect?.left || 0);
-        const xRatio = width > 0 ? xOffset / width : 0.5;
+        let xRatio = 0.5;
+        if (isRotatedFullscreen && rect) {
+            const h = rect.height || window.innerHeight;
+            const yOffset = e.clientY - (rect.top || 0);
+            xRatio = h > 0 ? yOffset / h : 0.5;
+        } else {
+            const width = rect?.width || window.innerWidth;
+            const xOffset = e.clientX - (rect?.left || 0);
+            xRatio = width > 0 ? xOffset / width : 0.5;
+        }
         const now = Date.now();
 
         const timeDiff = now - lastMouseClickRef.current.time;
@@ -1779,9 +1811,16 @@ CRITICAL RULES:
         if (!touch) return;
 
         const rect = containerRef.current?.getBoundingClientRect();
-        const width = rect?.width || window.innerWidth;
-        const xOffset = touch.clientX - (rect?.left || 0);
-        const xRatio = width > 0 ? xOffset / width : 0.5;
+        let xRatio = 0.5;
+        if (isRotatedFullscreen && rect) {
+            const h = rect.height || window.innerHeight;
+            const yOffset = touch.clientY - (rect.top || 0);
+            xRatio = h > 0 ? yOffset / h : 0.5;
+        } else {
+            const width = rect?.width || window.innerWidth;
+            const xOffset = touch.clientX - (rect?.left || 0);
+            xRatio = width > 0 ? xOffset / width : 0.5;
+        }
         const now = Date.now();
 
         // 1. Double tap check on side zones
@@ -2234,7 +2273,11 @@ CRITICAL RULES:
 
     return (
         <div
-            className={`watch-container ${isFullscreen ? 'is-fullscreen ios-fullscreen' : ''}`}
+            className={`watch-container ${
+                isFullscreen 
+                    ? (isRotatedFullscreen ? 'is-fullscreen ios-rotated-fullscreen' : 'is-fullscreen ios-fullscreen') 
+                    : ''
+            }`}
             ref={containerRef}
             onMouseMove={handleContainerMouseMove}
             onMouseLeave={() => isPlaying && setShowControls(false)}
