@@ -353,12 +353,25 @@ function startTelegramBotListener() {
                     const msg = update.message;
                     if (!msg || !msg.text) continue;
 
-                    const chatId = msg.chat.id;
+                    const chatId = String(msg.chat.id);
                     const text = msg.text.trim();
                     const fromName = msg.from?.first_name || 'بەڕێز';
+                    const authorizedChatId = String(process.env.TELEGRAM_CHAT_ID || '1838030544');
 
-                    // Dynamically update process.env.TELEGRAM_CHAT_ID to this user
-                    process.env.TELEGRAM_CHAT_ID = String(chatId);
+                    // Strict Security Lock: Reject anyone who is not the verified owner
+                    if (chatId !== authorizedChatId) {
+                        console.warn(`[Telegram Bot] ⚠️ Blocked unauthorized access attempt from: ${chatId} (${fromName})`);
+                        await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                chat_id: chatId,
+                                text: '⛔ <b>دەستپێڕاگەیشتن ڕێگاپێنەدراوە!</b>\nئەم بۆتە تایبەتە و تەنها لەلایەن خاوەنی سێرڤەرەوە دەتوانرێت دەستی پێبگات.',
+                                parse_mode: 'HTML'
+                            })
+                        }).catch(() => {});
+                        continue;
+                    }
 
                     if (text === '/start') {
                         const welcomeMsg = `🌸 <b>سڵاو ${fromName}!</b>\n\n` +
