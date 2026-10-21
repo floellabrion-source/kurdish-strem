@@ -322,6 +322,14 @@ function restoreBackup(filename) {
 }
 
 let lastMidnightBackupDate = '';
+const LAST_BACKUP_DATE_FILE = path.join(DATA_DIR, 'last_auto_backup_date.txt');
+
+try {
+    if (fs.existsSync(LAST_BACKUP_DATE_FILE)) {
+        lastMidnightBackupDate = fs.readFileSync(LAST_BACKUP_DATE_FILE, 'utf-8').trim();
+    }
+} catch (e) {}
+
 let isTelegramPollingActive = false;
 
 /**
@@ -440,19 +448,24 @@ function initAutoBackupSchedule() {
         try {
             const now = new Date();
             // Get current time in Kurdistan Timezone (Asia/Baghdad, UTC+3)
+            // Use hourCycle: 'h23' so midnight is 0 (not 24)
             const kurdTimeStr = new Intl.DateTimeFormat('en-US', {
                 timeZone: 'Asia/Baghdad',
                 hour: 'numeric',
                 minute: 'numeric',
-                hour12: false
+                hourCycle: 'h23'
             }).format(now);
-            const [hours, minutes] = kurdTimeStr.split(':').map(Number);
+            const [rawHours, minutes] = kurdTimeStr.split(':').map(Number);
+            const hours = (rawHours === 24 || rawHours === 0) ? 0 : rawHours;
             const todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Baghdad' }).format(now); // YYYY-MM-DD
 
-            // Trigger at 00:00 (12:00 AM midnight Kurdistan time)
-            if (hours === 0 && (minutes === 0 || minutes === 1)) {
+            // Trigger at 00:00 (12:00 AM midnight Kurdistan time window)
+            if (hours === 0) {
                 if (lastMidnightBackupDate !== todayStr) {
                     lastMidnightBackupDate = todayStr;
+                    try {
+                        fs.writeFileSync(LAST_BACKUP_DATE_FILE, todayStr, 'utf-8');
+                    } catch (e) {}
                     console.log(`[BackupService] ⏰ 12:00 AM Kurdistan Time reached! Sending daily backup to Telegram for ${todayStr}...`);
                     createBackup('auto', 'باکئەپی ئۆتۆماتیکی ڕۆژانەی کاتژمێر ١٢ی شەو (کاتی کوردستان)');
                 }
@@ -462,7 +475,8 @@ function initAutoBackupSchedule() {
         }
     };
 
-    // Check every 30 seconds
+    // Check immediately on startup AND every 30 seconds
+    checkMidnight();
     setInterval(checkMidnight, 30 * 1000);
 }
 
