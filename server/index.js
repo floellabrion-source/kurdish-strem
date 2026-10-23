@@ -6886,6 +6886,90 @@ app.post('/api/admin/movies/:id/seasons/:seasonNum/episodes/:episodeNum/srt/:typ
     res.json({ success: true });
 });
 
+// Batch Upload Subtitles for an Entire Season
+app.post('/api/admin/movies/:id/seasons/:seasonNum/batch-srt', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const { id, seasonNum } = req.params;
+        const sNum = parseInt(seasonNum, 10);
+        const { subType, items } = req.body;
+
+        if (!Array.isArray(items) || items.length === 0) {
+            return res.status(400).json({ error: 'هیچ فایلێک نەنێردراوە' });
+        }
+
+        const movies = readMovies();
+        const mIdx = movies.findIndex(m => String(m.id) === String(id));
+        if (mIdx === -1) return res.status(404).json({ error: 'فیلم یان زنجیرە نەدۆزرایەوە' });
+
+        const sIdx = (movies[mIdx].seasons || []).findIndex(s => parseInt(s.number, 10) === sNum);
+        if (sIdx === -1) return res.status(404).json({ error: `سیزنی ${sNum} نەدۆزرایەوە` });
+
+        const targetEpisodes = movies[mIdx].seasons[sIdx].episodes || [];
+        const isOriginal = subType !== 'translated';
+        let updatedCount = 0;
+        let skippedReserved = 0;
+
+        for (const item of items) {
+            const epNum = parseInt(item.episodeNum, 10);
+            const srtText = item.srtText;
+            if (!epNum || typeof srtText !== 'string') continue;
+
+            const ep = targetEpisodes.find(e => parseInt(e.number, 10) === epNum);
+            if (!ep) continue;
+
+            // Check reservation
+            if (ep.reservation && ep.reservation.expiresAt > Date.now()) {
+                if (ep.reservation.userId !== req.user.id && !isSuperAdmin(req.user)) {
+                    skippedReserved++;
+                    continue;
+                }
+            }
+
+            const epDir = path.join(MOVIES_DIR, id, 'seasons', `s${sNum}`, `e${epNum}`);
+            if (!fs.existsSync(epDir)) {
+                fs.mkdirSync(epDir, { recursive: true });
+            }
+
+            if (isOriginal) {
+                const origPath = path.join(epDir, 'original.srt');
+                fs.writeFileSync(origPath, srtText, 'utf8');
+                ep.originalSrt = 'original.srt';
+            } else {
+                const transPath = path.join(epDir, 'translated.srt');
+                fs.writeFileSync(transPath, srtText, 'utf8');
+                ep.translatedSrt = 'translated.srt';
+            }
+            updatedCount++;
+        }
+
+        writeMovies(movies);
+
+        logAdminActivity('batch_subtitle_upload', req.user, {
+            id,
+            title: movies[mIdx].title,
+            seasonNum: sNum,
+            subType: isOriginal ? 'original' : 'translated',
+            count: updatedCount
+        });
+
+        let msg = `بە سەرکەوتوویی ${updatedCount} ژێرنووس بەسترانەوە ✅`;
+        if (skippedReserved > 0) {
+            msg += ` (${skippedReserved} ئەڵقە لەبەر حجزکردن دەستکاری نەکرا)`;
+        }
+
+        return res.json({
+            success: true,
+            updatedCount,
+            skippedReserved,
+            message: msg,
+            movie: movies[mIdx]
+        });
+    } catch (err) {
+        console.error('Error in batch-srt:', err);
+        return res.status(500).json({ error: err.message || 'هەڵە لە پاشەکەوتکردنی بەکۆمەڵی ژێرنووسەکان' });
+    }
+});
+
 // Delete Episode Video (Local file & URL & Cloudflare R2)
 app.delete('/api/admin/movies/:id/seasons/:seasonNum/episodes/:episodeNum/video', requireAuth, requireAdmin, async (req, res) => {
     const movies = readMovies();

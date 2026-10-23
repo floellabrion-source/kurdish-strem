@@ -34,6 +34,75 @@ import {
 } from '../utils/aiTranslator';
 import './EpisodeManagerModal.css';
 
+// ─── HELPER: EXTRACT EPISODE NUMBER FROM SUBTITLE FILENAME ───
+export function parseEpisodeNumberFromFilename(filename: string, seasonNum: number): number | null {
+    const name = filename.replace(/\.(srt|vtt|sub|txt)$/i, '').trim();
+
+    // 1. Season & Episode combo: S01E02, s1e2, S01.E02, S01_E02, S01 - E02
+    const seMatch = name.match(/s0*(\d+)[._\-\s]*e0*(\d+)/i);
+    if (seMatch) {
+        const s = parseInt(seMatch[1], 10);
+        const e = parseInt(seMatch[2], 10);
+        if (s === seasonNum) return e;
+        return e;
+    }
+
+    // 2. 1x02 or 01x02 or 1X2 pattern
+    const xMatch = name.match(/(\d+)x0*(\d+)/i);
+    if (xMatch) {
+        const s = parseInt(xMatch[1], 10);
+        const e = parseInt(xMatch[2], 10);
+        if (s === seasonNum) return e;
+        return e;
+    }
+
+    // 3. Ep 02, Episode 02, EP02, Ep.02, Ep_02, E02
+    const epMatch = name.match(/(?:episode|ep|e)[._\-\s]*0*(\d{1,4})/i);
+    if (epMatch) {
+        return parseInt(epMatch[1], 10);
+    }
+
+    // 4. 3-digit season+episode: e.g. 102 for Season 1 Episode 2
+    if (seasonNum > 0 && seasonNum < 10) {
+        const threeDigit = name.match(new RegExp(`[._\\-\\s]${seasonNum}0*(\\d{2})[._\\-\\s]`));
+        if (threeDigit) {
+            return parseInt(threeDigit[1], 10);
+        }
+    }
+
+    // 5. Bracketed or separated number: [02], (02), - 02 -, _02_
+    const bracketMatch = name.match(/[\[\(_\-\s]0*(\d{1,3})[\]\)_\-\s]/);
+    if (bracketMatch) {
+        return parseInt(bracketMatch[1], 10);
+    }
+
+    // 6. Trailing number: "Title - 02" or "Title_02" or "Title 02"
+    const endNumMatch = name.match(/[._\-\s]0*(\d{1,3})$/);
+    if (endNumMatch) {
+        return parseInt(endNumMatch[1], 10);
+    }
+
+    // 7. Standalone number: "02" or "2"
+    const justNumMatch = name.match(/^0*(\d+)$/);
+    if (justNumMatch) {
+        return parseInt(justNumMatch[1], 10);
+    }
+
+    return null;
+}
+
+// ─── HELPER: CONVERT WEBVTT TO SRT FORMAT IF NEEDED ───
+export function convertVttToSrt(content: string): string {
+    if (!content || !content.trim().startsWith('WEBVTT')) {
+        return content;
+    }
+    let text = content.replace(/^WEBVTT[^\r\n]*(\r\n|\n|\r)/i, '');
+    text = text.replace(/NOTE(\s+[^\r\n]*)?(\r\n|\n|\r)[^]*?(\r\n\r\n|\n\n|\r\r)/gi, '');
+    text = text.replace(/(\d{2}:\d{2}:\d{2})\.(\d{3})/g, '$1,$2');
+    text = text.replace(/(^|[\r\n])(\d{2}:\d{2})\.(\d{3})/g, '$100:$2,$3');
+    return text.trim();
+}
+
 interface EpisodeManagerModalProps {
     movie: Movie;
     onClose: () => void;
@@ -214,6 +283,174 @@ export default function EpisodeManagerModal({
         } catch (err: any) {
             setR2Target(prev => prev ? { ...prev, saving: false } : null);
             showToast(err.response?.data?.error || 'کێشەیەک لە بەستنەوە ڕوویدا');
+        }
+    };
+
+    // ─── BATCH SUBTITLES LINKER STATE ───
+    const [batchSubTarget, setBatchSubTarget] = useState<{
+        season: Season;
+        items: Array<{
+            file: File;
+            detectedEpNum: number | null;
+            selectedEpNum: number | null;
+            autoMatched: boolean;
+        }>;
+        saving: boolean;
+    } | null>(null);
+
+    const [batchSubType, setBatchSubType] = useState<'original' | 'translated'>('original');
+    const [batchSaveProgressText, setBatchSaveProgressText] = useState<string>('');
+    const batchFileInputRef = useRef<HTMLInputElement | null>(null);
+    const batchAddMoreRef = useRef<HTMLInputElement | null>(null);
+    const [activeSeasonForBatch, setActiveSeasonForBatch] = useState<Season | null>(null);
+
+    const handleTriggerBatchSub = (season: Season) => {
+        setActiveSeasonForBatch(season);
+        if (batchFileInputRef.current) {
+            batchFileInputRef.current.value = '';
+            batchFileInputRef.current.click();
+        }
+    };
+
+    const handleInitialBatchFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files || files.length === 0 || !activeSeasonForBatch) return;
+
+        const season = activeSeasonForBatch;
+        const fileList = Array.from(files);
+
+        const items = fileList.map(file => {
+            const detected = parseEpisodeNumberFromFilename(file.name, season.number);
+            const exists = detected !== null && season.episodes.some(ep => ep.number === detected);
+            return {
+                file,
+                detectedEpNum: detected,
+                selectedEpNum: exists ? detected : null,
+                autoMatched: exists
+            };
+        });
+
+        items.sort((a, b) => {
+            const numA = a.selectedEpNum ?? 9999;
+            const numB = b.selectedEpNum ?? 9999;
+            return numA - numB;
+        });
+
+        setBatchSubTarget({
+            season,
+            items,
+            saving: false
+        });
+    };
+
+    const handleAppendMoreFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files || files.length === 0 || !batchSubTarget) return;
+
+        const season = batchSubTarget.season;
+        const fileList = Array.from(files);
+
+        const newItems = fileList.map(file => {
+            const detected = parseEpisodeNumberFromFilename(file.name, season.number);
+            const exists = detected !== null && season.episodes.some(ep => ep.number === detected);
+            return {
+                file,
+                detectedEpNum: detected,
+                selectedEpNum: exists ? detected : null,
+                autoMatched: exists
+            };
+        });
+
+        setBatchSubTarget(prev => {
+            if (!prev) return null;
+            return {
+                ...prev,
+                items: [...prev.items, ...newItems]
+            };
+        });
+    };
+
+    const handleUpdateItemEpisode = (index: number, epNum: number | null) => {
+        setBatchSubTarget(prev => {
+            if (!prev) return null;
+            const items = [...prev.items];
+            items[index] = {
+                ...items[index],
+                selectedEpNum: epNum,
+                autoMatched: false
+            };
+            return { ...prev, items };
+        });
+    };
+
+    const handleRemoveBatchItem = (index: number) => {
+        setBatchSubTarget(prev => {
+            if (!prev) return null;
+            const items = prev.items.filter((_, i) => i !== index);
+            return { ...prev, items };
+        });
+    };
+
+    const handleSaveBatchSubtitles = async () => {
+        if (!batchSubTarget || batchSubTarget.saving) return;
+        const assignedItems = batchSubTarget.items.filter(it => it.selectedEpNum !== null);
+        if (assignedItems.length === 0) {
+            showToast('هیچ فایلێک بە ئەڵقەکان نەبەستراوەتەوە');
+            return;
+        }
+
+        try {
+            setBatchSubTarget(prev => prev ? { ...prev, saving: true } : null);
+            setBatchSaveProgressText(`خوێندنەوەی فایلی ژێرنووسەکان... (0/${assignedItems.length})`);
+
+            const itemsPayload = [];
+            for (let i = 0; i < assignedItems.length; i++) {
+                const it = assignedItems[i];
+                setBatchSaveProgressText(`خوێندنەوەی ئەڵقەی ${it.selectedEpNum}... (${i + 1}/${assignedItems.length})`);
+                let rawText = await it.file.text();
+                rawText = convertVttToSrt(rawText);
+                itemsPayload.push({
+                    episodeNum: it.selectedEpNum,
+                    srtText: rawText
+                });
+            }
+
+            setBatchSaveProgressText('پاشەکەوت دەکرێت لە سێرڤەر...');
+
+            try {
+                const res = await axios.post(`/api/admin/movies/${movie.id}/seasons/${batchSubTarget.season.number}/batch-srt`, {
+                    subType: batchSubType,
+                    items: itemsPayload
+                });
+                showToast(res.data.message || `${itemsPayload.length} ژێرنووس بە سەرکەوتوویی پاشەکەوت کران ✅`);
+            } catch (apiErr: any) {
+                if (apiErr.response?.status === 404) {
+                    for (let i = 0; i < itemsPayload.length; i++) {
+                        const item = itemsPayload[i];
+                        setBatchSaveProgressText(`پاشەکەوتکردنی ئەڵقەی ${item.episodeNum} (${i + 1}/${itemsPayload.length})...`);
+                        const payload: any = {
+                            seasonNum: batchSubTarget.season.number,
+                            episodeNum: item.episodeNum
+                        };
+                        if (batchSubType === 'original') {
+                            payload.originalSrtText = item.srtText;
+                        } else {
+                            payload.translatedSrtText = item.srtText;
+                        }
+                        await axios.post(`/api/admin/movies/${movie.id}/srt-content`, payload);
+                    }
+                    showToast(`${itemsPayload.length} ژێرنووس بە سەرکەوتوویی پاشەکەوت کران ✅`);
+                } else {
+                    throw apiErr;
+                }
+            }
+
+            setBatchSubTarget(null);
+            if (onReloadMovie) onReloadMovie();
+        } catch (err: any) {
+            console.error('Batch save error:', err);
+            setBatchSubTarget(prev => prev ? { ...prev, saving: false } : null);
+            showToast(err.response?.data?.error || err.message || 'هەڵەیەک لە پاشەکەوتکردنی ژێرنووسەکان ڕوویدا');
         }
     };
 
@@ -1101,6 +1338,16 @@ export default function EpisodeManagerModal({
                                             >
                                                 <Zap size={14} />
                                                 <span>{lang === 'en' ? 'Auto-Link R2 ⚡' : 'بەستنەوە لە R2 ⚡'}</span>
+                                            </button>
+                                            {/* BULK SEASON SUBTITLES LINK BUTTON */}
+                                            <button
+                                                type="button"
+                                                className="season-action-btn bulk-sub-btn"
+                                                title={lang === 'en' ? 'Batch Upload Season Subtitles (.srt, .vtt) 📂' : 'بەستنەوەی ژێرنووسی هەموو ئەڵقەکان پێکەوە (Batch Subtitles) 📂'}
+                                                onClick={() => handleTriggerBatchSub(season)}
+                                            >
+                                                <FileText size={14} />
+                                                <span>{lang === 'en' ? 'Batch Subtitles 📂' : 'دانانی ژێرنووسەکان 📂'}</span>
                                             </button>
 
                                             <button
@@ -2263,6 +2510,214 @@ export default function EpisodeManagerModal({
                                                 {lang === 'en'
                                                     ? `Auto-Link ${r2Target.data?.readyCount || 0} Episodes Now ⚡`
                                                     : `بەستنەوەی ${r2Target.data ? (r2Target.data.readyCount > 0 ? r2Target.data.readyCount : r2Target.data.alreadyLinkedCount) : 0} ئەڵقە ئێستا ⚡`}
+                                            </span>
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* ─── HIDDEN INPUTS FOR BATCH SUBTITLES ─── */}
+                <input
+                    type="file"
+                    multiple
+                    accept=".srt,.vtt"
+                    ref={batchFileInputRef}
+                    style={{ display: 'none' }}
+                    onChange={handleInitialBatchFileSelect}
+                />
+                <input
+                    type="file"
+                    multiple
+                    accept=".srt,.vtt"
+                    ref={batchAddMoreRef}
+                    style={{ display: 'none' }}
+                    onChange={handleAppendMoreFiles}
+                />
+
+                {/* ─── BATCH SUBTITLES LINKER MODAL ─── */}
+                {batchSubTarget && (
+                    <div className="ep-modal-backdrop batch-sub-backdrop" onClick={() => !batchSubTarget.saving && setBatchSubTarget(null)}>
+                        <div className="batch-sub-modal-card" onClick={e => e.stopPropagation()}>
+                            {/* Modal Header */}
+                            <div className="batch-sub-modal-header">
+                                <div className="batch-sub-header-left">
+                                    <div className="batch-sub-icon-bubble">
+                                        <FileText size={22} className="batch-sub-icon" />
+                                    </div>
+                                    <div>
+                                        <h3 className="batch-sub-modal-title">
+                                            {lang === 'en'
+                                                ? `Batch Link Subtitles (Season ${batchSubTarget.season.number})`
+                                                : `بەستنەوەی بەکۆمەڵی ژێرنووسەکان (سیزنی ${batchSubTarget.season.number}) 📂`}
+                                        </h3>
+                                        <p className="batch-sub-modal-subtitle">
+                                            {lang === 'en'
+                                                ? 'Subtitle files matched to episodes by filename. Review matches before saving.'
+                                                : 'فایلەکان بە شێوەی خۆکار بەپێی ناوی ئەڵقە دیاری کراون، پێداچوونەوە بکە پێش پاشەکەوتکردن.'}
+                                        </p>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    className="ep-modal-close-btn"
+                                    disabled={batchSubTarget.saving}
+                                    onClick={() => setBatchSubTarget(null)}
+                                >
+                                    <X size={18} />
+                                </button>
+                            </div>
+
+                            {/* Subtitle Category Selection Bar */}
+                            <div className="batch-sub-type-bar">
+                                <span className="batch-sub-type-label">
+                                    {lang === 'en' ? 'Subtitle Category:' : 'جۆری ژێرنووس بۆ داغڵکردن:'}
+                                </span>
+                                <div className="batch-sub-type-options">
+                                    <label className={`batch-type-pill ${batchSubType === 'original' ? 'active' : ''}`}>
+                                        <input
+                                            type="radio"
+                                            name="batchSubType"
+                                            value="original"
+                                            checked={batchSubType === 'original'}
+                                            onChange={() => setBatchSubType('original')}
+                                        />
+                                        <FileText size={14} />
+                                        <span>{lang === 'en' ? 'Original (English / Source)' : 'ئەسڵی (ئینگلیزی / سەرچاوە - Original)'}</span>
+                                    </label>
+                                    <label className={`batch-type-pill ${batchSubType === 'translated' ? 'active' : ''}`}>
+                                        <input
+                                            type="radio"
+                                            name="batchSubType"
+                                            value="translated"
+                                            checked={batchSubType === 'translated'}
+                                            onChange={() => setBatchSubType('translated')}
+                                        />
+                                        <Languages size={14} />
+                                        <span>{lang === 'en' ? 'Kurdish (Translated)' : 'کوردی (وەرگێڕدراو - Kurdish)'}</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            {/* Summary & Add More Bar */}
+                            <div className="batch-sub-action-bar">
+                                <div className="batch-sub-summary">
+                                    <span className="batch-badge-count">
+                                        {batchSubTarget.items.filter(it => it.selectedEpNum !== null).length} / {batchSubTarget.items.length} {lang === 'en' ? 'Episodes Matched' : 'ئەڵقە بەستراونەتەوە'}
+                                    </span>
+                                    <span className="batch-badge-season-info">
+                                        {batchSubTarget.season.episodes.length} {lang === 'en' ? 'episodes in this season' : 'ئەڵقە لەم وەرزەدا هەیە'}
+                                    </span>
+                                </div>
+                                <div>
+                                    <button
+                                        type="button"
+                                        className="batch-btn-add-more"
+                                        onClick={() => batchAddMoreRef.current?.click()}
+                                    >
+                                        <Plus size={14} />
+                                        <span>{lang === 'en' ? 'Add more files' : 'زیادکردنی فایلی تر'}</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Scrollable File List */}
+                            <div className="batch-sub-list-container">
+                                {batchSubTarget.items.map((item, idx) => {
+                                    const matchedEp = batchSubTarget.season.episodes.find(e => e.number === item.selectedEpNum);
+                                    const alreadyHas = matchedEp ? (batchSubType === 'original' ? !!matchedEp.originalSrt : !!matchedEp.translatedSrt) : false;
+                                    const isDuplicate = item.selectedEpNum !== null && batchSubTarget.items.filter(it => it.selectedEpNum === item.selectedEpNum).length > 1;
+
+                                    return (
+                                        <div key={idx} className={`batch-sub-row ${item.selectedEpNum !== null ? 'is-matched' : 'is-unmatched'}`}>
+                                            <div className="batch-sub-file-info">
+                                                <FileText size={18} className="batch-file-icon" />
+                                                <div className="batch-sub-filename" title={item.file.name}>
+                                                    <span>{item.file.name}</span>
+                                                </div>
+                                                <span className="batch-file-size">{(item.file.size / 1024).toFixed(1)} KB</span>
+                                            </div>
+
+                                            <div className="batch-sub-match-col">
+                                                <span className="batch-arrow-label">➡️</span>
+                                                <select
+                                                    className={`batch-ep-select ${item.selectedEpNum !== null ? 'has-val' : 'no-val'}`}
+                                                    value={item.selectedEpNum ?? ''}
+                                                    onChange={e => handleUpdateItemEpisode(idx, e.target.value ? parseInt(e.target.value, 10) : null)}
+                                                >
+                                                    <option value="">{lang === 'en' ? '-- Skip / Unassigned --' : '-- پشتگوێخستن --'}</option>
+                                                    {batchSubTarget.season.episodes.map(ep => (
+                                                        <option key={ep.id} value={ep.number}>
+                                                            {lang === 'en' ? `Episode ${ep.number} (${ep.title})` : `ئەڵقەی ${ep.number} (${ep.title})`}
+                                                        </option>
+                                                    ))}
+                                                </select>
+
+                                                {item.selectedEpNum !== null && (
+                                                    <div className="batch-status-chips">
+                                                        <span className="batch-tag matched-tag">
+                                                            <CheckCircle2 size={12} />
+                                                            <span>{item.autoMatched ? (lang === 'en' ? 'Auto-matched' : 'خۆکار دۆزرایەوە') : (lang === 'en' ? 'Manual' : 'دەستی')}</span>
+                                                        </span>
+                                                        {isDuplicate && (
+                                                            <span className="batch-tag duplicate-tag" title="ئەم ئەڵقەیە بۆ زیاتر لە یەک فایل هەڵبژێردراوە">
+                                                                <AlertCircle size={11} />
+                                                                <span>{lang === 'en' ? 'Duplicate ep' : 'ئەڵقەی دووبارە'}</span>
+                                                            </span>
+                                                        )}
+                                                        {alreadyHas && !isDuplicate && (
+                                                            <span className="batch-tag overwrite-tag" title="ئەم ئەڵقەیە پێشتر ئەم جۆرە ژێرنووسەی هەبووە و دەگۆڕدرێت بەمە">
+                                                                <RefreshCw size={11} />
+                                                                <span>{lang === 'en' ? 'Overwrites existing' : 'نوێکردنەوە'}</span>
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <button
+                                                type="button"
+                                                className="batch-remove-file-btn"
+                                                title={lang === 'en' ? 'Remove file' : 'سڕینەوەی ئەم فایلە'}
+                                                onClick={() => handleRemoveBatchItem(idx)}
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Modal Footer */}
+                            <div className="batch-sub-modal-footer">
+                                <button
+                                    type="button"
+                                    className="batch-btn-cancel"
+                                    disabled={batchSubTarget.saving}
+                                    onClick={() => setBatchSubTarget(null)}
+                                >
+                                    {lang === 'en' ? 'Cancel' : 'هەڵوەشاندنەوە'}
+                                </button>
+                                <button
+                                    type="button"
+                                    className="batch-btn-save"
+                                    disabled={batchSubTarget.saving || batchSubTarget.items.filter(it => it.selectedEpNum !== null).length === 0}
+                                    onClick={handleSaveBatchSubtitles}
+                                >
+                                    {batchSubTarget.saving ? (
+                                        <>
+                                            <Loader2 size={16} className="spinning" />
+                                            <span>{batchSaveProgressText || (lang === 'en' ? 'Saving...' : 'پاشەکەوت دەکرێت...')}</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <CheckCircle2 size={16} />
+                                            <span>
+                                                {lang === 'en'
+                                                    ? `Save ${batchSubTarget.items.filter(it => it.selectedEpNum !== null).length} Subtitles 🚀`
+                                                    : `پاشەکەوتکردنی ${batchSubTarget.items.filter(it => it.selectedEpNum !== null).length} ژێرنووس 🚀`}
                                             </span>
                                         </>
                                     )}
