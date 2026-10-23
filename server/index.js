@@ -4599,6 +4599,86 @@ function detectMovieCountryAndAccent(rawCountry = '', rawLanguage = '') {
     };
 }
 
+// ─── OMDb Multi-Search & Live Suggestions Endpoint ───
+app.get('/api/omdb-search', requireAuth, requireAdmin, async (req, res) => {
+    const { query, type } = req.query;
+    if (!query || String(query).trim().length < 2) {
+        return res.json({ results: [] });
+    }
+
+    if (!OMDB_API_KEY) {
+        return res.status(500).json({ error: 'OMDB_API_KEY لەسەر سێرڤەر دانەنراوە.' });
+    }
+
+    try {
+        const rawInput = String(query).trim();
+        const imdbIdMatch = rawInput.match(/tt\d{7,8}/i);
+
+        // If direct IMDb ID / URL
+        if (imdbIdMatch) {
+            const byIdRes = await axios.get(`http://www.omdbapi.com/?i=${imdbIdMatch[0]}&apikey=${OMDB_API_KEY}`, { timeout: 6000 }).catch(() => null);
+            if (byIdRes?.data && byIdRes.data.Response === 'True') {
+                const item = byIdRes.data;
+                return res.json({
+                    isDirectId: true,
+                    results: [{
+                        title: item.Title,
+                        year: item.Year,
+                        imdbID: item.imdbID,
+                        type: item.Type === 'series' ? 'series' : (item.Genre?.includes('Animation') ? 'animation' : 'movie'),
+                        poster: item.Poster && item.Poster !== 'N/A' ? item.Poster : null
+                    }]
+                });
+            }
+        }
+
+        // Extract year if present (e.g., "Below 2002" or "Avatar 2009")
+        let searchTitle = rawInput;
+        let searchYear = '';
+        const yMatch = rawInput.match(/\b(19\d{2}|20\d{2})\b/);
+        if (yMatch) {
+            searchYear = yMatch[1];
+            searchTitle = rawInput.replace(yMatch[0], '').replace(/[()\[\]]/g, '').trim();
+        }
+
+        let searchUrl = `http://www.omdbapi.com/?s=${encodeURIComponent(searchTitle || rawInput)}&apikey=${OMDB_API_KEY}`;
+        if (searchYear) searchUrl += `&y=${searchYear}`;
+        if (type && (type === 'movie' || type === 'series')) searchUrl += `&type=${type}`;
+
+        let omdbRes = await axios.get(searchUrl, { timeout: 6000 }).catch(() => null);
+        let items = omdbRes?.data?.Search || [];
+
+        // If type/year filter gave 0 results, retry with just title
+        if (items.length === 0 && (type || searchYear)) {
+            const fallbackUrl = `http://www.omdbapi.com/?s=${encodeURIComponent(searchTitle || rawInput)}&apikey=${OMDB_API_KEY}`;
+            const fallbackRes = await axios.get(fallbackUrl, { timeout: 6000 }).catch(() => null);
+            items = fallbackRes?.data?.Search || [];
+        }
+
+        // If still 0, try exact title (?t=)
+        if (items.length === 0) {
+            const tUrl = `http://www.omdbapi.com/?t=${encodeURIComponent(searchTitle || rawInput)}&apikey=${OMDB_API_KEY}`;
+            const tRes = await axios.get(tUrl, { timeout: 6000 }).catch(() => null);
+            if (tRes?.data && tRes.data.Response === 'True') {
+                items = [tRes.data];
+            }
+        }
+
+        const formatted = items.slice(0, 8).map(d => ({
+            title: d.Title,
+            year: d.Year,
+            imdbID: d.imdbID,
+            type: d.Type === 'series' ? 'series' : (d.Genre?.includes('Animation') ? 'animation' : 'movie'),
+            poster: d.Poster && d.Poster !== 'N/A' ? d.Poster : null
+        }));
+
+        res.json({ results: formatted });
+    } catch (err) {
+        console.error('[OMDb Search Error]:', err.message);
+        res.status(500).json({ error: 'کێشەیەک لە گەڕانی IMDb ڕوویدا' });
+    }
+});
+
 app.get('/api/omdb-rating', requireAuth, requireAdmin, async (req, res) => {
     const { title } = req.query;
     if (!title) return res.status(400).json({ error: 'پێویستە ناو، لینک، یان کودی IMDb فیلمەکە بنێریت' });
@@ -4622,7 +4702,29 @@ app.get('/api/omdb-rating', requireAuth, requireAdmin, async (req, res) => {
             console.log(`[OMDb API] Fetching by Title (${rawInput})`);
         }
         
-        const response = await axios.get(url);
+        let response = await axios.get(url);
+        
+        // If searching by title failed with ?t=, fallback to search ?s=
+        if (response.data.Response !== 'True' && !imdbIdMatch) {
+            let searchTitle = rawInput;
+            let searchYear = '';
+            const yMatch = rawInput.match(/\b(19\d{2}|20\d{2})\b/);
+            if (yMatch) {
+                searchYear = yMatch[1];
+                searchTitle = rawInput.replace(yMatch[0], '').replace(/[()\[\]]/g, '').trim();
+            }
+            let sUrl = `http://www.omdbapi.com/?s=${encodeURIComponent(searchTitle || rawInput)}&apikey=${OMDB_API_KEY}`;
+            if (searchYear) sUrl += `&y=${searchYear}`;
+            const sRes = await axios.get(sUrl).catch(() => null);
+            if (sRes?.data?.Search?.length > 0) {
+                const best = sRes.data.Search[0];
+                console.log(`[OMDb API Fallback] Resolved "${rawInput}" -> "${best.Title}" (${best.imdbID})`);
+                const retryById = await axios.get(`http://www.omdbapi.com/?i=${best.imdbID}&apikey=${OMDB_API_KEY}`).catch(() => null);
+                if (retryById?.data?.Response === 'True') {
+                    response = retryById;
+                }
+            }
+        }
         
         if (response.data.Response === 'True') {
             const data = response.data;

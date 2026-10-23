@@ -36,6 +36,14 @@ import './Admin.css';
 
 interface Toast { id: number; msg: string; type: 'success' | 'error'; }
 
+interface ImdbSearchResult {
+    title: string;
+    year: string;
+    imdbID: string;
+    type: 'movie' | 'series' | 'animation' | string;
+    poster: string | null;
+}
+
 const GENRES_LIST = [
     { id: 'crime', ku: 'تاوانکاری', en: 'Crime' },
     { id: 'drama', ku: 'دراما', en: 'Drama' },
@@ -195,6 +203,32 @@ export default function Admin() {
     const [editEpForm, setEditEpForm] = useState<{ title: string; description: string; duration: string; status: 'published' | 'draft' }>({ title: '', description: '', duration: '', status: 'published' });
 
     const [fetchingImdbRating, setFetchingImdbRating] = useState(false);
+    
+    // IMDb Live Search & Suggestions State
+    const [imdbSearchResults, setImdbSearchResults] = useState<ImdbSearchResult[]>([]);
+    const [isSearchingImdb, setIsSearchingImdb] = useState(false);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const formSuggestionRef = useRef<HTMLDivElement>(null);
+    const searchTimeoutRef = useRef<any>(null);
+
+    const [editImdbSearchResults, setEditImdbSearchResults] = useState<ImdbSearchResult[]>([]);
+    const [isSearchingEditImdb, setIsSearchingEditImdb] = useState(false);
+    const [showEditSuggestions, setShowEditSuggestions] = useState(false);
+    const editSuggestionRef = useRef<HTMLDivElement>(null);
+    const editSearchTimeoutRef = useRef<any>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (formSuggestionRef.current && !formSuggestionRef.current.contains(e.target as Node)) {
+                setShowSuggestions(false);
+            }
+            if (editSuggestionRef.current && !editSuggestionRef.current.contains(e.target as Node)) {
+                setShowEditSuggestions(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     const [metricsTarget, setMetricsTarget] = useState<{
         movieId: string;
@@ -1386,6 +1420,122 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
             toast(errorMessage, 'error');
         } finally {
             setFetchingImdbRating(false);
+        }
+    };
+
+    const handleTitleChange = (val: string, isEdit: boolean = false) => {
+        if (isEdit) {
+            setEditMovie(m => m ? { ...m, title: val } : null);
+            if (editSearchTimeoutRef.current) clearTimeout(editSearchTimeoutRef.current);
+
+            const clean = val.trim();
+            if (clean.length < 2 || clean.includes('imdb.com') || /tt\d{7,8}/i.test(clean)) {
+                setEditImdbSearchResults([]);
+                setShowEditSuggestions(false);
+                return;
+            }
+
+            editSearchTimeoutRef.current = setTimeout(async () => {
+                setIsSearchingEditImdb(true);
+                try {
+                    const itemType = editMovie?.type === 'animation' ? 'movie' : editMovie?.type;
+                    const res = await axios.get(`/api/omdb-search?query=${encodeURIComponent(clean)}&type=${itemType || 'movie'}`);
+                    const list: ImdbSearchResult[] = res.data?.results || [];
+                    setEditImdbSearchResults(list);
+                    setShowEditSuggestions(list.length > 0);
+                } catch {
+                    setEditImdbSearchResults([]);
+                } finally {
+                    setIsSearchingEditImdb(false);
+                }
+            }, 380);
+        } else {
+            setForm(f => ({ ...f, title: val }));
+            if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+
+            const clean = val.trim();
+            if (clean.length < 2 || clean.includes('imdb.com') || /tt\d{7,8}/i.test(clean)) {
+                setImdbSearchResults([]);
+                setShowSuggestions(false);
+                return;
+            }
+
+            searchTimeoutRef.current = setTimeout(async () => {
+                setIsSearchingImdb(true);
+                try {
+                    const itemType = form.type === 'animation' ? 'movie' : form.type;
+                    const res = await axios.get(`/api/omdb-search?query=${encodeURIComponent(clean)}&type=${itemType || 'movie'}`);
+                    const list: ImdbSearchResult[] = res.data?.results || [];
+                    setImdbSearchResults(list);
+                    setShowSuggestions(list.length > 0);
+                } catch {
+                    setImdbSearchResults([]);
+                } finally {
+                    setIsSearchingImdb(false);
+                }
+            }, 380);
+        }
+    };
+
+    const handleSelectSuggestion = (item: ImdbSearchResult, isEdit: boolean = false) => {
+        if (isEdit) {
+            setShowEditSuggestions(false);
+            setEditImdbSearchResults([]);
+            setEditMovie(m => m ? { ...m, title: item.title } : null);
+            fetchImdbRating(item.imdbID, true);
+        } else {
+            setShowSuggestions(false);
+            setImdbSearchResults([]);
+            setForm(f => ({ ...f, title: item.title }));
+            fetchImdbRating(item.imdbID, false);
+        }
+    };
+
+    const handleManualFetchOrSearch = async (queryTitle: string, isEdit: boolean = false) => {
+        const clean = (queryTitle || '').trim();
+        if (!clean) {
+            toast(lang === 'en' ? 'Please enter a title, IMDb ID or link' : 'تکایە ناو، کۆد، یان لینکی IMDb فیلمەکە بنووسە', 'error');
+            return;
+        }
+
+        // If it's direct IMDb ID or URL, directly fetch
+        if (clean.includes('imdb.com') || /tt\d{7,8}/i.test(clean)) {
+            if (isEdit) setShowEditSuggestions(false);
+            else setShowSuggestions(false);
+            fetchImdbRating(clean, isEdit);
+            return;
+        }
+
+        // Otherwise, search
+        if (isEdit) setIsSearchingEditImdb(true);
+        else setIsSearchingImdb(true);
+
+        try {
+            const itemType = isEdit ? (editMovie?.type === 'animation' ? 'movie' : editMovie?.type) : (form.type === 'animation' ? 'movie' : form.type);
+            const res = await axios.get(`/api/omdb-search?query=${encodeURIComponent(clean)}&type=${itemType || 'movie'}`);
+            const list: ImdbSearchResult[] = res.data?.results || [];
+
+            if (list.length === 0) {
+                if (isEdit) setShowEditSuggestions(false);
+                else setShowSuggestions(false);
+                fetchImdbRating(clean, isEdit);
+            } else if (list.length === 1 || res.data?.isDirectId) {
+                handleSelectSuggestion(list[0], isEdit);
+            } else {
+                if (isEdit) {
+                    setEditImdbSearchResults(list);
+                    setShowEditSuggestions(true);
+                } else {
+                    setImdbSearchResults(list);
+                    setShowSuggestions(true);
+                }
+                toast(lang === 'en' ? `Found ${list.length} matches. Please select one:` : `${list.length} بەرهەمی نزیک دۆزرانەوە، تکایە یەکێکیان هەڵبژێرە:`, 'success');
+            }
+        } catch {
+            fetchImdbRating(clean, isEdit);
+        } finally {
+            if (isEdit) setIsSearchingEditImdb(false);
+            else setIsSearchingImdb(false);
         }
     };
 
@@ -2665,22 +2815,124 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
                                 <button onClick={() => setForm({ title: '', description: '', descriptionKu: '', descriptionEn: '', descriptionAr: '', language: '', country: 'US', countryFlag: '🇺🇸', accent: 'american', accentLabel: 'ئینگلیزی - ئەمریکی', countries: ['US'], genre: '', year: new Date().getFullYear().toString(), endYear: '', duration: '', type: 'movie', imdbRating: '', posterUrl: '', seasons: [], status: 'published' })} className="btn-cancel" style={{ padding: '4px 10px', fontSize: '12px' }}>{lang === 'en' ? 'Clear Form' : 'سڕینەوەی فۆڕم'}</button>
                             </div>
-                            <div className="form-group">
-                                <label>{lang === 'en' ? 'Movie / Series Title, IMDb Code, or Full URL *' : 'ناوی فیلم / زنجیرە، کودی IMDb، یان لینکی تەواو *'}</label>
-                                <input 
-                                    type="text" 
-                                    value={form.title} 
-                                    onChange={e => setForm(f => ({ ...f, title: e.target.value }))} 
-                                    onPaste={e => {
-                                        const pasted = e.clipboardData.getData('text');
-                                        if (pasted && (pasted.includes('imdb.com') || /tt\d{7,8}/i.test(pasted))) {
-                                            setForm(f => ({ ...f, title: pasted }));
-                                            setTimeout(() => fetchImdbRating(pasted), 50);
-                                        }
-                                    }}
-                                    className="form-input" 
-                                    placeholder={lang === 'en' ? "Enter English title, IMDb ID (e.g. tt0903747) or IMDb URL..." : "ناوی ئینگلیزی، کودی IMDb (وەک tt0903747) یان لینکی IMDb دابنێ..."} 
-                                />
+                            <div className="form-group" style={{ position: 'relative' }} ref={formSuggestionRef}>
+                                <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span>{lang === 'en' ? 'Movie / Series Title, IMDb Code, or Full URL *' : 'ناوی فیلم / زنجیرە، کودی IMDb، یان لینکی تەواو *'}</span>
+                                    <span style={{ fontSize: '11px', color: '#a78bfa', fontWeight: 500 }}>
+                                        {lang === 'en' ? '⚡ Auto-fetches as you type' : '⚡ بە نووسینی ناو ڕاستەوخۆ دەیهێنێت'}
+                                    </span>
+                                </label>
+                                <div className="title-fetch-input-wrapper">
+                                    <div style={{ position: 'relative', flex: 1 }}>
+                                        <input 
+                                            type="text" 
+                                            value={form.title} 
+                                            onChange={e => handleTitleChange(e.target.value, false)} 
+                                            onKeyDown={e => {
+                                                if (e.key === 'Enter') {
+                                                    e.preventDefault();
+                                                    handleManualFetchOrSearch(form.title, false);
+                                                }
+                                            }}
+                                            onPaste={e => {
+                                                const pasted = e.clipboardData.getData('text');
+                                                if (pasted && (pasted.includes('imdb.com') || /tt\d{7,8}/i.test(pasted))) {
+                                                    setForm(f => ({ ...f, title: pasted }));
+                                                    setShowSuggestions(false);
+                                                    setTimeout(() => fetchImdbRating(pasted, false), 50);
+                                                }
+                                            }}
+                                            className="form-input title-main-input" 
+                                            placeholder={lang === 'en' ? "Enter English title, IMDb ID (e.g. tt0903747) or IMDb URL..." : "ناوی ئینگلیزی، کودی IMDb (وەک tt0903747) یان لینکی IMDb دابنێ..."} 
+                                        />
+                                        {isSearchingImdb && (
+                                            <div className="title-input-spinner">
+                                                <Loader2 size={16} className="spinning" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <button 
+                                        type="button" 
+                                        onClick={() => handleManualFetchOrSearch(form.title, false)} 
+                                        className="btn-title-fetch" 
+                                        disabled={fetchingImdbRating || isSearchingImdb || !form.title.trim()}
+                                    >
+                                        {fetchingImdbRating ? (
+                                            <>
+                                                <Loader2 size={15} className="spinning" />
+                                                <span>{lang === 'en' ? 'Fetching...' : 'هێنان...'}</span>
+                                            </>
+                                        ) : isSearchingImdb ? (
+                                            <>
+                                                <Loader2 size={15} className="spinning" />
+                                                <span>{lang === 'en' ? 'Searching...' : 'گەڕان...'}</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Sparkles size={15} />
+                                                <span>{lang === 'en' ? 'Fetch' : 'هێنان'}</span>
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+
+                                {/* Multiple Matches Suggestions Dropdown */}
+                                {showSuggestions && imdbSearchResults.length > 0 && (
+                                    <div className="imdb-suggestions-dropdown">
+                                        <div className="imdb-suggestions-header">
+                                            <span className="imdb-suggestions-title">
+                                                🎯 {lang === 'en' ? `Found ${imdbSearchResults.length} matches (Select one):` : `${imdbSearchResults.length} بەرهەمی نزیک دۆزرانەوە (یەکێکیان هەڵبژێرە): `}
+                                            </span>
+                                            <button 
+                                                type="button" 
+                                                className="btn-close-suggestions" 
+                                                onClick={() => setShowSuggestions(false)}
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        </div>
+                                        <div className="imdb-suggestions-list">
+                                            {imdbSearchResults.map((item) => (
+                                                <div 
+                                                    key={item.imdbID} 
+                                                    className="imdb-suggestion-item"
+                                                    onClick={() => handleSelectSuggestion(item, false)}
+                                                >
+                                                    <div className="imdb-suggestion-poster">
+                                                        {item.poster ? (
+                                                            <img src={item.poster} alt={item.title} />
+                                                        ) : (
+                                                            <Film size={18} color="#6b7280" />
+                                                        )}
+                                                    </div>
+                                                    <div className="imdb-suggestion-info">
+                                                        <div className="imdb-suggestion-top">
+                                                            <span className="imdb-suggestion-name">{item.title}</span>
+                                                            {item.year && <span className="imdb-suggestion-year">({item.year})</span>}
+                                                        </div>
+                                                        <div className="imdb-suggestion-meta">
+                                                            <span className={`badge-imdb-type badge-${item.type}`}>
+                                                                {item.type === 'series' ? '📺 زنجیرە' : (item.type === 'animation' ? '🎨 ئەنیمەیشن' : '🎬 فیلم')}
+                                                            </span>
+                                                            <span className="badge-imdb-id">{item.imdbID}</span>
+                                                        </div>
+                                                    </div>
+                                                    <button 
+                                                        type="button" 
+                                                        className="btn-select-imdb"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleSelectSuggestion(item, false);
+                                                        }}
+                                                    >
+                                                        <CheckCircle size={14} />
+                                                        <span>{lang === 'en' ? 'Select' : 'هەڵبژاردن'}</span>
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                             
                             <div className="form-group"><label>{lang === 'en' ? 'Spoken Language' : 'زمانی قسەکردن'}</label><input type="text" value={form.language} onChange={e => setForm(f => ({ ...f, language: e.target.value }))} className="form-input" placeholder={lang === 'en' ? "e.g. English, Spanish" : "بۆ نموونە: English, Spanish"} /></div>
@@ -2865,22 +3117,124 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                                     <img src={editMovie.posterCloudUrl || editMovie.posterUrl} alt="Poster" style={{ width: '120px', borderRadius: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }} />
                                 </div>
                             )}
-                            <div className="form-group">
-                                <label>{lang === 'en' ? 'Movie / Series Title, IMDb Code, or Full URL *' : 'ناوی فیلم / زنجیرە، کودی IMDb، یان لینکی تەواو *'}</label>
-                                <input 
-                                    type="text" 
-                                    value={editMovie.title} 
-                                    onChange={e => setEditMovie(m => m ? { ...m, title: e.target.value } : null)} 
-                                    onPaste={e => {
-                                        const pasted = e.clipboardData.getData('text');
-                                        if (pasted && (pasted.includes('imdb.com') || /tt\d{7,8}/i.test(pasted))) {
-                                            setEditMovie(m => m ? { ...m, title: pasted } : null);
-                                            setTimeout(() => fetchImdbRating(pasted, true), 50);
-                                        }
-                                    }}
-                                    className="form-input" 
-                                    placeholder={lang === 'en' ? "Enter English title, IMDb ID (e.g. tt0903747) or IMDb URL..." : "ناوی ئینگلیزی، کودی IMDb (وەک tt0903747) یان لینکی IMDb دابنێ..."} 
-                                />
+                            <div className="form-group" style={{ position: 'relative' }} ref={editSuggestionRef}>
+                                <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span>{lang === 'en' ? 'Movie / Series Title, IMDb Code, or Full URL *' : 'ناوی فیلم / زنجیرە، کودی IMDb، یان لینکی تەواو *'}</span>
+                                    <span style={{ fontSize: '11px', color: '#a78bfa', fontWeight: 500 }}>
+                                        {lang === 'en' ? '⚡ Auto-fetches as you type' : '⚡ بە نووسینی ناو ڕاستەوخۆ دەیهێنێت'}
+                                    </span>
+                                </label>
+                                <div className="title-fetch-input-wrapper">
+                                    <div style={{ position: 'relative', flex: 1 }}>
+                                        <input 
+                                            type="text" 
+                                            value={editMovie.title} 
+                                            onChange={e => handleTitleChange(e.target.value, true)} 
+                                            onKeyDown={e => {
+                                                if (e.key === 'Enter') {
+                                                    e.preventDefault();
+                                                    handleManualFetchOrSearch(editMovie.title, true);
+                                                }
+                                            }}
+                                            onPaste={e => {
+                                                const pasted = e.clipboardData.getData('text');
+                                                if (pasted && (pasted.includes('imdb.com') || /tt\d{7,8}/i.test(pasted))) {
+                                                    setEditMovie(m => m ? { ...m, title: pasted } : null);
+                                                    setShowEditSuggestions(false);
+                                                    setTimeout(() => fetchImdbRating(pasted, true), 50);
+                                                }
+                                            }}
+                                            className="form-input title-main-input" 
+                                            placeholder={lang === 'en' ? "Enter English title, IMDb ID (e.g. tt0903747) or IMDb URL..." : "ناوی ئینگلیزی، کودی IMDb (وەک tt0903747) یان لینکی IMDb دابنێ..."} 
+                                        />
+                                        {isSearchingEditImdb && (
+                                            <div className="title-input-spinner">
+                                                <Loader2 size={16} className="spinning" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <button 
+                                        type="button" 
+                                        onClick={() => handleManualFetchOrSearch(editMovie.title, true)} 
+                                        className="btn-title-fetch" 
+                                        disabled={fetchingImdbRating || isSearchingEditImdb || !editMovie.title.trim()}
+                                    >
+                                        {fetchingImdbRating ? (
+                                            <>
+                                                <Loader2 size={15} className="spinning" />
+                                                <span>{lang === 'en' ? 'Fetching...' : 'هێنان...'}</span>
+                                            </>
+                                        ) : isSearchingEditImdb ? (
+                                            <>
+                                                <Loader2 size={15} className="spinning" />
+                                                <span>{lang === 'en' ? 'Searching...' : 'گەڕان...'}</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Sparkles size={15} />
+                                                <span>{lang === 'en' ? 'Fetch' : 'هێنان'}</span>
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+
+                                {/* Multiple Matches Suggestions Dropdown for Edit */}
+                                {showEditSuggestions && editImdbSearchResults.length > 0 && (
+                                    <div className="imdb-suggestions-dropdown">
+                                        <div className="imdb-suggestions-header">
+                                            <span className="imdb-suggestions-title">
+                                                🎯 {lang === 'en' ? `Found ${editImdbSearchResults.length} matches (Select one):` : `${editImdbSearchResults.length} بەرهەمی نزیک دۆزرانەوە (یەکێکیان هەڵبژێرە): `}
+                                            </span>
+                                            <button 
+                                                type="button" 
+                                                className="btn-close-suggestions" 
+                                                onClick={() => setShowEditSuggestions(false)}
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        </div>
+                                        <div className="imdb-suggestions-list">
+                                            {editImdbSearchResults.map((item) => (
+                                                <div 
+                                                    key={item.imdbID} 
+                                                    className="imdb-suggestion-item"
+                                                    onClick={() => handleSelectSuggestion(item, true)}
+                                                >
+                                                    <div className="imdb-suggestion-poster">
+                                                        {item.poster ? (
+                                                            <img src={item.poster} alt={item.title} />
+                                                        ) : (
+                                                            <Film size={18} color="#6b7280" />
+                                                        )}
+                                                    </div>
+                                                    <div className="imdb-suggestion-info">
+                                                        <div className="imdb-suggestion-top">
+                                                            <span className="imdb-suggestion-name">{item.title}</span>
+                                                            {item.year && <span className="imdb-suggestion-year">({item.year})</span>}
+                                                        </div>
+                                                        <div className="imdb-suggestion-meta">
+                                                            <span className={`badge-imdb-type badge-${item.type}`}>
+                                                                {item.type === 'series' ? '📺 زنجیرە' : (item.type === 'animation' ? '🎨 ئەنیمەیشن' : '🎬 فیلم')}
+                                                            </span>
+                                                            <span className="badge-imdb-id">{item.imdbID}</span>
+                                                        </div>
+                                                    </div>
+                                                    <button 
+                                                        type="button" 
+                                                        className="btn-select-imdb"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleSelectSuggestion(item, true);
+                                                        }}
+                                                    >
+                                                        <CheckCircle size={14} />
+                                                        <span>{lang === 'en' ? 'Select' : 'هەڵبژاردن'}</span>
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                             
                             <div className="form-group"><label>{lang === 'en' ? 'Spoken Language' : 'زمانی قسەکردن'}</label><input type="text" value={editMovie.language || ''} onChange={e => setEditMovie(m => m ? { ...m, language: e.target.value } : null)} className="form-input" placeholder={lang === 'en' ? "e.g. English, Spanish" : "بۆ نموونە: English, Spanish"} /></div>
