@@ -930,7 +930,11 @@ body.player-in-fullscreen {
     object-fit: contain;
 }
 .watch-video.aspect-fill {
-    object-fit: cover;
+    object-fit: cover !important;
+}
+.zoom-aspect-btn.active {
+    color: #38bdf8 !important;
+    background: rgba(56, 189, 248, 0.22) !important;
 }
 .watch-video.aspect-stretch {
     object-fit: fill;
@@ -3752,3 +3756,16 @@ body.player-in-fullscreen {
     }
 }
 
+
+/* Landscape edge-to-edge support for iPhone notch and home bar */
+@media (orientation: landscape) {
+    .watch-topbar {
+        padding-left: max(18px, env(safe-area-inset-left, 18px)) !important;
+        padding-right: max(18px, env(safe-area-inset-right, 18px)) !important;
+    }
+    .watch-controls-bottom {
+        padding-left: max(18px, env(safe-area-inset-left, 18px)) !important;
+        padding-right: max(18px, env(safe-area-inset-right, 18px)) !important;
+        padding-bottom: max(12px, env(safe-area-inset-bottom, 12px)) !important;
+    }
+}

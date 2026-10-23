@@ -3591,7 +3591,18 @@ CRITICAL RULES:
                             <PictureInPicture2 size={20} />
                         </button>
 
-                        <button 
+                                                <button 
+                            type="button"
+                            className={`ctrl-btn tooltip zoom-aspect-btn ${aspectRatio === 'fill' ? 'active' : ''}`}
+                            onClick={() => setAspectRatio(prev => prev === 'fill' ? 'default' : 'fill')}
+                            title={aspectRatio === 'fill' 
+                                ? (lang === 'en' ? 'Fit (Normal 16:9)' : 'قەبارەی ئاسایی (Fit)') 
+                                : (lang === 'en' ? 'Fill Screen (Cover)' : 'پڕکردنەوەی شاشە بەبێ ڕەشاتی (Fill)')}
+                        >
+                            <Maximize2 size={19} />
+                        </button>
+
+<button 
                             type="button"
                             className="ctrl-btn tooltip fullscreen-btn" 
                             onClick={toggleFullscreen}
