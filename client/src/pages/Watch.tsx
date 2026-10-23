@@ -1913,6 +1913,7 @@ CRITICAL RULES:
 
             isViewportFullscreenRef.current = false;
             setIsFullscreen(false);
+            setAspectRatio('default');
             document.body.classList.remove('player-in-fullscreen');
 
             if (window.screen && (window.screen.orientation as any)?.unlock) {
@@ -1946,6 +1947,7 @@ CRITICAL RULES:
             isViewportFullscreenRef.current = false;
             setIsFullscreen(true);
             document.body.classList.add('player-in-fullscreen');
+            if (isIOSDevice || window.innerWidth < 1024) setAspectRatio('fill');
         } else {
             // Fallback for iPhone/iOS Safari: Viewport Fullscreen (preserves React DOM, custom subtitles, dual subtitles & controls)
             isViewportFullscreenRef.current = true;
@@ -3591,18 +3593,7 @@ CRITICAL RULES:
                             <PictureInPicture2 size={20} />
                         </button>
 
-                                                <button 
-                            type="button"
-                            className={`ctrl-btn tooltip zoom-aspect-btn ${aspectRatio === 'fill' ? 'active' : ''}`}
-                            onClick={() => setAspectRatio(prev => prev === 'fill' ? 'default' : 'fill')}
-                            title={aspectRatio === 'fill' 
-                                ? (lang === 'en' ? 'Fit (Normal 16:9)' : 'قەبارەی ئاسایی (Fit)') 
-                                : (lang === 'en' ? 'Fill Screen (Cover)' : 'پڕکردنەوەی شاشە بەبێ ڕەشاتی (Fill)')}
-                        >
-                            <Maximize2 size={19} />
-                        </button>
-
-<button 
+                        <button 
                             type="button"
                             className="ctrl-btn tooltip fullscreen-btn" 
                             onClick={toggleFullscreen}

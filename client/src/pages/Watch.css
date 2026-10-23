@@ -932,10 +932,6 @@ body.player-in-fullscreen {
 .watch-video.aspect-fill {
     object-fit: cover !important;
 }
-.zoom-aspect-btn.active {
-    color: #38bdf8 !important;
-    background: rgba(56, 189, 248, 0.22) !important;
-}
 .watch-video.aspect-stretch {
     object-fit: fill;
 }
@@ -3768,4 +3764,11 @@ body.player-in-fullscreen {
         padding-right: max(18px, env(safe-area-inset-right, 18px)) !important;
         padding-bottom: max(12px, env(safe-area-inset-bottom, 12px)) !important;
     }
+}
+
+/* On Mobile & iOS Fullscreen, automatically fill the display edge-to-edge without black bars */
+.watch-container.is-fullscreen .watch-video,
+.watch-container.ios-fullscreen .watch-video,
+.watch-container.ios-rotated-fullscreen .watch-video {
+    object-fit: cover !important;
 }
