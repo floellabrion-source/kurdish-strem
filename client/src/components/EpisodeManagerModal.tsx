@@ -6,7 +6,7 @@ import {
     X, Plus, Trash2, Edit3, BarChart2, Video, Upload, Link as LinkIcon,
     FileText, Languages, Shield, ChevronDown, ChevronUp, PlusCircle, Loader2, Play,
     Download, Sparkles, CheckCircle2, AlertCircle, Pause, RefreshCw, Zap, BookOpen, Brain, DollarSign, Clock, Layers, Film,
-    Minimize2, Maximize2, Wrench, Globe, Lock, Unlock, Cloud, Search
+    Minimize2, Maximize2, Wrench, Globe, Lock, Unlock, Cloud, Search, FolderOpen, Folder
 } from 'lucide-react';
 import { Movie, Season, Episode, LanguageMetrics } from '../types';
 import { 
@@ -301,56 +301,28 @@ export default function EpisodeManagerModal({
     const [batchSubType, setBatchSubType] = useState<'original' | 'translated'>('original');
     const [batchSaveProgressText, setBatchSaveProgressText] = useState<string>('');
     const batchFileInputRef = useRef<HTMLInputElement | null>(null);
-    const batchAddMoreRef = useRef<HTMLInputElement | null>(null);
-    const [activeSeasonForBatch, setActiveSeasonForBatch] = useState<Season | null>(null);
+    const batchFolderInputRef = useRef<HTMLInputElement | null>(null);
+    const [isDraggingOver, setIsDraggingOver] = useState<boolean>(false);
 
     const handleTriggerBatchSub = (season: Season) => {
-        setActiveSeasonForBatch(season);
-        if (batchFileInputRef.current) {
-            batchFileInputRef.current.value = '';
-            batchFileInputRef.current.click();
-        }
-    };
-
-    const handleInitialBatchFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files;
-        if (!files || files.length === 0 || !activeSeasonForBatch) return;
-
-        const season = activeSeasonForBatch;
-        const fileList = Array.from(files);
-
-        const items = fileList.map(file => {
-            const detected = parseEpisodeNumberFromFilename(file.name, season.number);
-            const exists = detected !== null && season.episodes.some(ep => ep.number === detected);
-            return {
-                file,
-                detectedEpNum: detected,
-                selectedEpNum: exists ? detected : null,
-                autoMatched: exists
-            };
-        });
-
-        items.sort((a, b) => {
-            const numA = a.selectedEpNum ?? 9999;
-            const numB = b.selectedEpNum ?? 9999;
-            return numA - numB;
-        });
-
         setBatchSubTarget({
             season,
-            items,
+            items: [],
             saving: false
         });
     };
 
-    const handleAppendMoreFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files;
-        if (!files || files.length === 0 || !batchSubTarget) return;
-
+    const processAddedFiles = (filesToAdd: File[]) => {
+        if (!batchSubTarget || filesToAdd.length === 0) return;
         const season = batchSubTarget.season;
-        const fileList = Array.from(files);
 
-        const newItems = fileList.map(file => {
+        const filtered = filesToAdd.filter(f => /\.(srt|vtt)$/i.test(f.name));
+        if (filtered.length === 0) {
+            showToast('هیچ فایلی ژێرنووسی (.srt یان .vtt) نەدۆزرایەوە');
+            return;
+        }
+
+        const newItems = filtered.map(file => {
             const detected = parseEpisodeNumberFromFilename(file.name, season.number);
             const exists = detected !== null && season.episodes.some(ep => ep.number === detected);
             return {
@@ -363,11 +335,94 @@ export default function EpisodeManagerModal({
 
         setBatchSubTarget(prev => {
             if (!prev) return null;
+            const existingNames = new Set(prev.items.map(it => it.file.name));
+            const uniqueNew = newItems.filter(it => !existingNames.has(it.file.name));
+            const combined = [...prev.items, ...uniqueNew];
+            combined.sort((a, b) => (a.selectedEpNum ?? 9999) - (b.selectedEpNum ?? 9999));
             return {
                 ...prev,
-                items: [...prev.items, ...newItems]
+                items: combined
             };
         });
+    };
+
+    const handleFilesSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+        processAddedFiles(Array.from(files));
+        e.target.value = '';
+    };
+
+    const handleFolderSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+        processAddedFiles(Array.from(files));
+        e.target.value = '';
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDraggingOver(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDraggingOver(false);
+    };
+
+    const handleDrop = async (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDraggingOver(false);
+
+        if (!batchSubTarget) return;
+        const extracted: File[] = [];
+        const items = e.dataTransfer.items;
+
+        if (items && items.length > 0) {
+            const queue: any[] = [];
+            for (let i = 0; i < items.length; i++) {
+                const item = items[i];
+                if (item.kind === 'file') {
+                    const entry = (item as any).webkitGetAsEntry ? (item as any).webkitGetAsEntry() : null;
+                    if (entry) {
+                        queue.push(entry);
+                    } else {
+                        const f = item.getAsFile();
+                        if (f && /\.(srt|vtt)$/i.test(f.name)) extracted.push(f);
+                    }
+                }
+            }
+
+            while (queue.length > 0) {
+                const entry = queue.shift();
+                if (entry.isFile) {
+                    const f = await new Promise<File>(resolve => entry.file(resolve));
+                    if (/\.(srt|vtt)$/i.test(f.name)) extracted.push(f);
+                } else if (entry.isDirectory) {
+                    const reader = entry.createReader();
+                    const readBatch = async (): Promise<any[]> => {
+                        return new Promise(resolve => {
+                            reader.readEntries((entries: any[]) => resolve(entries || []));
+                        });
+                    };
+                    let batch = await readBatch();
+                    while (batch.length > 0) {
+                        queue.push(...batch);
+                        batch = await readBatch();
+                    }
+                }
+            }
+        } else if (e.dataTransfer.files) {
+            for (let i = 0; i < e.dataTransfer.files.length; i++) {
+                const f = e.dataTransfer.files[i];
+                if (/\.(srt|vtt)$/i.test(f.name)) extracted.push(f);
+            }
+        }
+
+        processAddedFiles(extracted);
     };
 
     const handleUpdateItemEpisode = (index: number, epNum: number | null) => {
@@ -2526,26 +2581,34 @@ export default function EpisodeManagerModal({
                     accept=".srt,.vtt"
                     ref={batchFileInputRef}
                     style={{ display: 'none' }}
-                    onChange={handleInitialBatchFileSelect}
+                    onChange={handleFilesSelected}
                 />
                 <input
                     type="file"
+                    // @ts-ignore
+                    webkitdirectory=""
+                    directory=""
                     multiple
-                    accept=".srt,.vtt"
-                    ref={batchAddMoreRef}
+                    ref={batchFolderInputRef}
                     style={{ display: 'none' }}
-                    onChange={handleAppendMoreFiles}
+                    onChange={handleFolderSelected}
                 />
 
                 {/* ─── BATCH SUBTITLES LINKER MODAL ─── */}
                 {batchSubTarget && (
-                    <div className="ep-modal-backdrop batch-sub-backdrop" onClick={() => !batchSubTarget.saving && setBatchSubTarget(null)}>
+                    <div
+                        className="ep-modal-backdrop batch-sub-backdrop"
+                        onClick={() => !batchSubTarget.saving && setBatchSubTarget(null)}
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                    >
                         <div className="batch-sub-modal-card" onClick={e => e.stopPropagation()}>
                             {/* Modal Header */}
                             <div className="batch-sub-modal-header">
                                 <div className="batch-sub-header-left">
                                     <div className="batch-sub-icon-bubble">
-                                        <FileText size={22} className="batch-sub-icon" />
+                                        <FolderOpen size={22} className="batch-sub-icon" />
                                     </div>
                                     <div>
                                         <h3 className="batch-sub-modal-title">
@@ -2555,8 +2618,8 @@ export default function EpisodeManagerModal({
                                         </h3>
                                         <p className="batch-sub-modal-subtitle">
                                             {lang === 'en'
-                                                ? 'Subtitle files matched to episodes by filename. Review matches before saving.'
-                                                : 'فایلەکان بە شێوەی خۆکار بەپێی ناوی ئەڵقە دیاری کراون، پێداچوونەوە بکە پێش پاشەکەوتکردن.'}
+                                                ? 'Upload your season folder or files — all episodes match automatically.'
+                                                : 'تەواوی فۆڵدەری زنجیرەکە یاخود فایلەکان هەڵبژێرە، سیستەمەکە خۆکارانە ئەڵقەکان دەبەستێتەوە.'}
                                         </p>
                                     </div>
                                 </div>
@@ -2601,94 +2664,152 @@ export default function EpisodeManagerModal({
                                 </div>
                             </div>
 
-                            {/* Summary & Add More Bar */}
+                            {/* Action / Summary Bar */}
                             <div className="batch-sub-action-bar">
                                 <div className="batch-sub-summary">
                                     <span className="batch-badge-count">
                                         {batchSubTarget.items.filter(it => it.selectedEpNum !== null).length} / {batchSubTarget.items.length} {lang === 'en' ? 'Episodes Matched' : 'ئەڵقە بەستراونەتەوە'}
                                     </span>
                                     <span className="batch-badge-season-info">
-                                        {batchSubTarget.season.episodes.length} {lang === 'en' ? 'episodes in this season' : 'ئەڵقە لەم وەرزەدا هەیە'}
+                                        {batchSubTarget.season.episodes.length} {lang === 'en' ? 'episodes in season' : 'ئەڵقە لەم وەرزەدا هەیە'}
                                     </span>
                                 </div>
-                                <div>
+                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                                     <button
                                         type="button"
                                         className="batch-btn-add-more"
-                                        onClick={() => batchAddMoreRef.current?.click()}
+                                        style={{ background: 'rgba(16, 185, 129, 0.15)', borderColor: '#34d399', color: '#34d399' }}
+                                        onClick={() => batchFolderInputRef.current?.click()}
+                                        title="تەواوی فۆڵدەری سەرەکی زنجیرەکە هەڵبژێرە، هەموو ژێرنووسەکانی ناو سابفۆڵدەرەکانیش دەخوێنێتەوە"
+                                    >
+                                        <FolderOpen size={14} />
+                                        <span>{lang === 'en' ? 'Pick Season Folder 📁' : 'هەڵبژاردنی تەواوی فۆڵدەر 📁'}</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="batch-btn-add-more"
+                                        onClick={() => batchFileInputRef.current?.click()}
                                     >
                                         <Plus size={14} />
-                                        <span>{lang === 'en' ? 'Add more files' : 'زیادکردنی فایلی تر'}</span>
+                                        <span>{lang === 'en' ? 'Add files' : 'فایلی تر'}</span>
                                     </button>
+                                    {batchSubTarget.items.length > 0 && (
+                                        <button
+                                            type="button"
+                                            className="batch-btn-add-more"
+                                            style={{ color: '#f87171' }}
+                                            onClick={() => setBatchSubTarget(prev => prev ? { ...prev, items: [] } : null)}
+                                            title="سڕینەوەی هەمووی"
+                                        >
+                                            <Trash2 size={13} />
+                                        </button>
+                                    )}
                                 </div>
                             </div>
 
-                            {/* Scrollable File List */}
-                            <div className="batch-sub-list-container">
-                                {batchSubTarget.items.map((item, idx) => {
-                                    const matchedEp = batchSubTarget.season.episodes.find(e => e.number === item.selectedEpNum);
-                                    const alreadyHas = matchedEp ? (batchSubType === 'original' ? !!matchedEp.originalSrt : !!matchedEp.translatedSrt) : false;
-                                    const isDuplicate = item.selectedEpNum !== null && batchSubTarget.items.filter(it => it.selectedEpNum === item.selectedEpNum).length > 1;
+                            {/* Scrollable File List or Empty Dropzone */}
+                            {batchSubTarget.items.length === 0 ? (
+                                <div
+                                    className={`batch-empty-dropzone ${isDraggingOver ? 'is-dragging' : ''}`}
+                                    onDragOver={handleDragOver}
+                                    onDragLeave={handleDragLeave}
+                                    onDrop={handleDrop}
+                                >
+                                    <div className="batch-dropzone-icon-wrap">
+                                        <FolderOpen size={40} />
+                                    </div>
+                                    <h4>{lang === 'en' ? 'Drop Season Folder or Files Here' : 'تەواوی فۆڵدەر یان فایلەکان لێرە فڕێ بدە (Drag & Drop)'}</h4>
+                                    <p>
+                                        {lang === 'en'
+                                            ? 'Drag the main series folder (e.g. Below 2026) here — all subfolders and .srt files will be scanned automatically!'
+                                            : 'دەتوانیت تەواوی فۆڵدەری سەرەکی زنجیرەکە (Below 2026) ڕاستەوخۆ بە ماوس ڕابکێشیتە ئێرە؛ هەموو فۆڵدەر و ئەڵقەکانی ناوی بە خۆکار دەردەهێنرێن!'}
+                                    </p>
+                                    <div className="batch-dropzone-buttons">
+                                        <button
+                                            type="button"
+                                            className="batch-btn-pick-folder"
+                                            onClick={() => batchFolderInputRef.current?.click()}
+                                        >
+                                            <FolderOpen size={16} />
+                                            <span>{lang === 'en' ? 'Select Season Folder 📁' : 'هەڵبژاردنی تەواوی فۆڵدەر (Folder) 📁'}</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="batch-btn-pick-files"
+                                            onClick={() => batchFileInputRef.current?.click()}
+                                        >
+                                            <FileText size={16} />
+                                            <span>{lang === 'en' ? 'Select Files (.srt) 📄' : 'دیاریکردنی فایلەکان (.srt) 📄'}</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="batch-sub-list-container">
+                                    {batchSubTarget.items.map((item, idx) => {
+                                        const matchedEp = batchSubTarget.season.episodes.find(e => e.number === item.selectedEpNum);
+                                        const alreadyHas = matchedEp ? (batchSubType === 'original' ? !!matchedEp.originalSrt : !!matchedEp.translatedSrt) : false;
+                                        const isDuplicate = item.selectedEpNum !== null && batchSubTarget.items.filter(it => it.selectedEpNum === item.selectedEpNum).length > 1;
 
-                                    return (
-                                        <div key={idx} className={`batch-sub-row ${item.selectedEpNum !== null ? 'is-matched' : 'is-unmatched'}`}>
-                                            <div className="batch-sub-file-info">
-                                                <FileText size={18} className="batch-file-icon" />
-                                                <div className="batch-sub-filename" title={item.file.name}>
-                                                    <span>{item.file.name}</span>
-                                                </div>
-                                                <span className="batch-file-size">{(item.file.size / 1024).toFixed(1)} KB</span>
-                                            </div>
-
-                                            <div className="batch-sub-match-col">
-                                                <span className="batch-arrow-label">➡️</span>
-                                                <select
-                                                    className={`batch-ep-select ${item.selectedEpNum !== null ? 'has-val' : 'no-val'}`}
-                                                    value={item.selectedEpNum ?? ''}
-                                                    onChange={e => handleUpdateItemEpisode(idx, e.target.value ? parseInt(e.target.value, 10) : null)}
-                                                >
-                                                    <option value="">{lang === 'en' ? '-- Skip / Unassigned --' : '-- پشتگوێخستن --'}</option>
-                                                    {batchSubTarget.season.episodes.map(ep => (
-                                                        <option key={ep.id} value={ep.number}>
-                                                            {lang === 'en' ? `Episode ${ep.number} (${ep.title})` : `ئەڵقەی ${ep.number} (${ep.title})`}
-                                                        </option>
-                                                    ))}
-                                                </select>
-
-                                                {item.selectedEpNum !== null && (
-                                                    <div className="batch-status-chips">
-                                                        <span className="batch-tag matched-tag">
-                                                            <CheckCircle2 size={12} />
-                                                            <span>{item.autoMatched ? (lang === 'en' ? 'Auto-matched' : 'خۆکار دۆزرایەوە') : (lang === 'en' ? 'Manual' : 'دەستی')}</span>
-                                                        </span>
-                                                        {isDuplicate && (
-                                                            <span className="batch-tag duplicate-tag" title="ئەم ئەڵقەیە بۆ زیاتر لە یەک فایل هەڵبژێردراوە">
-                                                                <AlertCircle size={11} />
-                                                                <span>{lang === 'en' ? 'Duplicate ep' : 'ئەڵقەی دووبارە'}</span>
-                                                            </span>
-                                                        )}
-                                                        {alreadyHas && !isDuplicate && (
-                                                            <span className="batch-tag overwrite-tag" title="ئەم ئەڵقەیە پێشتر ئەم جۆرە ژێرنووسەی هەبووە و دەگۆڕدرێت بەمە">
-                                                                <RefreshCw size={11} />
-                                                                <span>{lang === 'en' ? 'Overwrites existing' : 'نوێکردنەوە'}</span>
-                                                            </span>
-                                                        )}
+                                        return (
+                                            <div key={idx} className={`batch-sub-row ${item.selectedEpNum !== null ? 'is-matched' : 'is-unmatched'}`}>
+                                                <div className="batch-sub-file-info">
+                                                    <FileText size={18} className="batch-file-icon" />
+                                                    <div className="batch-sub-filename" title={item.file.name}>
+                                                        <span>{item.file.name}</span>
                                                     </div>
-                                                )}
-                                            </div>
+                                                    <span className="batch-file-size">{(item.file.size / 1024).toFixed(1)} KB</span>
+                                                </div>
 
-                                            <button
-                                                type="button"
-                                                className="batch-remove-file-btn"
-                                                title={lang === 'en' ? 'Remove file' : 'سڕینەوەی ئەم فایلە'}
-                                                onClick={() => handleRemoveBatchItem(idx)}
-                                            >
-                                                <Trash2 size={14} />
-                                            </button>
-                                        </div>
-                                    );
-                                })}
-                            </div>
+                                                <div className="batch-sub-match-col">
+                                                    <span className="batch-arrow-label">➡️</span>
+                                                    <select
+                                                        className={`batch-ep-select ${item.selectedEpNum !== null ? 'has-val' : 'no-val'}`}
+                                                        value={item.selectedEpNum ?? ''}
+                                                        onChange={e => handleUpdateItemEpisode(idx, e.target.value ? parseInt(e.target.value, 10) : null)}
+                                                    >
+                                                        <option value="">{lang === 'en' ? '-- Skip / Unassigned --' : '-- پشتگوێخستن --'}</option>
+                                                        {batchSubTarget.season.episodes.map(ep => (
+                                                            <option key={ep.id} value={ep.number}>
+                                                                {lang === 'en' ? `Episode ${ep.number} (${ep.title})` : `ئەڵقەی ${ep.number} (${ep.title})`}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+
+                                                    {item.selectedEpNum !== null && (
+                                                        <div className="batch-status-chips">
+                                                            <span className="batch-tag matched-tag">
+                                                                <CheckCircle2 size={12} />
+                                                                <span>{item.autoMatched ? (lang === 'en' ? 'Auto-matched' : 'خۆکار دۆزرایەوە') : (lang === 'en' ? 'Manual' : 'دەستی')}</span>
+                                                            </span>
+                                                            {isDuplicate && (
+                                                                <span className="batch-tag duplicate-tag" title="ئەم ئەڵقەیە بۆ زیاتر لە یەک فایل هەڵبژێردراوە">
+                                                                    <AlertCircle size={11} />
+                                                                    <span>{lang === 'en' ? 'Duplicate ep' : 'ئەڵقەی دووبارە'}</span>
+                                                                </span>
+                                                            )}
+                                                            {alreadyHas && !isDuplicate && (
+                                                                <span className="batch-tag overwrite-tag" title="ئەم ئەڵقەیە پێشتر ئەم جۆرە ژێرنووسەی هەبووە و دەگۆڕدرێت بەمە">
+                                                                    <RefreshCw size={11} />
+                                                                    <span>{lang === 'en' ? 'Overwrites existing' : 'نوێکردنەوە'}</span>
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <button
+                                                    type="button"
+                                                    className="batch-remove-file-btn"
+                                                    title={lang === 'en' ? 'Remove file' : 'سڕینەوەی ئەم فایلە'}
+                                                    onClick={() => handleRemoveBatchItem(idx)}
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
 
                             {/* Modal Footer */}
                             <div className="batch-sub-modal-footer">
