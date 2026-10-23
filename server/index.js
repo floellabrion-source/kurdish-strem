@@ -4679,33 +4679,21 @@ app.get('/api/omdb-search', requireAuth, requireAdmin, async (req, res) => {
     }
 });
 
-app.get('/api/omdb-rating', requireAuth, requireAdmin, async (req, res) => {
-    const { title } = req.query;
-    if (!title) return res.status(400).json({ error: 'پێویستە ناو، لینک، یان کودی IMDb فیلمەکە بنێریت' });
-    
-    if (!OMDB_API_KEY) {
-        return res.status(500).json({ error: 'OMDB_API_KEY لەسەر سێرڤەر دانەنراوە. تکایە لە .env زیادی بکە.' });
+async function fetchOmdbDetails(titleOrId) {
+    if (!titleOrId || !OMDB_API_KEY) return null;
+    const rawInput = titleOrId.toString().trim();
+    const imdbIdMatch = rawInput.match(/tt\d{7,8}/i);
+
+    let url = '';
+    if (imdbIdMatch) {
+        url = `http://www.omdbapi.com/?i=${imdbIdMatch[0]}&apikey=${OMDB_API_KEY}`;
+    } else {
+        url = `http://www.omdbapi.com/?t=${encodeURIComponent(rawInput)}&apikey=${OMDB_API_KEY}`;
     }
 
-    try {
-        // Detect if input is IMDb ID (e.g. tt0903747) or contains IMDb URL
-        const rawInput = title.toString().trim();
-        const imdbIdMatch = rawInput.match(/tt\d{7,8}/i);
-
-        let url = '';
-        if (imdbIdMatch) {
-            const imdbId = imdbIdMatch[0];
-            url = `http://www.omdbapi.com/?i=${imdbId}&apikey=${OMDB_API_KEY}`;
-            console.log(`[OMDb API] Fetching by IMDb ID (${imdbId})`);
-        } else {
-            url = `http://www.omdbapi.com/?t=${encodeURIComponent(rawInput)}&apikey=${OMDB_API_KEY}`;
-            console.log(`[OMDb API] Fetching by Title (${rawInput})`);
-        }
-        
-        let response = await axios.get(url);
-        
-        // If searching by title failed with ?t=, fallback to search ?s=
-        if (response.data.Response !== 'True' && !imdbIdMatch) {
+    let response = await axios.get(url).catch(() => null);
+    if (!response || response.data?.Response !== 'True') {
+        if (!imdbIdMatch) {
             let searchTitle = rawInput;
             let searchYear = '';
             const yMatch = rawInput.match(/\b(19\d{2}|20\d{2})\b/);
@@ -4718,142 +4706,143 @@ app.get('/api/omdb-rating', requireAuth, requireAdmin, async (req, res) => {
             const sRes = await axios.get(sUrl).catch(() => null);
             if (sRes?.data?.Search?.length > 0) {
                 const best = sRes.data.Search[0];
-                console.log(`[OMDb API Fallback] Resolved "${rawInput}" -> "${best.Title}" (${best.imdbID})`);
                 const retryById = await axios.get(`http://www.omdbapi.com/?i=${best.imdbID}&apikey=${OMDB_API_KEY}`).catch(() => null);
                 if (retryById?.data?.Response === 'True') {
                     response = retryById;
                 }
             }
         }
-        
-        if (response.data.Response === 'True') {
-            const data = response.data;
-            const imdbRating = parseFloat(data.imdbRating);
-            const resolvedTitle = data.Title || rawInput;
-            
-            let mappedType = data.Type === 'series' ? 'series' : 'movie';
-            if (data.Genre && data.Genre.includes('Animation')) mappedType = 'animation';
+    }
 
-            let seasonsData = [];
-            if (mappedType === 'series' && data.totalSeasons && !isNaN(parseInt(data.totalSeasons))) {
-                const totalS = parseInt(data.totalSeasons);
-                console.log(`[OMDb API] Fetching all ${totalS} seasons for ${resolvedTitle}...`);
-                
-                // Fetch all seasons concurrently with Promise.all
-                const seasonPromises = [];
-                for (let i = 1; i <= totalS; i++) {
-                    const seasonQueryParam = imdbIdMatch ? `i=${imdbIdMatch[0]}` : `t=${encodeURIComponent(resolvedTitle)}`;
-                    seasonPromises.push(
-                        axios.get(`http://www.omdbapi.com/?${seasonQueryParam}&Season=${i}&apikey=${OMDB_API_KEY}`)
-                            .then(sRes => ({ seasonNum: i, data: sRes.data }))
-                            .catch(err => {
-                                console.error(`OMDb Season ${i} fetch error:`, err.message);
-                                return { seasonNum: i, data: null };
-                            })
-                    );
+    if (!response || response.data?.Response !== 'True') {
+        return null;
+    }
+
+    const data = response.data;
+    const imdbRating = parseFloat(data.imdbRating);
+    const resolvedTitle = data.Title || rawInput;
+
+    let mappedType = data.Type === 'series' ? 'series' : 'movie';
+    if (data.Genre && data.Genre.includes('Animation')) mappedType = 'animation';
+
+    let seasonsData = [];
+    if (mappedType === 'series' && data.totalSeasons && !isNaN(parseInt(data.totalSeasons))) {
+        const totalS = parseInt(data.totalSeasons);
+        const seasonPromises = [];
+        for (let i = 1; i <= totalS; i++) {
+            const seasonQueryParam = imdbIdMatch ? `i=${imdbIdMatch[0]}` : `t=${encodeURIComponent(resolvedTitle)}`;
+            seasonPromises.push(
+                axios.get(`http://www.omdbapi.com/?${seasonQueryParam}&Season=${i}&apikey=${OMDB_API_KEY}`)
+                    .then(sRes => ({ seasonNum: i, data: sRes.data }))
+                    .catch(() => ({ seasonNum: i, data: null }))
+            );
+        }
+
+        const seasonResults = await Promise.all(seasonPromises);
+        for (const sItem of seasonResults) {
+            if (sItem.data && sItem.data.Response === 'True' && sItem.data.Episodes) {
+                let maxEpNum = 0;
+                sItem.data.Episodes.forEach(ep => {
+                    const num = parseInt(ep.Episode) || 0;
+                    if (num > maxEpNum) maxEpNum = num;
+                });
+
+                const episodes = [];
+                for (let eNum = 1; eNum <= maxEpNum; eNum++) {
+                    const omdbEp = sItem.data.Episodes.find(ep => parseInt(ep.Episode) === eNum);
+                    episodes.push({
+                        id: uuidv4(),
+                        number: eNum,
+                        title: omdbEp && omdbEp.Title && omdbEp.Title !== 'N/A' ? omdbEp.Title : `ئەڵقەی ${eNum}`,
+                        duration: data.Runtime && data.Runtime !== 'N/A' ? data.Runtime : '',
+                        videoFile: null,
+                        videoUrl: null,
+                        originalSrt: null,
+                        translatedSrt: null,
+                        sensitiveScenes: []
+                    });
                 }
 
-                const seasonResults = await Promise.all(seasonPromises);
-                for (const sItem of seasonResults) {
-                    if (sItem.data && sItem.data.Response === 'True' && sItem.data.Episodes) {
-                        let maxEpNum = 0;
-                        sItem.data.Episodes.forEach(ep => {
-                            const num = parseInt(ep.Episode) || 0;
-                            if (num > maxEpNum) maxEpNum = num;
-                        });
-
-                        const episodes = [];
-                        for (let eNum = 1; eNum <= maxEpNum; eNum++) {
-                            const omdbEp = sItem.data.Episodes.find(ep => parseInt(ep.Episode) === eNum);
-                            episodes.push({
-                                id: uuidv4(),
-                                number: eNum,
-                                title: omdbEp && omdbEp.Title && omdbEp.Title !== 'N/A' ? omdbEp.Title : `ئەڵقەی ${eNum}`,
-                                duration: data.Runtime && data.Runtime !== 'N/A' ? data.Runtime : '',
-                                videoFile: null,
-                                videoUrl: null,
-                                originalSrt: null,
-                                translatedSrt: null,
-                                sensitiveScenes: []
-                            });
-                        }
-
-                        seasonsData.push({
-                            id: uuidv4(),
-                            number: sItem.seasonNum,
-                            title: `سیزنی ${sItem.seasonNum}`,
-                            episodes: episodes
-                        });
-                    }
-                }
+                seasonsData.push({
+                    id: uuidv4(),
+                    number: sItem.seasonNum,
+                    title: `سیزنی ${sItem.seasonNum}`,
+                    episodes: episodes
+                });
             }
+        }
+    }
 
-            const plotEn = data.Plot && data.Plot !== 'N/A' ? data.Plot : '';
-            let plotKu = '';
-            let plotAr = '';
-            try {
-                plotKu = await translateText(plotEn, 'ckb');
-            } catch(e) { console.error('Kurdish translation failed', e.message); }
-            
-            try {
-                plotAr = await translateText(plotEn, 'ar');
-            } catch(e) { console.error('Arabic translation failed', e.message); }
+    const plotEn = data.Plot && data.Plot !== 'N/A' ? data.Plot : '';
+    let plotKu = '';
+    let plotAr = '';
+    try { plotKu = await translateText(plotEn, 'ckb'); } catch(e) {}
+    try { plotAr = await translateText(plotEn, 'ar'); } catch(e) {}
 
-            let yearVal = new Date().getFullYear();
-            let endYearVal = null;
-            if (data.Year && data.Year !== 'N/A') {
-                const yearParts = data.Year.split('–');
-                yearVal = parseInt(yearParts[0]);
-                if (yearParts.length > 1 && yearParts[1]) {
-                    endYearVal = parseInt(yearParts[1]);
-                } else if (yearParts.length > 1 && !yearParts[1]) {
-                    endYearVal = null;
-                } else {
-                    endYearVal = mappedType === 'series' ? yearVal : null;
-                }
-            }
-
-            const detectedGeo = detectMovieCountryAndAccent(data.Country, data.Language);
-
-            res.json({ 
-                title: resolvedTitle,
-                imdbID: data.imdbID || (imdbIdMatch ? imdbIdMatch[0] : ''),
-                imdbRating: isNaN(imdbRating) ? null : imdbRating,
-                imdbVotes: data.imdbVotes && data.imdbVotes !== 'N/A' ? data.imdbVotes : '',
-                plot: plotKu,
-                plotKu: plotKu,
-                plotEn: plotEn,
-                plotAr: plotAr,
-                genre: data.Genre && data.Genre !== 'N/A' ? data.Genre : '',
-                year: yearVal,
-                endYear: endYearVal,
-                runtime: data.Runtime && data.Runtime !== 'N/A' ? data.Runtime : '',
-                poster: data.Poster && data.Poster !== 'N/A' ? data.Poster : '',
-                type: mappedType,
-                actors: data.Actors && data.Actors !== 'N/A' ? data.Actors : '',
-                director: data.Director && data.Director !== 'N/A' ? data.Director : '',
-                awards: data.Awards && data.Awards !== 'N/A' ? data.Awards : '',
-                seasons: seasonsData,
-                language: data.Language && data.Language !== 'N/A' ? data.Language : '',
-                country: detectedGeo.country,
-                countryName: detectedGeo.countryName,
-                countryFlag: detectedGeo.countryFlag,
-                accent: detectedGeo.accent,
-                accentLabel: detectedGeo.accentLabel,
-                countries: detectedGeo.countries,
-                allDetectedCountries: detectedGeo.allDetected,
-                rawCountry: data.Country && data.Country !== 'N/A' ? data.Country : ''
-            });
+    let yearVal = new Date().getFullYear();
+    let endYearVal = null;
+    if (data.Year && data.Year !== 'N/A') {
+        const yearParts = data.Year.split('–');
+        yearVal = parseInt(yearParts[0]) || yearVal;
+        if (yearParts.length > 1 && yearParts[1]) {
+            endYearVal = parseInt(yearParts[1]);
+        } else if (yearParts.length > 1 && !yearParts[1]) {
+            endYearVal = null;
         } else {
-            res.status(404).json({ error: response.data.Error || 'فیلمەکە نەدۆزرایەوە لە IMDb/OMDb' });
+            endYearVal = mappedType === 'series' ? yearVal : null;
+        }
+    }
+
+    const detectedGeo = detectMovieCountryAndAccent(data.Country, data.Language);
+
+    return {
+        title: resolvedTitle,
+        imdbID: data.imdbID || (imdbIdMatch ? imdbIdMatch[0] : ''),
+        imdbRating: isNaN(imdbRating) ? null : imdbRating,
+        imdbVotes: data.imdbVotes && data.imdbVotes !== 'N/A' ? data.imdbVotes : '',
+        plot: plotKu,
+        plotKu: plotKu,
+        plotEn: plotEn,
+        plotAr: plotAr,
+        genre: data.Genre && data.Genre !== 'N/A' ? data.Genre : '',
+        year: yearVal,
+        endYear: endYearVal,
+        runtime: data.Runtime && data.Runtime !== 'N/A' ? data.Runtime : '',
+        poster: data.Poster && data.Poster !== 'N/A' ? data.Poster : '',
+        type: mappedType,
+        actors: data.Actors && data.Actors !== 'N/A' ? data.Actors : '',
+        director: data.Director && data.Director !== 'N/A' ? data.Director : '',
+        awards: data.Awards && data.Awards !== 'N/A' ? data.Awards : '',
+        seasons: seasonsData,
+        language: data.Language && data.Language !== 'N/A' ? data.Language : '',
+        country: detectedGeo.country,
+        countryName: detectedGeo.countryName,
+        countryFlag: detectedGeo.countryFlag,
+        accent: detectedGeo.accent,
+        accentLabel: detectedGeo.accentLabel,
+        countries: detectedGeo.countries,
+        allDetectedCountries: detectedGeo.allDetected,
+        rawCountry: data.Country && data.Country !== 'N/A' ? data.Country : ''
+    };
+}
+
+app.get('/api/omdb-rating', requireAuth, requireAdmin, async (req, res) => {
+    const { title } = req.query;
+    if (!title) return res.status(400).json({ error: 'پێویستە ناو، لینک، یان کودی IMDb فیلمەکە بنێریت' });
+    
+    if (!OMDB_API_KEY) {
+        return res.status(500).json({ error: 'OMDB_API_KEY لەسەر سێرڤەر دانەنراوە. تکایە لە .env زیادی بکە.' });
+    }
+
+    try {
+        const details = await fetchOmdbDetails(title);
+        if (details) {
+            return res.json(details);
+        } else {
+            return res.status(404).json({ error: 'فیلمەکە نەدۆزرایەوە لە IMDb/OMDb' });
         }
     } catch (error) {
         console.error('[OMDb API Error]:', error.message);
-        if (error.response) {
-            if (error.response.status === 401) {
-                return res.status(401).json({ error: 'کێشە لە API Key هەیە (Unauthorized). دڵنیابە کلیلەکە ڕاستە و چالاککراوە.' });
-            }
-        }
         res.status(500).json({ error: `هەڵەیەک لە پەیوەندیکردن بە OMDb API ڕوویدا: ${error.message}` });
     }
 });
@@ -4891,6 +4880,40 @@ app.post('/api/admin/movies', requireAuth, requirePermission('canAddMovies'), as
     const isSuper = isSuperAdmin(req.user);
     const canDirectPublish = hasPermission(req.user, 'canPublishDirectly');
     const initialStatus = (isSuper || canDirectPublish) ? (status || 'published') : (status === 'draft' ? 'draft' : 'pending_approval');
+
+    // ─── Automatic IMDb Auto-Enrichment if missing poster, plot, or seasons ───
+    if (!posterUrl || (!description && !descriptionKu) || !genre || (type === 'series' && (!seasons || seasons.length === 0))) {
+        try {
+            console.log(`[Auto-Enrich] Movie "${title}" has missing metadata, querying IMDb/OMDb...`);
+            const omdbData = await fetchOmdbDetails(title);
+            if (omdbData) {
+                console.log(`[Auto-Enrich] Successfully enriched "${title}" -> "${omdbData.title}" (${omdbData.type}, ${omdbData.year})`);
+                if (!title || title.includes('http') || title.includes('imdb.com')) title = omdbData.title;
+                if (!posterUrl) posterUrl = omdbData.poster;
+                if (!descriptionKu) descriptionKu = omdbData.plotKu;
+                if (!descriptionEn) descriptionEn = omdbData.plotEn;
+                if (!descriptionAr) descriptionAr = omdbData.plotAr;
+                if (!description) description = omdbData.plotKu || omdbData.plotEn;
+                if (!genre) genre = omdbData.genre;
+                if (!imdbRating) imdbRating = omdbData.imdbRating;
+                if (!year || year === new Date().getFullYear()) year = omdbData.year;
+                if (endYear === undefined || endYear === null) endYear = omdbData.endYear;
+                if (!duration) duration = omdbData.runtime;
+                if (!language) language = omdbData.language;
+                if (type !== 'animation' && omdbData.type) type = omdbData.type;
+                if ((!seasons || seasons.length === 0) && omdbData.seasons && omdbData.seasons.length > 0) {
+                    seasons = omdbData.seasons;
+                }
+                if (!country || country === 'US') country = omdbData.country;
+                if (!countryFlag || countryFlag === '🇺🇸') countryFlag = omdbData.countryFlag;
+                if (!accent || accent === 'american') accent = omdbData.accent;
+                if (!accentLabel || accentLabel === 'ئینگلیزی - ئەمریکی') accentLabel = omdbData.accentLabel;
+                if (!countries || countries.length === 0) countries = omdbData.countries;
+            }
+        } catch (enrichErr) {
+            console.error('[Auto-Enrich Error]:', enrichErr.message);
+        }
+    }
 
     const cleanTitle = await resolveCleanTitle(title);
     const movies = readMovies();

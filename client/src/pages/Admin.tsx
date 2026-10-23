@@ -685,7 +685,7 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
         country: 'US', countryFlag: '🇺🇸', accent: 'american', accentLabel: 'ئینگلیزی - ئەمریکی', countries: ['US'] as string[],
         genre: '', year: new Date().getFullYear().toString(), endYear: '',
         duration: '', type: 'movie' as 'movie' | 'series' | 'animation', imdbRating: '' as string | number,
-        posterUrl: '', seasons: [] as Season[], status: 'published' as 'published' | 'draft'
+        posterUrl: '', seasons: [] as Season[], status: 'published' as 'published' | 'draft' | 'pending_approval'
     });
 
     const refs = {
@@ -779,21 +779,84 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
         if (!form.title.trim()) { toast('ناوی بەرهەمەکە داخڵ بکە', 'error'); return; }
         try {
             let formToSend = { ...form };
-            if (formToSend.title.includes('http') || formToSend.title.includes('imdb.com') || /^tt\d{7,8}$/i.test(formToSend.title.trim())) {
-                const match = formToSend.title.match(/tt\d{7,8}/i);
-                if (match) {
-                    try {
-                        const omdbCheck = await axios.get(`/api/omdb-rating?title=${match[0]}`);
-                        if (omdbCheck.data && omdbCheck.data.title) {
-                            formToSend.title = omdbCheck.data.title;
+
+            // Auto-fetch metadata if poster or description is missing, so no empty movie is ever submitted!
+            if (!formToSend.posterUrl || (!formToSend.description && !formToSend.descriptionKu)) {
+                toast(lang === 'en' ? 'Fetching full movie details from IMDb...' : 'چاوەڕێبە... زانیاری و پۆستەری فیلمەکە لە IMDb دەهێنرێت...', 'success');
+                try {
+                    const omdbCheck = await axios.get(`/api/omdb-rating?title=${encodeURIComponent(formToSend.title.trim())}`);
+                    if (omdbCheck.data) {
+                        const d = omdbCheck.data;
+                        formToSend.title = d.title || formToSend.title;
+                        formToSend.posterUrl = d.poster || formToSend.posterUrl;
+                        formToSend.description = d.plotKu || d.plotEn || formToSend.description;
+                        formToSend.descriptionKu = d.plotKu || formToSend.descriptionKu;
+                        formToSend.descriptionEn = d.plotEn || formToSend.descriptionEn;
+                        formToSend.descriptionAr = d.plotAr || formToSend.descriptionAr;
+                        formToSend.year = d.year ? d.year.toString() : formToSend.year;
+                        formToSend.endYear = d.endYear ? d.endYear.toString() : formToSend.endYear;
+                        formToSend.duration = d.runtime || formToSend.duration;
+                        formToSend.imdbRating = d.imdbRating !== null ? d.imdbRating.toString() : formToSend.imdbRating;
+                        formToSend.language = d.language || formToSend.language;
+                        if (d.genre) {
+                            const englishGenres = d.genre.split(',').map((g: string) => g.trim());
+                            formToSend.genre = englishGenres.map((g: string) => genreMap[g] || g).join('، ');
                         }
-                    } catch {}
+                        if (formToSend.type !== 'animation' && d.type) {
+                            formToSend.type = d.type as any;
+                        }
+                        if ((!formToSend.seasons || formToSend.seasons.length === 0) && d.seasons && d.seasons.length > 0) {
+                            formToSend.seasons = d.seasons;
+                        }
+                        if (d.country) formToSend.country = d.country;
+                        if (d.countryFlag) formToSend.countryFlag = d.countryFlag;
+                        if (d.accent) formToSend.accent = d.accent;
+                        if (d.accentLabel) formToSend.accentLabel = d.accentLabel;
+                    }
+                } catch (omdbErr) {
+                    console.log('OMDb auto-fetch in handleCreate:', omdbErr);
                 }
             }
-            const res = await axios.post('/api/admin/movies', { ...formToSend, year: parseInt(formToSend.year), endYear: formToSend.endYear ? parseInt(formToSend.endYear) : null });
-            toast('بە سەرکەوتوویی زیاد کرا ✓');
+
+            // Normal admins without canPublishDirectly cannot publish directly
+            if (!isSuperAdmin && !canPublishDirectly) {
+                formToSend.status = formToSend.status === 'draft' ? 'draft' : 'pending_approval';
+            }
+
+            const res = await axios.post('/api/admin/movies', { 
+                ...formToSend, 
+                year: parseInt(formToSend.year), 
+                endYear: formToSend.endYear ? parseInt(formToSend.endYear) : null 
+            });
+
+            if (!isSuperAdmin && !canPublishDirectly) {
+                toast('بە سەرکەوتوویی نێردرا بۆ سەرۆک بۆ پەسەندکردن ⏳');
+            } else {
+                toast('بە سەرکەوتوویی زیاد کرا ✓');
+            }
             setShowForm(false);
-            setForm({ title: '', description: '', descriptionKu: '', descriptionEn: '', descriptionAr: '', language: '', country: 'US', countryFlag: '🇺🇸', accent: 'american', accentLabel: 'ئینگلیزی - ئەمریکی', countries: ['US'], genre: '', year: new Date().getFullYear().toString(), endYear: '', duration: '', type: 'movie' as 'movie' | 'series' | 'animation', imdbRating: '', posterUrl: '', seasons: [], status: 'published' });
+            setForm({ 
+                title: '', 
+                description: '', 
+                descriptionKu: '', 
+                descriptionEn: '', 
+                descriptionAr: '', 
+                language: '', 
+                country: 'US', 
+                countryFlag: '🇺🇸', 
+                accent: 'american', 
+                accentLabel: 'ئینگلیزی - ئەمریکی', 
+                countries: ['US'], 
+                genre: '', 
+                year: new Date().getFullYear().toString(), 
+                endYear: '', 
+                duration: '', 
+                type: 'movie' as 'movie' | 'series' | 'animation', 
+                imdbRating: '', 
+                posterUrl: '', 
+                seasons: [], 
+                status: (!isSuperAdmin && !canPublishDirectly) ? 'pending_approval' : 'published' 
+            });
             if (res.data) {
                 setMovies(prev => [res.data, ...prev.filter(m => m.id !== res.data.id)]);
             }
@@ -3015,13 +3078,28 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                             <div className="form-group">
                                 <label>{lang === 'en' ? 'Publishing / Translation Status' : 'دۆخی بڵاوکردنەوە / وەرگێڕان'}</label>
                                 <select 
-                                    value={form.status || 'published'} 
+                                    value={(!isSuperAdmin && !canPublishDirectly) ? (form.status === 'draft' ? 'draft' : 'pending_approval') : (form.status || 'published')} 
                                     onChange={e => setForm(f => ({ ...f, status: e.target.value as any }))}
                                     className="form-input"
                                 >
-                                    <option value="published">🌐 بڵاوکردنەوەی ڕاستەوخۆ (بۆ بینەران و بەکارهێنەران)</option>
-                                    <option value="draft">🛠️ بۆ وەرگێڕان و تەکنیک (تەنها لەلای ئەدمینەکان دەبینرێت)</option>
+                                    {(isSuperAdmin || canPublishDirectly) ? (
+                                        <>
+                                            <option value="published">🌐 بڵاوکردنەوەی ڕاستەوخۆ (بۆ بینەران و بەکارهێنەران)</option>
+                                            <option value="draft">🛠️ بۆ وەرگێڕان و تەکنیک (تەنها لەلای ئەدمینەکان دەبینرێت)</option>
+                                            <option value="pending_approval">⏳ خستنە چاوەڕوانی پەسەندکردن</option>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <option value="pending_approval">⏳ ناردن بۆ پەسەندکردنی سەرۆک (دوای پەسەندکردن بڵاودەبێتەوە)</option>
+                                            <option value="draft">🛠️ بۆ وەرگێڕان و تەکنیک (تەنها لەلای ئەدمینەکان دەبینرێت)</option>
+                                        </>
+                                    )}
                                 </select>
+                                {!isSuperAdmin && !canPublishDirectly && (
+                                    <span style={{ fontSize: '11px', color: '#f59e0b', marginTop: '4px', display: 'block' }}>
+                                        🔒 {lang === 'en' ? 'Requires Super Admin approval before being published to viewers.' : 'تێبینی: پێویستی بە ڕەزامەندی سەرۆکە بۆ ئەوەی بۆ بینەران بڵاوبێتەوە.'}
+                                    </span>
+                                )}
                             </div>
                             <div className="form-group">
                                 <label>{lang === 'en' ? 'IMDb Rating' : 'ڕەیتینگی IMDb'}</label>
@@ -3061,8 +3139,17 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                         </div>
                         <div className="form-body">
                             {editMovie.status === 'pending_approval' && (
-                                <div style={{ background: 'rgba(234, 179, 8, 0.15)', border: '1px solid rgba(234, 179, 8, 0.4)', borderRadius: '10px', padding: '12px', marginBottom: '14px', fontSize: '13px', color: '#fef08a' }}>
-                                    ⏳ <strong>{lang === 'en' ? 'This item is awaiting your approval!' : 'ئەم بەرهەمە چاوەڕوانی پەسەندکردنی تۆیە!'}</strong> {lang === 'en' ? 'Submitted by:' : 'نێردراوە لەلایەن:'} <span style={{ color: '#38bdf8', fontWeight: 'bold' }}>{editMovie.submittedBy?.username || (lang === 'en' ? 'Admin' : 'ئەدمین')}</span>
+                                <div style={{ background: 'rgba(234, 179, 8, 0.15)', border: '1px solid rgba(234, 179, 8, 0.4)', borderRadius: '10px', padding: '12px', marginBottom: '14px', fontSize: '13px', color: '#fef08a', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                                    <div>
+                                        ⏳ <strong>{lang === 'en' ? 'This item is awaiting your approval!' : 'ئەم بەرهەمە چاوەڕوانی پەسەندکردنی تۆیە!'}</strong> {lang === 'en' ? 'Submitted by:' : 'نێردراوە لەلایەن:'} <span style={{ color: '#38bdf8', fontWeight: 'bold' }}>{editMovie.submittedBy?.username || (lang === 'en' ? 'Admin' : 'ئەدمین')}</span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => fetchImdbRating(editMovie.title, true)}
+                                        style={{ background: '#8b5cf6', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: '7px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', boxShadow: '0 2px 6px rgba(139, 92, 246, 0.3)' }}
+                                    >
+                                        <Sparkles size={13} /> {lang === 'en' ? 'Re-fetch IMDb Data' : '⚡ نوێکردنەوەی زانیاری لە IMDb'}
+                                    </button>
                                 </div>
                             )}
 

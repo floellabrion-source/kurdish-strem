@@ -20,7 +20,7 @@ export interface Episode {
     duration: string;
     sensitiveScenes?: { start: number, end: number }[];
     languageMetrics?: LanguageMetrics;
-    status?: 'published' | 'draft';
+    status?: 'published' | 'draft' | 'pending_approval' | 'rejected';
     reservation?: SubtitleReservation | null;
 }
 
