@@ -4641,15 +4641,16 @@ app.get('/api/omdb-search', requireAuth, requireAdmin, async (req, res) => {
             searchTitle = rawInput.replace(yMatch[0], '').replace(/[()\[\]]/g, '').trim();
         }
 
+        // ─── UNIVERSAL SMART SEARCH ───
+        // We intentionally search across all types (movies & series) so famous series (e.g. The Mentalist) are never hidden!
         let searchUrl = `http://www.omdbapi.com/?s=${encodeURIComponent(searchTitle || rawInput)}&apikey=${OMDB_API_KEY}`;
         if (searchYear) searchUrl += `&y=${searchYear}`;
-        if (type && (type === 'movie' || type === 'series')) searchUrl += `&type=${type}`;
 
         let omdbRes = await axios.get(searchUrl, { timeout: 6000 }).catch(() => null);
         let items = omdbRes?.data?.Search || [];
 
-        // If type/year filter gave 0 results, retry with just title
-        if (items.length === 0 && (type || searchYear)) {
+        // If year filter returned 0 results, retry without year filter
+        if (items.length === 0 && searchYear) {
             const fallbackUrl = `http://www.omdbapi.com/?s=${encodeURIComponent(searchTitle || rawInput)}&apikey=${OMDB_API_KEY}`;
             const fallbackRes = await axios.get(fallbackUrl, { timeout: 6000 }).catch(() => null);
             items = fallbackRes?.data?.Search || [];
@@ -4664,12 +4665,30 @@ app.get('/api/omdb-search', requireAuth, requireAdmin, async (req, res) => {
             }
         }
 
+        // Smart Ranking:
+        // 1. Exact title matches come first
+        // 2. Items with active posters come before items without posters
+        const cleanTarget = (searchTitle || rawInput).trim().toLowerCase();
+        items.sort((a, b) => {
+            const aExact = (a.Title || '').trim().toLowerCase() === cleanTarget;
+            const bExact = (b.Title || '').trim().toLowerCase() === cleanTarget;
+            if (aExact && !bExact) return -1;
+            if (!aExact && bExact) return 1;
+
+            const aHasPoster = a.Poster && a.Poster !== 'N/A';
+            const bHasPoster = b.Poster && b.Poster !== 'N/A';
+            if (aHasPoster && !bHasPoster) return -1;
+            if (!aHasPoster && bHasPoster) return 1;
+
+            return 0;
+        });
+
         const formatted = items.slice(0, 8).map(d => ({
             title: d.Title,
             year: d.Year,
             imdbID: d.imdbID,
             type: d.Type === 'series' ? 'series' : (d.Genre?.includes('Animation') ? 'animation' : 'movie'),
-            poster: d.Poster && d.Poster !== 'N/A' ? d.Poster : null
+            poster: (d.Poster && d.Poster !== 'N/A') ? d.Poster : null
         }));
 
         res.json({ results: formatted });

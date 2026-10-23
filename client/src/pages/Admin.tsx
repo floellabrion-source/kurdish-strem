@@ -1501,8 +1501,7 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
             editSearchTimeoutRef.current = setTimeout(async () => {
                 setIsSearchingEditImdb(true);
                 try {
-                    const itemType = editMovie?.type === 'animation' ? 'movie' : editMovie?.type;
-                    const res = await axios.get(`/api/omdb-search?query=${encodeURIComponent(clean)}&type=${itemType || 'movie'}`);
+                    const res = await axios.get(`/api/omdb-search?query=${encodeURIComponent(clean)}`);
                     const list: ImdbSearchResult[] = res.data?.results || [];
                     setEditImdbSearchResults(list);
                     setShowEditSuggestions(list.length > 0);
@@ -1526,8 +1525,7 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
             searchTimeoutRef.current = setTimeout(async () => {
                 setIsSearchingImdb(true);
                 try {
-                    const itemType = form.type === 'animation' ? 'movie' : form.type;
-                    const res = await axios.get(`/api/omdb-search?query=${encodeURIComponent(clean)}&type=${itemType || 'movie'}`);
+                    const res = await axios.get(`/api/omdb-search?query=${encodeURIComponent(clean)}`);
                     const list: ImdbSearchResult[] = res.data?.results || [];
                     setImdbSearchResults(list);
                     setShowSuggestions(list.length > 0);
@@ -1544,12 +1542,20 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
         if (isEdit) {
             setShowEditSuggestions(false);
             setEditImdbSearchResults([]);
-            setEditMovie(m => m ? { ...m, title: item.title } : null);
+            setEditMovie(m => m ? { 
+                ...m, 
+                title: item.title,
+                type: (item.type as any) || m.type 
+            } : null);
             fetchImdbRating(item.imdbID, true);
         } else {
             setShowSuggestions(false);
             setImdbSearchResults([]);
-            setForm(f => ({ ...f, title: item.title }));
+            setForm(f => ({ 
+                ...f, 
+                title: item.title,
+                type: (item.type as any) || f.type 
+            }));
             fetchImdbRating(item.imdbID, false);
         }
     };
@@ -1574,8 +1580,7 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
         else setIsSearchingImdb(true);
 
         try {
-            const itemType = isEdit ? (editMovie?.type === 'animation' ? 'movie' : editMovie?.type) : (form.type === 'animation' ? 'movie' : form.type);
-            const res = await axios.get(`/api/omdb-search?query=${encodeURIComponent(clean)}&type=${itemType || 'movie'}`);
+            const res = await axios.get(`/api/omdb-search?query=${encodeURIComponent(clean)}`);
             const list: ImdbSearchResult[] = res.data?.results || [];
 
             if (list.length === 0) {
@@ -2861,7 +2866,7 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                         <div className="form-body">
                             {form.posterUrl && (
                                 <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '15px' }}>
-                                    <img src={form.posterUrl} alt="Poster" style={{ width: '120px', borderRadius: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }} />
+                                    <img src={form.posterUrl} alt="Poster" referrerPolicy="no-referrer" crossOrigin="anonymous" style={{ width: '120px', borderRadius: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }} />
                                 </div>
                             )}
                             <div className="type-selector">
@@ -2963,7 +2968,20 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                                                 >
                                                     <div className="imdb-suggestion-poster">
                                                         {item.poster ? (
-                                                            <img src={item.poster} alt={item.title} />
+                                                            <img 
+                                                                src={item.poster} 
+                                                                alt="" 
+                                                                referrerPolicy="no-referrer"
+                                                                crossOrigin="anonymous"
+                                                                loading="lazy"
+                                                                onError={(e) => {
+                                                                    e.currentTarget.style.display = 'none';
+                                                                    const parent = e.currentTarget.parentElement;
+                                                                    if (parent) {
+                                                                        parent.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18"/><path d="M17 3v18"/><path d="M3 7h4"/><path d="M3 17h4"/><path d="M17 7h4"/><path d="M17 17h4"/></svg>';
+                                                                    }
+                                                                }}
+                                                            />
                                                         ) : (
                                                             <Film size={18} color="#6b7280" />
                                                         )}
@@ -3201,7 +3219,7 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
 
                             {(editMovie.posterCloudUrl || editMovie.posterUrl) && (
                                 <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '15px' }}>
-                                    <img src={editMovie.posterCloudUrl || editMovie.posterUrl} alt="Poster" style={{ width: '120px', borderRadius: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }} />
+                                    <img src={editMovie.posterCloudUrl || editMovie.posterUrl} alt="Poster" referrerPolicy="no-referrer" crossOrigin="anonymous" style={{ width: '120px', borderRadius: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }} />
                                 </div>
                             )}
                             <div className="form-group" style={{ position: 'relative' }} ref={editSuggestionRef}>
@@ -3289,7 +3307,20 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                                                 >
                                                     <div className="imdb-suggestion-poster">
                                                         {item.poster ? (
-                                                            <img src={item.poster} alt={item.title} />
+                                                            <img 
+                                                                src={item.poster} 
+                                                                alt="" 
+                                                                referrerPolicy="no-referrer"
+                                                                crossOrigin="anonymous"
+                                                                loading="lazy"
+                                                                onError={(e) => {
+                                                                    e.currentTarget.style.display = 'none';
+                                                                    const parent = e.currentTarget.parentElement;
+                                                                    if (parent) {
+                                                                        parent.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18"/><path d="M17 3v18"/><path d="M3 7h4"/><path d="M3 17h4"/><path d="M17 7h4"/><path d="M17 17h4"/></svg>';
+                                                                    }
+                                                                }}
+                                                            />
                                                         ) : (
                                                             <Film size={18} color="#6b7280" />
                                                         )}
