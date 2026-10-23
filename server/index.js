@@ -3647,6 +3647,86 @@ app.post('/api/movies/:id/comments', requireAuth, (req, res) => {
     res.json({ success: true, comment: newComment, comments: movies[idx].comments });
 });
 
+// --- View Tracking & Deduplication ---
+const recentViewPings = new Map();
+
+function recordMovieView(movieId, { seasonNum, episodeNum, ip, countryInfo, city, deviceType, os, browser } = {}) {
+    if (!movieId) return;
+    const now = Date.now();
+    const cleanMovieId = String(movieId).trim();
+    const dedupKey = `${ip || 'unknown'}_${cleanMovieId}_${seasonNum || 0}_${episodeNum || 0}`;
+    const lastViewTime = recentViewPings.get(dedupKey);
+
+    // Deduplicate: 1 view per IP per movie/episode every 15 minutes
+    if (lastViewTime && (now - lastViewTime < 15 * 60 * 1000)) {
+        return;
+    }
+    recentViewPings.set(dedupKey, now);
+
+    // Clean old entries in recentViewPings (older than 1 hour)
+    if (recentViewPings.size > 10000) {
+        for (const [k, time] of recentViewPings.entries()) {
+            if (now - time > 60 * 60 * 1000) {
+                recentViewPings.delete(k);
+            }
+        }
+    }
+
+    // 1. Update views in movies database
+    let movieTitle = 'فیلم / زنجیرە';
+    try {
+        const movies = readMovies();
+        const m = movies.find(x => String(x.id) === cleanMovieId);
+        if (m) {
+            movieTitle = m.title || movieTitle;
+            m.views = (Number(m.views) || 0) + 1;
+            m.realViews = (Number(m.realViews) || 0) + 1;
+
+            if (seasonNum && episodeNum && m.seasons) {
+                const s = m.seasons.find(s => s.number === parseInt(seasonNum, 10));
+                const ep = s?.episodes?.find(e => e.number === parseInt(episodeNum, 10));
+                if (ep) {
+                    ep.views = (Number(ep.views) || 0) + 1;
+                }
+            }
+            writeMovies(movies);
+        }
+    } catch (err) {
+        console.error('Error incrementing movie views:', err.message);
+    }
+
+    // 2. Append to analytics watchEvents
+    try {
+        const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Baghdad' }).format(new Date());
+        const analytics = readAnalytics() || { visits: [], watchEvents: [] };
+        if (!Array.isArray(analytics.watchEvents)) analytics.watchEvents = [];
+
+        analytics.watchEvents.push({
+            movieId: cleanMovieId,
+            movieTitle,
+            seasonNum: seasonNum ? parseInt(seasonNum, 10) : null,
+            episodeNum: episodeNum ? parseInt(episodeNum, 10) : null,
+            ip,
+            countryCode: countryInfo?.code || 'IQ',
+            countryName: countryInfo?.name || 'عێراق',
+            countryFlag: countryInfo?.flag || '🇮🇶',
+            city: city || '',
+            device: deviceType || 'desktop',
+            os: os || 'Windows',
+            browser: browser || 'Chrome',
+            date: today,
+            timestamp: now
+        });
+
+        if (analytics.watchEvents.length > 50000) {
+            analytics.watchEvents = analytics.watchEvents.slice(-50000);
+        }
+        writeAnalytics(analytics);
+    } catch (err) {
+        console.error('Error recording watchEvent:', err.message);
+    }
+}
+
 // --- Live Concurrent Active Viewers Tracking ---
 const liveWatchers = new Map();
 
@@ -3733,8 +3813,73 @@ app.post('/api/movies/:id/heartbeat', (req, res) => {
         lastPing: Date.now()
     });
     
+    // Automatically record view in analytics & movies database
+    recordMovieView(movieId, {
+        seasonNum: req.body.seasonNum,
+        episodeNum: req.body.episodeNum,
+        ip,
+        countryInfo,
+        city,
+        deviceType,
+        os,
+        browser
+    });
+
     const count = getLiveViewerCount(movieId);
     res.json({ success: true, liveViewers: count });
+});
+
+// Endpoint: Explicit video view ping (called when playback starts)
+app.post('/api/movies/:id/view', (req, res) => {
+    const movieId = req.params.id;
+    const { seasonNum, episodeNum } = req.body;
+
+    const rawIp = req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.ip || '';
+    const ip = String(rawIp).split(',')[0].trim();
+    const rawCountry = req.headers['cf-ipcountry'] || req.body.country || 'IQ';
+    const countryInfo = getCountryInfo(rawCountry);
+    const rawCity = req.headers['cf-ipcity'] || req.body.city || '';
+    const city = rawCity ? decodeURIComponent(rawCity) : '';
+
+    const ua = req.headers['user-agent'] || '';
+    let isMobile = false;
+    let isTablet = false;
+    let os = 'Windows';
+    let browser = 'Chrome';
+
+    if (/ipad|tablet|(android(?!.*mobile))/i.test(ua)) {
+        isTablet = true;
+        os = /ipad/i.test(ua) ? 'iPadOS' : 'Android Tablet';
+    } else if (/iphone|mobile|ipod|android/i.test(ua)) {
+        isMobile = true;
+        if (/iphone/i.test(ua)) os = 'iPhone';
+        else if (/android/i.test(ua)) os = 'Android';
+    } else {
+        if (/windows/i.test(ua)) os = 'Windows PC';
+        else if (/macintosh|mac os x/i.test(ua)) os = 'Mac';
+        else if (/linux/i.test(ua)) os = 'Linux';
+    }
+
+    if (/edg\//i.test(ua)) browser = 'Edge';
+    else if (/chrome|crios/i.test(ua)) browser = 'Chrome';
+    else if (/firefox|fxios/i.test(ua)) browser = 'Firefox';
+    else if (/safari/i.test(ua)) browser = 'Safari';
+    else if (/opera|opr/i.test(ua)) browser = 'Opera';
+
+    const deviceType = req.body.device || (isTablet ? 'tablet' : (isMobile ? 'mobile' : 'desktop'));
+
+    recordMovieView(movieId, {
+        seasonNum,
+        episodeNum,
+        ip,
+        countryInfo,
+        city,
+        deviceType,
+        os,
+        browser
+    });
+
+    res.json({ success: true });
 });
 
 // Endpoint: Watcher left the movie
@@ -7575,9 +7720,17 @@ app.get('/api/admin/analytics', requireAuth, requireAdmin, (req, res) => {
             // Build list from all movies
             const list = movies.map(m => {
                 const recorded = counts[m.id] || 0;
-                // Baseline fallback based on real views
-                const baseViews = Math.round((Number(m.realViews || m.views) || 0) * defaultWeightFactor);
-                const totalInPeriod = recorded > 0 ? (recorded + baseViews) : baseViews;
+                const baseViews = Number(m.realViews || m.views) || 0;
+                
+                // If calculating allTime, use the maximum of actual watchEvents or base historical views
+                let totalInPeriod = recorded;
+                if (defaultWeightFactor === 1.0) {
+                    totalInPeriod = Math.max(recorded, baseViews);
+                } else if (recorded === 0) {
+                    // For specific periods (week/month/year), if no watchEvents exist, don't show a fake arbitrary number
+                    totalInPeriod = 0;
+                }
+                
                 return {
                     id: m.id,
                     title: m.title,

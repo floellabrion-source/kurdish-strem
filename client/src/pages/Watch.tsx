@@ -106,9 +106,19 @@ export default function Watch() {
     const seekTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const pendingSeekRef = useRef<number | null>(null);
     const isScrubbingRef = useRef(false);
+    const viewRecordedRef = useRef(false);
     const ignoreVideoErrorUntilRef = useRef(0);
     const modalOpenedAtRef = useRef(0);
     const isViewportFullscreenRef = useRef(false);
+
+    const clientId = useMemo(() => {
+        let cid = sessionStorage.getItem('stream_client_id');
+        if (!cid) {
+            cid = 'client_' + Math.random().toString(36).slice(2);
+            sessionStorage.setItem('stream_client_id', cid);
+        }
+        return cid;
+    }, []);
 
     const [movie, setMovie] = useState<Movie | null>(null);
     const [loading, setLoading] = useState(true);
@@ -1479,8 +1489,6 @@ CRITICAL RULES:
 
     useEffect(() => {
         if (!id) return;
-        const clientId = sessionStorage.getItem('stream_client_id') || ('client_' + Math.random().toString(36).slice(2));
-        sessionStorage.setItem('stream_client_id', clientId);
 
         const sendHeartbeat = () => {
             let username = '👤 میوان (Guest)';
@@ -1507,7 +1515,9 @@ CRITICAL RULES:
                 username,
                 device,
                 deviceName,
-                videoTime
+                videoTime,
+                seasonNum: episodeNum > 0 ? seasonNum : undefined,
+                episodeNum: episodeNum > 0 ? episodeNum : undefined
             }).catch(() => {});
         };
 
@@ -1531,6 +1541,7 @@ CRITICAL RULES:
     }, [id]);
 
     useEffect(() => {
+        viewRecordedRef.current = false;
         axios.get(`/api/movies/${id}`).then(async res => {
             const m: Movie = res.data;
             setMovie(m);
@@ -1991,6 +2002,16 @@ CRITICAL RULES:
         if (diff > 0 && diff < 2.0) { // 2.0 allows for normal fast playback
             accumulatedSecondsRef.current += diff;
             totalAccumulatedSecondsRef.current += diff;
+
+            // Trigger real view count once viewer actively watches 3 seconds
+            if (totalAccumulatedSecondsRef.current >= 3 && !viewRecordedRef.current && id) {
+                viewRecordedRef.current = true;
+                axios.post(`/api/movies/${id}/view`, {
+                    seasonNum: episodeNum > 0 ? seasonNum : undefined,
+                    episodeNum: episodeNum > 0 ? episodeNum : undefined,
+                    clientId
+                }).catch(() => {});
+            }
             
             // Sync every 10 seconds of active playback so time updates in real-time
             if (accumulatedSecondsRef.current >= 10) {
@@ -2310,6 +2331,14 @@ CRITICAL RULES:
                 onPlaying={() => {
                     setIsBuffering(false);
                     setIsPlaying(true);
+                    if (!viewRecordedRef.current && id) {
+                        viewRecordedRef.current = true;
+                        axios.post(`/api/movies/${id}/view`, {
+                            seasonNum: episodeNum > 0 ? seasonNum : undefined,
+                            episodeNum: episodeNum > 0 ? episodeNum : undefined,
+                            clientId
+                        }).catch(() => {});
+                    }
                 }}
                 onProgress={e => {
                     const v = e.currentTarget;
