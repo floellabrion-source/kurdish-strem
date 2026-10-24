@@ -1969,7 +1969,15 @@ Format your output EXACTLY as follows using delimiter tags:
                                     <video
                                         ref={videoRef}
                                         src={isHls ? undefined : effectiveVideoSrc}
+                                        crossOrigin="anonymous"
                                         controls
+                                        onPlay={() => {
+                                            try {
+                                                if ((window as any).__waveformAudioCtx && (window as any).__waveformAudioCtx.state === 'suspended') {
+                                                    (window as any).__waveformAudioCtx.resume().catch(() => {});
+                                                }
+                                            } catch (e) {}
+                                        }}
                                         onTimeUpdate={handleTimeUpdate}
                                         className="dual-srt-video-el"
                                     />

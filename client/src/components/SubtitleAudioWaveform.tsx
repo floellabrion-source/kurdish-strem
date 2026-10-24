@@ -212,6 +212,7 @@ export default function SubtitleAudioWaveform({
 
                 const ctx = audioContextRef.current;
                 if (!ctx) return;
+                (window as any).__waveformAudioCtx = ctx;
 
                 if (ctx.state === 'suspended') {
                     const resumeCtx = () => {
@@ -221,6 +222,9 @@ export default function SubtitleAudioWaveform({
                     };
                     window.addEventListener('click', resumeCtx);
                     window.addEventListener('keydown', resumeCtx);
+                    if (video) {
+                        video.addEventListener('play', resumeCtx);
+                    }
                 }
 
                 if (!analyserRef.current) {
