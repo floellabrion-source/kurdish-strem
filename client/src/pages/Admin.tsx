@@ -8,7 +8,7 @@ import {
     PlusCircle, ListVideo, Upload, Languages, Shield, ShieldCheck, Link as LinkIcon, Star, Play, Search,
     Users, BarChart2, CreditCard, Sparkles, Filter, Download, Pause, History, Trophy, BookOpen,
     HardDrive, Bell, Wrench, Globe, Eye, EyeOff, Zap, DollarSign, Brain, Clock, RefreshCw, Minimize2,
-    Wallet, Folder, ExternalLink, Share2
+    Wallet, Folder, ExternalLink, Share2, Copy
 } from 'lucide-react';
 import { Movie, Season, Episode, LanguageMetrics, getCefrDisplayLevel, getCefrColor, ACCENT_OPTIONS } from '../types';
 import { runAiTranslationAndAnalysis, triggerFileDownload, pauseTranslationTask, isTaskPaused, parseSRT, AI_TRANSLATION_MODELS, TRANSLATION_TONES, MODEL_PRICING } from '../utils/aiTranslator';
@@ -2911,15 +2911,44 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                                                                 <span>⚙️ {st.source}</span>
                                                             </div>
                                                         </div>
-                                                        <button
-                                                            type="button"
-                                                            className="btn-start-ingest"
-                                                            disabled={!st.magnet}
-                                                            onClick={() => startIngest(r2MovieModal.movie, st.magnet, undefined, st.quality)}
-                                                        >
-                                                            <Download size={14} />
-                                                            <span>گواستنەوە بۆ R2 ⚡</span>
-                                                        </button>
+                                                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                                            <button
+                                                                type="button"
+                                                                title="کۆپیکردنی لینکی تۆرێنت (ماگنت)"
+                                                                onClick={() => {
+                                                                    if (st.magnet) {
+                                                                        navigator.clipboard.writeText(st.magnet);
+                                                                        toast('لینکی ماگنت (تۆرێنت) کۆپی کرا بۆ کلیپبۆرد 📋');
+                                                                    }
+                                                                }}
+                                                                style={{
+                                                                    background: 'rgba(51, 65, 85, 0.75)',
+                                                                    border: '1px solid rgba(148, 163, 184, 0.35)',
+                                                                    color: '#38bdf8',
+                                                                    borderRadius: '8px',
+                                                                    padding: '7px 11px',
+                                                                    cursor: 'pointer',
+                                                                    display: 'inline-flex',
+                                                                    alignItems: 'center',
+                                                                    gap: '5px',
+                                                                    fontSize: '12px',
+                                                                    fontWeight: 600,
+                                                                    transition: 'all 0.2s ease'
+                                                                }}
+                                                            >
+                                                                <Copy size={13} />
+                                                                <span>کۆپی</span>
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                className="btn-start-ingest"
+                                                                disabled={!st.magnet}
+                                                                onClick={() => startIngest(r2MovieModal.movie, st.magnet, undefined, st.quality)}
+                                                            >
+                                                                <Download size={14} />
+                                                                <span>گواستنەوە بۆ R2 ⚡</span>
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 ))}
                                             </div>
