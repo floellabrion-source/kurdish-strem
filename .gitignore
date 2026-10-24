@@ -9,4 +9,7 @@ server/vertex-key.json
 *.db-shm
 *.db-wal
 *.db
+server/data/*.json
+server/data/*.db*
+server/data/*.txt
 server/data/backups/
