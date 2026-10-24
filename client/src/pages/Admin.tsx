@@ -163,12 +163,36 @@ export default function Admin() {
     const [expandedSeries, setExpandedSeries] = useState<Record<string, boolean>>({});
     const [expandedMovies, setExpandedMovies] = useState<Record<string, boolean>>({});
 
-    // Cloudflare R2 Movie Linker Modal State
+    // Cloudflare R2 Movie Linker & Remote Ingestion Modal State
     const [r2MovieModal, setR2MovieModal] = useState<{
         movie: Movie;
         keyword: string;
         loading: boolean;
         saving: boolean;
+        tab?: 'auto_stream' | 'direct_link' | 'scan_r2';
+        streams?: Array<{
+            title: string;
+            details?: string;
+            quality: string;
+            size: string;
+            seeders: number;
+            source: string;
+            infoHash?: string;
+            magnet?: string;
+        }>;
+        loadingStreams?: boolean;
+        directUrlInput?: string;
+        directQuality?: string;
+        ingestJob?: {
+            taskId: string;
+            status: 'downloading' | 'uploading' | 'completed' | 'failed' | 'cancelled';
+            progress: number;
+            downloadSpeed?: string;
+            eta?: string;
+            uploadProgress?: number;
+            r2Url?: string;
+            error?: string;
+        } | null;
         data: {
             allFoldersCount: number;
             candidateFoldersCount: number;
@@ -187,6 +211,7 @@ export default function Admin() {
         manualUrl: string;
         error: string | null;
     } | null>(null);
+    const ingestPollingRef = useRef<any>(null);
 
     // Social Media Post & Story Generator Modal
     const [socialModalMovie, setSocialModalMovie] = useState<Movie | null>(null);
@@ -1262,18 +1287,152 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
         }
     };
 
+    const fetchStreamsForMovie = async (movie: Movie) => {
+        setR2MovieModal(prev => prev ? { ...prev, loadingStreams: true, streams: [] } : null);
+        try {
+            let cleanImdb = '';
+            if (movie.imdbRating && String(movie.imdbRating).startsWith('tt')) {
+                cleanImdb = String(movie.imdbRating);
+            }
+
+            // 1. Try server endpoint first
+            const res = await axios.get(`/api/admin/stream-search?title=${encodeURIComponent(movie.title)}&year=${movie.year || ''}&imdbId=${cleanImdb}`);
+            let list = res.data?.streams || [];
+
+            // 2. Client-side direct fallback if server got 0 streams (bypasses any Cloudflare challenge)
+            if (list.length === 0 && (res.data?.imdbId || cleanImdb)) {
+                const targetId = res.data?.imdbId || cleanImdb;
+                try {
+                    const clientRes = await rawAxios.get(`https://torrentio.strem.fun/stream/movie/${targetId}.json`, { timeout: 6000 });
+                    const clientStreams = clientRes.data?.streams || [];
+                    list = clientStreams.slice(0, 16).map((s: any) => {
+                        const rawTitle = s.title || '';
+                        const lines = rawTitle.split('\n');
+                        const mainTitle = lines[0] || (s.name || 'Stream');
+                        const details = lines.slice(1).join(' - ');
+                        const sizeMatch = rawTitle.match(/💾\s*([\d\.]+\s*[GMK]B)/i);
+                        const seedersMatch = rawTitle.match(/👤\s*(\d+)/);
+                        const sourceMatch = rawTitle.match(/⚙️\s*([\w\d\s]+)/i);
+
+                        let quality = '1080p';
+                        if (/4k|2160p/i.test(s.name + ' ' + rawTitle)) quality = '4K';
+                        else if (/1080p/i.test(s.name + ' ' + rawTitle)) quality = '1080p';
+                        else if (/720p/i.test(s.name + ' ' + rawTitle)) quality = '720p';
+                        else if (/480p|360p/i.test(s.name + ' ' + rawTitle)) quality = '480p';
+
+                        const magnet = s.infoHash ? `magnet:?xt=urn:btih:${s.infoHash}&dn=${encodeURIComponent(s.behaviorHints?.filename || mainTitle)}&tr=http%3A%2F%2Fp4p.arenabg.com%3A1337%2Fannounce&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=udp%3A%2F%2Fopen.stealth.si%3A80%2Fannounce` : null;
+
+                        return {
+                            title: mainTitle,
+                            details,
+                            quality,
+                            size: sizeMatch ? sizeMatch[1] : 'دیارینەکراو',
+                            seeders: seedersMatch ? parseInt(seedersMatch[1], 10) : 0,
+                            source: sourceMatch ? sourceMatch[1].trim() : (s.name ? s.name.replace('\n', ' ') : 'P2P'),
+                            infoHash: s.infoHash,
+                            magnet
+                        };
+                    });
+                } catch (e) {}
+            }
+
+            setR2MovieModal(prev => prev ? { ...prev, loadingStreams: false, streams: list } : null);
+        } catch (err: any) {
+            setR2MovieModal(prev => prev ? { ...prev, loadingStreams: false, streams: [] } : null);
+        }
+    };
+
+    const startIngest = async (movie: Movie, magnetUrl?: string, directUrl?: string, quality?: string) => {
+        if (!magnetUrl && !directUrl) return;
+        try {
+            const res = await axios.post('/api/admin/ingest/start', {
+                movieId: movie.id,
+                magnetUrl,
+                directUrl,
+                quality: quality || '1080p',
+                title: movie.title
+            });
+
+            if (!res.data?.taskId) throw new Error(res.data?.error || 'نەتوانرا گواستنەوە دەستپێبکرێت');
+
+            const taskId = res.data.taskId;
+            setR2MovieModal(prev => prev ? {
+                ...prev,
+                ingestJob: {
+                    taskId,
+                    status: 'downloading',
+                    progress: 0,
+                    downloadSpeed: '0 KB/s',
+                    uploadProgress: 0
+                }
+            } : null);
+
+            // Poll status every 1.5 seconds
+            if (ingestPollingRef.current) clearInterval(ingestPollingRef.current);
+            ingestPollingRef.current = setInterval(async () => {
+                try {
+                    const sRes = await axios.get(`/api/admin/ingest/status/${taskId}`);
+                    const job = sRes.data;
+                    setR2MovieModal(prev => {
+                        if (!prev) return null;
+                        return {
+                            ...prev,
+                            ingestJob: {
+                                taskId: job.id,
+                                status: job.status,
+                                progress: job.progress || 0,
+                                downloadSpeed: job.downloadSpeed || '',
+                                eta: job.eta || '',
+                                uploadProgress: job.uploadProgress || 0,
+                                r2Url: job.r2Url || '',
+                                error: job.error || ''
+                            }
+                        };
+                    });
+
+                    if (job.status === 'completed') {
+                        clearInterval(ingestPollingRef.current);
+                        toast('فایلی فیلم بە سەرکەوتوویی گوازرایەوە بۆ سەر Cloudflare R2 ⚡');
+                        setMovies(prev => prev.map(m => m.id === movie.id ? { ...m, videoUrl: job.r2Url } : m));
+                        load(true);
+                    } else if (job.status === 'failed' || job.status === 'cancelled') {
+                        clearInterval(ingestPollingRef.current);
+                        if (job.status === 'failed') toast(job.error || 'گواستنەوە سەرکەوتوو نەبوو', 'error');
+                    }
+                } catch (e) {}
+            }, 1500);
+        } catch (err: any) {
+            toast(err.response?.data?.error || err.message || 'هەڵەیەک ڕوویدا', 'error');
+        }
+    };
+
+    const cancelIngest = async (taskId: string) => {
+        try {
+            if (ingestPollingRef.current) clearInterval(ingestPollingRef.current);
+            await axios.post(`/api/admin/ingest/cancel/${taskId}`);
+            setR2MovieModal(prev => prev ? { ...prev, ingestJob: null } : null);
+            toast('پرۆسەی گواستنەوە هەڵوەشێنرایەوە');
+        } catch (e) {}
+    };
+
     const openR2MovieModal = (movie: Movie) => {
         const initialKeyword = movie.title || '';
         setR2MovieModal({
             movie,
             keyword: initialKeyword,
-            loading: true,
+            loading: false,
             saving: false,
+            tab: 'auto_stream',
+            streams: [],
+            loadingStreams: true,
+            directUrlInput: '',
+            directQuality: '1080p',
+            ingestJob: null,
             data: null,
             manualUrl: movie.videoUrl || '',
             error: null
         });
-        scanR2ForMovie(movie.id, initialKeyword);
+        fetchStreamsForMovie(movie);
     };
 
     const handleLinkR2MovieCandidate = async (candidateUrl: string) => {
@@ -2542,13 +2701,13 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                                 <div>
                                     <h3 className="r2-link-modal-title">
                                         {lang === 'en'
-                                            ? `Auto-Link Movie from Cloudflare R2 ⚡: ${r2MovieModal.movie.title}`
-                                            : `بەستنەوەی خودکاری فیلم لە Cloudflare R2 ⚡: ${r2MovieModal.movie.title}`}
+                                            ? `Cloud Ingestion & R2 Video Hub ⚡: ${r2MovieModal.movie.title}`
+                                            : `هاوردەکردنی زیرەکی فیلم بۆ Cloudflare R2 ⚡: ${r2MovieModal.movie.title}`}
                                     </h3>
                                     <p className="r2-link-modal-subtitle">
                                         {lang === 'en'
-                                            ? 'Scans your R2 bucket for HLS master.m3u8 playlists and links the movie video with 1 click.'
-                                            : 'پشکنینی فۆڵدەرەکانی ناو Cloudflare R2 بە دوای فایلی master.m3u8 و بەستنەوە بە یەک کلیک.'}
+                                            ? 'Auto-fetch streams, remote download via magnet/link, or scan R2 bucket with zero seeding safety.'
+                                            : 'دۆزینەوەی خۆکاری فایلی فیلم، هاوردەکردنی خێرا بە ماگنت یان لینک بەبێ سەرفکردنی ئینتەرنێتی ماڵەوە.'}
                                     </p>
                                 </div>
                             </div>
@@ -2556,12 +2715,273 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                                 type="button"
                                 className="ep-modal-close-btn"
                                 disabled={r2MovieModal.saving}
-                                onClick={() => setR2MovieModal(null)}
+                                onClick={() => {
+                                    if (ingestPollingRef.current) clearInterval(ingestPollingRef.current);
+                                    setR2MovieModal(null);
+                                }}
                             >
                                 <X size={18} />
                             </button>
                         </div>
 
+                        {/* R2 / Stream Navigation Tabs */}
+                        <div className="r2-tabs-bar">
+                            <button
+                                type="button"
+                                className={`r2-tab-btn ${r2MovieModal.tab === 'auto_stream' || !r2MovieModal.tab ? 'active' : ''}`}
+                                onClick={() => {
+                                    setR2MovieModal(prev => prev ? { ...prev, tab: 'auto_stream' } : null);
+                                    if (!r2MovieModal.streams || r2MovieModal.streams.length === 0) {
+                                        fetchStreamsForMovie(r2MovieModal.movie);
+                                    }
+                                }}
+                            >
+                                <Sparkles size={15} />
+                                <span>گەڕانی خۆکاری فایلی فیلم (Auto-Fetch) 🚀</span>
+                            </button>
+                            <button
+                                type="button"
+                                className={`r2-tab-btn ${r2MovieModal.tab === 'direct_link' ? 'active' : ''}`}
+                                onClick={() => setR2MovieModal(prev => prev ? { ...prev, tab: 'direct_link' } : null)}
+                            >
+                                <LinkIcon size={15} />
+                                <span>هاوردەکردن بە لینک یان ماگنت (Remote Link) ⚡</span>
+                            </button>
+                            <button
+                                type="button"
+                                className={`r2-tab-btn ${r2MovieModal.tab === 'scan_r2' ? 'active' : ''}`}
+                                onClick={() => {
+                                    setR2MovieModal(prev => prev ? { ...prev, tab: 'scan_r2', loading: true } : null);
+                                    scanR2ForMovie(r2MovieModal.movie.id, r2MovieModal.keyword);
+                                }}
+                            >
+                                <Folder size={15} />
+                                <span>فۆڵدەرەکانی ناو R2</span>
+                            </button>
+                        </div>
+
+                        {/* Currently linked URL banner */}
+                        {r2MovieModal.movie.videoUrl && (
+                            <div className="r2-current-video-banner" style={{ margin: '12px 16px 0 16px' }}>
+                                <div className="r2-current-video-info">
+                                    <span className="r2-current-label">ڤیدیۆی بەستراوەی ئێستا:</span>
+                                    <code className="r2-current-url" title={r2MovieModal.movie.videoUrl}>{r2MovieModal.movie.videoUrl}</code>
+                                </div>
+                                <div className="r2-current-video-actions">
+                                    <a
+                                        href={r2MovieModal.movie.videoUrl}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="r2-btn-preview"
+                                        title="تاقیکردنەوە لە پەڕەیەکی نوێ"
+                                    >
+                                        <ExternalLink size={13} />
+                                        <span>تاقیکردنەوە</span>
+                                    </a>
+                                    <button
+                                        type="button"
+                                        className="r2-btn-unlink"
+                                        onClick={handleUnlinkMovieVideo}
+                                        disabled={r2MovieModal.saving}
+                                        title="سڕینەوەی بەستنەوەی ڤیدیۆ"
+                                    >
+                                        <Trash2 size={13} />
+                                        <span>سڕینەوەی بەستنەوە</span>
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* TAB 1: AUTO STREAM SEARCH */}
+                        {(r2MovieModal.tab === 'auto_stream' || !r2MovieModal.tab) && (
+                            <div className="r2-link-modal-body" style={{ maxHeight: '420px', padding: '16px' }}>
+                                {r2MovieModal.ingestJob ? (
+                                    <div className="ingest-progress-box">
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '12px' }}>
+                                            <Zap size={24} color="#0ea5e9" className="r2-bolt-icon" />
+                                            <h4 style={{ margin: 0, fontSize: '16px', color: '#f8fafc' }}>
+                                                {r2MovieModal.ingestJob.status === 'downloading' && 'قۆناغی ١: داگرتنی فیلم لە کلاود بۆ ناو سێرڤەر...'}
+                                                {r2MovieModal.ingestJob.status === 'uploading' && 'قۆناغی ٢: بەرزکردنەوەی ڕاستەوخۆ بۆ ناو Cloudflare R2...'}
+                                                {r2MovieModal.ingestJob.status === 'completed' && 'تەواو بوو! فایلی فیلم بە سەرکەوتوویی لە ناو کلاود پاشەکەوت کرا ✓'}
+                                                {r2MovieModal.ingestJob.status === 'failed' && 'گواستنەوە سەرکەوتوو نەبوو!'}
+                                            </h4>
+                                        </div>
+
+                                        <div className="ingest-progress-bar-bg">
+                                            <div
+                                                className="ingest-progress-bar-fill"
+                                                style={{
+                                                    width: `${r2MovieModal.ingestJob.status === 'uploading' ? (r2MovieModal.ingestJob.uploadProgress || 50) : (r2MovieModal.ingestJob.progress || 0)}%`
+                                                }}
+                                            />
+                                        </div>
+
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#94a3b8', marginTop: '6px' }}>
+                                            <span>
+                                                {r2MovieModal.ingestJob.status === 'downloading' && `داگیراوە: ${r2MovieModal.ingestJob.progress}%`}
+                                                {r2MovieModal.ingestJob.status === 'uploading' && `ئەپلۆدی R2: ${r2MovieModal.ingestJob.uploadProgress || 0}%`}
+                                                {r2MovieModal.ingestJob.status === 'completed' && '100% تەواو'}
+                                            </span>
+                                            <span>
+                                                {r2MovieModal.ingestJob.downloadSpeed && `خێرایی: ${r2MovieModal.ingestJob.downloadSpeed}`}
+                                                {r2MovieModal.ingestJob.eta && ` - کاتی ماوە: ${r2MovieModal.ingestJob.eta}`}
+                                            </span>
+                                        </div>
+
+                                        {r2MovieModal.ingestJob.status === 'failed' && (
+                                            <p style={{ color: '#ef4444', fontSize: '13px', marginTop: '10px' }}>{r2MovieModal.ingestJob.error}</p>
+                                        )}
+
+                                        <div style={{ marginTop: '16px' }}>
+                                            {r2MovieModal.ingestJob.status === 'downloading' && (
+                                                <button
+                                                    type="button"
+                                                    className="btn-r2-retry"
+                                                    onClick={() => cancelIngest(r2MovieModal.ingestJob!.taskId)}
+                                                    style={{ background: '#ef4444', borderColor: '#dc2626' }}
+                                                >
+                                                    <X size={14} /> هەڵوەشاندنەوە
+                                                </button>
+                                            )}
+                                            {(r2MovieModal.ingestJob.status === 'completed' || r2MovieModal.ingestJob.status === 'failed') && (
+                                                <button
+                                                    type="button"
+                                                    className="btn-start-ingest"
+                                                    style={{ margin: '0 auto' }}
+                                                    onClick={() => setR2MovieModal(prev => prev ? { ...prev, ingestJob: null } : null)}
+                                                >
+                                                    <CheckCircle size={14} /> گەڕانەوە بۆ لیست
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                                            <div style={{ fontSize: '13px', color: '#94a3b8' }}>
+                                                <span>سەرچاوە دۆزراوەکانی فیلم بەپێی IMDb: </span>
+                                                <strong style={{ color: '#38bdf8' }}>{r2MovieModal.streams?.length || 0} سەرچاوە</strong>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                className="r2-search-refresh-btn"
+                                                disabled={r2MovieModal.loadingStreams}
+                                                onClick={() => fetchStreamsForMovie(r2MovieModal.movie)}
+                                                style={{ padding: '6px 12px' }}
+                                            >
+                                                {r2MovieModal.loadingStreams ? <Loader2 size={14} className="spinning" /> : <RefreshCw size={14} />}
+                                                <span>نوێکردنەوەی گەڕان</span>
+                                            </button>
+                                        </div>
+
+                                        {r2MovieModal.loadingStreams && (
+                                            <div className="r2-link-loading-state" style={{ padding: '30px 0' }}>
+                                                <Loader2 size={32} className="spinning r2-spinner" />
+                                                <p>گەڕانی فایلی فیلم بە کوالیتییەکانی 1080p و 720p لە هەموو داتابەیسەکان دەکرێت...</p>
+                                            </div>
+                                        )}
+
+                                        {!r2MovieModal.loadingStreams && (!r2MovieModal.streams || r2MovieModal.streams.length === 0) && (
+                                            <div className="r2-no-candidates-box" style={{ padding: '24px' }}>
+                                                <AlertCircle size={22} color="#fbbf24" />
+                                                <div>
+                                                    <strong>هیچ سەرچاوەیەکی ئۆتۆماتیک بە کۆدی ئەم فیلمە نەدۆزرایەوە.</strong>
+                                                    <p>دەتوانیت بچیتە تابی دووەم (هاوردەکردن بە لینک) و خۆت لینکی ماگنت یان Pixeldrain دابنێیت تا سێرڤەرەکە بیباتە سەر R2.</p>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {!r2MovieModal.loadingStreams && r2MovieModal.streams && r2MovieModal.streams.length > 0 && (
+                                            <div className="streams-list">
+                                                {r2MovieModal.streams.map((st, i) => (
+                                                    <div key={i} className="stream-card">
+                                                        <div className="stream-card-info">
+                                                            <div className="stream-card-title-row">
+                                                                <span className={`stream-badge stream-badge-${st.quality.toLowerCase()}`}>{st.quality}</span>
+                                                                <span className="stream-title-text" title={st.title}>{st.title}</span>
+                                                                {i === 0 && <span className="r2-cand-badge best-match">پێشنیارکراو 🌟</span>}
+                                                            </div>
+                                                            <div className="stream-card-meta">
+                                                                <span>💾 {st.size}</span>
+                                                                <span>👤 {st.seeders} سێدەر</span>
+                                                                <span>⚙️ {st.source}</span>
+                                                            </div>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            className="btn-start-ingest"
+                                                            disabled={!st.magnet}
+                                                            onClick={() => startIngest(r2MovieModal.movie, st.magnet, undefined, st.quality)}
+                                                        >
+                                                            <Download size={14} />
+                                                            <span>گواستنەوە بۆ R2 ⚡</span>
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+                            </div>
+                        )}
+
+                        {/* TAB 2: DIRECT / MAGNET MANUAL LINK */}
+                        {r2MovieModal.tab === 'direct_link' && (
+                            <div className="r2-link-modal-body" style={{ padding: '20px' }}>
+                                <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '16px', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#f1f5f9', marginBottom: '8px' }}>
+                                        لینکی ماگنت (Magnet Link) یان بەستەری ڕاستەوخۆ (Pixeldrain / Pahe / MP4):
+                                    </label>
+                                    <textarea
+                                        rows={3}
+                                        placeholder="magnet:?xt=urn:btih:... یان https://pixeldrain.com/api/file/..."
+                                        value={r2MovieModal.directUrlInput || ''}
+                                        onChange={e => setR2MovieModal({ ...r2MovieModal, directUrlInput: e.target.value })}
+                                        style={{ width: '100%', background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(255, 255, 255, 0.15)', borderRadius: '8px', padding: '10px', color: '#f8fafc', fontSize: '13px', direction: 'ltr', boxSizing: 'border-box' }}
+                                    />
+
+                                    <div style={{ display: 'flex', gap: '12px', marginTop: '12px', alignItems: 'center' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            <span style={{ fontSize: '12.5px', color: '#94a3b8' }}>کوالیتی:</span>
+                                            <select
+                                                value={r2MovieModal.directQuality || '1080p'}
+                                                onChange={e => setR2MovieModal({ ...r2MovieModal, directQuality: e.target.value })}
+                                                style={{ background: '#1e293b', border: '1px solid #334155', color: '#f8fafc', padding: '6px 10px', borderRadius: '6px', fontSize: '12.5px' }}
+                                            >
+                                                <option value="1080p">1080p Full HD</option>
+                                                <option value="720p">720p HD</option>
+                                                <option value="480p">480p / 360p</option>
+                                                <option value="4K">4K Ultra HD</option>
+                                            </select>
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            className="btn-start-ingest"
+                                            style={{ marginRight: 'auto' }}
+                                            disabled={!r2MovieModal.directUrlInput?.trim()}
+                                            onClick={() => {
+                                                const raw = (r2MovieModal.directUrlInput || '').trim();
+                                                if (raw.startsWith('magnet:')) {
+                                                    setR2MovieModal(prev => prev ? { ...prev, tab: 'auto_stream' } : null);
+                                                    startIngest(r2MovieModal.movie, raw, undefined, r2MovieModal.directQuality);
+                                                } else {
+                                                    setR2MovieModal(prev => prev ? { ...prev, tab: 'auto_stream' } : null);
+                                                    startIngest(r2MovieModal.movie, undefined, raw, r2MovieModal.directQuality);
+                                                }
+                                            }}
+                                        >
+                                            <Zap size={15} />
+                                            <span>دەستپێکردنی گواستنەوە بۆ Cloudflare R2 ⚡</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* TAB 3: SCAN R2 FOLDERS (EXISTING LOGIC) */}
+                        {r2MovieModal.tab === 'scan_r2' && (
+                            <>
                         {/* Keyword Search / Refine Bar */}
                         <div className="r2-link-search-bar">
                             <div className="r2-search-input-wrap">
@@ -2758,6 +3178,9 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                                 </>
                             )}
                         </div>
+
+                            </>
+                        )}
 
                         {/* Modal Footer */}
                         <div className="r2-link-modal-footer">

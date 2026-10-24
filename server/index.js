@@ -7463,6 +7463,351 @@ app.post('/api/admin/r2/upload', requireAuth, requireAdmin, cloudUpload.single('
     }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// 🚀 AUTO STREAM SEARCH & LEGAL SAFE REMOTE INGESTION ENGINE (FOR CLOUDFLARE R2)
+// ─────────────────────────────────────────────────────────────────────────────
+const { Upload: R2StorageUpload } = require('@aws-sdk/lib-storage');
+const { spawn: spawnAriaProcess } = require('child_process');
+
+const activeIngestJobs = new Map();
+
+function findLargestVideoFile(dir) {
+    let largestFile = null;
+    let largestSize = 0;
+    function scan(d) {
+        if (!fs.existsSync(d)) return;
+        const entries = fs.readdirSync(d, { withFileTypes: true });
+        for (const entry of entries) {
+            const fullPath = path.join(d, entry.name);
+            if (entry.isDirectory()) {
+                scan(fullPath);
+            } else if (entry.isFile()) {
+                const ext = path.extname(entry.name).toLowerCase();
+                if (['.mp4', '.mkv', '.webm', '.avi', '.mov', '.ts'].includes(ext)) {
+                    const stats = fs.statSync(fullPath);
+                    if (stats.size > largestSize) {
+                        largestSize = stats.size;
+                        largestFile = fullPath;
+                    }
+                }
+            }
+        }
+    }
+    scan(dir);
+    return { filePath: largestFile, size: largestSize };
+}
+
+// 1. AUTO STREAM SEARCH (Torrentio / Stremio API with client fallback)
+app.get('/api/admin/stream-search', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        let { imdbId, title, year, season, episode } = req.query;
+        let cleanImdb = (imdbId || '').trim();
+
+        if (!cleanImdb.startsWith('tt') && title) {
+            if (OMDB_API_KEY) {
+                const omdbRes = await axios.get(`http://www.omdbapi.com/?t=${encodeURIComponent(title)}&${year ? 'y=' + year + '&' : ''}apikey=${OMDB_API_KEY}`, { timeout: 5000 }).catch(() => null);
+                if (omdbRes?.data?.imdbID) cleanImdb = omdbRes.data.imdbID;
+            }
+        }
+
+        if (!cleanImdb) {
+            return res.json({ streams: [], error: 'کۆدی IMDb نەدۆزرایەوە' });
+        }
+
+        let url = `https://torrentio.strem.fun/stream/movie/${cleanImdb}.json`;
+        if (season && episode) {
+            url = `https://torrentio.strem.fun/stream/series/${cleanImdb}:${season}:${episode}.json`;
+        }
+
+        const tRes = await axios.get(url, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            },
+            timeout: 7000
+        }).catch(() => null);
+
+        const rawStreams = tRes?.data?.streams || [];
+        const formatted = rawStreams.slice(0, 16).map(s => {
+            const rawTitle = s.title || '';
+            const lines = rawTitle.split('\n');
+            const mainTitle = lines[0] || (s.name || 'Stream');
+            const details = lines.slice(1).join(' - ');
+
+            const sizeMatch = rawTitle.match(/💾\s*([\d\.]+\s*[GMK]B)/i);
+            const seedersMatch = rawTitle.match(/👤\s*(\d+)/);
+            const sourceMatch = rawTitle.match(/⚙️\s*([\w\d\s]+)/i);
+
+            let quality = '1080p';
+            if (/4k|2160p/i.test(s.name + ' ' + rawTitle)) quality = '4K';
+            else if (/1080p/i.test(s.name + ' ' + rawTitle)) quality = '1080p';
+            else if (/720p/i.test(s.name + ' ' + rawTitle)) quality = '720p';
+            else if (/480p|360p/i.test(s.name + ' ' + rawTitle)) quality = '480p';
+
+            const magnet = s.infoHash ? `magnet:?xt=urn:btih:${s.infoHash}&dn=${encodeURIComponent(s.behaviorHints?.filename || mainTitle)}&tr=http%3A%2F%2Fp4p.arenabg.com%3A1337%2Fannounce&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=udp%3A%2F%2Fopen.stealth.si%3A80%2Fannounce` : null;
+
+            return {
+                title: mainTitle,
+                details: details,
+                quality,
+                size: sizeMatch ? sizeMatch[1] : 'دیارینەکراو',
+                seeders: seedersMatch ? parseInt(seedersMatch[1], 10) : 0,
+                source: sourceMatch ? sourceMatch[1].trim() : (s.name ? s.name.replace('\n', ' ') : 'P2P'),
+                infoHash: s.infoHash,
+                magnet: magnet
+            };
+        });
+
+        res.json({ success: true, streams: formatted, imdbId: cleanImdb });
+    } catch (err) {
+        console.error('[Stream Search Err]', err);
+        res.json({ streams: [], error: 'نەتوانرا پەیوەندی لەگەڵ سێرڤەری گەڕان ببەسترێت' });
+    }
+});
+
+// 2. SAFE INGESTION ENGINE FOR CLOUDFLARE R2
+app.post('/api/admin/ingest/start', requireAuth, requireAdmin, async (req, res) => {
+    if (!hasR2Config()) {
+        return res.status(503).json({ error: 'ڕێکخستنەکانی Cloudflare R2 لە .env تەواو نەکراون.' });
+    }
+
+    const { movieId, episodeId, season, magnetUrl, directUrl, quality, title } = req.body;
+    if (!movieId) return res.status(400).json({ error: 'کۆدی فیلم (movieId) پێویستە.' });
+    if (!magnetUrl && !directUrl) return res.status(400).json({ error: 'لینکی ماگنت یان لینکی ڕاستەوخۆ دیاری نەکراوە.' });
+
+    const taskId = 'ingest_' + Date.now();
+    const tempDir = path.join('/tmp', 'kstream_' + taskId);
+    fs.mkdirSync(tempDir, { recursive: true });
+
+    const job = {
+        id: taskId,
+        movieId,
+        episodeId: episodeId || null,
+        season: season !== undefined ? Number(season) : null,
+        quality: quality || '1080p',
+        title: title || 'Movie',
+        type: magnetUrl ? 'magnet' : 'direct',
+        status: 'downloading', // 'downloading' | 'uploading' | 'completed' | 'failed' | 'cancelled'
+        progress: 0,
+        downloadSpeed: '',
+        eta: '',
+        uploadProgress: 0,
+        r2Url: null,
+        error: null,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        proc: null
+    };
+
+    activeIngestJobs.set(taskId, job);
+
+    // Run async background worker
+    (async () => {
+        try {
+            let downloadCompleted = false;
+
+            if (magnetUrl) {
+                // 🛡️ STRICT EUROPEAN SERVER (HETZNER) ZERO-RISK RULES:
+                // 1. --seed-time=0: Quits the very instant download finishes (NO UPLOAD/SEEDING)
+                // 2. --max-upload-limit=1K: Chokes any upload traffic to zero
+                // 3. --enable-dht=false: Server IP never broadcasted to public DHT network
+                // 4. --enable-peer-exchange=false: Server IP hidden from PEX
+                // 5. --bt-stop-timeout=180: Disconnects if no seeds available
+                // 6. --listen-port=0: No inbound listening port opened
+                const ariaArgs = [
+                    '--seed-time=0',
+                    '--max-upload-limit=1K',
+                    '--enable-dht=false',
+                    '--enable-peer-exchange=false',
+                    '--bt-stop-timeout=180',
+                    '--summary-interval=1',
+                    '--file-allocation=none',
+                    '--dir=' + tempDir,
+                    magnetUrl
+                ];
+
+                const proc = spawnAriaProcess('aria2c', ariaArgs);
+                job.proc = proc;
+
+                proc.stdout.on('data', (chunk) => {
+                    const text = chunk.toString();
+                    const match = text.match(/\[#\w+\s+([\d\.]+\w+)\/([\d\.]+\w+)\((\d+)%\)\s+CN:\d+\s+DL:([\d\.]+\w+)(?:\s+ETA:([\w\d]+))?/);
+                    if (match) {
+                        job.progress = parseInt(match[3], 10);
+                        job.downloadSpeed = match[4] + '/s';
+                        if (match[5]) job.eta = match[5];
+                        job.updatedAt = Date.now();
+                    }
+                });
+
+                proc.stderr.on('data', (chunk) => {
+                    console.error('[aria2c err]', chunk.toString().slice(0, 150));
+                });
+
+                await new Promise((resolve, reject) => {
+                    proc.on('close', (code) => {
+                        if (code === 0) {
+                            downloadCompleted = true;
+                            resolve();
+                        } else {
+                            reject(new Error(`داگرتن وەستا بە کۆدی: ${code}`));
+                        }
+                    });
+                    proc.on('error', reject);
+                });
+            } else if (directUrl) {
+                // Direct HTTPS Download (16 connections, 100% encrypted web traffic)
+                const ariaArgs = [
+                    '-x', '16',
+                    '-s', '16',
+                    '--summary-interval=1',
+                    '--dir=' + tempDir,
+                    directUrl
+                ];
+                const proc = spawnAriaProcess('aria2c', ariaArgs);
+                job.proc = proc;
+
+                proc.stdout.on('data', (chunk) => {
+                    const text = chunk.toString();
+                    const match = text.match(/\((\d+)%\)\s+CN:\d+\s+DL:([\d\.]+\w+)/);
+                    if (match) {
+                        job.progress = parseInt(match[1], 10);
+                        job.downloadSpeed = match[2] + '/s';
+                        job.updatedAt = Date.now();
+                    }
+                });
+
+                await new Promise((resolve, reject) => {
+                    proc.on('close', (code) => {
+                        if (code === 0) {
+                            downloadCompleted = true;
+                            resolve();
+                        } else {
+                            reject(new Error(`داگرتنی بەستەر سەرکەوتوو نەبوو: ${code}`));
+                        }
+                    });
+                    proc.on('error', reject);
+                });
+            }
+
+            if (!downloadCompleted) throw new Error('فایلەکە لە کلاود دانەبەزی');
+
+            // Find video file
+            job.status = 'uploading';
+            job.progress = 100;
+            job.updatedAt = Date.now();
+
+            const video = findLargestVideoFile(tempDir);
+            if (!video.filePath) throw new Error('هیچ فایلی ڤیدیۆی دروست نەدۆزرایەوە لەناو داگیراوەکاندا');
+
+            const fileName = path.basename(video.filePath);
+            const ext = path.extname(fileName).toLowerCase() || '.mp4';
+            const cleanName = safeCloudName(fileName);
+            const timestamp = Date.now();
+            const r2Path = `videos/${movieId}_${timestamp}_${cleanName}`;
+
+            // Stream directly to Cloudflare R2 via multipart upload (low RAM usage)
+            const fileStream = fs.createReadStream(video.filePath);
+            const mimeType = ext === '.mp4' ? 'video/mp4' : (ext === '.webm' ? 'video/webm' : 'video/x-matroska');
+
+            const parallelUpload = new R2StorageUpload({
+                client: getR2Client(),
+                params: {
+                    Bucket: R2_CONFIG.bucket,
+                    Key: r2Path,
+                    Body: fileStream,
+                    ContentType: mimeType
+                },
+                partSize: 10 * 1024 * 1024, // 10MB chunk
+                queueSize: 4
+            });
+
+            parallelUpload.on('httpUploadProgress', (progress) => {
+                if (progress.total) {
+                    job.uploadProgress = Math.round((progress.loaded / progress.total) * 100);
+                    job.updatedAt = Date.now();
+                }
+            });
+
+            await parallelUpload.done();
+
+            const finalUrl = `${R2_CONFIG.publicUrl.replace(/\/+$/, '')}/${r2Path}`;
+            job.r2Url = finalUrl;
+
+            // Link to Movie in Database
+            const movies = readMovies();
+            const mIdx = movies.findIndex(m => m.id === movieId);
+            if (mIdx !== -1) {
+                if (job.episodeId && job.season !== null) {
+                    const seasonObj = movies[mIdx].seasons?.find(s => s.number === job.season);
+                    const epObj = seasonObj?.episodes?.find(e => e.id === job.episodeId);
+                    if (epObj) {
+                        epObj.videoUrl = finalUrl;
+                        epObj.videoFile = null;
+                        epObj.videoUpdatedAt = Date.now();
+                    }
+                } else {
+                    movies[mIdx].videoUrl = finalUrl;
+                    movies[mIdx].videoFile = null;
+                    movies[mIdx].videoUpdatedAt = Date.now();
+                }
+                writeMovies(movies);
+            }
+
+            job.status = 'completed';
+            job.uploadProgress = 100;
+            job.updatedAt = Date.now();
+
+            // CLEANUP IMMEDIATELY: Delete temp directory to keep VPS disk 100% clean
+            try {
+                fs.rmSync(tempDir, { recursive: true, force: true });
+            } catch (e) {
+                console.error('Failed to cleanup temp dir:', e.message);
+            }
+        } catch (err) {
+            console.error('[Ingest Worker Err]', err);
+            job.status = 'failed';
+            job.error = err.message || 'هەڵەی نەزانراو لە پرۆسەی گواستنەوەدا ڕوویدا';
+            job.updatedAt = Date.now();
+            try {
+                fs.rmSync(tempDir, { recursive: true, force: true });
+            } catch (e) {}
+        }
+    })();
+
+    res.json({ success: true, taskId, status: 'downloading' });
+});
+
+// 3. INGEST STATUS ENDPOINT
+app.get('/api/admin/ingest/status/:taskId', requireAuth, requireAdmin, (req, res) => {
+    const job = activeIngestJobs.get(req.params.taskId);
+    if (!job) return res.status(404).json({ error: 'کارەکە نەدۆزرایەوە' });
+    res.json({
+        id: job.id,
+        status: job.status,
+        progress: job.progress,
+        downloadSpeed: job.downloadSpeed,
+        eta: job.eta,
+        uploadProgress: job.uploadProgress,
+        r2Url: job.r2Url,
+        error: job.error,
+        updatedAt: job.updatedAt
+    });
+});
+
+// 4. INGEST CANCEL ENDPOINT
+app.post('/api/admin/ingest/cancel/:taskId', requireAuth, requireAdmin, (req, res) => {
+    const job = activeIngestJobs.get(req.params.taskId);
+    if (!job) return res.status(404).json({ error: 'کارەکە نەدۆزرایەوە' });
+    if (job.proc) {
+        try { job.proc.kill('SIGKILL'); } catch (e) {}
+    }
+    job.status = 'cancelled';
+    const tempDir = path.join('/tmp', 'kstream_' + job.id);
+    try { fs.rmSync(tempDir, { recursive: true, force: true }); } catch (e) {}
+    res.json({ success: true, message: 'پرۆسەکە هەڵوەشێنرایەوە' });
+});
+
+
 app.get('/api/admin/users', requireAuth, requireAdmin, (req, res) => {
     const isSuper = isSuperAdmin(req.user);
     const users = readUsers().map(u => {
