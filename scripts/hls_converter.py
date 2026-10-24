@@ -1,5 +1,6 @@
 import os
 import sys
+import re
 import time
 import subprocess
 import threading
@@ -29,14 +30,31 @@ def get_video_info(video_path):
                 except:
                     pass
         return dur, height
-    except Exception as e:
+    except Exception:
         return 0.0, 720
+
+def find_largest_video(directory):
+    video_exts = {".mp4", ".mkv", ".avi", ".mov", ".webm", ".m4v"}
+    largest_file = None
+    largest_size = 0
+    for root, _, files in os.walk(directory):
+        for f in files:
+            ext = os.path.splitext(f)[1].lower()
+            if ext in video_exts:
+                fp = os.path.join(root, f)
+                try:
+                    sz = os.path.getsize(fp)
+                    if sz > largest_size:
+                        largest_size = sz
+                        largest_file = fp
+                except: pass
+    return largest_file
 
 class HLSConverterApp(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Kurdish Stream - Smart HLS GPU Video Converter & Cloud Uploader (NVIDIA RTX Turbo)")
-        self.geometry("780x760")
+        self.geometry("780x780")
         self.minsize(720, 680)
         self.configure(bg="#0e0e17")
 
@@ -46,11 +64,11 @@ class HLSConverterApp(tk.Tk):
 
         self.setup_ui()
 
-        # Handle dragged-and-dropped file from .bat
-        if len(sys.argv) > 1 and os.path.isfile(sys.argv[1]):
+        # Handle dragged-and-dropped file from .bat or CLI
+        if len(sys.argv) > 1 and (os.path.isfile(sys.argv[1]) or sys.argv[1].startswith("magnet:?")):
             self.file_entry.delete(0, tk.END)
             self.file_entry.insert(0, sys.argv[1])
-            self.log(f"Auto-Loaded File: {sys.argv[1]}\n")
+            self.log(f"Auto-Loaded Input: {sys.argv[1][:80]}...\n")
 
     def setup_ui(self):
         # Header
@@ -73,19 +91,29 @@ class HLSConverterApp(tk.Tk):
         file_frame = tk.Frame(self, bg="#161626", padx=12, pady=12, relief="flat", highlightbackground="#2d2d48", highlightthickness=1)
         file_frame.pack(fill="x", padx=20, pady=8)
 
-        file_label = tk.Label(file_frame, text="فایلی ڤیدیۆی داگیراو (Video File):", font=("Segoe UI", 9, "bold"), fg="#94a3b8", bg="#161626")
+        file_label = tk.Label(
+            file_frame, text="فایلی ڤیدیۆی داگیراو یان لینکی ماگنت/تۆرێنت (Video File OR Magnet Link):",
+            font=("Segoe UI", 9, "bold"), fg="#38bdf8", bg="#161626"
+        )
         file_label.pack(anchor="w", pady=(0, 4))
 
         file_row = tk.Frame(file_frame, bg="#161626")
         file_row.pack(fill="x")
 
         self.file_entry = tk.Entry(file_row, font=("Segoe UI", 10), bg="#222238", fg="#ffffff", insertbackground="white", relief="flat")
-        self.file_entry.pack(side="left", fill="x", expand=True, padx=(0, 10), ipady=4)
+        self.file_entry.pack(side="left", fill="x", expand=True, padx=(0, 8), ipady=4)
+
+        paste_btn = tk.Button(
+            file_row, text="📋 پەیست (Paste)", font=("Segoe UI", 9, "bold"),
+            bg="#334155", fg="#38bdf8", activebackground="#475569", activeforeground="#ffffff",
+            relief="flat", cursor="hand2", padx=10, pady=3, command=self.paste_from_clipboard
+        )
+        paste_btn.pack(side="left", padx=(0, 6))
 
         browse_btn = tk.Button(
             file_row, text="Browse Video... 📂", font=("Segoe UI", 9, "bold"),
             bg="#2563eb", fg="#ffffff", activebackground="#3b82f6", activeforeground="#ffffff",
-            relief="flat", cursor="hand2", padx=14, pady=3, command=self.browse_file
+            relief="flat", cursor="hand2", padx=12, pady=3, command=self.browse_file
         )
         browse_btn.pack(side="right")
 
@@ -190,12 +218,21 @@ class HLSConverterApp(tk.Tk):
         scrollbar.pack(side="right", fill="y")
         self.log_text.pack(side="left", fill="both", expand=True)
 
-        self.log("Ready! Select your movie and click 'START GPU CONVERSION & CLOUD UPLOAD'.\n")
+        self.log("Ready! Select your movie OR paste a magnet link, then click 'START GPU CONVERSION & CLOUD UPLOAD'.\n")
         self.log("NVIDIA RTX 4060 Ti Turbo mode enabled with Stereo AAC audio & Cloudflare R2 auto-sync.\n")
 
     def log(self, text):
         self.log_text.insert(tk.END, text)
         self.log_text.see(tk.END)
+
+    def paste_from_clipboard(self):
+        try:
+            txt = self.clipboard_get().strip()
+            if txt:
+                self.file_entry.delete(0, tk.END)
+                self.file_entry.insert(0, txt)
+                self.log(f"Pasted from Clipboard: {txt[:70]}...\n")
+        except: pass
 
     def browse_file(self):
         filename = filedialog.askopenfilename(
@@ -226,9 +263,14 @@ class HLSConverterApp(tk.Tk):
                 pass
 
     def start_conversion(self):
-        video_path = self.file_entry.get().strip().strip('"')
-        if not video_path or not os.path.isfile(video_path):
-            messagebox.showwarning("Warning", "تکایە سەرەتا فایلی ڤیدیۆ هەڵبژێرە (Please select a valid video file)!")
+        raw_input = self.file_entry.get().strip().strip('"')
+        if not raw_input:
+            messagebox.showwarning("Warning", "تکایە فایلی ڤیدیۆ هەڵبژێرە یان لینکی تۆرێنت (ماگنت) پەیست بکە!")
+            return
+
+        is_magnet = raw_input.startswith("magnet:?") or raw_input.startswith("http")
+        if not is_magnet and not os.path.isfile(raw_input):
+            messagebox.showwarning("Warning", "فایلی ڤیدیۆی دیاریکراو نەدۆزرایەوە! تکایە فایلێکی دروست هەڵبژێرە یان لینکی ماگنت پەیست بکە.")
             return
 
         chosen = []
@@ -249,12 +291,80 @@ class HLSConverterApp(tk.Tk):
         self.stop_requested = False
         self.is_running = True
 
-        threading.Thread(target=self.run_process_thread, args=(video_path, chosen), daemon=True).start()
+        threading.Thread(target=self.run_process_thread, args=(raw_input, chosen, is_magnet), daemon=True).start()
 
-    def run_process_thread(self, video_path, chosen_qualities):
+    def run_process_thread(self, raw_input, chosen_qualities, is_magnet):
         try:
+            video_path = raw_input
+
+            # Stage 1: If input is a magnet link, download it first via aria2c
+            if is_magnet:
+                self.log("\n" + "="*50 + "\n")
+                self.log("Step 1: Downloading movie from torrent network via high-speed engine...\n")
+                self.status_lbl.configure(text="⬇️ قۆناغی ۱: داگرتنی خێرای فیلم لە تۆرێنت...", fg="#38bdf8")
+
+                script_dir = os.path.dirname(os.path.abspath(__file__))
+                aria_exe = os.path.join(script_dir, "aria2c.exe")
+                if not os.path.exists(aria_exe):
+                    aria_exe = "aria2c"
+
+                torrent_dir = os.path.join(os.path.expanduser("~"), "Downloads", "KurdishStream_Torrents", f"job_{int(time.time())}")
+                os.makedirs(torrent_dir, exist_ok=True)
+
+                aria_args = [
+                    aria_exe,
+                    "--seed-time=0",
+                    "--max-upload-limit=1K",
+                    "--enable-dht=true",
+                    "--enable-peer-exchange=true",
+                    "--bt-enable-lpd=true",
+                    "--bt-max-peers=60",
+                    "--bt-stop-timeout=300",
+                    "--summary-interval=1",
+                    "--file-allocation=none",
+                    "--dir=" + torrent_dir,
+                    raw_input
+                ]
+
+                self.proc = subprocess.Popen(
+                    aria_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+                    bufsize=1, universal_newlines=True
+                )
+
+                if self.proc.stdout:
+                    for line in self.proc.stdout:
+                        if self.stop_requested:
+                            self.proc.terminate()
+                            break
+                        line = line.strip()
+                        if "CN:" in line and "DL:" in line:
+                            match = re.search(r'\((\d+)%\)\s+CN:(\d+)\s+DL:([\d\.]+\w+)', line)
+                            if match:
+                                pct = float(match.group(1))
+                                self.progress["value"] = pct
+                                self.status_lbl.configure(
+                                    text=f"⬇️ داگرتن: %{int(pct)} | خێرایی: {match.group(3)}/s | هاوبەش: {match.group(2)}",
+                                    fg="#38bdf8"
+                                )
+                        elif "METADATA" in line:
+                            self.status_lbl.configure(text="⬇️ پەیوەندیکردن بە سیدەرەکان و دەرهێنانی زانیاری فایل...", fg="#facc15")
+
+                self.proc.wait()
+                if self.stop_requested or self.proc.returncode != 0:
+                    self.log(f"[ERROR] Torrent download stopped or failed (code {self.proc.returncode})\n")
+                    return
+
+                video_path = find_largest_video(torrent_dir)
+                if not video_path:
+                    self.log("[ERROR] No video file found in downloaded torrent!\n")
+                    messagebox.showerror("Error", "هیچ فایلی ڤیدیۆ لەناو داگیراوەکەدا نەدۆزرایەوە!")
+                    return
+
+                self.log(f"Torrent Download Complete! Video: {video_path}\n")
+
+            # Stage 2: Analyze & GPU Transcode
             self.log("\n" + "="*50 + "\n")
-            self.log("Step 1: Analyzing video metadata & stream parameters...\n")
+            self.log("Step 2: Analyzing video metadata & stream parameters...\n")
             self.status_lbl.configure(text="Analyzing video metadata...", fg="#facc15")
 
             total_dur, detected_height = get_video_info(video_path)
@@ -429,7 +539,7 @@ class HLSConverterApp(tk.Tk):
                 self.log(f"Master Playlist: {master_pl}\n")
                 self.log(f"Qualities: {q_labels}\n")
 
-                # Step 3: Automatic Upload to Cloudflare R2 (Bypassing Cyberduck)
+                # Stage 3: Automatic Upload to Cloudflare R2 (Bypassing Cyberduck)
                 if self.var_auto_upload.get():
                     self.log("\nStep 3: Starting automated high-speed upload to Cloudflare R2 (بەبێ Cyberduck)...\n")
                     self.status_lbl.configure(text="☁️ خەریکی بەرزکردنەوەیە بۆ Cloudflare R2...", fg="#38bdf8")
