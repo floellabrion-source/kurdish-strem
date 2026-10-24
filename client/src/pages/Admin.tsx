@@ -192,6 +192,7 @@ export default function Admin() {
             uploadProgress?: number;
             r2Url?: string;
             error?: string;
+            statusMessage?: string;
         } | null;
         data: {
             allFoldersCount: number;
@@ -1385,7 +1386,8 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                                 eta: job.eta || '',
                                 uploadProgress: job.uploadProgress || 0,
                                 r2Url: job.r2Url || '',
-                                error: job.error || ''
+                                error: job.error || '',
+                                statusMessage: job.statusMessage || ''
                             }
                         };
                     });
@@ -2800,10 +2802,11 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
                                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '12px' }}>
                                             <Zap size={24} color="#0ea5e9" className="r2-bolt-icon" />
                                             <h4 style={{ margin: 0, fontSize: '16px', color: '#f8fafc' }}>
-                                                {r2MovieModal.ingestJob.status === 'downloading' && 'قۆناغی ١: داگرتنی فیلم لە کلاود بۆ ناو سێرڤەر...'}
+                                                {r2MovieModal.ingestJob.status === 'downloading' && (r2MovieModal.ingestJob.statusMessage || 'قۆناغی ١: داگرتنی فیلم لە کلاود بۆ ناو سێرڤەر...')}
                                                 {r2MovieModal.ingestJob.status === 'uploading' && 'قۆناغی ٢: بەرزکردنەوەی ڕاستەوخۆ بۆ ناو Cloudflare R2...'}
                                                 {r2MovieModal.ingestJob.status === 'completed' && 'تەواو بوو! فایلی فیلم بە سەرکەوتوویی لە ناو کلاود پاشەکەوت کرا ✓'}
                                                 {r2MovieModal.ingestJob.status === 'failed' && 'گواستنەوە سەرکەوتوو نەبوو!'}
+                                                {r2MovieModal.ingestJob.status === 'cancelled' && 'پرۆسەکە هەڵوەشێنرایەوە'}
                                             </h4>
                                         </div>
 
@@ -2818,9 +2821,10 @@ const handleDeleteMovieSrt = async (movie: Movie, srtType: 'original' | 'transla
 
                                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#94a3b8', marginTop: '6px' }}>
                                             <span>
-                                                {r2MovieModal.ingestJob.status === 'downloading' && `داگیراوە: ${r2MovieModal.ingestJob.progress}%`}
+                                                {r2MovieModal.ingestJob.status === 'downloading' && (r2MovieModal.ingestJob.statusMessage || `داگیراوە: ${r2MovieModal.ingestJob.progress}%`)}
                                                 {r2MovieModal.ingestJob.status === 'uploading' && `ئەپلۆدی R2: ${r2MovieModal.ingestJob.uploadProgress || 0}%`}
                                                 {r2MovieModal.ingestJob.status === 'completed' && '100% تەواو'}
+                                                {r2MovieModal.ingestJob.status === 'cancelled' && 'هەڵوەشێنراوە'}
                                             </span>
                                             <span>
                                                 {r2MovieModal.ingestJob.downloadSpeed && `خێرایی: ${r2MovieModal.ingestJob.downloadSpeed}`}

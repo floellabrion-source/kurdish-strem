@@ -7543,7 +7543,19 @@ app.get('/api/admin/stream-search', requireAuth, requireAdmin, async (req, res) 
             else if (/720p/i.test(s.name + ' ' + rawTitle)) quality = '720p';
             else if (/480p|360p/i.test(s.name + ' ' + rawTitle)) quality = '480p';
 
-            const magnet = s.infoHash ? `magnet:?xt=urn:btih:${s.infoHash}&dn=${encodeURIComponent(s.behaviorHints?.filename || mainTitle)}&tr=http%3A%2F%2Fp4p.arenabg.com%3A1337%2Fannounce&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=udp%3A%2F%2Fopen.stealth.si%3A80%2Fannounce` : null;
+            const BEST_TRACKERS = [
+                'udp://tracker.opentrackr.org:1337/announce',
+                'udp://open.stealth.si:80/announce',
+                'udp://tracker.torrent.eu.org:451/announce',
+                'udp://explodie.org:6969/announce',
+                'udp://tracker.openbittorrent.com:6969/announce',
+                'http://tracker.opentrackr.org:1337/announce',
+                'udp://exodus.desync.com:6969/announce',
+                'udp://tracker.coppersurfer.tk:6969/announce',
+                'udp://tracker.cyberia.is:6969/announce'
+            ];
+            const trackerParams = BEST_TRACKERS.map(t => '&tr=' + encodeURIComponent(t)).join('');
+            const magnet = s.infoHash ? `magnet:?xt=urn:btih:${s.infoHash}&dn=${encodeURIComponent(s.behaviorHints?.filename || mainTitle)}${trackerParams}` : null;
 
             return {
                 title: mainTitle,
@@ -7590,6 +7602,7 @@ app.post('/api/admin/ingest/start', requireAuth, requireAdmin, async (req, res) 
         progress: 0,
         downloadSpeed: '',
         eta: '',
+        statusMessage: magnetUrl ? 'پەیوەندیکردن بە سیدەرەکان و دەرهێنانی زانیاری...' : 'ئامادەکردنی داگرتن...',
         uploadProgress: 0,
         r2Url: null,
         error: null,
@@ -7616,9 +7629,19 @@ app.post('/api/admin/ingest/start', requireAuth, requireAdmin, async (req, res) 
                 const ariaArgs = [
                     '--seed-time=0',
                     '--max-upload-limit=1K',
-                    '--enable-dht=false',
-                    '--enable-peer-exchange=false',
-                    '--bt-stop-timeout=180',
+                    '--listen-port=6881-6889',
+                    '--dht-listen-port=6881-6889',
+                    '--enable-dht=true',
+                    '--enable-dht6=false',
+                    '--dht-entry-point=router.bittorrent.com:6881',
+                    '--dht-entry-point=dht.transmissionbt.com:6881',
+                    '--dht-entry-point=router.utorrent.com:6881',
+                    '--enable-peer-exchange=true',
+                    '--bt-enable-lpd=true',
+                    '--bt-max-peers=60',
+                    '--bt-tracker-timeout=15',
+                    '--bt-tracker-connect-timeout=10',
+                    '--bt-stop-timeout=300',
                     '--summary-interval=1',
                     '--file-allocation=none',
                     '--dir=' + tempDir,
@@ -7630,12 +7653,26 @@ app.post('/api/admin/ingest/start', requireAuth, requireAdmin, async (req, res) 
 
                 proc.stdout.on('data', (chunk) => {
                     const text = chunk.toString();
-                    const match = text.match(/\[#\w+\s+([\d\.]+\w+)\/([\d\.]+\w+)\((\d+)%\)\s+CN:\d+\s+DL:([\d\.]+\w+)(?:\s+ETA:([\w\d]+))?/);
+                    const match = text.match(/\[#\w+\s+([\d\.]+\w+)\/([\d\.]+\w+)\((\d+)%\)\s+CN:(\d+)\s+DL:([\d\.]+\w+)(?:\s+ETA:([\w\d]+))?/);
                     if (match) {
                         job.progress = parseInt(match[3], 10);
-                        job.downloadSpeed = match[4] + '/s';
-                        if (match[5]) job.eta = match[5];
+                        job.downloadSpeed = match[5] + '/s';
+                        if (match[6]) job.eta = match[6];
+                        job.statusMessage = `داگیراوە: ${job.progress}% (${match[1]}/${match[2]}) - ${match[4]} سیدەر`;
                         job.updatedAt = Date.now();
+                    } else {
+                        const cnMatch = text.match(/CN:(\d+)/);
+                        const peers = cnMatch ? cnMatch[1] : '0';
+                        if (job.progress === 0) {
+                            if (text.includes('METADATA')) {
+                                job.statusMessage = `وەرگرتنی زانیاری پەڕگە (${peers} هاوبەش)...`;
+                            } else if (parseInt(peers, 10) > 0) {
+                                job.statusMessage = `پەیوەست بوو بە ${peers} سیدەر، دەستپێکردنی داگرتن...`;
+                            } else {
+                                job.statusMessage = 'پەیوەندیکردن بە سیدەرەکان لە ڕێگەی تۆڕی خێرا...';
+                            }
+                            job.updatedAt = Date.now();
+                        }
                     }
                 });
 
@@ -7645,9 +7682,15 @@ app.post('/api/admin/ingest/start', requireAuth, requireAdmin, async (req, res) 
 
                 await new Promise((resolve, reject) => {
                     proc.on('close', (code) => {
+                        if (job.status === 'cancelled') {
+                            resolve();
+                            return;
+                        }
                         if (code === 0) {
                             downloadCompleted = true;
                             resolve();
+                        } else if (code === 7) {
+                            reject(new Error('داگرتن پچڕا یان لەلایەن بەکارهێنەرەوە وەستێنرا (کۆدی 7).'));
                         } else {
                             reject(new Error(`داگرتن وەستا بە کۆدی: ${code}`));
                         }
@@ -7764,6 +7807,10 @@ app.post('/api/admin/ingest/start', requireAuth, requireAdmin, async (req, res) 
                 console.error('Failed to cleanup temp dir:', e.message);
             }
         } catch (err) {
+            if (job.status === 'cancelled') {
+                try { fs.rmSync(tempDir, { recursive: true, force: true }); } catch (e) {}
+                return;
+            }
             console.error('[Ingest Worker Err]', err);
             job.status = 'failed';
             job.error = err.message || 'هەڵەی نەزانراو لە پرۆسەی گواستنەوەدا ڕوویدا';
@@ -7787,6 +7834,7 @@ app.get('/api/admin/ingest/status/:taskId', requireAuth, requireAdmin, (req, res
         progress: job.progress,
         downloadSpeed: job.downloadSpeed,
         eta: job.eta,
+        statusMessage: job.statusMessage || '',
         uploadProgress: job.uploadProgress,
         r2Url: job.r2Url,
         error: job.error,
