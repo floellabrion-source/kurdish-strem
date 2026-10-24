@@ -6,7 +6,6 @@ import threading
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 
-# Check FFmpeg
 def get_video_info(video_path):
     try:
         cmd = [
@@ -36,9 +35,9 @@ def get_video_info(video_path):
 class HLSConverterApp(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Kurdish Stream - Smart HLS GPU Video Converter (NVIDIA RTX Turbo)")
-        self.geometry("760x720")
-        self.minsize(700, 650)
+        self.title("Kurdish Stream - Smart HLS GPU Video Converter & Cloud Uploader (NVIDIA RTX Turbo)")
+        self.geometry("780x760")
+        self.minsize(720, 680)
         self.configure(bg="#0e0e17")
 
         self.proc = None
@@ -47,32 +46,44 @@ class HLSConverterApp(tk.Tk):
 
         self.setup_ui()
 
+        # Handle dragged-and-dropped file from .bat
+        if len(sys.argv) > 1 and os.path.isfile(sys.argv[1]):
+            self.file_entry.delete(0, tk.END)
+            self.file_entry.insert(0, sys.argv[1])
+            self.log(f"Auto-Loaded File: {sys.argv[1]}\n")
+
     def setup_ui(self):
         # Header
         header_frame = tk.Frame(self, bg="#0e0e17")
         header_frame.pack(fill="x", padx=20, pady=(15, 5))
 
         title_lbl = tk.Label(
-            header_frame, text="Kurdish Stream - Smart HLS Video Converter",
+            header_frame, text="Kurdish Stream - Smart HLS Video Converter & Cloud Sync",
             font=("Segoe UI", 15, "bold"), fg="#c084fc", bg="#0e0e17"
         )
         title_lbl.pack(anchor="w")
 
         sub_lbl = tk.Label(
-            header_frame, text="Hardware: NVIDIA RTX 4060 Ti GPU Turbo | High-Speed Multi-Quality",
+            header_frame, text="Hardware: NVIDIA RTX 4060 Ti GPU Turbo | Direct Cloudflare R2 Integration (No Cyberduck Needed)",
             font=("Segoe UI", 9), fg="#34d399", bg="#0e0e17"
         )
         sub_lbl.pack(anchor="w")
 
         # File Selection Frame
         file_frame = tk.Frame(self, bg="#161626", padx=12, pady=12, relief="flat", highlightbackground="#2d2d48", highlightthickness=1)
-        file_frame.pack(fill="x", padx=20, pady=10)
+        file_frame.pack(fill="x", padx=20, pady=8)
 
-        self.file_entry = tk.Entry(file_frame, font=("Segoe UI", 10), bg="#222238", fg="#ffffff", insertbackground="white", relief="flat")
+        file_label = tk.Label(file_frame, text="فایلی ڤیدیۆی داگیراو (Video File):", font=("Segoe UI", 9, "bold"), fg="#94a3b8", bg="#161626")
+        file_label.pack(anchor="w", pady=(0, 4))
+
+        file_row = tk.Frame(file_frame, bg="#161626")
+        file_row.pack(fill="x")
+
+        self.file_entry = tk.Entry(file_row, font=("Segoe UI", 10), bg="#222238", fg="#ffffff", insertbackground="white", relief="flat")
         self.file_entry.pack(side="left", fill="x", expand=True, padx=(0, 10), ipady=4)
 
         browse_btn = tk.Button(
-            file_frame, text="Browse Video... 📂", font=("Segoe UI", 9, "bold"),
+            file_row, text="Browse Video... 📂", font=("Segoe UI", 9, "bold"),
             bg="#2563eb", fg="#ffffff", activebackground="#3b82f6", activeforeground="#ffffff",
             relief="flat", cursor="hand2", padx=14, pady=3, command=self.browse_file
         )
@@ -80,12 +91,12 @@ class HLSConverterApp(tk.Tk):
 
         # Quality Selection Box
         q_frame = tk.LabelFrame(
-            self, text=" Select Output Qualities ", font=("Segoe UI", 9, "bold"),
+            self, text=" هەڵبژاردنی کوالێتیەکان (Select Desired Qualities) ", font=("Segoe UI", 9, "bold"),
             fg="#e2e8f0", bg="#161626", padx=15, pady=8, relief="flat", highlightbackground="#2d2d48", highlightthickness=1
         )
         q_frame.pack(fill="x", padx=20, pady=5)
 
-        self.var_1080 = tk.BooleanVar(value=False)
+        self.var_1080 = tk.BooleanVar(value=True)
         self.var_720 = tk.BooleanVar(value=True)
         self.var_480 = tk.BooleanVar(value=False)
         self.var_360 = tk.BooleanVar(value=True)
@@ -108,12 +119,27 @@ class HLSConverterApp(tk.Tk):
         )
         toggle_btn.pack(side="right", padx=5)
 
+        # Cloudflare R2 Auto-Upload Frame
+        r2_frame = tk.LabelFrame(
+            self, text=" بەستنەوەی کلاود و خۆکارکردن (Cloudflare R2 Automation) ", font=("Segoe UI", 9, "bold"),
+            fg="#38bdf8", bg="#161626", padx=15, pady=8, relief="flat", highlightbackground="#2d2d48", highlightthickness=1
+        )
+        r2_frame.pack(fill="x", padx=20, pady=5)
+
+        self.var_auto_upload = tk.BooleanVar(value=True)
+        cb_upload = tk.Checkbutton(
+            r2_frame, text="⚡ بەرزکردنەوەی خۆکار بۆ Cloudflare R2 پاش تەواوبوون (Auto-Upload - بەبێ پێویستی بە Cyberduck!)",
+            variable=self.var_auto_upload, font=("Segoe UI", 9, "bold"),
+            fg="#38bdf8", bg="#161626", selectcolor="#222238", activebackground="#161626"
+        )
+        cb_upload.pack(anchor="w")
+
         # Buttons Frame (Convert & Stop)
         btn_frame = tk.Frame(self, bg="#0e0e17")
-        btn_frame.pack(fill="x", padx=20, pady=12)
+        btn_frame.pack(fill="x", padx=20, pady=10)
 
         self.start_btn = tk.Button(
-            btn_frame, text="START SMART GPU CONVERSION ▶", font=("Segoe UI", 11, "bold"),
+            btn_frame, text="START GPU CONVERSION & CLOUD UPLOAD 🚀", font=("Segoe UI", 11, "bold"),
             bg="#059669", fg="#ffffff", activebackground="#10b981", activeforeground="#ffffff",
             relief="flat", cursor="hand2", pady=8, command=self.start_conversion
         )
@@ -164,7 +190,8 @@ class HLSConverterApp(tk.Tk):
         scrollbar.pack(side="right", fill="y")
         self.log_text.pack(side="left", fill="both", expand=True)
 
-        self.log("Ready! Select your movie and click 'START SMART GPU CONVERSION'.\n")
+        self.log("Ready! Select your movie and click 'START GPU CONVERSION & CLOUD UPLOAD'.\n")
+        self.log("NVIDIA RTX 4060 Ti Turbo mode enabled with Stereo AAC audio & Cloudflare R2 auto-sync.\n")
 
     def log(self, text):
         self.log_text.insert(tk.END, text)
@@ -193,8 +220,8 @@ class HLSConverterApp(tk.Tk):
         if self.proc:
             try:
                 self.proc.terminate()
-                self.log("\n[ABORTED] Conversion stopped by user (کارەکە لەسەر داوای بەکارهێنەر ڕاگیرا).\n")
-                self.status_lbl.configure(text="Conversion Stopped (کارەکە ڕاگیرا)", fg="#ef4444")
+                self.log("\n[ABORTED] Process stopped by user (کارەکە لەسەر داوای بەکارهێنەر ڕاگیرا).\n")
+                self.status_lbl.configure(text="Process Stopped (کارەکە ڕاگیرا)", fg="#ef4444")
             except:
                 pass
 
@@ -222,12 +249,12 @@ class HLSConverterApp(tk.Tk):
         self.stop_requested = False
         self.is_running = True
 
-        threading.Thread(target=self.run_ffmpeg_thread, args=(video_path, chosen), daemon=True).start()
+        threading.Thread(target=self.run_process_thread, args=(video_path, chosen), daemon=True).start()
 
-    def run_ffmpeg_thread(self, video_path, chosen_qualities):
+    def run_process_thread(self, video_path, chosen_qualities):
         try:
-            self.log("\n" + "="*45 + "\n")
-            self.log("Analyzing video metadata...\n")
+            self.log("\n" + "="*50 + "\n")
+            self.log("Step 1: Analyzing video metadata & stream parameters...\n")
             self.status_lbl.configure(text="Analyzing video metadata...", fg="#facc15")
 
             total_dur, detected_height = get_video_info(video_path)
@@ -257,9 +284,9 @@ class HLSConverterApp(tk.Tk):
 
             q_count = len(chosen_qualities)
             q_labels = ", ".join([f"{q}p" for q in chosen_qualities])
-            self.log(f"Plan: Generating {q_count} Qualities: ({q_labels})\n")
-            self.log("Encoding with NVIDIA RTX NVENC GPU Turbo...\n")
-            self.status_lbl.configure(text="Encoding via NVIDIA GPU Turbo...", fg="#34d399")
+            self.log(f"Step 2: Encoding {q_count} HLS Qualities: ({q_labels})\n")
+            self.log("Hardware Acceleration: NVIDIA RTX 4060 Ti (h264_nvenc)...\n")
+            self.status_lbl.configure(text="Encoding via NVIDIA RTX GPU Turbo...", fg="#34d399")
 
             filter_parts = []
             stream_maps_parts = []
@@ -340,13 +367,11 @@ class HLSConverterApp(tk.Tk):
                     if line.startswith("out_time_us="):
                         try:
                             cur_out_sec = float(line.split("=")[1]) / 1000000.0
-                        except:
-                            pass
+                        except: pass
                     elif line.startswith("out_time_ms="):
                         try:
                             cur_out_sec = float(line.split("=")[1]) / 1000.0
-                        except:
-                            pass
+                        except: pass
                     elif line.startswith("speed="):
                         cur_speed = line.split("=")[1].strip()
 
@@ -374,7 +399,7 @@ class HLSConverterApp(tk.Tk):
                         rem_str = f"{rem_min:02d}:{rem_sec_r:02d}"
 
                         self.status_lbl.configure(
-                            text=f"⏳ Progress: {int(pct)}% | Speed: {cur_speed} | Elapsed: {el_str} | Remaining (ماوە): {rem_str}",
+                            text=f"⚡ GPU Encoding: {int(pct)}% | Speed: {cur_speed} | Elapsed: {el_str} | Remaining: {rem_str}",
                             fg="#22d3ee"
                         )
 
@@ -394,23 +419,94 @@ class HLSConverterApp(tk.Tk):
                             f.write(m_data)
                     except: pass
 
-                self.progress["value"] = 100
                 total_elapsed = time.time() - start_time
                 tot_min = int(total_elapsed // 60)
                 tot_sec = int(total_elapsed % 60)
                 tot_str = f"{tot_min:02d}:{tot_sec:02d}"
 
-                self.status_lbl.configure(text=f"✅ Completed successfully in {tot_str}!", fg="#34d399")
-                self.log("\n" + "="*45 + "\n")
-                self.log(f"SUCCESS! Smart HLS Created in {tot_str}!\n")
+                self.log("\n" + "="*50 + "\n")
+                self.log(f"✅ GPU ENCODING SUCCESS! Created in {tot_str}!\n")
                 self.log(f"Master Playlist: {master_pl}\n")
                 self.log(f"Qualities: {q_labels}\n")
-                self.log("Ready for upload to Cyberduck / Cloudflare R2.\n")
 
-                messagebox.showinfo("Success - Kurdish Stream", f"Success! HLS Created Successfully in {tot_str}!\n\nOutput Folder will now open.")
-                os.startfile(output_dir)
+                # Step 3: Automatic Upload to Cloudflare R2 (Bypassing Cyberduck)
+                if self.var_auto_upload.get():
+                    self.log("\nStep 3: Starting automated high-speed upload to Cloudflare R2 (بەبێ Cyberduck)...\n")
+                    self.status_lbl.configure(text="☁️ خەریکی بەرزکردنەوەیە بۆ Cloudflare R2...", fg="#38bdf8")
+                    self.progress["value"] = 0
+
+                    script_dir = os.path.dirname(os.path.abspath(__file__))
+                    upload_script = os.path.join(script_dir, "upload_to_r2.js")
+
+                    master_url = ""
+                    auto_linked_title = ""
+
+                    up_proc = subprocess.Popen(
+                        ["node", upload_script, output_dir],
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.STDOUT,
+                        text=True,
+                        universal_newlines=True
+                    )
+                    self.proc = up_proc
+
+                    if up_proc.stdout:
+                        for line in up_proc.stdout:
+                            if self.stop_requested:
+                                up_proc.terminate()
+                                break
+                            line = line.strip()
+                            if line.startswith("[PROGRESS]"):
+                                try:
+                                    pct_part = line.split("(")[1].split("%")[0]
+                                    pct_val = float(pct_part)
+                                    self.progress["value"] = pct_val
+                                    self.status_lbl.configure(
+                                        text=f"☁️ بەرزکردنەوە بۆ Cloudflare R2: %{int(pct_val)} - {line.split('-')[-1].strip()}",
+                                        fg="#38bdf8"
+                                    )
+                                except: pass
+                            elif line.startswith("[MASTER_URL]"):
+                                master_url = line.split(" ", 1)[1].strip()
+                            elif line.startswith("[AUTO_LINK]"):
+                                auto_linked_title = line.split(":", 1)[1].strip()
+                            elif line.startswith("[SUCCESS]"):
+                                self.log(f"{line}\n")
+                            elif line.startswith("[ERROR]"):
+                                self.log(f"{line}\n")
+
+                    up_proc.wait()
+
+                    if up_proc.returncode == 0:
+                        self.progress["value"] = 100
+                        self.status_lbl.configure(text="🎉 پیرۆزە! هەموو کارەکان تەواو بوون و لەسەر کلاود پاشەکەوت کرا ✓", fg="#34d399")
+                        self.log("\n" + "="*50 + "\n")
+                        self.log("SUCCESS: All HLS files uploaded to Cloudflare R2 directly!\n")
+                        if master_url:
+                            self.log(f"Cloud URL: {master_url}\n")
+                            try:
+                                self.clipboard_clear()
+                                self.clipboard_append(master_url)
+                                self.log("Clipboard: Master URL copied to your clipboard automatically! 📋\n")
+                            except: pass
+                        if auto_linked_title:
+                            self.log(f"Auto-Linked to Website Movie: {auto_linked_title} ✓\n")
+
+                        msg = f"پیرۆزە! هەموو کارەکان بە سەرکەوتوویی تەواو بوون!\n\nفیلمەکە کرا بە ۳ کوالێتی ({q_labels}) بە کارتی شاشەکەت، و ڕاستەوخۆ بەرزکرایەوە بۆ ناو Cloudflare R2 بەبێ پێویستی بە بەرنامەی Cyberduck.\n\nلینکی کلاود کۆپی کرا بۆ کلیپبۆرد:\n{master_url}"
+                        messagebox.showinfo("Success - Kurdish Stream", msg)
+                    else:
+                        self.status_lbl.configure(text="هەڵە لە کاتی بەرزکردنەوە بۆ R2!", fg="#ef4444")
+                        self.log("\n[ERROR] Upload to R2 failed! Check log window.\n")
+                        messagebox.showwarning("Warning", "گۆڕینی کوالێتیەکان سەرکەوتوو بوو، بەڵام لە کاتی بەرزکردنەوە بۆ کلاود کێشەیەک ڕوویدا.")
+                        os.startfile(output_dir)
+                else:
+                    self.progress["value"] = 100
+                    self.status_lbl.configure(text=f"✅ Completed successfully in {tot_str}!", fg="#34d399")
+                    messagebox.showinfo("Success - Kurdish Stream", f"Success! HLS Created Successfully in {tot_str}!\n\nOutput Folder will now open.")
+                    os.startfile(output_dir)
+
             elif self.stop_requested:
-                self.status_lbl.configure(text="Conversion Stopped by User", fg="#ef4444")
+                self.status_lbl.configure(text="Process Stopped by User", fg="#ef4444")
             else:
                 self.log(f"\nERROR: Conversion failed with code {self.proc.returncode}\n")
                 self.status_lbl.configure(text="Error during conversion!", fg="#ef4444")
